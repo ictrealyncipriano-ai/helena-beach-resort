@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /storage
+
+# Update this URL for production
+Sitemap: https://helenabeachresort.com/sitemap.xml

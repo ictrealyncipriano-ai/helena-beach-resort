@@ -1,0 +1,8 @@
+.git
+.gitignore
+node_modules
+vendor
+.env
+database/database.sqlite
+.gitattributes
+AGENTS.md
