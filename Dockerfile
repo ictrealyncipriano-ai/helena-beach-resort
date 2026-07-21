@@ -4,7 +4,7 @@ RUN apt-get update && apt-get install -y \
     libpq-dev libzip-dev unzip git curl nodejs npm \
     && rm -rf /var/lib/apt/lists/*
 
-RUN docker-php-ext-install pdo_pgsql pgsql zip bcmath
+RUN docker-php-ext-install intl pdo_pgsql pgsql zip bcmath
 
 RUN a2enmod rewrite
 
