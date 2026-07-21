@@ -80,13 +80,16 @@ class CottageSeeder extends Seeder
         ];
 
         foreach ($cottages as $data) {
-            $amenities = $data['amenities'];
+            $amenityNames = $data['amenities'];
             unset($data['amenities']);
 
-            $cottage = Cottage::create($data);
+            $cottage = Cottage::firstOrCreate(
+                ['slug' => $data['slug']],
+                $data
+            );
 
-            foreach ($amenities as $name) {
-                CottageAmenity::create([
+            foreach ($amenityNames as $name) {
+                CottageAmenity::firstOrCreate([
                     'cottage_id' => $cottage->id,
                     'name' => $name,
                 ]);

@@ -22,7 +22,10 @@ class SiteSettingSeeder extends Seeder
         ];
 
         foreach ($settings as $setting) {
-            SiteSetting::create($setting);
+            SiteSetting::firstOrCreate(
+                ['key' => $setting['key']],
+                $setting
+            );
         }
     }
 }

@@ -12,6 +12,10 @@ class PhotoSeeder extends Seeder
 {
     public function run(): void
     {
+        if (CottagePhoto::count() > 0 && Gallery::count() > 0) {
+            return;
+        }
+
         $disk = Storage::disk('public');
 
         $disk->makeDirectory('cottages');
