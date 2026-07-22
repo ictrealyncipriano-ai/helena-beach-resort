@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Cottage;
+use App\Models\CottageDateBlock;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -38,6 +39,17 @@ class PublicPageTest extends TestCase
 
     public function test_contact_page_returns_200(): void
     {
+        $this->get('/contact')->assertStatus(200);
+    }
+
+    public function test_contact_page_with_date_blocks_returns_200(): void
+    {
+        $cottage = Cottage::first();
+        CottageDateBlock::create([
+            'cottage_id' => $cottage->id,
+            'date' => now()->addDay()->format('Y-m-d'),
+            'reason' => 'Test booking',
+        ]);
         $this->get('/contact')->assertStatus(200);
     }
 

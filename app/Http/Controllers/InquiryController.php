@@ -16,7 +16,7 @@ class InquiryController extends Controller
             ->get();
 
         $blockedByCottage = $cottages->mapWithKeys(fn ($c) => [
-            $c->id => $c->dateBlocks()->future()->pluck('date')->map(fn ($d) => $d->format('Y-m-d')),
+            $c->id => $c->dateBlocks()->future()->pluck('date'),
         ]);
 
         return view('pages.contact', compact('cottages', 'blockedByCottage'));
