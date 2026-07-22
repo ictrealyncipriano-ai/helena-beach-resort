@@ -29,12 +29,12 @@ class UserResource extends Resource
 
     public static function canCreate(): bool
     {
-        return auth()->user()?->role === User::ROLE_SUPER_ADMIN;
+        return in_array(auth()->user()?->role, [User::ROLE_SUPER_ADMIN, User::ROLE_ADMIN]);
     }
 
     public static function canEdit($record): bool
     {
-        return auth()->user()?->role === User::ROLE_SUPER_ADMIN;
+        return in_array(auth()->user()?->role, [User::ROLE_SUPER_ADMIN, User::ROLE_ADMIN]);
     }
 
     public static function canDelete($record): bool
