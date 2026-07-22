@@ -75,6 +75,17 @@ class PublicPageTest extends TestCase
         $this->get("/cottages/{$cottage->slug}")->assertStatus(200);
     }
 
+    public function test_cottage_show_with_date_blocks_returns_200(): void
+    {
+        $cottage = Cottage::first();
+        CottageDateBlock::create([
+            'cottage_id' => $cottage->id,
+            'date' => now()->addDay()->format('Y-m-d'),
+            'reason' => 'Test booking',
+        ]);
+        $this->get("/cottages/{$cottage->slug}")->assertStatus(200);
+    }
+
     public function test_cottage_show_returns_404_for_invalid_slug(): void
     {
         $this->get('/cottages/nonexistent-cottage')->assertStatus(404);

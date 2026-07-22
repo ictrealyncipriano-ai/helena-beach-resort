@@ -20,7 +20,6 @@ class CottageController extends Controller
         $blockedDates = $cottage->dateBlocks()
             ->future()
             ->pluck('date')
-            ->map(fn ($d) => $d->format('Y-m-d'))
             ->values();
 
         return view('pages.cottages.show', compact('cottage', 'blockedDates'));
