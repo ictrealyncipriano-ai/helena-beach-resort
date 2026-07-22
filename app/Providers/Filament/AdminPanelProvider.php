@@ -27,7 +27,6 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('admin')
             ->login()
-            ->revealablePasswords(false)
             ->brandName('Helena Beach Resort')
             ->colors([
                 'primary' => '#0d9488',
