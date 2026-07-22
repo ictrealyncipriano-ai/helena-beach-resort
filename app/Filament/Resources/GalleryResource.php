@@ -4,6 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\GalleryResource\Pages;
 use App\Models\Gallery;
+use App\Models\User;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
@@ -21,6 +22,26 @@ class GalleryResource extends Resource
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-photo';
 
     protected static string|\UnitEnum|null $navigationGroup = 'Content';
+
+    public static function canViewAny(): bool
+    {
+        return in_array(auth()->user()?->role, [User::ROLE_SUPER_ADMIN, User::ROLE_ADMIN]);
+    }
+
+    public static function canCreate(): bool
+    {
+        return in_array(auth()->user()?->role, [User::ROLE_SUPER_ADMIN, User::ROLE_ADMIN]);
+    }
+
+    public static function canEdit($record): bool
+    {
+        return in_array(auth()->user()?->role, [User::ROLE_SUPER_ADMIN, User::ROLE_ADMIN]);
+    }
+
+    public static function canDelete($record): bool
+    {
+        return in_array(auth()->user()?->role, [User::ROLE_SUPER_ADMIN, User::ROLE_ADMIN]);
+    }
 
     public static function form(Schema $schema): Schema
     {

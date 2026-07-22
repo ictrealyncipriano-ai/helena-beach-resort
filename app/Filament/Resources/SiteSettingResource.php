@@ -4,6 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\SiteSettingResource\Pages;
 use App\Models\SiteSetting;
+use App\Models\User;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
@@ -21,6 +22,26 @@ class SiteSettingResource extends Resource
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-cog';
 
     protected static string|\UnitEnum|null $navigationGroup = 'Settings';
+
+    public static function canViewAny(): bool
+    {
+        return in_array(auth()->user()?->role, [User::ROLE_SUPER_ADMIN, User::ROLE_ADMIN]);
+    }
+
+    public static function canCreate(): bool
+    {
+        return auth()->user()?->role === User::ROLE_SUPER_ADMIN;
+    }
+
+    public static function canEdit($record): bool
+    {
+        return auth()->user()?->role === User::ROLE_SUPER_ADMIN;
+    }
+
+    public static function canDelete($record): bool
+    {
+        return auth()->user()?->role === User::ROLE_SUPER_ADMIN;
+    }
 
     public static function form(Schema $schema): Schema
     {

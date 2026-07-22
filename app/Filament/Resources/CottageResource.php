@@ -4,6 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\CottageResource\Pages;
 use App\Models\Cottage;
+use App\Models\User;
 use Filament\Forms;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
@@ -22,6 +23,26 @@ class CottageResource extends Resource
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-home';
 
     protected static string|\UnitEnum|null $navigationGroup = 'Content';
+
+    public static function canViewAny(): bool
+    {
+        return in_array(auth()->user()?->role, [User::ROLE_SUPER_ADMIN, User::ROLE_ADMIN]);
+    }
+
+    public static function canCreate(): bool
+    {
+        return in_array(auth()->user()?->role, [User::ROLE_SUPER_ADMIN, User::ROLE_ADMIN]);
+    }
+
+    public static function canEdit($record): bool
+    {
+        return in_array(auth()->user()?->role, [User::ROLE_SUPER_ADMIN, User::ROLE_ADMIN]);
+    }
+
+    public static function canDelete($record): bool
+    {
+        return in_array(auth()->user()?->role, [User::ROLE_SUPER_ADMIN, User::ROLE_ADMIN]);
+    }
 
     public static function form(Schema $schema): Schema
     {

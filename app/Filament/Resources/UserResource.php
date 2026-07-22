@@ -22,6 +22,26 @@ class UserResource extends Resource
 
     protected static string|\UnitEnum|null $navigationGroup = 'Settings';
 
+    public static function canViewAny(): bool
+    {
+        return in_array(auth()->user()?->role, [User::ROLE_SUPER_ADMIN, User::ROLE_ADMIN]);
+    }
+
+    public static function canCreate(): bool
+    {
+        return auth()->user()?->role === User::ROLE_SUPER_ADMIN;
+    }
+
+    public static function canEdit($record): bool
+    {
+        return auth()->user()?->role === User::ROLE_SUPER_ADMIN;
+    }
+
+    public static function canDelete($record): bool
+    {
+        return auth()->user()?->role === User::ROLE_SUPER_ADMIN;
+    }
+
     public static function form(Schema $schema): Schema
     {
         return $schema
@@ -40,6 +60,13 @@ class UserResource extends Resource
                     ->maxLength(255)
                     ->dehydrated(fn ($state): bool => filled($state))
                     ->placeholder(fn (string $operation): string => $operation === 'create' ? '' : 'Leave blank to keep current'),
+                Forms\Components\Select::make('role')
+                    ->options([
+                        User::ROLE_SUPER_ADMIN => 'Super Admin',
+                        User::ROLE_ADMIN => 'Admin',
+                        User::ROLE_STAFF => 'Staff',
+                    ])
+                    ->required(),
             ]);
     }
 
@@ -53,6 +80,13 @@ class UserResource extends Resource
                 Tables\Columns\TextColumn::make('email')
                     ->searchable()
                     ->sortable(),
+                Tables\Columns\TextColumn::make('role')
+                    ->badge()
+                    ->color(fn (string $state): string => match ($state) {
+                        User::ROLE_SUPER_ADMIN => 'danger',
+                        User::ROLE_ADMIN => 'warning',
+                        User::ROLE_STAFF => 'gray',
+                    }),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()

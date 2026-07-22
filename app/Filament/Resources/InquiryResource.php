@@ -5,6 +5,7 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\InquiryResource\Pages;
 use App\Models\Inquiry;
 use App\Models\CottageDateBlock;
+use App\Models\User;
 use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
@@ -25,6 +26,26 @@ class InquiryResource extends Resource
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-chat-bubble-left';
 
     protected static string|\UnitEnum|null $navigationGroup = 'Bookings';
+
+    public static function canViewAny(): bool
+    {
+        return in_array(auth()->user()?->role, [User::ROLE_SUPER_ADMIN, User::ROLE_ADMIN, User::ROLE_STAFF]);
+    }
+
+    public static function canCreate(): bool
+    {
+        return false;
+    }
+
+    public static function canEdit($record): bool
+    {
+        return in_array(auth()->user()?->role, [User::ROLE_SUPER_ADMIN, User::ROLE_ADMIN]);
+    }
+
+    public static function canDelete($record): bool
+    {
+        return auth()->user()?->role === User::ROLE_SUPER_ADMIN;
+    }
 
     public static function form(Schema $schema): Schema
     {

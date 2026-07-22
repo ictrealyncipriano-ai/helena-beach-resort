@@ -9,13 +9,23 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
-        if (!User::where('email', 'admin@helenaresort.com')->exists()) {
-            User::create([
-                'name' => 'Admin',
-                'email' => 'admin@helenaresort.com',
+        User::updateOrCreate(
+            ['email' => 'admin@helenaresort.com'],
+            [
+                'name' => 'Super Admin',
                 'password' => 'password',
-            ]);
-        }
+                'role' => 'super_admin',
+            ]
+        );
+
+        User::updateOrCreate(
+            ['email' => 'staff@helenaresort.com'],
+            [
+                'name' => 'Staff',
+                'password' => 'password',
+                'role' => 'staff',
+            ]
+        );
 
         $this->call([
             SiteSettingSeeder::class,
