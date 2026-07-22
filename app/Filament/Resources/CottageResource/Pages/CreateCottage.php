@@ -8,4 +8,9 @@ use Filament\Resources\Pages\CreateRecord;
 class CreateCottage extends CreateRecord
 {
     protected static string $resource = CottageResource::class;
+
+    protected function getRedirectUrl(): string
+    {
+        return $this->getResource()::getUrl('index');
+    }
 }
