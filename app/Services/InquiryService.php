@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Guest;
 use App\Models\Inquiry;
 use App\Mail\InquiryNotification;
 use App\Models\SiteSetting;
@@ -22,6 +23,12 @@ class InquiryService
             'message' => $data['message'] ?? null,
             'source' => 'website',
         ]);
+
+        $guest = Guest::updateOrCreate(
+            ['email' => $data['email']],
+            ['name' => $data['name'], 'phone' => $data['phone'] ?? null]
+        );
+        $inquiry->guest()->associate($guest)->save();
 
         $ownerEmail = SiteSetting::getValue('contact_email');
         if ($ownerEmail) {

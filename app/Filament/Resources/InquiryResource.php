@@ -56,8 +56,14 @@ class InquiryResource extends Resource
                         Forms\Components\TextInput::make('name'),
                         Forms\Components\TextInput::make('email'),
                         Forms\Components\TextInput::make('phone'),
+                        Forms\Components\Select::make('guest_id')
+                            ->relationship('guest', 'email')
+                            ->searchable()
+                            ->preload()
+                            ->nullable()
+                            ->label('Linked Guest'),
                     ])
-                    ->columns(3),
+                    ->columns(2),
                 Section::make('Booking Details')
                     ->schema([
                         Forms\Components\DatePicker::make('check_in'),
@@ -87,6 +93,10 @@ class InquiryResource extends Resource
                     ->searchable(),
                 Tables\Columns\TextColumn::make('phone'),
                 Tables\Columns\TextColumn::make('cottage.name'),
+                Tables\Columns\TextColumn::make('guest.name')
+                    ->searchable()
+                    ->label('Guest')
+                    ->toggleable(),
                 Tables\Columns\TextColumn::make('check_in')
                     ->date()
                     ->sortable(),
@@ -134,6 +144,11 @@ class InquiryResource extends Resource
                                 ], ['reason' => "Booked: {$record->reference_code}"]);
                             }
                         }
+                        $guest = $record->guest;
+                        if ($guest) {
+                            $guest->increment('total_stays');
+                            $guest->update(['last_stay_at' => $record->check_out ?? now()]);
+                        }
                     })
                     ->visible(fn (Inquiry $record) => $record->status === 'pending'),
                 Action::make('markCancelled')
@@ -169,6 +184,16 @@ class InquiryResource extends Resource
                         TextEntry::make('phone'),
                     ])
                     ->columns(3),
+                Section::make('Guest Profile')
+                    ->schema([
+                        TextEntry::make('guest.name')->label('Name'),
+                        TextEntry::make('guest.email')->label('Email'),
+                        TextEntry::make('guest.phone')->label('Phone'),
+                        TextEntry::make('guest.total_stays')->label('Total Stays'),
+                        TextEntry::make('guest.last_stay_at')->label('Last Stay')->date(),
+                    ])
+                    ->columns(3)
+                    ->visible(fn (Inquiry $record): bool => $record->guest !== null),
                 Section::make('Booking Details')
                     ->schema([
                         TextEntry::make('check_in')->date(),

@@ -9,7 +9,7 @@ class Inquiry extends Model
 {
     protected $fillable = [
         'reference_code', 'name', 'email', 'phone', 'check_in', 'check_out',
-        'pax', 'cottage_id', 'message', 'status', 'source'
+        'pax', 'cottage_id', 'guest_id', 'message', 'status', 'source'
     ];
 
     protected static function booted(): void
@@ -24,6 +24,11 @@ class Inquiry extends Model
     public function cottage(): BelongsTo
     {
         return $this->belongsTo(Cottage::class);
+    }
+
+    public function guest(): BelongsTo
+    {
+        return $this->belongsTo(Guest::class);
     }
 
     public function scopePending($q)
