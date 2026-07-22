@@ -11,10 +11,13 @@ return new class extends Migration
         $driver = Schema::getConnection()->getDriverName();
 
         if ($driver === 'pgsql') {
+            DB::statement('ALTER TABLE cottages ALTER COLUMN is_available DROP DEFAULT');
             DB::statement('ALTER TABLE cottages ALTER COLUMN is_available TYPE integer USING (is_available::integer)');
             DB::statement('ALTER TABLE cottages ALTER COLUMN is_available SET DEFAULT 1');
+            DB::statement('ALTER TABLE galleries ALTER COLUMN is_active DROP DEFAULT');
             DB::statement('ALTER TABLE galleries ALTER COLUMN is_active TYPE integer USING (is_active::integer)');
             DB::statement('ALTER TABLE galleries ALTER COLUMN is_active SET DEFAULT 1');
+            DB::statement('ALTER TABLE cottage_photos ALTER COLUMN is_primary DROP DEFAULT');
             DB::statement('ALTER TABLE cottage_photos ALTER COLUMN is_primary TYPE integer USING (is_primary::integer)');
             DB::statement('ALTER TABLE cottage_photos ALTER COLUMN is_primary SET DEFAULT 0');
         }
