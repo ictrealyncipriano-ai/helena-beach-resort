@@ -28,6 +28,8 @@ class AdminPanelProvider extends PanelProvider
             ->path('admin')
             ->login()
             ->brandName('Helena Beach Resort')
+            ->brandLogo(asset('images/logo.jpg'))
+            ->brandLogoHeight('2rem')
             ->colors([
                 'primary' => '#0d9488',
             ])

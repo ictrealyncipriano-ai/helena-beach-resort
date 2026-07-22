@@ -3,7 +3,7 @@
         <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div>
                 <div class="flex items-center gap-2 mb-4">
-                    <span class="text-2xl">🏖️</span>
+                    <img src="{{ asset('images/logo.jpg') }}" alt="Helena Beach Resort" class="h-8 w-auto rounded">
                     <span class="font-semibold text-xl text-white">Helena Beach Resort</span>
                 </div>
                 <p class="text-teal-200 text-sm leading-relaxed">

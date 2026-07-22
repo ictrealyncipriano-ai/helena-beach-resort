@@ -2,7 +2,7 @@
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex items-center justify-between h-16 sm:h-20">
             <a href="{{ route('home') }}" class="flex items-center gap-2">
-                <span class="text-2xl">🏖️</span>
+                <img src="{{ asset('images/logo.jpg') }}" alt="Helena Beach" class="h-8 w-auto rounded">
                 <span class="font-semibold text-xl text-teal-700">Helena Beach</span>
             </a>
 
