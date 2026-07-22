@@ -49,15 +49,17 @@
                         </div>
                         <div>
                             <label for="cottage_id" class="block text-sm font-medium text-gray-700 mb-1">Interested Cottage</label>
-                            <select id="cottage_id" name="cottage_id"
+                            <select id="cottage_id" name="cottage_id" x-on:change="showAvailability"
                                 class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none transition-colors text-sm">
                                 <option value="">Select a cottage</option>
                                 @foreach($cottages as $cottage)
-                                <option value="{{ $cottage->id }}" {{ old('cottage_id') == $cottage->id || request('cottage_id') == $cottage->id ? 'selected' : '' }}>
+                                <option value="{{ $cottage->id }}" {{ old('cottage_id') == $cottage->id || request('cottage_id') == $cottage->id ? 'selected' : '' }}
+                                    data-blocked='{{ json_encode($blockedByCottage[$cottage->id] ?? []) }}'>
                                     {{ $cottage->name }}
                                 </option>
                                 @endforeach
                             </select>
+                            <div id="availability-info" class="mt-2 text-xs hidden"></div>
                         </div>
                     </div>
 
@@ -115,4 +117,38 @@
         </div>
     </div>
 </section>
+@push('scripts')
+<script>
+    function showAvailability() {
+        const select = document.getElementById('cottage_id');
+        const info = document.getElementById('availability-info');
+        const option = select.options[select.selectedIndex];
+
+        if (!option.value) {
+            info.classList.add('hidden');
+            return;
+        }
+
+        let blocked;
+        try { blocked = JSON.parse(option.dataset.blocked || '[]'); } catch { blocked = []; }
+
+        if (blocked.length === 0) {
+            info.className = 'mt-2 text-xs text-green-600';
+            info.textContent = 'This cottage has no booked dates.';
+        } else {
+            const dates = blocked.map(d => {
+                const [y, m, day] = d.split('-');
+                return new Date(y, m - 1, day).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            });
+            info.className = 'mt-2 text-xs text-amber-600';
+            info.textContent = `Currently booked on: ${dates.join(', ')}`;
+        }
+        info.classList.remove('hidden');
+    }
+
+    document.addEventListener('DOMContentLoaded', showAvailability);
+    document.getElementById('cottage_id').addEventListener('change', showAvailability);
+</script>
+@endpush
+
 @endsection

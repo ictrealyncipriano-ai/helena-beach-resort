@@ -43,4 +43,19 @@ class Cottage extends Model
     {
         return $this->hasMany(Inquiry::class);
     }
+
+    public function dateBlocks(): HasMany
+    {
+        return $this->hasMany(CottageDateBlock::class);
+    }
+
+    public function isAvailableOn(string $date): bool
+    {
+        return !$this->dateBlocks()->where('date', $date)->exists();
+    }
+
+    public function scopeAvailableOn($q, string $date)
+    {
+        $q->whereDoesntHave('dateBlocks', fn ($q) => $q->where('date', $date));
+    }
 }

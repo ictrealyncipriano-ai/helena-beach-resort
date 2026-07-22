@@ -4,6 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\InquiryResource\Pages;
 use App\Models\Inquiry;
+use App\Models\CottageDateBlock;
 use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
@@ -101,13 +102,32 @@ class InquiryResource extends Resource
                     ->label('Confirm')
                     ->icon('heroicon-o-check')
                     ->color('success')
-                    ->action(fn (Inquiry $record) => $record->update(['status' => 'confirmed']))
+                    ->action(function (Inquiry $record) {
+                        $record->update(['status' => 'confirmed']);
+                        if ($record->check_in && $record->check_out && $record->cottage_id) {
+                            $period = \Carbon\CarbonPeriod::create($record->check_in, $record->check_out)->toArray();
+                            foreach ($period as $date) {
+                                CottageDateBlock::firstOrCreate([
+                                    'cottage_id' => $record->cottage_id,
+                                    'date' => $date->format('Y-m-d'),
+                                ], ['reason' => "Booked: {$record->reference_code}"]);
+                            }
+                        }
+                    })
                     ->visible(fn (Inquiry $record) => $record->status === 'pending'),
                 Action::make('markCancelled')
                     ->label('Cancel')
                     ->icon('heroicon-o-x-mark')
                     ->color('danger')
-                    ->action(fn (Inquiry $record) => $record->update(['status' => 'cancelled']))
+                    ->action(function (Inquiry $record) {
+                        $record->update(['status' => 'cancelled']);
+                        if ($record->check_in && $record->check_out && $record->cottage_id) {
+                            CottageDateBlock::where('cottage_id', $record->cottage_id)
+                                ->whereBetween('date', [$record->check_in, $record->check_out])
+                                ->where('reason', "Booked: {$record->reference_code}")
+                                ->delete();
+                        }
+                    })
                     ->visible(fn (Inquiry $record) => $record->status === 'pending'),
             ])
             ->bulkActions([

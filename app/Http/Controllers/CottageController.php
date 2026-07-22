@@ -17,6 +17,12 @@ class CottageController extends Controller
 
     public function show(Cottage $cottage)
     {
-        return view('pages.cottages.show', compact('cottage'));
+        $blockedDates = $cottage->dateBlocks()
+            ->future()
+            ->pluck('date')
+            ->map(fn ($d) => $d->format('Y-m-d'))
+            ->values();
+
+        return view('pages.cottages.show', compact('cottage', 'blockedDates'));
     }
 }

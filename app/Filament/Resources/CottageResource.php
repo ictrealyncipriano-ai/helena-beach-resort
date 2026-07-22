@@ -77,6 +77,23 @@ class CottageResource extends Resource
                             ->columns(2),
                     ]),
 
+                Section::make('Availability')
+                    ->schema([
+                        Forms\Components\Repeater::make('dateBlocks')
+                            ->relationship()
+                            ->schema([
+                                Forms\Components\DatePicker::make('date')
+                                    ->required()
+                                    ->native(false)
+                                    ->displayFormat('M d, Y'),
+                                Forms\Components\TextInput::make('reason')
+                                    ->placeholder('e.g. Maintenance, Private Event'),
+                            ])
+                            ->columns(2)
+                            ->defaultItems(0)
+                            ->label('Blocked Dates'),
+                    ]),
+
                 Section::make('Photos')
                     ->schema([
                         Forms\Components\Repeater::make('photos')

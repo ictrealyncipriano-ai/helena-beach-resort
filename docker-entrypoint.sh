@@ -2,9 +2,6 @@
 set -e
 
 php artisan migrate --force
-
-if [ "$(php -r 'echo \App\Models\User::count();' 2>/dev/null || echo 0)" -eq 0 ]; then
-    php artisan db:seed --force
-fi
+php artisan db:seed --force 2>/dev/null || true
 
 exec apache2-foreground

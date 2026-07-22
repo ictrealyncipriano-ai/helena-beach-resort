@@ -15,7 +15,11 @@ class InquiryController extends Controller
             ->orderBy('sort_order')
             ->get();
 
-        return view('pages.contact', compact('cottages'));
+        $blockedByCottage = $cottages->mapWithKeys(fn ($c) => [
+            $c->id => $c->dateBlocks()->future()->pluck('date')->map(fn ($d) => $d->format('Y-m-d')),
+        ]);
+
+        return view('pages.contact', compact('cottages', 'blockedByCottage'));
     }
 
     public function store(InquiryRequest $request, InquiryService $inquiryService)
