@@ -31,7 +31,7 @@ class AdminPanelProvider extends PanelProvider
             ->brandName('Helena Beach Resort')
             ->brandLogo(new HtmlString('
                 <div class="flex items-center gap-2 h-8 overflow-hidden">
-                    <img src="'.asset('images/logo.jpg').'" alt="Helena Beach" class="h-6 w-auto rounded shrink-0">
+                    <img src="'.url('images/logo.jpg').'" alt="Helena Beach" class="h-6 w-auto rounded shrink-0">
                     <span class="text-sm font-semibold whitespace-nowrap">Helena Beach Resort</span>
                 </div>
             '))
