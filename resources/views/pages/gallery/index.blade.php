@@ -24,7 +24,7 @@
         @else
         <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
             @foreach($galleries as $item)
-            <div class="aspect-square rounded-xl overflow-hidden bg-gray-100 group cursor-pointer" onclick="openModal(this)">
+            <div class="relative aspect-square rounded-xl overflow-hidden bg-gray-100 group cursor-pointer" onclick="openModal(this)">
                 <img src="{{ Storage::url($item->photo_path) }}" alt="{{ $item->title }}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" loading="lazy">
                 @if($item->title)
                 <div class="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-end p-4">
