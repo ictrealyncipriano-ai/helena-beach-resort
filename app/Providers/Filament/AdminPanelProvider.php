@@ -11,6 +11,7 @@ use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
 use Filament\Widgets\AccountWidget;
+use Illuminate\Support\HtmlString;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
@@ -28,7 +29,12 @@ class AdminPanelProvider extends PanelProvider
             ->path('admin')
             ->login()
             ->brandName('Helena Beach Resort')
-            ->brandLogo(asset('images/logo.jpg'))
+            ->brandLogo(new HtmlString('
+                <div class="flex items-center gap-2 h-8 overflow-hidden">
+                    <img src="'.asset('images/logo.jpg').'" alt="Helena Beach" class="h-6 w-auto rounded shrink-0">
+                    <span class="text-sm font-semibold whitespace-nowrap">Helena Beach Resort</span>
+                </div>
+            '))
             ->brandLogoHeight('2rem')
             ->colors([
                 'primary' => '#0d9488',
