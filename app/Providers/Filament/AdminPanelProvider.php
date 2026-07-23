@@ -30,9 +30,9 @@ class AdminPanelProvider extends PanelProvider
             ->login()
             ->brandName('Helena Beach Resort')
             ->brandLogo(new HtmlString('
-                <div class="flex items-center gap-2 h-8 overflow-hidden">
-                    <img src="'.url('images/logo.jpg').'" alt="Helena Beach" class="h-6 w-auto rounded shrink-0">
-                    <span class="text-sm font-semibold whitespace-nowrap">Helena Beach Resort</span>
+                <div style="display: flex; align-items: center; gap: 0.5rem; height: 2rem; overflow: hidden;">
+                    <img src="'.url('images/logo.jpg').'" alt="Helena Beach" style="height: 1.5rem; width: auto; border-radius: 0.25rem; flex-shrink: 0;">
+                    <span style="font-size: 0.875rem; font-weight: 600; white-space: nowrap;">Helena Beach Resort</span>
                 </div>
             '))
             ->brandLogoHeight('2rem')
