@@ -51,6 +51,7 @@ class GalleryResource extends Resource
                 Forms\Components\FileUpload::make('photo_path')
                     ->image()
                     ->directory('gallery')
+                    ->disk('r2')
                     ->required(),
                 Forms\Components\Select::make('category')
                     ->options([

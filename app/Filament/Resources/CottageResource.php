@@ -122,7 +122,8 @@ class CottageResource extends Resource
                             ->schema([
                                 Forms\Components\FileUpload::make('photo_path')
                                     ->image()
-                                    ->directory('cottages'),
+                                    ->directory('cottages')
+                                    ->disk('r2'),
                                 Forms\Components\Toggle::make('is_primary')
                                     ->label('Primary Photo'),
                                 Forms\Components\TextInput::make('sort_order')
