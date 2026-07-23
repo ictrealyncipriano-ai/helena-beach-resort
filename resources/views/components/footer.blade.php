@@ -40,7 +40,7 @@
                     </li>
                     <li class="flex items-center gap-2">
                         <span>📧</span>
-                        <span>helenabeachresort@example.com</span>
+                        <span>{{ App\Models\SiteSetting::getValue('contact_email', 'helenabeachresort@example.com') }}</span>
                     </li>
                 </ul>
             </div>

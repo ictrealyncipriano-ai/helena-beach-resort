@@ -15,7 +15,7 @@ class GalleryController extends Controller
 
         $galleries = Gallery::where('is_active', true)
             ->orderBy('sort_order')
-            ->get();
+            ->paginate(20);
 
         return view('pages.gallery.index', compact('galleries', 'categories'));
     }

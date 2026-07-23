@@ -34,6 +34,9 @@
             </div>
             @endforeach
         </div>
+        <div class="mt-10">
+            {{ $galleries->links() }}
+        </div>
         @endif
     </div>
 </section>

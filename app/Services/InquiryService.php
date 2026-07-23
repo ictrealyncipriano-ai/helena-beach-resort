@@ -6,6 +6,7 @@ use App\Models\Guest;
 use App\Models\Inquiry;
 use App\Mail\InquiryNotification;
 use App\Models\SiteSetting;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 
 class InquiryService
@@ -35,7 +36,10 @@ class InquiryService
             try {
                 Mail::to($ownerEmail)->send(new InquiryNotification($inquiry));
             } catch (\Exception $e) {
-                // silently fail if mail not configured
+                Log::warning('Failed to send inquiry notification', [
+                    'inquiry_id' => $inquiry->id,
+                    'error' => $e->getMessage(),
+                ]);
             }
         }
 

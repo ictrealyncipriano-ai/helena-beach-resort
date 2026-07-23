@@ -11,7 +11,7 @@
     <meta property="og:description" content="@yield('og_description', 'Experience paradise in Infanta, Quezon. Beachfront cottages, fresh seafood, and unforgettable memories.')" />
     <meta property="og:url" content="{{ url()->current() }}" />
     <meta property="og:type" content="@yield('og_type', 'website')" />
-    <meta property="og:image" content="@yield('og_image', asset('build/assets/app-CK3MAMFJ.css'))" />
+    <meta property="og:image" content="@yield('og_image', asset('images/logo.jpg'))" />
     <meta property="og:site_name" content="{{ config('app.name') }}" />
 
     <meta name="twitter:card" content="summary_large_image" />
