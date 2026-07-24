@@ -23,7 +23,7 @@ class ListGalleries extends ListRecords
                 ->visible(fn () => in_array(auth()->user()?->role, [User::ROLE_SUPER_ADMIN, User::ROLE_ADMIN]))
                 ->requiresConfirmation()
                 ->modalHeading('Migrate images to Cloudflare R2?')
-                ->modalDescription('Copy all existing gallery and cottage images from the current storage (Supabase) to Cloudflare R2. This may take a moment.')
+                ->modalDescription('Copy all existing gallery and cottage images from Supabase Storage to Cloudflare R2. Existing files on Cloudflare will be skipped. This may take a moment.')
                 ->modalSubmitActionLabel('Migrate')
                 ->action(function () {
                     $exitCode = Artisan::call('cloudflare:migrate', ['from' => 'r2']);
