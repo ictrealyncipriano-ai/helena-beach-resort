@@ -5,9 +5,7 @@ namespace App\Filament\Resources\GalleryResource\Pages;
 use App\Filament\Resources\GalleryResource;
 use App\Models\User;
 use Filament\Actions;
-use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ListRecords;
-use Illuminate\Support\Facades\Artisan;
 
 class ListGalleries extends ListRecords
 {
@@ -21,28 +19,7 @@ class ListGalleries extends ListRecords
                 ->label('Migrate to Cloudflare')
                 ->icon('heroicon-o-cloud-arrow-up')
                 ->visible(fn () => in_array(auth()->user()?->role, [User::ROLE_SUPER_ADMIN, User::ROLE_ADMIN]))
-                ->requiresConfirmation()
-                ->modalHeading('Migrate images to Cloudflare R2?')
-                ->modalDescription('Copy all existing gallery and cottage images from Supabase Storage to Cloudflare R2. Existing files on Cloudflare will be skipped. This may take a moment.')
-                ->modalSubmitActionLabel('Migrate')
-                ->action(function () {
-                    $exitCode = Artisan::call('cloudflare:migrate', ['from' => 'r2']);
-                    $output = Artisan::output();
-
-                    if ($exitCode === 0) {
-                        Notification::make()
-                            ->title('Migration completed')
-                            ->body($output)
-                            ->success()
-                            ->send();
-                    } else {
-                        Notification::make()
-                            ->title('Migration failed')
-                            ->body($output)
-                            ->danger()
-                            ->send();
-                    }
-                }),
+                ->url(route('admin.migrate-cloudflare')),
         ];
     }
 }
