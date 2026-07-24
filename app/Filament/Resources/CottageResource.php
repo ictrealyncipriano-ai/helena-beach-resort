@@ -123,7 +123,7 @@ class CottageResource extends Resource
                                 Forms\Components\FileUpload::make('photo_path')
                                     ->image()
                                     ->directory('cottages')
-                                    ->disk('r2'),
+                                    ->disk('cloudflare'),
                                 Forms\Components\Toggle::make('is_primary')
                                     ->label('Primary Photo'),
                                 Forms\Components\TextInput::make('sort_order')

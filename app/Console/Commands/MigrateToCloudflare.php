@@ -5,16 +5,16 @@ namespace App\Console\Commands;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Storage;
 
-class MigrateToR2 extends Command
+class MigrateToCloudflare extends Command
 {
-    protected $signature = 'r2:migrate {disk=public : Source disk to migrate from}';
-    protected $description = 'Migrate existing uploaded files from local storage to Cloudflare R2';
+    protected $signature = 'cloudflare:migrate {from=r2 : Source disk to migrate from}';
+    protected $description = 'Migrate existing uploaded files to Cloudflare R2';
 
     public function handle(): int
     {
-        $sourceDisk = $this->argument('disk');
+        $sourceDisk = $this->argument('from');
         $source = Storage::disk($sourceDisk);
-        $r2 = Storage::disk('r2');
+        $dest = Storage::disk('cloudflare');
 
         $directories = ['gallery', 'cottages'];
         $migrated = 0;
@@ -30,14 +30,14 @@ class MigrateToR2 extends Command
             $this->info("Found " . count($files) . " files in '$dir'.");
 
             foreach ($files as $file) {
-                if ($r2->exists($file)) {
-                    $this->line("  SKIP $file (already exists on R2)");
+                if ($dest->exists($file)) {
+                    $this->line("  SKIP $file (already exists on Cloudflare)");
                     $skipped++;
                     continue;
                 }
 
                 $contents = $source->get($file);
-                $r2->put($file, $contents, 'public');
+                $dest->put($file, $contents, 'public');
                 $this->line("  OK   $file");
                 $migrated++;
             }
