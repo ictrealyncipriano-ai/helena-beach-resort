@@ -63,9 +63,9 @@ class FaqSeeder extends Seeder
         ];
 
         foreach ($faqs as $faq) {
-            Faq::firstOrCreate(
+            Faq::updateOrCreate(
                 ['question' => $faq['question']],
-                $faq
+                [...$faq, 'is_active' => true]
             );
         }
     }
