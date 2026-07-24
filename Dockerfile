@@ -2,9 +2,11 @@ FROM php:8.2-apache
 
 RUN apt-get update && apt-get install -y \
     libicu-dev libpq-dev libzip-dev unzip git curl nodejs npm \
+    libpng-dev libjpeg62-turbo-dev libwebp-dev \
     && rm -rf /var/lib/apt/lists/*
 
-RUN docker-php-ext-install intl pdo_pgsql pgsql zip bcmath
+RUN docker-php-ext-configure gd --with-jpeg --with-webp \
+    && docker-php-ext-install intl pdo_pgsql pgsql zip bcmath gd
 
 RUN a2enmod rewrite
 
