@@ -12,7 +12,7 @@ class PhotoSeeder extends Seeder
 {
     public function run(): void
     {
-        $disk = Storage::disk('public');
+        $disk = Storage::disk(env('FILESYSTEM_DISK', 'public'));
 
         $disk->makeDirectory('cottages');
         $disk->makeDirectory('gallery');
