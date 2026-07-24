@@ -23,6 +23,7 @@
                     <li><a href="{{ route('about') }}" class="text-teal-200 hover:text-white transition-colors">About</a></li>
                     <li><a href="{{ route('cottages.index') }}" class="text-teal-200 hover:text-white transition-colors">Cottages</a></li>
                     <li><a href="{{ route('gallery.index') }}" class="text-teal-200 hover:text-white transition-colors">Gallery</a></li>
+                    <li><a href="{{ route('faq') }}" class="text-teal-200 hover:text-white transition-colors">FAQ</a></li>
                     <li><a href="{{ route('contact') }}" class="text-teal-200 hover:text-white transition-colors">Contact Us</a></li>
                 </ul>
             </div>

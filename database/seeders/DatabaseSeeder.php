@@ -31,6 +31,7 @@ class DatabaseSeeder extends Seeder
             SiteSettingSeeder::class,
             CottageSeeder::class,
             PhotoSeeder::class,
+            FaqSeeder::class,
         ]);
     }
 }

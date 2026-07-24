@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Cottage;
+use App\Models\Faq;
 use App\Models\Gallery;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Cache;
@@ -34,6 +35,15 @@ class PageController extends Controller
         return view('pages.about');
     }
 
+    public function faq()
+    {
+        $faqs = Faq::where('is_active', true)
+            ->orderBy('sort_order')
+            ->get();
+
+        return view('pages.faq', compact('faqs'));
+    }
+
     public function sitemap()
     {
         $xml = Cache::remember('sitemap', 3600, function () {
@@ -42,6 +52,7 @@ class PageController extends Controller
             $pages = [
                 ['loc' => route('home'), 'priority' => '1.0', 'changefreq' => 'daily'],
                 ['loc' => route('about'), 'priority' => '0.7', 'changefreq' => 'monthly'],
+                ['loc' => route('faq'), 'priority' => '0.5', 'changefreq' => 'monthly'],
                 ['loc' => route('cottages.index'), 'priority' => '0.9', 'changefreq' => 'daily'],
                 ['loc' => route('gallery.index'), 'priority' => '0.7', 'changefreq' => 'weekly'],
                 ['loc' => route('contact'), 'priority' => '0.6', 'changefreq' => 'monthly'],

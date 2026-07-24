@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Route;
 Route::get('/health', fn () => response('ok', 200))->name('health');
 Route::get('/', [PageController::class, 'home'])->name('home');
 Route::get('/about', [PageController::class, 'about'])->name('about');
+Route::get('/faq', [PageController::class, 'faq'])->name('faq');
 Route::get('/sitemap.xml', [PageController::class, 'sitemap'])->name('sitemap');
 Route::get('/cottages', [CottageController::class, 'index'])->name('cottages.index');
 Route::get('/cottages/{cottage:slug}', [CottageController::class, 'show'])->name('cottages.show');
