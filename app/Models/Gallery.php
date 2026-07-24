@@ -40,8 +40,8 @@ class Gallery extends Model
             return;
         }
 
+        $originalSize = $disk->size($path);
         $mime = $info['mime'];
-        $src = null;
 
         try {
             match ($mime) {
@@ -51,7 +51,10 @@ class Gallery extends Model
                 default => null,
             };
 
-            $disk->put($path, file_get_contents($tmpPath), 'public');
+            $compressedSize = filesize($tmpPath);
+            if ($compressedSize < $originalSize) {
+                $disk->put($path, file_get_contents($tmpPath), 'public');
+            }
         } finally {
             @unlink($tmpPath);
         }
