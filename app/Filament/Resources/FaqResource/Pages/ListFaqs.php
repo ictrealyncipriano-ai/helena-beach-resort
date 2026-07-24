@@ -19,7 +19,6 @@ class ListFaqs extends ListRecords
                 ->label('Activate All FAQs')
                 ->icon('heroicon-o-check-circle')
                 ->color('success')
-                ->requiresConfirmation()
                 ->action(function () {
                     Faq::query()->update(['is_active' => true]);
                 }),
