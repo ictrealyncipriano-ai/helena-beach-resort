@@ -6,7 +6,7 @@ use App\Http\Controllers\InquiryController;
 use App\Http\Controllers\PageController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/health', fn () => response('ok', 200))->name('health');
+Route::get('/health', [PageController::class, 'health'])->name('health');
 Route::get('/', [PageController::class, 'home'])->name('home');
 Route::get('/about', [PageController::class, 'about'])->name('about');
 Route::get('/faq', [PageController::class, 'faq'])->name('faq');

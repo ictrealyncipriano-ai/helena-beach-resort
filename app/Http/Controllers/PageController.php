@@ -37,11 +37,20 @@ class PageController extends Controller
 
     public function faq()
     {
-        $faqs = Faq::where('is_active', true)
-            ->orderBy('sort_order')
-            ->get();
+        try {
+            $faqs = Faq::where('is_active', true)
+                ->orderBy('sort_order')
+                ->get();
+        } catch (QueryException) {
+            $faqs = collect();
+        }
 
         return view('pages.faq', compact('faqs'));
+    }
+
+    public function health()
+    {
+        return response('ok', 200);
     }
 
     public function sitemap()
