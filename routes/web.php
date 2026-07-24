@@ -1,9 +1,11 @@
 <?php
 
+use App\Http\Controllers\AdminController;
 use App\Http\Controllers\CottageController;
 use App\Http\Controllers\GalleryController;
 use App\Http\Controllers\InquiryController;
 use App\Http\Controllers\PageController;
+use Filament\Http\Middleware\Authenticate;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/health', [PageController::class, 'health'])->name('health');
@@ -19,3 +21,7 @@ Route::post('/contact', [InquiryController::class, 'store'])
     ->middleware('throttle:3,1')
     ->name('contact.store');
 Route::get('/booking/confirmation/{inquiry}', [InquiryController::class, 'show'])->name('booking.confirmation');
+
+Route::get('/admin/faqs/activate-all', [AdminController::class, 'activateAllFaqs'])
+    ->middleware([Authenticate::class])
+    ->name('admin.faqs.activate-all');

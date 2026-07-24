@@ -19,6 +19,10 @@ class FaqResource extends Resource
 {
     protected static ?string $model = Faq::class;
 
+    protected static ?string $modelLabel = 'FAQ';
+
+    protected static ?string $pluralModelLabel = 'FAQs';
+
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-question-mark-circle';
 
     protected static string|\UnitEnum|null $navigationGroup = 'Content';

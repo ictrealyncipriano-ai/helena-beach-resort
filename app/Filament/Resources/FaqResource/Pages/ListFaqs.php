@@ -3,7 +3,6 @@
 namespace App\Filament\Resources\FaqResource\Pages;
 
 use App\Filament\Resources\FaqResource;
-use App\Models\Faq;
 use Filament\Actions;
 use Filament\Resources\Pages\ListRecords;
 
@@ -19,9 +18,7 @@ class ListFaqs extends ListRecords
                 ->label('Activate All FAQs')
                 ->icon('heroicon-o-check-circle')
                 ->color('success')
-                ->action(function () {
-                    Faq::query()->update(['is_active' => true]);
-                }),
+                ->url(fn (): string => route('admin.faqs.activate-all')),
         ];
     }
 }
