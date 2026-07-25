@@ -7,6 +7,7 @@ use App\Models\Faq;
 use App\Models\Gallery;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 
 class PageController extends Controller
 {
@@ -22,7 +23,8 @@ class PageController extends Controller
                 ->orderBy('sort_order')
                 ->take(8)
                 ->get();
-        } catch (QueryException) {
+        } catch (QueryException $e) {
+            Log::error('Home page query failed: ' . $e->getMessage());
             $cottages = collect();
             $gallery = collect();
         }
@@ -41,7 +43,8 @@ class PageController extends Controller
             $faqs = Faq::where('is_active', true)
                 ->orderBy('sort_order')
                 ->get();
-        } catch (QueryException) {
+        } catch (QueryException $e) {
+            Log::error('FAQ query failed: ' . $e->getMessage());
             $faqs = collect();
         }
 
