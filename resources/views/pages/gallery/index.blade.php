@@ -22,9 +22,12 @@
             <p class="text-gray-400 mt-2">We're adding photos. Check back later!</p>
         </div>
         @else
-        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+        <div id="gallery-grid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
             @foreach($galleries as $item)
-            <div class="relative aspect-square rounded-xl overflow-hidden bg-gray-100 group cursor-pointer" onclick="openModal(this)">
+            <div class="relative aspect-square rounded-xl overflow-hidden bg-gray-100 group cursor-pointer"
+                 onclick="openModal(this)"
+                 data-src="{{ Storage::url($item->photo_path) }}"
+                 data-title="{{ $item->title ?? '' }}">
                 <img src="{{ Storage::url($item->photo_path) }}" alt="{{ $item->title }}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" loading="lazy">
                 @if($item->title)
                 <div class="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-end p-4">
@@ -43,18 +46,35 @@
 
 {{-- Lightbox Modal --}}
 <div id="lightbox" class="fixed inset-0 z-50 bg-black/90 hidden items-center justify-center p-4" onclick="closeModal(event)">
-    <button onclick="closeModal(event)" class="absolute top-4 right-4 text-white/70 hover:text-white text-3xl z-10">&times;</button>
-    <img id="lightbox-img" src="" alt="" class="max-w-full max-h-[90vh] object-contain rounded-lg">
+    <button onclick="closeModal(event)" class="absolute top-4 right-4 text-white/60 hover:text-white text-4xl z-20 transition-colors">&times;</button>
+
+    <button onclick="prevImage(event)" class="absolute left-4 top-1/2 -translate-y-1/2 text-white/60 hover:text-white text-5xl z-20 transition-colors p-2" aria-label="Previous">
+        &#8249;
+    </button>
+
+    <button onclick="nextImage(event)" class="absolute right-4 top-1/2 -translate-y-1/2 text-white/60 hover:text-white text-5xl z-20 transition-colors p-2" aria-label="Next">
+        &#8250;
+    </button>
+
+    <div class="relative flex flex-col items-center gap-4 max-w-full max-h-full">
+        <img id="lightbox-img" src="" alt=""
+             class="max-w-full max-h-[80vh] object-contain rounded-lg transition-opacity duration-300">
+        <p id="lightbox-caption" class="text-white/80 text-sm text-center px-4"></p>
+        <p id="lightbox-counter" class="text-white/40 text-xs text-center"></p>
+    </div>
 </div>
 
 <script>
 let currentImages = [];
+let currentTitles = [];
 let currentIndex = 0;
 
 function openModal(el) {
-    const imgs = document.querySelectorAll('.aspect-square img');
-    currentImages = Array.from(imgs).map(img => img.src);
-    currentIndex = currentImages.indexOf(el.querySelector('img').src);
+    const items = document.querySelectorAll('#gallery-grid > div');
+    currentImages = Array.from(items).map(item => item.dataset.src);
+    currentTitles = Array.from(items).map(item => item.dataset.title);
+    currentIndex = currentImages.indexOf(el.dataset.src);
+
     showImage(currentIndex);
     document.getElementById('lightbox').classList.remove('hidden');
     document.getElementById('lightbox').classList.add('flex');
@@ -63,7 +83,29 @@ function openModal(el) {
 
 function showImage(index) {
     const img = document.getElementById('lightbox-img');
-    img.src = currentImages[index];
+    const caption = document.getElementById('lightbox-caption');
+
+    img.style.opacity = '0';
+    setTimeout(() => {
+        img.src = currentImages[index];
+        img.style.opacity = '1';
+    }, 150);
+
+    caption.textContent = currentTitles[index] || '';
+    document.getElementById('lightbox-counter').textContent = (index + 1) + ' / ' + currentImages.length;
+    currentIndex = index;
+}
+
+function nextImage(e) {
+    if (e) { e.stopPropagation(); }
+    const next = (currentIndex + 1) % currentImages.length;
+    showImage(next);
+}
+
+function prevImage(e) {
+    if (e) { e.stopPropagation(); }
+    const prev = (currentIndex - 1 + currentImages.length) % currentImages.length;
+    showImage(prev);
 }
 
 function closeModal(e) {
@@ -75,11 +117,16 @@ function closeModal(e) {
 }
 
 document.addEventListener('keydown', function(e) {
+    const lb = document.getElementById('lightbox');
+    if (lb.classList.contains('hidden')) return;
+
     if (e.key === 'Escape') {
-        document.getElementById('lightbox').classList.add('hidden');
-        document.getElementById('lightbox').classList.remove('flex');
+        lb.classList.add('hidden');
+        lb.classList.remove('flex');
         document.body.style.overflow = '';
     }
+    if (e.key === 'ArrowRight') nextImage();
+    if (e.key === 'ArrowLeft') prevImage();
 });
 </script>
 @endsection
