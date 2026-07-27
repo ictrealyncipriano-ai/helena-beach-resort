@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Cottage;
 use App\Models\Faq;
 use App\Models\Gallery;
+use App\Models\Service;
 use App\Models\Testimonial;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Cache;
@@ -60,6 +61,12 @@ class PageController extends Controller
         return view('pages.faq', compact('faqs'));
     }
 
+    public function services()
+    {
+        $services = Service::active()->get()->groupBy('category');
+        return view('pages.services', compact('services'));
+    }
+
     public function reviews()
     {
         $testimonials = Testimonial::active()->paginate(12);
@@ -80,6 +87,7 @@ class PageController extends Controller
                 ['loc' => route('home'), 'priority' => '1.0', 'changefreq' => 'daily'],
                 ['loc' => route('about'), 'priority' => '0.7', 'changefreq' => 'monthly'],
                 ['loc' => route('faq'), 'priority' => '0.5', 'changefreq' => 'monthly'],
+                ['loc' => route('services'), 'priority' => '0.6', 'changefreq' => 'weekly'],
                 ['loc' => route('reviews'), 'priority' => '0.6', 'changefreq' => 'weekly'],
                 ['loc' => route('cottages.index'), 'priority' => '0.9', 'changefreq' => 'daily'],
                 ['loc' => route('gallery.index'), 'priority' => '0.7', 'changefreq' => 'weekly'],
