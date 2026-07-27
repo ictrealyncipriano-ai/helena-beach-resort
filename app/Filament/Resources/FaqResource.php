@@ -54,14 +54,14 @@ class FaqResource extends Resource
                 Forms\Components\TextInput::make('question')
                     ->required()
                     ->maxLength(255),
-                Forms\Components\TextInput::make('answer')
-                    ->required(),
+                Forms\Components\Textarea::make('answer')
+                    ->required()
+                    ->rows(4),
                 Forms\Components\TextInput::make('sort_order')
                     ->numeric()
                     ->default(0),
-                Forms\Components\TextInput::make('is_active')
-                    ->numeric()
-                    ->default(1),
+                Forms\Components\Toggle::make('is_active')
+                    ->default(true),
             ]);
     }
 
