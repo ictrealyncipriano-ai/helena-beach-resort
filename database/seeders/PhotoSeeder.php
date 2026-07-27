@@ -20,14 +20,6 @@ class PhotoSeeder extends Seeder
         $hasRecords = CottagePhoto::count() > 0 && Gallery::count() > 0;
 
         if ($hasRecords) {
-            foreach (CottagePhoto::with('cottage')->cursor() as $photo) {
-                $svg = $this->makeSvg($photo->cottage?->name ?? 'Cottage');
-                $disk->put($photo->photo_path, $svg);
-            }
-            foreach (Gallery::cursor() as $item) {
-                $svg = $this->makeSvg($item->title ?: 'Gallery');
-                $disk->put($item->photo_path, $svg);
-            }
             return;
         }
 
