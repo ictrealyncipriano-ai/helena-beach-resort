@@ -30,6 +30,8 @@ class SiteSettingSeeder extends Seeder
             ['key' => 'section_cta_heading', 'value' => 'Ready for a Getaway?', 'type' => 'text'],
             ['key' => 'section_cta_subtitle', 'value' => 'Contact us to book your stay or ask any questions.', 'type' => 'textarea'],
             ['key' => 'section_cta_btn_text', 'value' => 'Contact Us', 'type' => 'text'],
+            ['key' => 'section_reviews_heading', 'value' => 'What Our Guests Say', 'type' => 'text'],
+            ['key' => 'section_reviews_subtitle', 'value' => 'Read what our visitors have to say about their stay at Helena Beach Resort.', 'type' => 'textarea'],
             ['key' => 'facebook_url', 'value' => '#', 'type' => 'text'],
         ];
 

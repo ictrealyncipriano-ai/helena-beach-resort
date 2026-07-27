@@ -32,6 +32,7 @@ class DatabaseSeeder extends Seeder
             CottageSeeder::class,
             PhotoSeeder::class,
             FaqSeeder::class,
+            TestimonialSeeder::class,
         ]);
     }
 }

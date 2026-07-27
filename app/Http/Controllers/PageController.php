@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Cottage;
 use App\Models\Faq;
 use App\Models\Gallery;
+use App\Models\Testimonial;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
@@ -29,7 +30,15 @@ class PageController extends Controller
             $gallery = collect();
         }
 
-        return view('pages.home', compact('cottages', 'gallery'));
+            $testimonials = Testimonial::active()->take(3)->get();
+            $avgRating = Testimonial::where('is_active', true)->avg('rating');
+        } catch (QueryException $e) {
+            Log::error('Home page testimonial query failed: ' . $e->getMessage());
+            $testimonials = collect();
+            $avgRating = null;
+        }
+
+        return view('pages.home', compact('cottages', 'gallery', 'testimonials', 'avgRating'));
     }
 
     public function about()
@@ -51,6 +60,12 @@ class PageController extends Controller
         return view('pages.faq', compact('faqs'));
     }
 
+    public function reviews()
+    {
+        $testimonials = Testimonial::active()->paginate(12);
+        return view('pages.reviews', compact('testimonials'));
+    }
+
     public function health()
     {
         return response('ok', 200);
@@ -65,6 +80,7 @@ class PageController extends Controller
                 ['loc' => route('home'), 'priority' => '1.0', 'changefreq' => 'daily'],
                 ['loc' => route('about'), 'priority' => '0.7', 'changefreq' => 'monthly'],
                 ['loc' => route('faq'), 'priority' => '0.5', 'changefreq' => 'monthly'],
+                ['loc' => route('reviews'), 'priority' => '0.6', 'changefreq' => 'weekly'],
                 ['loc' => route('cottages.index'), 'priority' => '0.9', 'changefreq' => 'daily'],
                 ['loc' => route('gallery.index'), 'priority' => '0.7', 'changefreq' => 'weekly'],
                 ['loc' => route('contact'), 'priority' => '0.6', 'changefreq' => 'monthly'],

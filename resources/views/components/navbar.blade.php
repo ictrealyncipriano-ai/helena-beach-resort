@@ -12,6 +12,7 @@
                 <a href="{{ route('cottages.index') }}" class="text-sm font-medium text-gray-600 hover:text-teal-600 transition-colors">Cottages</a>
                 <a href="{{ route('gallery.index') }}" class="text-sm font-medium text-gray-600 hover:text-teal-600 transition-colors">Gallery</a>
                 <a href="{{ route('faq') }}" class="text-sm font-medium text-gray-600 hover:text-teal-600 transition-colors">FAQ</a>
+                <a href="{{ route('reviews') }}" class="text-sm font-medium text-gray-600 hover:text-teal-600 transition-colors">Reviews</a>
                 <a href="{{ route('contact') }}" class="text-sm font-medium text-gray-600 hover:text-teal-600 transition-colors">Contact</a>
                 <div class="flex items-center gap-3">
                     <a href="{{ App\Models\SiteSetting::getValue('facebook_url', '#') }}" target="_blank" rel="noopener noreferrer" class="text-gray-400 hover:text-teal-600 transition-colors" aria-label="Facebook">
@@ -36,6 +37,7 @@
             <a href="{{ route('cottages.index') }}" class="block text-sm font-medium text-gray-600 hover:text-teal-600">Cottages</a>
             <a href="{{ route('gallery.index') }}" class="block text-sm font-medium text-gray-600 hover:text-teal-600">Gallery</a>
             <a href="{{ route('faq') }}" class="block text-sm font-medium text-gray-600 hover:text-teal-600">FAQ</a>
+            <a href="{{ route('reviews') }}" class="block text-sm font-medium text-gray-600 hover:text-teal-600">Reviews</a>
             <a href="{{ route('contact') }}" class="block text-sm font-medium text-gray-600 hover:text-teal-600">Contact</a>
             <hr class="border-gray-100">
             <a href="{{ App\Models\SiteSetting::getValue('facebook_url', '#') }}" target="_blank" rel="noopener noreferrer" class="block text-sm font-medium text-gray-600 hover:text-teal-600">Facebook</a>

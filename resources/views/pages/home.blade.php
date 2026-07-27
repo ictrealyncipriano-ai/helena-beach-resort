@@ -97,6 +97,60 @@
 </section>
 @endif
 
+{{-- Testimonials --}}
+@if($testimonials->isNotEmpty())
+<section class="py-16 sm:py-24 bg-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-12">
+            <h2 class="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">{{ App\Models\SiteSetting::getValue('section_reviews_heading', 'What Our Guests Say') }}</h2>
+            <p class="text-gray-600 max-w-2xl mx-auto">{{ App\Models\SiteSetting::getValue('section_reviews_subtitle', 'Read what our visitors have to say about their stay at Helena Beach Resort.') }}</p>
+        </div>
+
+        @if($avgRating)
+        <div class="flex items-center justify-center gap-2 mb-10">
+            <div class="flex items-center gap-1">
+                @for($i = 1; $i <= 5; $i++)
+                    <span class="text-2xl {{ $i <= round($avgRating) ? 'text-amber-400' : 'text-gray-200' }}">★</span>
+                @endfor
+            </div>
+            <span class="text-lg font-semibold text-gray-700">{{ number_format($avgRating, 1) }}</span>
+            <span class="text-sm text-gray-400">average rating</span>
+        </div>
+        @endif
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            @foreach($testimonials as $testimonial)
+            <div class="bg-gray-50 rounded-2xl p-6 flex flex-col">
+                <div class="flex items-center gap-1 mb-3">
+                    @for($i = 1; $i <= 5; $i++)
+                        <span class="text-lg {{ $i <= $testimonial->rating ? 'text-amber-400' : 'text-gray-200' }}">★</span>
+                    @endfor
+                </div>
+                <p class="text-gray-600 text-sm leading-relaxed flex-1">"{{ $testimonial->content }}"</p>
+                <div class="flex items-center gap-3 mt-4 pt-4 border-t border-gray-200">
+                    @if($testimonial->guest_avatar)
+                    <img src="{{ Storage::url($testimonial->guest_avatar) }}" alt="{{ $testimonial->guest_name }}" class="w-10 h-10 rounded-full object-cover">
+                    @else
+                    <div class="w-10 h-10 rounded-full bg-teal-100 flex items-center justify-center text-teal-600 font-semibold text-sm">
+                        {{ substr($testimonial->guest_name, 0, 1) }}
+                    </div>
+                    @endif
+                    <p class="text-sm font-medium text-gray-900">{{ $testimonial->guest_name }}</p>
+                </div>
+            </div>
+            @endforeach
+        </div>
+
+        <div class="text-center mt-10">
+            <a href="{{ route('reviews') }}" class="inline-flex items-center px-6 py-3 border-2 border-teal-600 text-teal-600 font-medium rounded-full hover:bg-teal-50 transition-colors">
+                Read All Reviews
+                <svg class="ml-2 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+            </a>
+        </div>
+    </div>
+</section>
+@endif
+
 {{-- CTA --}}
 <section class="py-20 bg-gradient-to-br from-teal-600 to-teal-800">
     <div class="max-w-4xl mx-auto px-4 text-center">
