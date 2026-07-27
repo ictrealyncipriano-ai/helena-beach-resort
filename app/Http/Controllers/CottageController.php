@@ -8,7 +8,7 @@ class CottageController extends Controller
 {
     public function index()
     {
-        $cottages = Cottage::where('is_available', true)
+        $cottages = Cottage::whereRaw('is_available IS TRUE')
             ->orderBy('sort_order')
             ->get();
 

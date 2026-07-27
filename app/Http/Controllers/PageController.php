@@ -14,12 +14,12 @@ class PageController extends Controller
     public function home()
     {
         try {
-            $cottages = Cottage::where('is_available', true)
+            $cottages = Cottage::whereRaw('is_available IS TRUE')
                 ->orderBy('sort_order')
                 ->take(6)
                 ->get();
 
-            $gallery = Gallery::where('is_active', true)
+            $gallery = Gallery::whereRaw('is_active IS TRUE')
                 ->orderBy('sort_order')
                 ->take(8)
                 ->get();
@@ -40,7 +40,7 @@ class PageController extends Controller
     public function faq()
     {
         try {
-            $faqs = Faq::where('is_active', true)
+            $faqs = Faq::whereRaw('is_active IS TRUE')
                 ->orderBy('sort_order')
                 ->get();
         } catch (QueryException $e) {
@@ -59,7 +59,7 @@ class PageController extends Controller
     public function sitemap()
     {
         $xml = Cache::remember('sitemap', 3600, function () {
-            $cottages = Cottage::where('is_available', true)->get();
+            $cottages = Cottage::whereRaw('is_available IS TRUE')->get();
 
             $pages = [
                 ['loc' => route('home'), 'priority' => '1.0', 'changefreq' => 'daily'],

@@ -8,12 +8,12 @@ class GalleryController extends Controller
 {
     public function index()
     {
-        $categories = Gallery::where('is_active', true)
+        $categories = Gallery::whereRaw('is_active IS TRUE')
             ->select('category')
             ->distinct()
             ->pluck('category');
 
-        $galleries = Gallery::where('is_active', true)
+        $galleries = Gallery::whereRaw('is_active IS TRUE')
             ->orderBy('sort_order')
             ->paginate(20);
 
