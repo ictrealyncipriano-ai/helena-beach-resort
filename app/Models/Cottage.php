@@ -36,7 +36,7 @@ class Cottage extends Model
 
     public function primaryPhoto(): HasOne
     {
-        return $this->hasOne(CottagePhoto::class)->whereRaw('is_primary IS TRUE');
+        return $this->hasOne(CottagePhoto::class)->where('is_primary', true);
     }
 
     public function inquiries(): HasMany

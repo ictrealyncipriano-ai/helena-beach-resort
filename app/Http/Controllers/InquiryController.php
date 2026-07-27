@@ -11,7 +11,7 @@ class InquiryController extends Controller
 {
     public function create()
     {
-        $cottages = Cottage::whereRaw('is_available IS TRUE')
+        $cottages = Cottage::where('is_available', true)
             ->orderBy('sort_order')
             ->get();
 
