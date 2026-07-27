@@ -9,7 +9,8 @@ class Inquiry extends Model
 {
     protected $fillable = [
         'reference_code', 'name', 'email', 'phone', 'check_in', 'check_out',
-        'pax', 'cottage_id', 'guest_id', 'message', 'status', 'source'
+        'pax', 'cottage_id', 'guest_id', 'message', 'status', 'source',
+        'booking_type', 'total_amount',
     ];
 
     protected static function booted(): void

@@ -46,6 +46,13 @@
                     @endif
                 </div>
 
+                @if($inquiry->booking_type)
+                <div class="pt-4 border-t border-gray-100 text-sm">
+                    <p class="text-gray-500">Booking Type</p>
+                    <p class="font-medium text-gray-900">{{ $inquiry->booking_type === 'day_tour' ? 'Day Tour' : 'Overnight' }}</p>
+                </div>
+                @endif
+
                 @if($inquiry->check_in || $inquiry->check_out)
                 <div class="grid grid-cols-2 gap-4 text-sm pt-4 border-t border-gray-100">
                     @if($inquiry->check_in)
@@ -64,6 +71,12 @@
                     <div>
                         <p class="text-gray-500">Guests</p>
                         <p class="font-medium text-gray-900">{{ $inquiry->pax }}</p>
+                    </div>
+                    @endif
+                    @if($inquiry->total_amount)
+                    <div>
+                        <p class="text-gray-500">Total</p>
+                        <p class="font-medium text-teal-600">₱{{ number_format($inquiry->total_amount) }}</p>
                     </div>
                     @endif
                 </div>

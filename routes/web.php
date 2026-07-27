@@ -18,6 +18,11 @@ Route::get('/sitemap.xml', [PageController::class, 'sitemap'])->name('sitemap');
 Route::get('/cottages', [CottageController::class, 'index'])->name('cottages.index');
 Route::get('/cottages/{cottage:slug}', [CottageController::class, 'show'])->name('cottages.show');
 Route::get('/gallery', [GalleryController::class, 'index'])->name('gallery.index');
+Route::get('/book', [App\Http\Controllers\BookingController::class, 'create'])->name('book');
+Route::post('/book', [App\Http\Controllers\BookingController::class, 'store'])
+    ->middleware('throttle:3,1')
+    ->name('book.store');
+
 Route::get('/contact', [InquiryController::class, 'create'])->name('contact');
 Route::post('/contact', [InquiryController::class, 'store'])
     ->middleware('throttle:3,1')

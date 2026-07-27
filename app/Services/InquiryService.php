@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Cottage;
 use App\Models\Guest;
 use App\Models\Inquiry;
 use App\Mail\InquiryNotification;
@@ -13,6 +14,19 @@ class InquiryService
 {
     public function store(array $data): Inquiry
     {
+        $totalAmount = null;
+        if (!empty($data['booking_type']) && !empty($data['cottage_id'])) {
+            $cottage = Cottage::find($data['cottage_id']);
+            if ($cottage) {
+                if ($data['booking_type'] === 'day_tour') {
+                    $totalAmount = $cottage->rate_daytour;
+                } elseif ($data['booking_type'] === 'overnight' && !empty($data['check_in']) && !empty($data['check_out'])) {
+                    $nights = \Carbon\Carbon::parse($data['check_in'])->diffInDays(\Carbon\Carbon::parse($data['check_out']));
+                    $totalAmount = $cottage->rate_overnight * max($nights, 1);
+                }
+            }
+        }
+
         $inquiry = Inquiry::create([
             'name' => $data['name'],
             'email' => $data['email'],
@@ -22,7 +36,9 @@ class InquiryService
             'pax' => $data['pax'] ?? null,
             'cottage_id' => $data['cottage_id'] ?? null,
             'message' => $data['message'] ?? null,
-            'source' => 'website',
+            'booking_type' => $data['booking_type'] ?? null,
+            'total_amount' => $totalAmount,
+            'source' => $data['source'] ?? 'website',
         ]);
 
         $guest = Guest::updateOrCreate(

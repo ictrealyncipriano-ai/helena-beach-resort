@@ -84,7 +84,7 @@
                             <span class="text-sm font-medium text-red-600 bg-red-50 px-3 py-1 rounded-full">Unavailable</span>
                             @endif
                         </div>
-                        <a href="{{ route('contact') }}?cottage_id={{ $cottage->id }}" class="block w-full text-center px-6 py-3 bg-teal-600 text-white font-medium rounded-full hover:bg-teal-700 transition-colors">
+                        <a href="{{ route('book') }}?cottage_id={{ $cottage->id }}" class="block w-full text-center px-6 py-3 bg-teal-600 text-white font-medium rounded-full hover:bg-teal-700 transition-colors">
                             Book This Cottage
                         </a>
                     </div>

@@ -66,9 +66,18 @@ class InquiryResource extends Resource
                     ->columns(2),
                 Section::make('Booking Details')
                     ->schema([
+                        Forms\Components\Select::make('booking_type')
+                            ->options([
+                                'day_tour' => 'Day Tour',
+                                'overnight' => 'Overnight',
+                            ])
+                            ->nullable(),
                         Forms\Components\DatePicker::make('check_in'),
                         Forms\Components\DatePicker::make('check_out'),
                         Forms\Components\TextInput::make('pax'),
+                        Forms\Components\TextInput::make('total_amount')
+                            ->prefix('₱')
+                            ->numeric(),
                         Forms\Components\Select::make('cottage_id')
                             ->relationship('cottage', 'name'),
                         Forms\Components\TextInput::make('status'),
@@ -104,12 +113,35 @@ class InquiryResource extends Resource
                     ->date()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('pax'),
+                Tables\Columns\TextColumn::make('booking_type')
+                    ->badge()
+                    ->formatStateUsing(fn (?string $state) => match ($state) {
+                        'day_tour' => 'Day Tour',
+                        'overnight' => 'Overnight',
+                        default => 'Inquiry',
+                    })
+                    ->colors([
+                        'info' => 'day_tour',
+                        'success' => 'overnight',
+                        'gray' => null,
+                    ])
+                    ->toggleable(),
+                Tables\Columns\TextColumn::make('total_amount')
+                    ->money('PHP')
+                    ->toggleable(),
                 Tables\Columns\BadgeColumn::make('status')
                     ->colors([
                         'warning' => 'pending',
                         'success' => 'confirmed',
                         'danger' => 'cancelled',
                     ]),
+                Tables\Columns\TextColumn::make('source')
+                    ->badge()
+                    ->colors([
+                        'primary' => 'booking',
+                        'gray' => 'website',
+                    ])
+                    ->toggleable(),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
@@ -122,6 +154,17 @@ class InquiryResource extends Resource
                         'pending' => 'Pending',
                         'confirmed' => 'Confirmed',
                         'cancelled' => 'Cancelled',
+                    ]),
+                Tables\Filters\SelectFilter::make('booking_type')
+                    ->options([
+                        'day_tour' => 'Day Tour',
+                        'overnight' => 'Overnight',
+                    ])
+                    ->label('Type'),
+                Tables\Filters\SelectFilter::make('source')
+                    ->options([
+                        'website' => 'Inquiry',
+                        'booking' => 'Booking',
                     ]),
                 Tables\Filters\SelectFilter::make('cottage_id')
                     ->relationship('cottage', 'name'),
@@ -196,10 +239,17 @@ class InquiryResource extends Resource
                     ->visible(fn (Inquiry $record): bool => $record->guest !== null),
                 Section::make('Booking Details')
                     ->schema([
+                        TextEntry::make('booking_type')
+                            ->formatStateUsing(fn (?string $state) => match ($state) {
+                                'day_tour' => 'Day Tour',
+                                'overnight' => 'Overnight',
+                                default => 'Inquiry',
+                            }),
                         TextEntry::make('check_in')->date(),
                         TextEntry::make('check_out')->date(),
                         TextEntry::make('pax'),
                         TextEntry::make('cottage.name'),
+                        TextEntry::make('total_amount')->money('PHP'),
                         TextEntry::make('status')->badge()
                             ->color(fn (string $state): string => match ($state) {
                                 'confirmed' => 'success',

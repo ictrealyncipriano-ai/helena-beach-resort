@@ -87,6 +87,7 @@ class PageController extends Controller
                 ['loc' => route('home'), 'priority' => '1.0', 'changefreq' => 'daily'],
                 ['loc' => route('about'), 'priority' => '0.7', 'changefreq' => 'monthly'],
                 ['loc' => route('faq'), 'priority' => '0.5', 'changefreq' => 'monthly'],
+                ['loc' => route('book'), 'priority' => '0.8', 'changefreq' => 'weekly'],
                 ['loc' => route('services'), 'priority' => '0.6', 'changefreq' => 'weekly'],
                 ['loc' => route('reviews'), 'priority' => '0.6', 'changefreq' => 'weekly'],
                 ['loc' => route('cottages.index'), 'priority' => '0.9', 'changefreq' => 'daily'],
