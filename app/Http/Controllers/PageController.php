@@ -31,6 +31,7 @@ class PageController extends Controller
             $gallery = collect();
         }
 
+        try {
             $testimonials = Testimonial::active()->take(3)->get();
             $avgRating = Testimonial::where('is_active', true)->avg('rating');
         } catch (QueryException $e) {
@@ -63,13 +64,25 @@ class PageController extends Controller
 
     public function services()
     {
-        $services = Service::active()->get()->groupBy('category');
+        try {
+            $services = Service::active()->get()->groupBy('category');
+        } catch (QueryException $e) {
+            Log::error('Services page query failed: ' . $e->getMessage());
+            $services = collect();
+        }
+
         return view('pages.services', compact('services'));
     }
 
     public function reviews()
     {
-        $testimonials = Testimonial::active()->paginate(12);
+        try {
+            $testimonials = Testimonial::active()->paginate(12);
+        } catch (QueryException $e) {
+            Log::error('Reviews page query failed: ' . $e->getMessage());
+            $testimonials = new \Illuminate\Pagination\LengthAwarePaginator([], 0, 12);
+        }
+
         return view('pages.reviews', compact('testimonials'));
     }
 
