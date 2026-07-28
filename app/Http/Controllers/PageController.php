@@ -6,10 +6,12 @@ use App\Models\Cottage;
 use App\Models\Faq;
 use App\Models\Gallery;
 use App\Models\Service;
+use App\Models\SiteSetting;
 use App\Models\Testimonial;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 
 class PageController extends Controller
 {
@@ -89,6 +91,19 @@ class PageController extends Controller
     public function health()
     {
         return response('ok', 200);
+    }
+
+    public function testMail()
+    {
+        $ownerEmail = SiteSetting::getValue('contact_email', 'ict.realyncipriano@gmail.com');
+        try {
+            Mail::mailer('smtp')->raw('Test email from Helena Beach Resort at ' . now(), function ($msg) use ($ownerEmail) {
+                $msg->to($ownerEmail)->subject('SMTP Test – ' . now()->format('Y-m-d H:i:s'));
+            });
+            return response('Mail sent successfully to ' . $ownerEmail, 200);
+        } catch (\Exception $e) {
+            return response('Mail failed: ' . $e->getMessage(), 500);
+        }
     }
 
     public function sitemap()

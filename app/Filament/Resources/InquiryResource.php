@@ -16,6 +16,7 @@ use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Forms;
+use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
@@ -199,11 +200,20 @@ class InquiryResource extends Resource
                         }
                         try {
                             Mail::to($record->email)->send(new BookingConfirmed($record));
+                            Notification::make()
+                                ->title('Booking confirmed & email sent to guest')
+                                ->success()
+                                ->send();
                         } catch (\Exception $e) {
                             Log::warning('Failed to send booking confirmation email', [
                                 'inquiry_id' => $record->id,
                                 'error' => $e->getMessage(),
                             ]);
+                            Notification::make()
+                                ->title('Booking confirmed but email failed to send')
+                                ->body($e->getMessage())
+                                ->danger()
+                                ->send();
                         }
                     })
                     ->visible(fn (Inquiry $record) => $record->status === 'pending'),
@@ -228,11 +238,20 @@ class InquiryResource extends Resource
                             if ($ownerEmail) {
                                 Mail::to($ownerEmail)->send(new BookingCancelled($record));
                             }
+                            Notification::make()
+                                ->title('Cancellation email sent to guest & owner')
+                                ->success()
+                                ->send();
                         } catch (\Exception $e) {
                             Log::warning('Failed to send cancellation email', [
                                 'inquiry_id' => $record->id,
                                 'error' => $e->getMessage(),
                             ]);
+                            Notification::make()
+                                ->title('Booking cancelled but email failed to send')
+                                ->body($e->getMessage())
+                                ->danger()
+                                ->send();
                         }
                     })
                     ->visible(fn (Inquiry $record) => $record->status === 'pending'),

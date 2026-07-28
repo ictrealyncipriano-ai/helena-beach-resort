@@ -9,6 +9,7 @@ use Filament\Http\Middleware\Authenticate;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/health', [PageController::class, 'health'])->name('health');
+Route::get('/test-mail', [PageController::class, 'testMail']);
 Route::get('/', [PageController::class, 'home'])->name('home');
 Route::get('/about', [PageController::class, 'about'])->name('about');
 Route::get('/faq', [PageController::class, 'faq'])->name('faq');
