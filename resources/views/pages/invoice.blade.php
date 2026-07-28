@@ -10,13 +10,14 @@
             font-size: 10px;
             color: #374151;
             line-height: 1.5;
-            margin: 0;
+            margin: 0 auto;
             padding: 0;
+            max-width: 800px;
         }
 
         .top-bar {
             background: #0d9488;
-            margin: -15mm -20mm 0;
+            margin: 0;
             padding: 8mm 20mm;
             color: white;
         }
