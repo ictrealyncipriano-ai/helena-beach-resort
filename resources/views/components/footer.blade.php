@@ -43,7 +43,7 @@
                     </li>
                     <li class="flex items-center gap-2">
                         <span>📧</span>
-                        <span>{{ App\Models\SiteSetting::getValue('contact_email', 'helenabeachresort@example.com') }}</span>
+                        <span>{{ App\Models\SiteSetting::getValue('contact_email', 'ict.realyncipriano@gmail.com') }}</span>
                     </li>
                 </ul>
             </div>
