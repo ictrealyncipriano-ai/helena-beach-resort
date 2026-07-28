@@ -97,7 +97,7 @@ class PageController extends Controller
     {
         $ownerEmail = SiteSetting::getValue('contact_email', 'ict.realyncipriano@gmail.com');
         try {
-            Mail::mailer('smtp')->raw('Test email from Helena Beach Resort at ' . now(), function ($msg) use ($ownerEmail) {
+            Mail::raw('Test email from Helena Beach Resort at ' . now(), function ($msg) use ($ownerEmail) {
                 $msg->to($ownerEmail)->subject('SMTP Test – ' . now()->format('Y-m-d H:i:s'));
             });
             return response('Mail sent successfully to ' . $ownerEmail, 200);
