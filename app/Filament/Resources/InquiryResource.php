@@ -3,8 +3,11 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\InquiryResource\Pages;
+use App\Mail\BookingConfirmed;
+use App\Mail\BookingCancelled;
 use App\Models\Inquiry;
 use App\Models\CottageDateBlock;
+use App\Models\SiteSetting;
 use App\Models\User;
 use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
@@ -18,6 +21,8 @@ use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 
 class InquiryResource extends Resource
 {
@@ -192,6 +197,14 @@ class InquiryResource extends Resource
                             $guest->increment('total_stays');
                             $guest->update(['last_stay_at' => $record->check_out ?? now()]);
                         }
+                        try {
+                            Mail::to($record->email)->send(new BookingConfirmed($record));
+                        } catch (\Exception $e) {
+                            Log::warning('Failed to send booking confirmation email', [
+                                'inquiry_id' => $record->id,
+                                'error' => $e->getMessage(),
+                            ]);
+                        }
                     })
                     ->visible(fn (Inquiry $record) => $record->status === 'pending'),
                 Action::make('markCancelled')
@@ -205,6 +218,21 @@ class InquiryResource extends Resource
                                 ->whereBetween('date', [$record->check_in, $record->check_out])
                                 ->where('reason', "Booked: {$record->reference_code}")
                                 ->delete();
+                        }
+                        if ($record->guest) {
+                            $record->guest->decrement('total_stays');
+                        }
+                        try {
+                            Mail::to($record->email)->send(new BookingCancelled($record));
+                            $ownerEmail = SiteSetting::getValue('contact_email');
+                            if ($ownerEmail) {
+                                Mail::to($ownerEmail)->send(new BookingCancelled($record));
+                            }
+                        } catch (\Exception $e) {
+                            Log::warning('Failed to send cancellation email', [
+                                'inquiry_id' => $record->id,
+                                'error' => $e->getMessage(),
+                            ]);
                         }
                     })
                     ->visible(fn (Inquiry $record) => $record->status === 'pending'),

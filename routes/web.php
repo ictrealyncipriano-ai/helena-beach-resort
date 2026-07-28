@@ -29,6 +29,16 @@ Route::post('/contact', [InquiryController::class, 'store'])
     ->name('contact.store');
 Route::get('/booking/confirmation/{inquiry}', [InquiryController::class, 'show'])->name('booking.confirmation');
 
+Route::get('/booking/lookup', [App\Http\Controllers\BookingPortalController::class, 'lookupForm'])->name('booking.portal.lookup');
+Route::post('/booking/lookup', [App\Http\Controllers\BookingPortalController::class, 'lookup'])->name('booking.portal.lookup.post');
+Route::get('/booking/{inquiry}', [App\Http\Controllers\BookingPortalController::class, 'show'])->name('booking.portal.show');
+Route::post('/booking/{inquiry}/cancel', [App\Http\Controllers\BookingPortalController::class, 'cancel'])
+    ->middleware('throttle:3,1')
+    ->name('booking.portal.cancel');
+
+Route::get('/booking/{inquiry}/invoice', [App\Http\Controllers\InvoiceController::class, 'show'])->name('invoice.show');
+Route::get('/booking/{inquiry}/invoice/pdf', [App\Http\Controllers\InvoiceController::class, 'download'])->name('invoice.download');
+
 Route::get('/admin/faqs/activate-all', [AdminController::class, 'activateAllFaqs'])
     ->middleware([Authenticate::class])
     ->name('admin.faqs.activate-all');

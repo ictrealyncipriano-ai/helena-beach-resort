@@ -96,7 +96,12 @@
             </div>
         </div>
 
-        <div class="text-center mt-8">
+        <div class="mt-6 p-4 bg-teal-50 border border-teal-200 rounded-xl text-sm text-teal-700">
+            <strong>💡 Save your reference code!</strong> You can use it later to
+            <a href="{{ route('booking.portal.lookup') }}" class="underline font-medium">view or cancel your booking</a>.
+        </div>
+
+        <div class="text-center mt-6">
             <a href="{{ route('home') }}" class="text-sm text-teal-600 hover:text-teal-700">← Back to Home</a>
         </div>
     </div>
