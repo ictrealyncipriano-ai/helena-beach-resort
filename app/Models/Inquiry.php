@@ -22,6 +22,15 @@ class Inquiry extends Model
         });
     }
 
+    protected function casts(): array
+    {
+        return [
+            'check_in' => 'date',
+            'check_out' => 'date',
+            'total_amount' => 'decimal:2',
+        ];
+    }
+
     public function cottage(): BelongsTo
     {
         return $this->belongsTo(Cottage::class);
