@@ -79,7 +79,8 @@ class UserResource extends Resource
             ->columns([
                 Tables\Columns\TextColumn::make('name')
                     ->searchable()
-                    ->sortable(),
+                    ->sortable()
+                    ->weight('medium'),
                 Tables\Columns\TextColumn::make('email')
                     ->searchable()
                     ->sortable(),
@@ -91,14 +92,16 @@ class UserResource extends Resource
                         User::ROLE_STAFF => 'gray',
                     }),
                 Tables\Columns\TextColumn::make('created_at')
-                    ->dateTime()
+                    ->label('Joined')
+                    ->date('M d, Y')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([])
             ->actions([
-                EditAction::make(),
+                EditAction::make()->icon('heroicon-o-pencil'),
                 DeleteAction::make()
+                    ->icon('heroicon-o-trash')
                     ->hidden(fn (User $record): bool => $record->id === auth()->id()),
             ])
             ->bulkActions([

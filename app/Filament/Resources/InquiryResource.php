@@ -116,24 +116,36 @@ class InquiryResource extends Resource
     {
         return $table
             ->columns([
+                Tables\Columns\TextColumn::make('reference_code')
+                    ->label('Ref #')
+                    ->searchable()
+                    ->sortable()
+                    ->color('gray')
+                    ->weight('medium'),
                 Tables\Columns\TextColumn::make('name')
                     ->searchable()
-                    ->sortable(),
+                    ->sortable()
+                    ->weight('medium'),
                 Tables\Columns\TextColumn::make('email')
-                    ->searchable(),
-                Tables\Columns\TextColumn::make('phone'),
-                Tables\Columns\TextColumn::make('cottage.name'),
+                    ->searchable()
+                    ->toggleable(),
+                Tables\Columns\TextColumn::make('phone')
+                    ->toggleable(),
+                Tables\Columns\TextColumn::make('cottage.name')
+                    ->badge()
+                    ->color('primary'),
                 Tables\Columns\TextColumn::make('guest.name')
                     ->searchable()
                     ->label('Guest')
                     ->toggleable(),
                 Tables\Columns\TextColumn::make('check_in')
-                    ->date()
+                    ->date('M d, Y')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('check_out')
-                    ->date()
+                    ->date('M d, Y')
                     ->sortable(),
-                Tables\Columns\TextColumn::make('pax'),
+                Tables\Columns\TextColumn::make('pax')
+                    ->alignment('center'),
                 Tables\Columns\TextColumn::make('booking_type')
                     ->badge()
                     ->formatStateUsing(fn (?string $state) => match ($state) {
@@ -144,18 +156,20 @@ class InquiryResource extends Resource
                     ->colors([
                         'info' => 'day_tour',
                         'success' => 'overnight',
-                        'gray' => null,
+                        'gray' => '',
                     ])
                     ->toggleable(),
                 Tables\Columns\TextColumn::make('total_amount')
                     ->money('PHP')
+                    ->alignment('right')
                     ->toggleable(),
-                Tables\Columns\BadgeColumn::make('status')
-                    ->colors([
-                        'warning' => 'pending',
-                        'success' => 'confirmed',
-                        'danger' => 'cancelled',
-                    ]),
+                Tables\Columns\TextColumn::make('status')
+                    ->badge()
+                    ->color(fn (string $state): string => match ($state) {
+                        'confirmed' => 'success',
+                        'cancelled' => 'danger',
+                        default => 'warning',
+                    }),
                 Tables\Columns\TextColumn::make('source')
                     ->badge()
                     ->colors([
@@ -191,8 +205,8 @@ class InquiryResource extends Resource
                     ->relationship('cottage', 'name'),
             ])
             ->actions([
-                ViewAction::make(),
-                EditAction::make(),
+                ViewAction::make()->icon('heroicon-o-eye'),
+                EditAction::make()->icon('heroicon-o-pencil'),
                 // Quick-action button to confirm a pending inquiry
                 Action::make('markConfirmed')
                     ->label('Confirm')

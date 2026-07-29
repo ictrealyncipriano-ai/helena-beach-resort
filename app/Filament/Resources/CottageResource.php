@@ -145,29 +145,48 @@ class CottageResource extends Resource
             ->columns([
                 Tables\Columns\TextColumn::make('name')
                     ->searchable()
-                    ->sortable(),
+                    ->sortable()
+                    ->weight('medium'),
                 Tables\Columns\TextColumn::make('capacity')
-                    ->sortable(),
+                    ->label('Max Pax')
+                    ->sortable()
+                    ->alignment('center'),
                 Tables\Columns\TextColumn::make('rate_daytour')
+                    ->label('Day Tour')
                     ->money('PHP')
-                    ->sortable(),
+                    ->sortable()
+                    ->alignment('right'),
                 Tables\Columns\TextColumn::make('rate_overnight')
+                    ->label('Overnight')
                     ->money('PHP')
-                    ->sortable(),
+                    ->sortable()
+                    ->alignment('right'),
                 Tables\Columns\IconColumn::make('is_available')
+                    ->label('Avail')
                     ->boolean()
-                    ->sortable(),
+                    ->sortable()
+                    ->alignment('center'),
+                Tables\Columns\TextColumn::make('inquiries_count')
+                    ->label('Bookings')
+                    ->counts('inquiries')
+                    ->badge()
+                    ->color('primary')
+                    ->alignment('center')
+                    ->toggleable(),
                 Tables\Columns\TextColumn::make('sort_order')
-                    ->sortable(),
+                    ->label('Sort')
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->defaultSort('sort_order')
             ->reorderable('sort_order')
             ->filters([
-                Tables\Filters\TernaryFilter::make('is_available'),
+                Tables\Filters\TernaryFilter::make('is_available')
+                    ->label('Availability'),
             ])
             ->actions([
-                EditAction::make(),
-                DeleteAction::make(),
+                EditAction::make()->icon('heroicon-o-pencil'),
+                DeleteAction::make()->icon('heroicon-o-trash'),
             ])
             ->bulkActions([
                 BulkActionGroup::make([

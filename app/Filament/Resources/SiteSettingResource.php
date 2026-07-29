@@ -72,16 +72,24 @@ class SiteSettingResource extends Resource
             ->columns([
                 Tables\Columns\TextColumn::make('key')
                     ->searchable()
-                    ->sortable(),
+                    ->sortable()
+                    ->weight('medium')
+                    ->color('gray'),
                 Tables\Columns\TextColumn::make('value')
-                    ->limit(50),
+                    ->limit(60)
+                    ->wrap(),
                 Tables\Columns\TextColumn::make('type')
-                    ->badge(),
+                    ->badge()
+                    ->color(fn (string $state): string => match ($state) {
+                        'image' => 'info',
+                        'textarea' => 'warning',
+                        default => 'gray',
+                    }),
             ])
             ->filters([])
             ->actions([
-                EditAction::make(),
-                DeleteAction::make(),
+                EditAction::make()->icon('heroicon-o-pencil'),
+                DeleteAction::make()->icon('heroicon-o-trash'),
             ])
             ->bulkActions([
                 BulkActionGroup::make([

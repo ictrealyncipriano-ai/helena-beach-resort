@@ -77,16 +77,27 @@ class GalleryResource extends Resource
             ->columns([
                 Tables\Columns\ImageColumn::make('photo_path')
                     ->square()
-                    ->size(80),
+                    ->size(60),
                 Tables\Columns\TextColumn::make('title')
-                    ->searchable(),
+                    ->searchable()
+                    ->weight('medium'),
                 Tables\Columns\TextColumn::make('category')
-                    ->badge(),
+                    ->badge()
+                    ->color(fn (string $state): string => match ($state) {
+                        'beach' => 'info',
+                        'food' => 'warning',
+                        'events' => 'success',
+                        default => 'gray',
+                    }),
                 Tables\Columns\IconColumn::make('is_active')
+                    ->label('Active')
                     ->boolean()
-                    ->sortable(),
+                    ->sortable()
+                    ->alignment('center'),
                 Tables\Columns\TextColumn::make('sort_order')
-                    ->sortable(),
+                    ->label('Sort')
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->defaultSort('sort_order')
             ->reorderable('sort_order')
@@ -98,11 +109,12 @@ class GalleryResource extends Resource
                         'food' => 'Food',
                         'events' => 'Events',
                     ]),
-                Tables\Filters\TernaryFilter::make('is_active'),
+                Tables\Filters\TernaryFilter::make('is_active')
+                    ->label('Active'),
             ])
             ->actions([
-                EditAction::make(),
-                DeleteAction::make(),
+                EditAction::make()->icon('heroicon-o-pencil'),
+                DeleteAction::make()->icon('heroicon-o-trash'),
             ])
             ->bulkActions([
                 BulkActionGroup::make([

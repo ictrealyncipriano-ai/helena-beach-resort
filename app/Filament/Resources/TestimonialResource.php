@@ -83,29 +83,39 @@ class TestimonialResource extends Resource
             ->columns([
                 Tables\Columns\TextColumn::make('guest_name')
                     ->searchable()
-                    ->sortable(),
+                    ->sortable()
+                    ->weight('medium'),
                 Tables\Columns\TextColumn::make('rating')
                     ->formatStateUsing(fn (int $state): string => str_repeat('★', $state) . str_repeat('☆', 5 - $state))
                     ->color('warning'),
                 Tables\Columns\TextColumn::make('content')
                     ->limit(80)
                     ->searchable(),
+                Tables\Columns\TextColumn::make('cottage.name')
+                    ->badge()
+                    ->color('primary')
+                    ->toggleable(),
                 Tables\Columns\IconColumn::make('is_active')
+                    ->label('Active')
                     ->boolean()
-                    ->sortable(),
+                    ->sortable()
+                    ->alignment('center'),
                 Tables\Columns\TextColumn::make('sort_order')
-                    ->sortable(),
+                    ->label('Sort')
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->defaultSort('sort_order')
             ->reorderable('sort_order')
             ->filters([
-                Tables\Filters\TernaryFilter::make('is_active'),
+                Tables\Filters\TernaryFilter::make('is_active')
+                    ->label('Active'),
                 Tables\Filters\SelectFilter::make('rating')
                     ->options([1 => '1', 2 => '2', 3 => '3', 4 => '4', 5 => '5']),
             ])
             ->actions([
-                EditAction::make(),
-                DeleteAction::make(),
+                EditAction::make()->icon('heroicon-o-pencil'),
+                DeleteAction::make()->icon('heroicon-o-trash'),
             ])
             ->bulkActions([
                 BulkActionGroup::make([

@@ -54,7 +54,7 @@ class ServiceResource extends Resource
                     ->required()
                     ->maxLength(255),
                 Forms\Components\TextInput::make('icon')
-                    ->helperText('Enter an emoji (e.g. 🏊, 🍽️, 🅿️)')
+                    ->helperText('SVG icon name (e.g. wifi, pool, parking)')
                     ->maxLength(50),
                 Forms\Components\Textarea::make('description')
                     ->columnSpanFull(),
@@ -82,18 +82,31 @@ class ServiceResource extends Resource
                     ->label(''),
                 Tables\Columns\TextColumn::make('name')
                     ->searchable()
-                    ->sortable(),
+                    ->sortable()
+                    ->weight('medium'),
                 Tables\Columns\TextColumn::make('category')
                     ->badge()
+                    ->color(fn (string $state): string => match ($state) {
+                        'Amenities' => 'info',
+                        'Dining' => 'warning',
+                        'Activities' => 'success',
+                        'Events' => 'danger',
+                        default => 'gray',
+                    })
                     ->sortable(),
                 Tables\Columns\TextColumn::make('description')
                     ->limit(60)
-                    ->searchable(),
+                    ->searchable()
+                    ->toggleable(),
                 Tables\Columns\IconColumn::make('is_active')
+                    ->label('Active')
                     ->boolean()
-                    ->sortable(),
+                    ->sortable()
+                    ->alignment('center'),
                 Tables\Columns\TextColumn::make('sort_order')
-                    ->sortable(),
+                    ->label('Sort')
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->defaultSort('sort_order')
             ->reorderable('sort_order')
@@ -105,11 +118,12 @@ class ServiceResource extends Resource
                         'Activities' => 'Activities',
                         'Events' => 'Events',
                     ]),
-                Tables\Filters\TernaryFilter::make('is_active'),
+                Tables\Filters\TernaryFilter::make('is_active')
+                    ->label('Active'),
             ])
             ->actions([
-                EditAction::make(),
-                DeleteAction::make(),
+                EditAction::make()->icon('heroicon-o-pencil'),
+                DeleteAction::make()->icon('heroicon-o-trash'),
             ])
             ->bulkActions([
                 BulkActionGroup::make([
