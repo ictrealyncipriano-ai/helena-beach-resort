@@ -23,7 +23,7 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @stack('styles')
 </head>
-<body class="font-sans antialiased text-gray-800 bg-white">
+<body class="font-sans antialiased text-gray-800 bg-white" x-data="{ mobileMenu: false }" x-on:keydown.escape="mobileMenu = false">
     <x-navbar />
 
     <main>
@@ -31,6 +31,22 @@
     </main>
 
     <x-footer />
+
+    {{-- Scroll reveal observer --}}
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('revealed');
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, { rootMargin: '0px 0px -60px 0px', threshold: 0.1 });
+
+        document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+    });
+    </script>
 
     @stack('scripts')
 </body>

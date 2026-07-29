@@ -4,52 +4,89 @@
 
 @section('content')
 {{-- Hero --}}
-<section class="relative min-h-[80vh] flex items-center justify-center bg-gradient-to-br from-teal-600 via-teal-700 to-cyan-800 overflow-hidden">
-    <div class="absolute inset-0 opacity-10" style="background-image: url('data:image/svg+xml,%3Csvg width=\'60\' height=\'60\' viewBox=\'0 0 60 60\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'none\' fill-rule=\'evenodd\'%3E%3Cg fill=\'%23ffffff\' fill-opacity=\'0.15\'%3E%3Cpath d=\'M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E');"></div>
-    <div class="relative z-10 text-center px-4 max-w-4xl mx-auto">
-        <h1 class="text-4xl sm:text-5xl md:text-7xl font-bold text-white mb-6 leading-tight">
-            {{ App\Models\SiteSetting::getValue('hero_tagline', 'Welcome to') }}<br>
+<section class="relative min-h-[90vh] flex items-center justify-center overflow-hidden">
+    {{-- Background --}}
+    @php $heroBg = App\Models\SiteSetting::getValue('hero_background'); @endphp
+    <div class="absolute inset-0 bg-gradient-to-br from-teal-600 via-teal-700 to-cyan-800">
+        @if($heroBg)
+        <img src="{{ Storage::url($heroBg) }}" alt="" class="absolute inset-0 w-full h-full object-cover opacity-25">
+        <div class="absolute inset-0 bg-gradient-to-br from-teal-600/80 via-teal-700/70 to-cyan-800/80"></div>
+        @endif
+    </div>
+    {{-- Decorative elements --}}
+    <div class="absolute inset-0 pointer-events-none" aria-hidden="true">
+        <div class="absolute -top-24 -right-24 w-96 h-96 bg-teal-400/10 rounded-full blur-3xl"></div>
+        <div class="absolute -bottom-32 -left-32 w-[30rem] h-[30rem] bg-cyan-400/10 rounded-full blur-3xl"></div>
+        <div class="absolute top-1/4 left-1/4 w-64 h-64 bg-amber-400/5 rounded-full blur-3xl"></div>
+    </div>
+    <div class="relative z-10 text-center px-4 max-w-5xl mx-auto">
+        <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 text-teal-100 text-sm font-medium mb-8 backdrop-blur-sm reveal">
+            <x-icons name="sparkles" class="w-4 h-4" />
+            {{ App\Models\SiteSetting::getValue('hero_tagline', 'Welcome to Paradise') }}
+        </div>
+        <h1 class="text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-bold text-white mb-6 leading-[1.1] font-heading reveal">
             <span class="text-amber-300">{{ App\Models\SiteSetting::getValue('hero_heading', 'Helena Beach Resort') }}</span>
         </h1>
-        <p class="text-lg sm:text-xl text-teal-100 mb-10 max-w-2xl mx-auto leading-relaxed">
+        <p class="text-lg sm:text-xl md:text-2xl text-teal-100/90 mb-10 max-w-3xl mx-auto leading-relaxed reveal reveal-delay-1">
             {{ App\Models\SiteSetting::getValue('hero_subtitle', 'Escape to paradise — unwind on pristine shores, enjoy beachfront cottages, and create unforgettable memories with family and friends in Infanta, Quezon.') }}
         </p>
-        <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <a href="{{ route('cottages.index') }}" class="inline-flex items-center px-8 py-3.5 bg-amber-400 text-amber-900 text-base font-semibold rounded-full hover:bg-amber-300 transition-all shadow-lg shadow-amber-400/30">
-                {{ App\Models\SiteSetting::getValue('hero_primary_btn_text', 'Explore Cottages') }}
-                <svg class="ml-2 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+        <div class="flex flex-col sm:flex-row items-center justify-center gap-4 reveal reveal-delay-2">
+            <a href="{{ route('cottages.index') }}" class="inline-flex items-center px-8 py-4 bg-amber-400 text-amber-900 text-base font-semibold rounded-full hover:bg-amber-300 transition-all shadow-lg shadow-amber-400/30 hover:shadow-xl hover:shadow-amber-400/40 active:scale-95 group">
+                <span>{{ App\Models\SiteSetting::getValue('hero_primary_btn_text', 'Explore Cottages') }}</span>
+                <x-icons name="arrow-right" class="ml-2 w-5 h-5 group-hover:translate-x-0.5 transition-transform" />
             </a>
-            <a href="{{ route('contact') }}" class="inline-flex items-center px-8 py-3.5 border-2 border-white/30 text-white text-base font-semibold rounded-full hover:bg-white/10 transition-all">
+            <a href="{{ route('contact') }}" class="inline-flex items-center px-8 py-4 border-2 border-white/30 text-white text-base font-semibold rounded-full hover:bg-white/10 transition-all backdrop-blur-sm active:scale-95">
                 {{ App\Models\SiteSetting::getValue('hero_secondary_btn_text', 'Book Now') }}
             </a>
         </div>
+    </div>
+    {{-- Wave Divider --}}
+    <div class="absolute bottom-0 left-0 right-0 leading-none">
+        <svg viewBox="0 0 1440 120" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-full h-auto" preserveAspectRatio="none">
+            <path d="M0 40C240 80 480 100 720 80C960 60 1200 60 1440 80V120H0V40Z" fill="white" fill-opacity="0.1"/>
+            <path d="M0 60C240 90 480 110 720 90C960 70 1200 70 1440 85V120H0V60Z" fill="white" fill-opacity="0.2"/>
+            <path d="M0 80C240 100 480 120 720 100C960 80 1200 80 1440 95V120H0V80Z" fill="white"/>
+        </svg>
     </div>
 </section>
 
 {{-- Featured Cottages --}}
 @if($cottages->isNotEmpty())
-<section class="py-16 sm:py-24 bg-white">
+<section class="py-20 sm:py-28 bg-white relative">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="text-center mb-12">
-            <h2 class="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">{{ App\Models\SiteSetting::getValue('section_cottages_heading', 'Our Cottages') }}</h2>
-            <p class="text-gray-600 max-w-2xl mx-auto">{{ App\Models\SiteSetting::getValue('section_cottages_subtitle', 'Comfortable beachfront cottages perfect for your stay.') }}</p>
+        <div class="text-center mb-14 reveal">
+            <span class="inline-block text-xs font-semibold tracking-widest uppercase text-teal-600 mb-3">Accommodations</span>
+            <h2 class="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 mb-4 font-heading">{{ App\Models\SiteSetting::getValue('section_cottages_heading', 'Our Cottages') }}</h2>
+            <div class="w-16 h-1 bg-teal-500 rounded-full mx-auto mb-4"></div>
+            <p class="text-gray-600 max-w-2xl mx-auto text-lg">{{ App\Models\SiteSetting::getValue('section_cottages_subtitle', 'Comfortable beachfront cottages perfect for your stay.') }}</p>
         </div>
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-            @foreach($cottages as $cottage)
-            <a href="{{ route('cottages.show', $cottage) }}" class="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl border border-gray-100 transition-all duration-300">
-                <div class="aspect-[4/3] bg-teal-50 overflow-hidden">
+            @foreach($cottages as $i => $cottage)
+            <a href="{{ route('cottages.show', $cottage) }}" class="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl border border-gray-100 transition-all duration-300 reveal {{ $i > 0 ? 'reveal-delay-' . min($i, 4) : '' }}">
+                <div class="aspect-[4/3] bg-teal-50 overflow-hidden relative">
                     @if($cottage->primaryPhoto)
-                    <img src="{{ Storage::url($cottage->primaryPhoto->photo_path) }}" alt="{{ $cottage->name }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+                    <img src="{{ Storage::url($cottage->primaryPhoto->photo_path) }}" alt="{{ $cottage->name }}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700">
                     @else
-                    <div class="w-full h-full flex items-center justify-center text-teal-300 text-6xl">🏠</div>
+                    <div class="w-full h-full flex items-center justify-center text-teal-300">
+                        <x-icons name="building" class="w-16 h-16" />
+                    </div>
                     @endif
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-5">
+                        <span class="text-white text-sm font-medium flex items-center gap-1">
+                            <x-icons name="arrow-right" class="w-4 h-4" />
+                            View Details
+                        </span>
+                    </div>
                 </div>
                 <div class="p-5">
-                    <h3 class="text-lg font-semibold text-gray-900 group-hover:text-teal-600 transition-colors">{{ $cottage->name }}</h3>
-                    <p class="text-sm text-gray-500 mt-1 line-clamp-2">{{ Str::limit(strip_tags($cottage->description), 100) }}</p>
+                    <div class="flex items-center justify-between mb-2">
+                        <h3 class="text-lg font-semibold text-gray-900 group-hover:text-teal-600 transition-colors">{{ $cottage->name }}</h3>
+                    </div>
+                    <p class="text-sm text-gray-500 line-clamp-2">{{ Str::limit(strip_tags($cottage->description), 100) }}</p>
                     <div class="flex items-center justify-between mt-4 pt-4 border-t border-gray-100">
-                        <div class="flex items-center gap-4 text-sm text-gray-500">
-                            <span>👥 {{ $cottage->capacity }}</span>
+                        <div class="flex items-center gap-2 text-sm text-gray-500">
+                            <x-icons name="users" class="w-4 h-4 text-gray-400" />
+                            <span>{{ $cottage->capacity }}</span>
                         </div>
                         <div class="text-right">
                             @if($cottage->rate_daytour)
@@ -62,10 +99,10 @@
             </a>
             @endforeach
         </div>
-        <div class="text-center mt-10">
-            <a href="{{ route('cottages.index') }}" class="inline-flex items-center px-6 py-3 border-2 border-teal-600 text-teal-600 font-medium rounded-full hover:bg-teal-50 transition-colors">
-                {{ App\Models\SiteSetting::getValue('section_cottages_btn_text', 'View All Cottages') }}
-                <svg class="ml-2 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+        <div class="text-center mt-12 reveal">
+            <a href="{{ route('cottages.index') }}" class="inline-flex items-center px-6 py-3 border-2 border-teal-600 text-teal-600 font-medium rounded-full hover:bg-teal-50 transition-colors group">
+                <span>{{ App\Models\SiteSetting::getValue('section_cottages_btn_text', 'View All Cottages') }}</span>
+                <x-icons name="arrow-right" class="ml-2 w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
             </a>
         </div>
     </div>
@@ -74,23 +111,33 @@
 
 {{-- Gallery Preview --}}
 @if($gallery->isNotEmpty())
-<section class="py-16 sm:py-24 bg-gray-50">
+<section class="py-20 sm:py-28 bg-gray-50 relative">
+    <div class="absolute inset-0 pointer-events-none overflow-hidden" aria-hidden="true">
+        <div class="absolute top-0 right-0 w-96 h-96 bg-teal-400/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
+    </div>
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="text-center mb-12">
-            <h2 class="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">{{ App\Models\SiteSetting::getValue('section_gallery_heading', 'Gallery') }}</h2>
-            <p class="text-gray-600 max-w-2xl mx-auto">{{ App\Models\SiteSetting::getValue('section_gallery_subtitle', 'A glimpse of the beauty that awaits you.') }}</p>
+        <div class="text-center mb-14 reveal">
+            <span class="inline-block text-xs font-semibold tracking-widest uppercase text-teal-600 mb-3">Moments</span>
+            <h2 class="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 mb-4 font-heading">{{ App\Models\SiteSetting::getValue('section_gallery_heading', 'Gallery') }}</h2>
+            <div class="w-16 h-1 bg-teal-500 rounded-full mx-auto mb-4"></div>
+            <p class="text-gray-600 max-w-2xl mx-auto text-lg">{{ App\Models\SiteSetting::getValue('section_gallery_subtitle', 'A glimpse of the beauty that awaits you.') }}</p>
         </div>
         <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-            @foreach($gallery as $item)
-            <div class="aspect-square rounded-xl overflow-hidden bg-gray-100">
-                <img src="{{ Storage::url($item->photo_path) }}" alt="{{ $item->title }}" class="w-full h-full object-cover hover:scale-110 transition-transform duration-500" loading="lazy">
+            @foreach($gallery->take(8) as $i => $item)
+            <div class="aspect-square rounded-xl overflow-hidden bg-gray-100 reveal {{ $i > 0 ? 'reveal-delay-' . min($i % 4 + 1, 4) : '' }}">
+                <img src="{{ Storage::url($item->photo_path) }}" alt="{{ $item->title }}" class="w-full h-full object-cover hover:scale-110 transition-transform duration-700" loading="lazy">
+                @if($item->title)
+                <div class="absolute inset-0 bg-black/0 hover:bg-black/30 transition-colors flex items-end p-3 opacity-0 hover:opacity-100">
+                    <p class="text-white text-xs font-medium">{{ $item->title }}</p>
+                </div>
+                @endif
             </div>
             @endforeach
         </div>
-        <div class="text-center mt-10">
-            <a href="{{ route('gallery.index') }}" class="inline-flex items-center px-6 py-3 border-2 border-teal-600 text-teal-600 font-medium rounded-full hover:bg-teal-50 transition-colors">
-                {{ App\Models\SiteSetting::getValue('section_gallery_btn_text', 'View Full Gallery') }}
-                <svg class="ml-2 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+        <div class="text-center mt-12 reveal">
+            <a href="{{ route('gallery.index') }}" class="inline-flex items-center px-6 py-3 border-2 border-teal-600 text-teal-600 font-medium rounded-full hover:bg-teal-50 transition-colors group">
+                <span>{{ App\Models\SiteSetting::getValue('section_gallery_btn_text', 'View Full Gallery') }}</span>
+                <x-icons name="arrow-right" class="ml-2 w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
             </a>
         </div>
     </div>
@@ -99,67 +146,137 @@
 
 {{-- Testimonials --}}
 @if($testimonials->isNotEmpty())
-<section class="py-16 sm:py-24 bg-white">
+<section class="py-20 sm:py-28 bg-white relative">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="text-center mb-12">
-            <h2 class="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">{{ App\Models\SiteSetting::getValue('section_reviews_heading', 'What Our Guests Say') }}</h2>
-            <p class="text-gray-600 max-w-2xl mx-auto">{{ App\Models\SiteSetting::getValue('section_reviews_subtitle', 'Read what our visitors have to say about their stay at Helena Beach Resort.') }}</p>
+        <div class="text-center mb-14 reveal">
+            <span class="inline-block text-xs font-semibold tracking-widest uppercase text-teal-600 mb-3">Testimonials</span>
+            <h2 class="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 mb-4 font-heading">{{ App\Models\SiteSetting::getValue('section_reviews_heading', 'What Our Guests Say') }}</h2>
+            <div class="w-16 h-1 bg-teal-500 rounded-full mx-auto mb-4"></div>
+            <p class="text-gray-600 max-w-2xl mx-auto text-lg">{{ App\Models\SiteSetting::getValue('section_reviews_subtitle', 'Read what our visitors have to say about their stay at Helena Beach Resort.') }}</p>
         </div>
 
         @if($avgRating)
-        <div class="flex items-center justify-center gap-2 mb-10">
+        <div class="flex items-center justify-center gap-3 mb-12 reveal">
             <div class="flex items-center gap-1">
                 @for($i = 1; $i <= 5; $i++)
-                    <span class="text-2xl {{ $i <= round($avgRating) ? 'text-amber-400' : 'text-gray-200' }}">★</span>
+                    <x-icons name="star" class="w-6 h-6 {{ $i <= round($avgRating) ? 'text-amber-400' : 'text-gray-200' }}" />
                 @endfor
             </div>
-            <span class="text-lg font-semibold text-gray-700">{{ number_format($avgRating, 1) }}</span>
+            <span class="text-xl font-bold text-gray-800">{{ number_format($avgRating, 1) }}</span>
             <span class="text-sm text-gray-400">average rating</span>
         </div>
         @endif
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-            @foreach($testimonials as $testimonial)
-            <div class="bg-gray-50 rounded-2xl p-6 flex flex-col">
-                <div class="flex items-center gap-1 mb-3">
-                    @for($i = 1; $i <= 5; $i++)
-                        <span class="text-lg {{ $i <= $testimonial->rating ? 'text-amber-400' : 'text-gray-200' }}">★</span>
-                    @endfor
-                </div>
-                <p class="text-gray-600 text-sm leading-relaxed flex-1">"{{ $testimonial->content }}"</p>
-                <div class="flex items-center gap-3 mt-4 pt-4 border-t border-gray-200">
-                    @if($testimonial->guest_avatar)
-                    <img src="{{ Storage::url($testimonial->guest_avatar) }}" alt="{{ $testimonial->guest_name }}" class="w-10 h-10 rounded-full object-cover">
-                    @else
-                    <div class="w-10 h-10 rounded-full bg-teal-100 flex items-center justify-center text-teal-600 font-semibold text-sm">
-                        {{ substr($testimonial->guest_name, 0, 1) }}
+        {{-- Testimonial Carousel --}}
+        <div x-data="testimonialCarousel()" class="relative max-w-5xl mx-auto reveal">
+            <div class="overflow-hidden">
+                <div class="flex transition-transform duration-500 ease-out"
+                     :style="'transform: translateX(-' + (current * (100 / slidesPerView)) + '%)'">
+                    @foreach($testimonials as $testimonial)
+                    <div class="w-full md:w-1/2 lg:w-1/3 shrink-0 px-4">
+                        <div class="bg-gray-50 rounded-2xl p-6 sm:p-8 flex flex-col h-full">
+                            <div class="flex items-center gap-1 mb-4">
+                                @for($i = 1; $i <= 5; $i++)
+                                    <x-icons name="star" class="w-4 h-4 {{ $i <= $testimonial->rating ? 'text-amber-400' : 'text-gray-200' }}" />
+                                @endfor
+                            </div>
+                            <p class="text-gray-600 text-sm leading-relaxed flex-1 italic">"{{ $testimonial->content }}"</p>
+                            <div class="flex items-center gap-3 mt-5 pt-4 border-t border-gray-200">
+                                @if($testimonial->guest_avatar)
+                                <img src="{{ Storage::url($testimonial->guest_avatar) }}" alt="{{ $testimonial->guest_name }}" class="w-10 h-10 rounded-full object-cover ring-2 ring-white">
+                                @else
+                                <div class="w-10 h-10 rounded-full bg-teal-100 flex items-center justify-center text-teal-600 font-semibold text-sm ring-2 ring-white">
+                                    {{ substr($testimonial->guest_name, 0, 1) }}
+                                </div>
+                                @endif
+                                <div>
+                                    <p class="text-sm font-semibold text-gray-900">{{ $testimonial->guest_name }}</p>
+                                    @if($testimonial->cottage)
+                                    <p class="text-xs text-gray-400">Stayed at {{ $testimonial->cottage->name }}</p>
+                                    @endif
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    @endif
-                    <p class="text-sm font-medium text-gray-900">{{ $testimonial->guest_name }}</p>
+                    @endforeach
                 </div>
             </div>
-            @endforeach
+
+            {{-- Carousel Controls --}}
+            <div class="flex items-center justify-center gap-4 mt-8">
+                <button @click="prev" class="w-10 h-10 rounded-full border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-gray-100 hover:text-teal-600 transition-colors" :disabled="current === 0">
+                    <x-icons name="chevron-left" class="w-5 h-5" />
+                </button>
+                <div class="flex items-center gap-2">
+                    <template x-for="(_, i) in Array.from({length: totalPages})" :key="i">
+                        <button @click="goTo(i)" class="w-2 h-2 rounded-full transition-all duration-300"
+                                :class="i === current ? 'bg-teal-600 w-6' : 'bg-gray-300 hover:bg-gray-400'"></button>
+                    </template>
+                </div>
+                <button @click="next" class="w-10 h-10 rounded-full border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-gray-100 hover:text-teal-600 transition-colors" :disabled="current >= totalPages - 1">
+                    <x-icons name="chevron-right" class="w-5 h-5" />
+                </button>
+            </div>
         </div>
 
-        <div class="text-center mt-10">
-            <a href="{{ route('reviews') }}" class="inline-flex items-center px-6 py-3 border-2 border-teal-600 text-teal-600 font-medium rounded-full hover:bg-teal-50 transition-colors">
-                Read All Reviews
-                <svg class="ml-2 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+        <div class="text-center mt-12 reveal">
+            <a href="{{ route('reviews') }}" class="inline-flex items-center px-6 py-3 border-2 border-teal-600 text-teal-600 font-medium rounded-full hover:bg-teal-50 transition-colors group">
+                <span>Read All Reviews</span>
+                <x-icons name="arrow-right" class="ml-2 w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
             </a>
         </div>
     </div>
 </section>
+
+@push('scripts')
+<script>
+function testimonialCarousel() {
+    return {
+        current: 0,
+        slidesPerView: 1,
+        totalPages: {{ $testimonials->count() }},
+        init() {
+            this.updateSlidesPerView();
+            window.addEventListener('resize', () => this.updateSlidesPerView());
+        },
+        updateSlidesPerView() {
+            if (window.innerWidth >= 1024) this.slidesPerView = 3;
+            else if (window.innerWidth >= 768) this.slidesPerView = 2;
+            else this.slidesPerView = 1;
+            this.totalPages = Math.max(0, Math.ceil({{ $testimonials->count() }} / this.slidesPerView) - 1);
+            if (this.current > this.totalPages) this.current = this.totalPages;
+        },
+        next() { if (this.current < this.totalPages) this.current++; },
+        prev() { if (this.current > 0) this.current--; },
+        goTo(i) { this.current = i; },
+    };
+}
+</script>
+@endpush
 @endif
 
 {{-- CTA --}}
-<section class="py-20 bg-gradient-to-br from-teal-600 to-teal-800">
-    <div class="max-w-4xl mx-auto px-4 text-center">
-        <h2 class="text-3xl sm:text-4xl font-bold text-white mb-4">{{ App\Models\SiteSetting::getValue('section_cta_heading', 'Ready for a Getaway?') }}</h2>
-        <p class="text-teal-100 text-lg mb-8">{{ App\Models\SiteSetting::getValue('section_cta_subtitle', 'Contact us to book your stay or ask any questions.') }}</p>
-        <a href="{{ route('contact') }}" class="inline-flex items-center px-8 py-3.5 bg-amber-400 text-amber-900 text-base font-semibold rounded-full hover:bg-amber-300 transition-all shadow-lg">
-            {{ App\Models\SiteSetting::getValue('section_cta_btn_text', 'Contact Us') }}
-            <svg class="ml-2 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
-        </a>
+<section class="py-24 bg-gradient-to-br from-teal-600 via-teal-700 to-cyan-800 relative overflow-hidden">
+    <div class="absolute inset-0 pointer-events-none" aria-hidden="true">
+        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[40rem] h-[40rem] bg-amber-400/5 rounded-full blur-3xl"></div>
+    </div>
+    <div class="max-w-4xl mx-auto px-4 text-center relative z-10">
+        <div class="reveal">
+            <h2 class="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-4 font-heading">{{ App\Models\SiteSetting::getValue('section_cta_heading', 'Ready for a Getaway?') }}</h2>
+            <div class="w-16 h-1 bg-amber-400 rounded-full mx-auto mb-4"></div>
+            <p class="text-teal-100/90 text-lg sm:text-xl mb-10 max-w-2xl mx-auto">{{ App\Models\SiteSetting::getValue('section_cta_subtitle', 'Contact us to book your stay or ask any questions.') }}</p>
+            <a href="{{ route('contact') }}" class="inline-flex items-center px-8 py-4 bg-amber-400 text-amber-900 text-base font-semibold rounded-full hover:bg-amber-300 transition-all shadow-lg shadow-amber-400/30 hover:shadow-xl hover:shadow-amber-400/40 active:scale-95 group">
+                <span>{{ App\Models\SiteSetting::getValue('section_cta_btn_text', 'Contact Us') }}</span>
+                <x-icons name="arrow-right" class="ml-2 w-5 h-5 group-hover:translate-x-0.5 transition-transform" />
+            </a>
+        </div>
+    </div>
+    {{-- Wave Divider Top --}}
+    <div class="absolute top-0 left-0 right-0 leading-none rotate-180">
+        <svg viewBox="0 0 1440 60" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-full h-auto" preserveAspectRatio="none">
+            <path d="M0 20C240 60 480 60 720 40C960 20 1200 20 1440 40V60H0V20Z" fill="white" fill-opacity="0.05"/>
+            <path d="M0 40C240 55 480 55 720 45C960 35 1200 35 1440 45V60H0V40Z" fill="white" fill-opacity="0.08"/>
+        </svg>
     </div>
 </section>
 @endsection
