@@ -155,6 +155,33 @@
     @apply border-primary-500 ring-1 ring-primary-500;
 }
 
+.fi-input-wrp-content-ctn {
+    position: relative;
+}
+
+.fi-input-wrp-content-ctn::before {
+    position: absolute;
+    left: 0.875rem;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 1.25rem;
+    height: 1.25rem;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    opacity: 0.35;
+    z-index: 1;
+    pointer-events: none;
+}
+
+.fi-fo-text-input:has(input[type="email"]) .fi-input-wrp-content-ctn::before {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%236b7280'%3E%3Cpath d='M3 4a2 2 0 00-2 2v1.161l8.441 4.221a1.25 1.25 0 001.118 0L19 7.161V6a2 2 0 00-2-2H3z'/%3E%3Cpath d='M19 8.839l-7.77 3.885a2.75 2.75 0 01-2.46 0L1 8.839V14a2 2 0 002 2h14a2 2 0 002-2V8.839z'/%3E%3C/svg%3E");
+}
+
+.fi-fo-text-input:has(input[type="password"]) .fi-input-wrp-content-ctn::before {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%236b7280'%3E%3Cpath fill-rule='evenodd' d='M10 1a4.5 4.5 0 00-4.5 4.5V9H5a2 2 0 00-2 2v6a2 2 0 002 2h10a2 2 0 002-2v-6a2 2 0 00-2-2h-.5V5.5A4.5 4.5 0 0010 1zm3 8V5.5a3 3 0 10-6 0V9h6z' clip-rule='evenodd'/%3E%3C/svg%3E");
+}
+
 .fi-fo-rich-editor {
     @apply rounded-xl overflow-hidden border border-gray-200;
 }
