@@ -119,6 +119,14 @@
     @apply rounded-xl border border-gray-200 shadow-sm;
 }
 
+.fi-simple-main {
+    @apply w-full max-w-none p-0 bg-transparent shadow-none;
+}
+
+.fi-simple-main {
+    --tw-ring-color: transparent;
+}
+
 .fi-topbar {
     @apply bg-white border-b border-gray-200 shadow-sm;
 }

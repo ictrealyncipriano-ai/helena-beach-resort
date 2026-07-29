@@ -107,7 +107,7 @@ class AdminPanelProvider extends PanelProvider
                             to { opacity: 1; transform: translateY(0); }
                         }
 
-                        .fi-simple-main { width: 100% !important; max-width: none !important; padding: 0 !important; }
+                        .fi-simple-main { width: 100% !important; max-width: none !important; padding: 0 !important; background: transparent !important; box-shadow: none !important; --tw-ring-color: transparent !important; }
 
                         .fi-simple-header { text-align: center !important; padding-top: 0.5rem !important; }
                         .fi-simple-header-heading {
