@@ -9,8 +9,8 @@ use Flowframe\Trend\TrendValue;
 
 class BookingRevenueChart extends ChartWidget
 {
-    protected static ?string $heading = 'Revenue (Last 6 Months)';
-    protected static ?string $pollingInterval = null;
+    protected ?string $heading = 'Revenue (Last 6 Months)';
+    protected ?string $pollingInterval = null;
     protected int | string | array $columnSpan = 'full';
     protected ?string $maxHeight = '300px';
 

@@ -7,8 +7,8 @@ use Filament\Widgets\ChartWidget;
 
 class BookingTypePie extends ChartWidget
 {
-    protected static ?string $heading = 'Booking Type Distribution';
-    protected static ?string $pollingInterval = null;
+    protected ?string $heading = 'Booking Type Distribution';
+    protected ?string $pollingInterval = null;
     protected int | string | array $columnSpan = 'full';
     protected ?string $maxHeight = '280px';
 

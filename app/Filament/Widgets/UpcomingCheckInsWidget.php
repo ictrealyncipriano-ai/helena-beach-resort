@@ -9,7 +9,7 @@ use Filament\Widgets\TableWidget as BaseWidget;
 
 class UpcomingCheckInsWidget extends BaseWidget
 {
-    protected static ?string $heading = 'Upcoming Check-Ins';
+    protected ?string $heading = 'Upcoming Check-Ins';
     protected int | string | array $columnSpan = 'full';
 
     public function table(Table $table): Table
