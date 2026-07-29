@@ -27,6 +27,7 @@ class AdminPanelProvider extends PanelProvider
             ->default()
             ->id('admin')
             ->path('admin')
+            ->maxContentWidth('full')
             ->login()
             ->brandName('Helena Beach Resort')
             ->brandLogo(new HtmlString('
