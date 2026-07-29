@@ -84,7 +84,7 @@
 }
 
 .fi-input {
-    @apply rounded-xl border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 transition-all text-sm;
+    @apply transition-all text-sm;
 }
 
 .fi-fo-select {

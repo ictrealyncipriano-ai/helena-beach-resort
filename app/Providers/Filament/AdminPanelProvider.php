@@ -200,12 +200,6 @@ class AdminPanelProvider extends PanelProvider
                         }
                         .fi-simple-page .fi-ac-btn-action.fi-btn .fi-icon { display: none !important; }
 
-                        .fi-simple-layout .fi-simple-main-ctn:has(+ div[style*="text-align: center"]) {
-                            flex: 1;
-                            display: flex;
-                            align-items: center;
-                        }
-
                         @media (max-width: 640px) {
                             .fi-simple-layout { padding: 0.75rem !important; }
                             .fi-simple-page { margin: 0.5rem !important; padding: 1.5rem !important; }
@@ -234,11 +228,11 @@ class AdminPanelProvider extends PanelProvider
                 ')
             )
             ->renderHook(
-                'panels::footer',
+                'panels::simple-layout.end',
                 fn () => new HtmlString('
-                    <div style="text-align: center; padding: 1rem; font-size: 0.75rem; color: #9ca3af; border-top: 1px solid #f3f4f6; margin-top: 1rem;">
-                        <a href="'.route('home').'" style="color: #0d9488; text-decoration: none; font-weight: 500;">← Back to Website</a>
-                        &nbsp;&middot;&nbsp;
+                    <div style="text-align: center; padding: 1.5rem 1rem 2rem; font-size: 0.75rem; color: #9ca3af;">
+                        <a href="'.route('home').'" style="color: #0d9488; text-decoration: none; font-weight: 500; display: inline-block; margin-bottom: 0.5rem;">← Back to Website</a>
+                        <br>
                         &copy; '.date('Y').' Helena Beach Resort
                     </div>
                 ')
