@@ -168,6 +168,7 @@
 }
 
 .fi-input-wrp-content-ctn::before {
+    content: "";
     position: absolute;
     left: 0.875rem;
     top: 50%;

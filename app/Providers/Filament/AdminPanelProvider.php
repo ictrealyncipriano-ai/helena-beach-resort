@@ -51,8 +51,8 @@ class AdminPanelProvider extends PanelProvider
             ->renderHook(
                 'panels::auth.login.form.before',
                 fn () => new HtmlString('
-                    <p style="text-align: center; color: #6b7280; font-size: 0.875rem; line-height: 1.5; margin-bottom: 1.5rem;">
-                        Welcome back! Sign in to manage your resort.
+                    <p style="text-align: center; color: #6b7280; font-size: 0.875rem; line-height: 1.5; margin-bottom: 1.75rem;">
+                        Welcome back! Sign in to continue.
                     </p>
                 ')
             )
@@ -77,18 +77,19 @@ class AdminPanelProvider extends PanelProvider
 
                         .fi-simple-page {
                             background: rgba(255,255,255,0.97) !important;
-                            border-radius: 1.25rem !important;
+                            backdrop-filter: blur(4px) !important;
+                            border-radius: 1.5rem !important;
                             box-shadow:
-                                0 1px 3px rgba(0,0,0,0.04),
-                                0 8px 32px rgba(13,148,136,0.12),
-                                0 24px 60px rgba(13,148,136,0.08) !important;
+                                0 1px 2px rgba(0,0,0,0.04),
+                                0 8px 24px rgba(13,148,136,0.08),
+                                0 20px 48px rgba(13,148,136,0.06) !important;
                             padding: 2.5rem !important;
-                            max-width: 26rem !important;
+                            max-width: 28rem !important;
                             width: 100% !important;
                             margin: 0 auto !important;
                             border: 1px solid rgba(13,148,136,0.08) !important;
                             position: relative !important;
-                            animation: loginFadeIn 0.5s ease-out;
+                            animation: loginFadeIn 0.6s ease-out;
                         }
 
                         .fi-simple-page::before {
@@ -99,7 +100,7 @@ class AdminPanelProvider extends PanelProvider
                             right: 0;
                             height: 4px;
                             background: linear-gradient(90deg, #0d9488, #14b8a6, #5eead4);
-                            border-radius: 1.25rem 1.25rem 0 0;
+                            border-radius: 1.5rem 1.5rem 0 0;
                         }
 
                         @keyframes loginFadeIn {
@@ -111,15 +112,15 @@ class AdminPanelProvider extends PanelProvider
 
                         .fi-simple-header { text-align: center !important; padding-top: 0.5rem !important; }
                         .fi-simple-header-heading {
-                            font-size: 1.125rem !important;
-                            font-weight: 600 !important;
-                            color: #374151 !important;
+                            font-size: 1.25rem !important;
+                            font-weight: 700 !important;
+                            color: #111827 !important;
                             margin-top: 1rem !important;
                             margin-bottom: 0 !important;
                         }
 
                         .fi-fo-field { margin-bottom: 1.25rem !important; }
-                        .fi-fo-field-label { font-size: 0.813rem !important; font-weight: 500 !important; color: #374151 !important; margin-bottom: 0.375rem !important; display: block !important; }
+                        .fi-fo-field-label { font-size: 0.813rem !important; font-weight: 600 !important; color: #374151 !important; margin-bottom: 0.375rem !important; display: block !important; }
 
                         .fi-input-wrp {
                             border-radius: 0.75rem !important;
@@ -132,7 +133,7 @@ class AdminPanelProvider extends PanelProvider
                         .fi-input-wrp:focus-within {
                             border-color: #0d9488 !important;
                             background: white !important;
-                            box-shadow: 0 0 0 4px rgba(13,148,136,0.08) !important;
+                            box-shadow: 0 0 0 4px rgba(13,148,136,0.1) !important;
                         }
 
                         .fi-input-wrp-content-ctn { position: relative !important; }
@@ -150,6 +151,7 @@ class AdminPanelProvider extends PanelProvider
                         .fi-simple-page .fi-input:focus {
                             border: none !important;
                             box-shadow: none !important;
+                            outline: none !important;
                         }
                         .fi-simple-page .fi-input::placeholder { color: #9ca3af !important; }
 
@@ -176,7 +178,9 @@ class AdminPanelProvider extends PanelProvider
                             height: 1rem !important;
                             cursor: pointer !important;
                             accent-color: #0d9488 !important;
+                            transition: all 0.15s ease !important;
                         }
+                        .fi-checkbox-input:checked { border-color: #0d9488 !important; }
 
                         .fi-simple-page .fi-ac-btn-action.fi-btn {
                             width: 100% !important;
@@ -190,6 +194,7 @@ class AdminPanelProvider extends PanelProvider
                             transition: all 0.2s ease !important;
                             box-shadow: 0 4px 14px rgba(13,148,136,0.3) !important;
                             letter-spacing: 0.01em !important;
+                            cursor: pointer !important;
                         }
                         .fi-simple-page .fi-ac-btn-action.fi-btn:hover {
                             transform: translateY(-1px) !important;
@@ -197,13 +202,21 @@ class AdminPanelProvider extends PanelProvider
                         }
                         .fi-simple-page .fi-ac-btn-action.fi-btn:active {
                             transform: translateY(0) !important;
+                            box-shadow: 0 2px 8px rgba(13,148,136,0.25) !important;
                         }
                         .fi-simple-page .fi-ac-btn-action.fi-btn .fi-icon { display: none !important; }
 
                         @media (max-width: 640px) {
                             .fi-simple-layout { padding: 0.75rem !important; }
-                            .fi-simple-page { margin: 0.5rem !important; padding: 1.5rem !important; }
-                            .fi-simple-page .fi-input { padding: 0.625rem 0.875rem 0.625rem 2.5rem !important; font-size: 1rem !important; }
+                            .fi-simple-page { padding: 1.5rem !important; max-width: 100% !important; margin: 0 0.5rem !important; }
+                            .fi-simple-page .fi-input { padding: 0.75rem 0.875rem 0.75rem 2.5rem !important; font-size: 1rem !important; }
+                            .fi-fo-field { margin-bottom: 1rem !important; }
+                        }
+
+                        @media (max-width: 380px) {
+                            .fi-simple-layout { padding: 0.5rem !important; }
+                            .fi-simple-page { padding: 1.25rem !important; border-radius: 1.25rem !important; }
+                            .fi-simple-page .fi-input { padding-left: 2.25rem !important; }
                         }
                     </style>
                 ')
