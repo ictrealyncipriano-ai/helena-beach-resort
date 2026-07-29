@@ -10,6 +10,7 @@ use Filament\Pages\Dashboard;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
+use Filament\View\PanelsRenderHook;
 use Filament\Widgets\AccountWidget;
 use Illuminate\Support\HtmlString;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
@@ -31,12 +32,12 @@ class AdminPanelProvider extends PanelProvider
             ->login()
             ->brandName('Helena Beach Resort')
             ->brandLogo(new HtmlString('
-                <div style="display: flex; align-items: center; gap: 0.625rem; height: 2.25rem;">
-                    <img src="'.url('images/logo.jpg').'" alt="Helena Beach" style="height: 1.75rem; width: auto; border-radius: 0.375rem; flex-shrink: 0; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-                    <span style="font-family: Playfair Display, Georgia, serif; font-size: 1rem; font-weight: 700; white-space: nowrap; color: #fff;">Helena Beach</span>
+                <div style="display: flex; align-items: center; justify-content: center; gap: 0.75rem; height: auto;">
+                    <img src="'.url('images/logo.jpg').'" alt="Helena Beach" style="height: 2.5rem; width: auto; border-radius: 0.5rem; flex-shrink: 0; box-shadow: 0 2px 8px rgba(13,148,136,0.2);">
+                    <span style="font-family: Playfair Display, Georgia, serif; font-size: 1.25rem; font-weight: 700; white-space: nowrap; color: #0d9488;">Helena Beach</span>
                 </div>
             '))
-            ->brandLogoHeight('2.25rem')
+            ->brandLogoHeight('3rem')
             ->colors([
                 'primary' => '#0d9488',
             ])
@@ -48,6 +49,14 @@ class AdminPanelProvider extends PanelProvider
                     <link href="https://fonts.bunny.net/css?family=playfair-display:400,600,700&display=swap" rel="stylesheet" />'
             )
             ->renderHook(
+                'panels::auth.login.form.before',
+                fn () => new HtmlString('
+                    <p style="text-align: center; color: #6b7280; font-size: 0.875rem; line-height: 1.5; margin-bottom: 1.5rem;">
+                        Welcome back! Sign in to manage your resort.
+                    </p>
+                ')
+            )
+            ->renderHook(
                 'panels::body.start',
                 fn () => new HtmlString('
                     <style>
@@ -56,17 +65,171 @@ class AdminPanelProvider extends PanelProvider
                         .fi-sidebar-item-active a { border-left: 3px solid #0d9488; background: linear-gradient(to right, rgba(13,148,136,0.06), transparent); }
                         .fi-logo { filter: drop-shadow(0 1px 2px rgba(0,0,0,0.15)); }
                         .fi-topbar { background: rgba(255,255,255,0.9) !important; backdrop-filter: blur(12px) !important; }
-                        .fi-simple-layout { background: linear-gradient(135deg, #f0fdfa 0%, #ccfbf1 50%, #fef3c7 100%) !important; min-height: 100vh; display: flex !important; align-items: center !important; justify-content: center !important; }
-                        .fi-simple-page { background: white !important; border-radius: 1rem !important; box-shadow: 0 20px 60px rgba(13,148,136,0.15) !important; padding: 2rem !important; max-width: 28rem !important; width: 100% !important; margin: 2rem auto !important; }
-                        .fi-simple-page .fi-btn { border-radius: 0.75rem !important; padding: 0.75rem 1.5rem !important; font-weight: 600 !important; transition: all 0.2s !important; }
-                        .fi-simple-page .fi-btn:hover { transform: translateY(-1px) !important; box-shadow: 0 8px 25px rgba(13,148,136,0.25) !important; }
-                        .fi-simple-page .fi-input { border-radius: 0.75rem !important; border-color: #e5e7eb !important; transition: all 0.2s !important; }
-                        .fi-simple-page .fi-input:focus { border-color: #0d9488 !important; box-shadow: 0 0 0 3px rgba(13,148,136,0.1) !important; }
-                        .fi-simple-header { text-align: center !important; }
-                        .fi-simple-header-heading { font-size: 1.25rem !important; font-weight: 700 !important; color: #111827 !important; margin-top: 0.5rem !important; }
+
+                        .fi-simple-layout {
+                            background: linear-gradient(135deg, #f0fdfa 0%, #d1fae5 40%, #fef3c7 100%) !important;
+                            min-height: 100vh;
+                            display: flex !important;
+                            align-items: center !important;
+                            justify-content: center !important;
+                            padding: 1.5rem !important;
+                        }
+
+                        .fi-simple-page {
+                            background: rgba(255,255,255,0.97) !important;
+                            border-radius: 1.25rem !important;
+                            box-shadow:
+                                0 1px 3px rgba(0,0,0,0.04),
+                                0 8px 32px rgba(13,148,136,0.12),
+                                0 24px 60px rgba(13,148,136,0.08) !important;
+                            padding: 2.5rem !important;
+                            max-width: 26rem !important;
+                            width: 100% !important;
+                            margin: 0 auto !important;
+                            border: 1px solid rgba(13,148,136,0.08) !important;
+                            position: relative !important;
+                            animation: loginFadeIn 0.5s ease-out;
+                        }
+
+                        .fi-simple-page::before {
+                            content: "";
+                            position: absolute;
+                            top: 0;
+                            left: 0;
+                            right: 0;
+                            height: 4px;
+                            background: linear-gradient(90deg, #0d9488, #14b8a6, #5eead4);
+                            border-radius: 1.25rem 1.25rem 0 0;
+                        }
+
+                        @keyframes loginFadeIn {
+                            from { opacity: 0; transform: translateY(12px); }
+                            to { opacity: 1; transform: translateY(0); }
+                        }
+
                         .fi-simple-main { width: 100% !important; max-width: none !important; padding: 0 !important; }
+
+                        .fi-simple-header { text-align: center !important; padding-top: 0.5rem !important; }
+                        .fi-simple-header-heading {
+                            font-size: 1.125rem !important;
+                            font-weight: 600 !important;
+                            color: #374151 !important;
+                            margin-top: 1rem !important;
+                            margin-bottom: 0 !important;
+                        }
+
+                        .fi-fo-field { margin-bottom: 1.25rem !important; }
+                        .fi-fo-field-label { font-size: 0.813rem !important; font-weight: 500 !important; color: #374151 !important; margin-bottom: 0.375rem !important; display: block !important; }
+
+                        .fi-input-wrp {
+                            border-radius: 0.75rem !important;
+                            border: 1.5px solid #e5e7eb !important;
+                            background: #f9fafb !important;
+                            transition: all 0.2s ease !important;
+                            position: relative !important;
+                            box-shadow: none !important;
+                        }
+                        .fi-input-wrp:focus-within {
+                            border-color: #0d9488 !important;
+                            background: white !important;
+                            box-shadow: 0 0 0 4px rgba(13,148,136,0.08) !important;
+                        }
+
+                        .fi-input-wrp-content-ctn { position: relative !important; }
+                        .fi-input-wrp-content-ctn::before {
+                            position: absolute;
+                            left: 0.875rem;
+                            top: 50%;
+                            transform: translateY(-50%);
+                            width: 1.25rem;
+                            height: 1.25rem;
+                            background-size: contain;
+                            background-repeat: no-repeat;
+                            background-position: center;
+                            opacity: 0.35;
+                            z-index: 1;
+                            pointer-events: none;
+                        }
+                        .fi-fo-text-input:has(input[type="email"]) .fi-input-wrp-content-ctn::before {
+                            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%236b7280'%3E%3Cpath d='M3 4a2 2 0 00-2 2v1.161l8.441 4.221a1.25 1.25 0 001.118 0L19 7.161V6a2 2 0 00-2-2H3z'/%3E%3Cpath d='M19 8.839l-7.77 3.885a2.75 2.75 0 01-2.46 0L1 8.839V14a2 2 0 002 2h14a2 2 0 002-2V8.839z'/%3E%3C/svg%3E");
+                        }
+                        .fi-fo-text-input:has(input[type="password"]) .fi-input-wrp-content-ctn::before {
+                            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%236b7280'%3E%3Cpath fill-rule='evenodd' d='M10 1a4.5 4.5 0 00-4.5 4.5V9H5a2 2 0 00-2 2v6a2 2 0 002 2h10a2 2 0 002-2v-6a2 2 0 00-2-2h-.5V5.5A4.5 4.5 0 0010 1zm3 8V5.5a3 3 0 10-6 0V9h6z' clip-rule='evenodd'/%3E%3C/svg%3E");
+                        }
+
+                        .fi-simple-page .fi-input {
+                            border-radius: 0.75rem !important;
+                            border: none !important;
+                            background: transparent !important;
+                            padding: 0.75rem 1rem 0.75rem 2.75rem !important;
+                            font-size: 0.875rem !important;
+                            color: #111827 !important;
+                            box-shadow: none !important;
+                            transition: none !important;
+                        }
+                        .fi-simple-page .fi-input:focus {
+                            border: none !important;
+                            box-shadow: none !important;
+                        }
+                        .fi-simple-page .fi-input::placeholder { color: #9ca3af !important; }
+
+                        .fi-input-wrp-suffix { padding-right: 0.5rem !important; }
+
+                        .fi-fo-field:has(input[type="checkbox"]) {
+                            display: flex !important;
+                            align-items: center !important;
+                            margin-bottom: 1.5rem !important;
+                        }
+                        .fi-fo-field:has(input[type="checkbox"]) .fi-fo-field-label {
+                            margin-bottom: 0 !important;
+                            display: inline-flex !important;
+                            align-items: center !important;
+                            gap: 0.5rem !important;
+                            cursor: pointer !important;
+                            font-size: 0.813rem !important;
+                            color: #6b7280 !important;
+                        }
+                        .fi-checkbox-input {
+                            border-radius: 0.375rem !important;
+                            border: 1.5px solid #d1d5db !important;
+                            width: 1rem !important;
+                            height: 1rem !important;
+                            cursor: pointer !important;
+                            accent-color: #0d9488 !important;
+                        }
+
+                        .fi-simple-page .fi-ac-btn-action.fi-btn {
+                            width: 100% !important;
+                            border-radius: 0.75rem !important;
+                            padding: 0.75rem 1.5rem !important;
+                            font-weight: 600 !important;
+                            font-size: 0.875rem !important;
+                            background: linear-gradient(135deg, #0d9488, #14b8a6) !important;
+                            border: none !important;
+                            color: white !important;
+                            transition: all 0.2s ease !important;
+                            box-shadow: 0 4px 14px rgba(13,148,136,0.3) !important;
+                            letter-spacing: 0.01em !important;
+                        }
+                        .fi-simple-page .fi-ac-btn-action.fi-btn:hover {
+                            transform: translateY(-1px) !important;
+                            box-shadow: 0 8px 25px rgba(13,148,136,0.35) !important;
+                        }
+                        .fi-simple-page .fi-ac-btn-action.fi-btn:active {
+                            transform: translateY(0) !important;
+                        }
+                        .fi-simple-page .fi-ac-btn-action.fi-btn .fi-icon { display: none !important; }
+
+                        .fi-simple-layout .fi-simple-main-ctn:has(+ div[style*="text-align: center"]) {
+                            flex: 1;
+                            display: flex;
+                            align-items: center;
+                        }
+
                         @media (max-width: 640px) {
-                            .fi-simple-page { margin: 1rem !important; padding: 1.5rem !important; }
+                            .fi-simple-layout { padding: 0.75rem !important; }
+                            .fi-simple-page { margin: 0.5rem !important; padding: 1.5rem !important; }
+                            .fi-simple-page .fi-input { padding: 0.625rem 0.875rem 0.625rem 2.5rem !important; font-size: 1rem !important; }
                         }
                     </style>
                 ')
@@ -75,9 +238,9 @@ class AdminPanelProvider extends PanelProvider
                 'panels::simple-layout.start',
                 fn () => new HtmlString('
                     <div style="position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: 0;">
-                        <div style="position: absolute; top: -10%; right: -5%; width: 40%; height: 60%; background: radial-gradient(ellipse, rgba(13,148,136,0.08), transparent 70%); border-radius: 50%;"></div>
-                        <div style="position: absolute; bottom: -10%; left: -5%; width: 50%; height: 50%; background: radial-gradient(ellipse, rgba(245,158,11,0.06), transparent 70%); border-radius: 50%;"></div>
-                        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 80%; height: 80%; background: radial-gradient(ellipse, rgba(13,148,136,0.03), transparent 70%); border-radius: 50%;"></div>
+                        <div style="position: absolute; top: -15%; right: -5%; width: 45%; height: 70%; background: radial-gradient(ellipse, rgba(13,148,136,0.1), transparent 70%); border-radius: 50%;"></div>
+                        <div style="position: absolute; bottom: -10%; left: -5%; width: 50%; height: 55%; background: radial-gradient(ellipse, rgba(245,158,11,0.08), transparent 70%); border-radius: 50%;"></div>
+                        <div style="position: absolute; top: 40%; left: 60%; width: 30%; height: 40%; background: radial-gradient(ellipse, rgba(59,130,246,0.05), transparent 70%); border-radius: 50%;"></div>
                     </div>
                 ')
             )
