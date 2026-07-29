@@ -1,4 +1,9 @@
-@import 'tailwindcss';
+/* Import ONLY the theme and utilities layers — skip the base layer (preflight)
+   to avoid conflicting with Filament's own CSS reset on img, svg, etc. */
+@layer theme, utilities;
+
+@import 'tailwindcss' layer(theme);
+@import 'tailwindcss' layer(utilities);
 
 @source '../../../../vendor/filament/**/*.blade.php';
 @source '../../../../vendor/filament/actions/dist/';
