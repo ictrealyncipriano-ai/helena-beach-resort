@@ -6,8 +6,15 @@ use App\Http\Requests\BookingRequest;
 use App\Models\Cottage;
 use App\Services\InquiryService;
 
+/**
+ * Handles the booking flow: show booking form and store new bookings.
+ * Differs from InquiryController in that bookings have a 'booking' source tag.
+ */
 class BookingController extends Controller
 {
+    /**
+     * Show booking form with available cottages, blocked dates, and rate info.
+     */
     public function create()
     {
         $cottages = Cottage::where('is_available', true)
@@ -30,6 +37,9 @@ class BookingController extends Controller
         return view('pages.book', compact('cottages', 'blockedByCottage', 'rates'));
     }
 
+    /**
+     * Store a new booking and redirect to confirmation page.
+     */
     public function store(BookingRequest $request, InquiryService $inquiryService)
     {
         $data = $request->validated();

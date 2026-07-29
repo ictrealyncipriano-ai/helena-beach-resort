@@ -8,6 +8,10 @@ use Filament\Resources\Pages\ViewRecord;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 
+/**
+ * View page for a single guest record.
+ * Shows guest info, stays history, and related inquiries table.
+ */
 class ViewGuest extends ViewRecord
 {
     protected static string $resource = GuestResource::class;

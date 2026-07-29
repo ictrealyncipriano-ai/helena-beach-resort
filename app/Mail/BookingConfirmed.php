@@ -7,6 +7,10 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
 
+/**
+ * Sent to guest when an admin confirms their booking via the
+ * Confirm action on the inquiry table or by editing the status.
+ */
 class BookingConfirmed extends Mailable
 {
     use Queueable, SerializesModels;

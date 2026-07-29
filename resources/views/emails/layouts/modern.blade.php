@@ -7,6 +7,7 @@
 <meta name="supported-color-schemes" content="light">
 <title>{{ config('app.name') }}</title>
 <style type="text/css">
+/* Responsive styles for mobile email clients */
 @media only screen and (max-width: 600px) {
   .email-container { width: 100% !important; }
   .content-padding { padding: 24px 20px !important; }
@@ -26,8 +27,10 @@
 <tr>
 <td align="center" style="padding: 32px 16px;">
 
+<!-- Email container: max 600px -->
 <table class="email-container" role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width: 600px; width: 100%;">
 
+<!-- Header: brand gradient + logo -->
 <tr>
 <td style="background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%); border-radius: 16px 16px 0 0; padding: 32px 40px 24px; text-align: center;">
 <img src="{{ asset('images/logo.jpg') }}" alt="{{ config('app.name') }}" class="header-logo" style="height: 48px; width: auto; border-radius: 8px; margin-bottom: 8px;">
@@ -36,12 +39,14 @@
 </td>
 </tr>
 
+<!-- Body content: yielded from child templates -->
 <tr>
 <td class="content-padding" style="background-color: #ffffff; padding: 32px 40px; border-left: 1px solid #e2e8f0; border-right: 1px solid #e2e8f0;">
 @yield('content')
 </td>
 </tr>
 
+<!-- Footer: contact info and copyright -->
 <tr>
 <td style="background: linear-gradient(135deg, #0f766e 0%, #0d9488 100%); border-radius: 0 0 16px 16px; padding: 24px 40px; text-align: center;">
 <p class="footer-text" style="margin: 0 0 8px; font-size: 13px; color: #ccfbf1; line-height: 1.5;">

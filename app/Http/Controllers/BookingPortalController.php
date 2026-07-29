@@ -10,13 +10,19 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 
+/**
+ * Guest-facing booking portal: lookup bookings by email + reference code,
+ * view booking details, and self-cancel (with 48h cutoff).
+ */
 class BookingPortalController extends Controller
 {
+    /** Show email/reference lookup form */
     public function lookupForm()
     {
         return view('pages.booking-lookup');
     }
 
+    /** Find a booking by email + reference code */
     public function lookup(Request $request)
     {
         $validated = $request->validate([
@@ -37,6 +43,7 @@ class BookingPortalController extends Controller
         return redirect()->route('booking.portal.show', $inquiry);
     }
 
+    /** Show booking detail page with cancellation option */
     public function show(Inquiry $inquiry)
     {
         $canCancel = $this->canCancel($inquiry);
@@ -44,6 +51,7 @@ class BookingPortalController extends Controller
         return view('pages.booking-detail', compact('inquiry', 'canCancel'));
     }
 
+    /** Cancel a booking (guest-facing), sends notification to guest and owner */
     public function cancel(Request $request, Inquiry $inquiry)
     {
         if (!$this->canCancel($inquiry)) {
@@ -81,6 +89,11 @@ class BookingPortalController extends Controller
             ->with('success', 'Your booking has been cancelled.');
     }
 
+    /**
+     * Check if cancellation is allowed:
+     * - Status must be pending or confirmed
+     * - Must be at least 48 hours before check-in
+     */
     private function canCancel(Inquiry $inquiry): bool
     {
         if (!in_array($inquiry->status, ['pending', 'confirmed'])) {

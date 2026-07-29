@@ -7,6 +7,7 @@ use App\Models\Inquiry;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
 
+/** Dashboard stats cards: total cottages, pending inquiries, confirmed this month. */
 class StatsOverviewWidget extends BaseWidget
 {
     protected function getStats(): array

@@ -14,6 +14,9 @@ class Gallery extends Model
         return ['is_active' => 'boolean'];
     }
 
+    /**
+     * Boot events: automatically compress uploaded images on save.
+     */
     protected static function booted(): void
     {
         static::saving(function (Gallery $gallery) {
@@ -23,6 +26,9 @@ class Gallery extends Model
         });
     }
 
+    /**
+     * Compress an image at the given storage path if it reduces file size.
+     */
     protected static function compressImage(string $path): void
     {
         $disk = Storage::disk('cloudflare');

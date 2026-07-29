@@ -5,6 +5,11 @@ namespace Database\Seeders;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 
+/**
+ * Main seeder: creates default admin/staff users and populates
+ * initial data (settings, cottages, FAQs, etc.).
+ * Uses updateOrCreate and firstOrCreate to avoid duplicates on re-seed.
+ */
 class DatabaseSeeder extends Seeder
 {
     public function run(): void

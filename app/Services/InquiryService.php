@@ -10,10 +10,18 @@ use App\Models\SiteSetting;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 
+/**
+ * Handles the business logic for storing new inquiries/bookings.
+ * Calculates total amount, creates/updates guest record, sends notification to owner.
+ */
 class InquiryService
 {
+    /**
+     * Store a new inquiry with automatic total calculation and owner notification.
+     */
     public function store(array $data): Inquiry
     {
+        // Calculate total amount based on booking type and cottage rates
         $totalAmount = null;
         if (!empty($data['booking_type']) && !empty($data['cottage_id'])) {
             $cottage = Cottage::find($data['cottage_id']);
@@ -41,12 +49,14 @@ class InquiryService
             'source' => $data['source'] ?? 'website',
         ]);
 
+        // Create or update guest record linked to this inquiry
         $guest = Guest::updateOrCreate(
             ['email' => $data['email']],
             ['name' => $data['name'], 'phone' => $data['phone'] ?? null]
         );
         $inquiry->guest()->associate($guest)->save();
 
+        // Notify resort owner about new inquiry
         $ownerEmail = SiteSetting::getValue('contact_email');
         if ($ownerEmail) {
             try {

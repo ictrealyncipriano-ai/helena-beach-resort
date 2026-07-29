@@ -15,6 +15,9 @@ use Filament\Schemas\Schema;
 use Filament\Tables;
 use Filament\Tables\Table;
 
+/**
+ * Admin CRUD for photo gallery entries with category tagging.
+ */
 class GalleryResource extends Resource
 {
     protected static ?string $model = Gallery::class;
@@ -106,11 +109,6 @@ class GalleryResource extends Resource
                     DeleteBulkAction::make(),
                 ]),
             ]);
-    }
-
-    public static function getRelations(): array
-    {
-        return [];
     }
 
     public static function getPages(): array

@@ -14,6 +14,9 @@ use Filament\Schemas\Schema;
 use Filament\Tables;
 use Filament\Tables\Table;
 
+/**
+ * Admin user management: role-based access (super_admin, admin, staff).
+ */
 class UserResource extends Resource
 {
     protected static ?string $model = User::class;
@@ -103,11 +106,6 @@ class UserResource extends Resource
                     DeleteBulkAction::make(),
                 ]),
             ]);
-    }
-
-    public static function getRelations(): array
-    {
-        return [];
     }
 
     public static function getPages(): array

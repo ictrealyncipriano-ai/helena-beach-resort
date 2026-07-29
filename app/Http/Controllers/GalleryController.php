@@ -4,8 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Models\Gallery;
 
+/**
+ * Public photo gallery page with category filtering.
+ */
 class GalleryController extends Controller
 {
+    /** Show paginated gallery grouped by category */
     public function index()
     {
         $categories = Gallery::where('is_active', true)

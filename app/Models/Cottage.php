@@ -19,6 +19,9 @@ class Cottage extends Model
         return ['is_available' => 'boolean'];
     }
 
+    /**
+     * Boot events: auto-generates URL slug from cottage name.
+     */
     protected static function booted(): void
     {
         static::creating(fn ($cottage) => $cottage->slug = $cottage->slug ?: Str::slug($cottage->name));

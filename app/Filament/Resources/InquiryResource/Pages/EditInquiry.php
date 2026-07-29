@@ -13,10 +13,16 @@ use Filament\Resources\Pages\EditRecord;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 
+/**
+ * Edit page for inquiries.
+ * Detects status changes and triggers confirmation/cancellation side effects
+ * (emails, date blocking, guest stay tracking).
+ */
 class EditInquiry extends EditRecord
 {
     protected static string $resource = InquiryResource::class;
 
+    /** Stores the status value before the form was submitted. */
     private ?string $previousStatus = null;
 
     protected function getRedirectUrl(): string
@@ -31,12 +37,14 @@ class EditInquiry extends EditRecord
         ];
     }
 
+    /** Capture the original status before save to detect changes in afterSave. */
     protected function mutateFormDataBeforeSave(array $data): array
     {
         $this->previousStatus = $this->record->status;
         return $data;
     }
 
+    /** After save, check if status changed and run confirm/cancel logic. */
     protected function afterSave(): void
     {
         if ($this->previousStatus === $this->record->status) {
@@ -50,6 +58,7 @@ class EditInquiry extends EditRecord
         }
     }
 
+    /** Handle status change to confirmed: block dates, update guest, send email. */
     private function handleConfirmed(): void
     {
         $record = $this->record;
@@ -89,6 +98,7 @@ class EditInquiry extends EditRecord
         }
     }
 
+    /** Handle status change to cancelled: unblock dates, decrement stays, send email. */
     private function handleCancelled(): void
     {
         $record = $this->record;

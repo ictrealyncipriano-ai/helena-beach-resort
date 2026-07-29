@@ -7,6 +7,10 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class CottageDateBlock extends Model
 {
+    /**
+     * Tracks dates when a cottage is booked/unavailable.
+     * Created when an inquiry status changes to 'confirmed'.
+     */
     protected $fillable = [
         'cottage_id', 'date', 'reason',
     ];

@@ -25,6 +25,12 @@ use Filament\Tables\Table;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 
+/**
+ * Admin CRUD for inquiries/bookings.
+ * Includes actions to confirm (sends booking confirmed email + blocks dates)
+ * and cancel (sends cancellation email + removes date blocks).
+ * Access restricted by user role.
+ */
 class InquiryResource extends Resource
 {
     protected static ?string $model = Inquiry::class;
@@ -53,6 +59,7 @@ class InquiryResource extends Resource
         return auth()->user()?->role === User::ROLE_SUPER_ADMIN;
     }
 
+    /** Form for editing an inquiry (guest info, booking details, status). */
     public static function form(Schema $schema): Schema
     {
         return $schema
@@ -104,6 +111,7 @@ class InquiryResource extends Resource
             ]);
     }
 
+    /** Table listing all inquiries with filters and confirm/cancel actions. */
     public static function table(Table $table): Table
     {
         return $table
@@ -185,6 +193,7 @@ class InquiryResource extends Resource
             ->actions([
                 ViewAction::make(),
                 EditAction::make(),
+                // Quick-action button to confirm a pending inquiry
                 Action::make('markConfirmed')
                     ->label('Confirm')
                     ->icon('heroicon-o-check')
@@ -224,6 +233,7 @@ class InquiryResource extends Resource
                         }
                     })
                     ->visible(fn (Inquiry $record) => $record->status === 'pending'),
+                // Quick-action button to cancel a pending inquiry
                 Action::make('markCancelled')
                     ->label('Cancel')
                     ->icon('heroicon-o-x-mark')
@@ -270,6 +280,7 @@ class InquiryResource extends Resource
             ]);
     }
 
+    /** Detail view layout for a single inquiry. */
     public static function infolist(Schema $schema): Schema
     {
         return $schema

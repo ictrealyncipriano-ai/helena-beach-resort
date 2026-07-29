@@ -15,6 +15,10 @@ use Filament\Schemas\Schema;
 use Filament\Tables;
 use Filament\Tables\Table;
 
+/**
+ * Admin key-value settings manager (contact info, hero text, social links, etc.).
+ * Only super_admin can edit or create settings.
+ */
 class SiteSettingResource extends Resource
 {
     protected static ?string $model = SiteSetting::class;

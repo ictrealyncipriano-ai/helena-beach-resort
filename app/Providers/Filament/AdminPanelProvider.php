@@ -19,6 +19,9 @@ use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 
+/**
+ * Configures the Filament admin panel: brand, navigation, middleware, and theming.
+ */
 class AdminPanelProvider extends PanelProvider
 {
     public function panel(Panel $panel): Panel
@@ -30,6 +33,7 @@ class AdminPanelProvider extends PanelProvider
             ->maxContentWidth('full')
             ->login()
             ->brandName('Helena Beach Resort')
+            // Custom logo with text displayed in the admin sidebar header
             ->brandLogo(new HtmlString('
                 <div style="display: flex; align-items: center; gap: 0.5rem; height: 2rem; overflow: hidden;">
                     <img src="'.url('images/logo.jpg').'" alt="Helena Beach" style="height: 1.5rem; width: auto; border-radius: 0.25rem; flex-shrink: 0;">
@@ -37,10 +41,12 @@ class AdminPanelProvider extends PanelProvider
                 </div>
             '))
             ->brandLogoHeight('2rem')
+            // Primary teal brand color used across all admin UI components
             ->colors([
                 'primary' => '#0d9488',
             ])
             ->font('Inter')
+            // Sidebar navigation grouping
             ->navigationGroups([
                 'Content',
                 'Bookings',

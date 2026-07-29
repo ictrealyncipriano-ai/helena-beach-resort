@@ -7,6 +7,7 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Widgets\TableWidget as BaseWidget;
 
+/** Dashboard widget showing the 5 most recent inquiries. */
 class RecentInquiriesWidget extends BaseWidget
 {
     protected int | string | array $columnSpan = 'full';

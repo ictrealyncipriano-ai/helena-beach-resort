@@ -15,6 +15,9 @@ use Filament\Schemas\Schema;
 use Filament\Tables;
 use Filament\Tables\Table;
 
+/**
+ * Admin CRUD for guest testimonials/reviews with rating and cottage association.
+ */
 class TestimonialResource extends Resource
 {
     protected static ?string $model = Testimonial::class;
@@ -109,11 +112,6 @@ class TestimonialResource extends Resource
                     DeleteBulkAction::make(),
                 ]),
             ]);
-    }
-
-    public static function getRelations(): array
-    {
-        return [];
     }
 
     public static function getPages(): array

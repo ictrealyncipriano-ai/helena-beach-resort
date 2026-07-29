@@ -18,6 +18,10 @@ use Filament\Schemas\Schema;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 
+/**
+ * Admin CRUD for guest records (auto-created from inquiries).
+ * Tracks total stays and last stay date per guest.
+ */
 class GuestResource extends Resource
 {
     protected static ?string $model = Guest::class;

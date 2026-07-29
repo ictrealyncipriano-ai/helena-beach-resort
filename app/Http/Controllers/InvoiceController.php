@@ -5,8 +5,12 @@ namespace App\Http\Controllers;
 use App\Models\Inquiry;
 use Barryvdh\DomPDF\Facade\Pdf;
 
+/**
+ * Invoice display and PDF download for confirmed bookings.
+ */
 class InvoiceController extends Controller
 {
+    /** Display invoice in-browser (HTML) */
     public function show(Inquiry $inquiry)
     {
         abort_if($inquiry->status !== 'confirmed', 404);
@@ -14,6 +18,7 @@ class InvoiceController extends Controller
         return view('pages.invoice', compact('inquiry'));
     }
 
+    /** Download invoice as PDF */
     public function download(Inquiry $inquiry)
     {
         abort_if($inquiry->status !== 'confirmed', 404);

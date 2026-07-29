@@ -13,6 +13,9 @@ class Inquiry extends Model
         'booking_type', 'total_amount',
     ];
 
+    /**
+     * Boot events: auto-generates reference code (HB-000001) on creation.
+     */
     protected static function booted(): void
     {
         static::creating(function (Inquiry $inquiry) {

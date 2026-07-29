@@ -16,6 +16,9 @@ use Filament\Schemas\Schema;
 use Filament\Tables;
 use Filament\Tables\Table;
 
+/**
+ * Admin CRUD for cottages: rates, photos, amenities, and date blocking.
+ */
 class CottageResource extends Resource
 {
     protected static ?string $model = Cottage::class;
@@ -44,6 +47,7 @@ class CottageResource extends Resource
         return in_array(auth()->user()?->role, [User::ROLE_SUPER_ADMIN, User::ROLE_ADMIN]);
     }
 
+    /** Form with sections for details, amenities, availability, and photos. */
     public static function form(Schema $schema): Schema
     {
         return $schema

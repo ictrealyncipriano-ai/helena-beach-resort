@@ -13,6 +13,10 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 
+/**
+ * Handles all public pages (home, about, faq, services, reviews, sitemap).
+ * Each method returns a Blade view with data fetched from the database.
+ */
 class PageController extends Controller
 {
     public function home()
@@ -45,11 +49,13 @@ class PageController extends Controller
         return view('pages.home', compact('cottages', 'gallery', 'testimonials', 'avgRating'));
     }
 
+    /** Static about page */
     public function about()
     {
         return view('pages.about');
     }
 
+    /** Display FAQs sorted by sort_order */
     public function faq()
     {
         try {
@@ -64,6 +70,7 @@ class PageController extends Controller
         return view('pages.faq', compact('faqs'));
     }
 
+    /** Display resort services grouped by category */
     public function services()
     {
         try {
@@ -76,6 +83,7 @@ class PageController extends Controller
         return view('pages.services', compact('services'));
     }
 
+    /** Paginated guest reviews/testimonials */
     public function reviews()
     {
         try {
@@ -88,11 +96,13 @@ class PageController extends Controller
         return view('pages.reviews', compact('testimonials'));
     }
 
+    /** Health check endpoint for Render / monitoring */
     public function health()
     {
         return response('ok', 200);
     }
 
+    /** Debug endpoint to test email delivery via the configured mailer */
     public function testMail()
     {
         $ownerEmail = SiteSetting::getValue('contact_email', 'ict.realyncipriano@gmail.com');
@@ -106,6 +116,7 @@ class PageController extends Controller
         }
     }
 
+    /** Generate XML sitemap for SEO, cached for 1 hour */
     public function sitemap()
     {
         $xml = Cache::remember('sitemap', 3600, function () {

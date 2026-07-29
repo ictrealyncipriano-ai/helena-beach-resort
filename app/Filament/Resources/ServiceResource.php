@@ -15,6 +15,9 @@ use Filament\Schemas\Schema;
 use Filament\Tables;
 use Filament\Tables\Table;
 
+/**
+ * Admin CRUD for resort services grouped by category (Amenities, Dining, Activities, Events).
+ */
 class ServiceResource extends Resource
 {
     protected static ?string $model = Service::class;
@@ -113,11 +116,6 @@ class ServiceResource extends Resource
                     DeleteBulkAction::make(),
                 ]),
             ]);
-    }
-
-    public static function getRelations(): array
-    {
-        return [];
     }
 
     public static function getPages(): array

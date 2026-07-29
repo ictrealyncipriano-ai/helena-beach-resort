@@ -15,6 +15,9 @@ use Filament\Schemas\Schema;
 use Filament\Tables;
 use Filament\Tables\Table;
 
+/**
+ * Admin CRUD for frequently asked questions with drag-to-reorder.
+ */
 class FaqResource extends Resource
 {
     protected static ?string $model = Faq::class;
@@ -92,11 +95,6 @@ class FaqResource extends Resource
                     DeleteBulkAction::make(),
                 ]),
             ]);
-    }
-
-    public static function getRelations(): array
-    {
-        return [];
     }
 
     public static function getPages(): array
