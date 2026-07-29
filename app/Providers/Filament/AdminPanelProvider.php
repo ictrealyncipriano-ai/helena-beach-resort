@@ -248,7 +248,7 @@ class AdminPanelProvider extends PanelProvider
                     <script>
                         (function() {
                             const togglePw = function() {
-                                const wrapper = document.querySelector('.fi-fo-text-input.fi-input-wrp[x-data*="isPasswordRevealed"]');
+                                const wrapper = document.querySelector('.fi-fo-text-input.fi-input-wrp[x-data*=\"isPasswordRevealed\"]');
                                 if (!wrapper || wrapper.querySelector('._pw-toggle-done')) return;
                                 const actions = wrapper.querySelector('.fi-input-wrp-actions');
                                 if (!actions) return;
