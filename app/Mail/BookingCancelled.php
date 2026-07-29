@@ -22,6 +22,6 @@ class BookingCancelled extends Mailable
     {
         return $this
             ->subject("Booking Cancelled — {$this->inquiry->reference_code}")
-            ->markdown('emails.booking-cancelled');
+            ->view('emails.booking-cancelled');
     }
 }

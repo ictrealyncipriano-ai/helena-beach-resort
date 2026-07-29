@@ -22,6 +22,6 @@ class BookingConfirmed extends Mailable
     {
         return $this
             ->subject("Booking Confirmed — {$this->inquiry->reference_code}")
-            ->markdown('emails.booking-confirmed');
+            ->view('emails.booking-confirmed');
     }
 }

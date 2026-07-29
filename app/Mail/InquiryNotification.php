@@ -22,6 +22,6 @@ class InquiryNotification extends Mailable
     {
         return $this
             ->subject("New Booking Inquiry from {$this->inquiry->name}")
-            ->markdown('emails.inquiry-notification');
+            ->view('emails.inquiry-notification');
     }
 }
