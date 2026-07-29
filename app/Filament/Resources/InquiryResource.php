@@ -86,7 +86,14 @@ class InquiryResource extends Resource
                             ->numeric(),
                         Forms\Components\Select::make('cottage_id')
                             ->relationship('cottage', 'name'),
-                        Forms\Components\TextInput::make('status'),
+                        Forms\Components\Select::make('status')
+                            ->options([
+                                'pending' => 'Pending',
+                                'confirmed' => 'Confirmed',
+                                'cancelled' => 'Cancelled',
+                            ])
+                            ->default('pending')
+                            ->required(),
                     ])
                     ->columns(3),
                 Section::make('Message')
