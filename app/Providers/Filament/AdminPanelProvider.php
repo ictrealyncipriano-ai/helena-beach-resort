@@ -157,7 +157,25 @@ class AdminPanelProvider extends PanelProvider
                         }
                         .fi-simple-page .fi-input::placeholder { color: #9ca3af !important; }
 
-                        .fi-input-wrp-suffix { padding-right: 0.5rem !important; display: flex !important; align-items: center !important; }
+                        .fi-input-wrp-suffix { padding-right: 0.25rem !important; display: flex !important; align-items: center !important; }
+                        .fi-icon-btn {
+                            display: inline-flex !important;
+                            align-items: center !important;
+                            justify-content: center !important;
+                            width: 2rem !important;
+                            height: 2rem !important;
+                            border-radius: 0.5rem !important;
+                            color: #6b7280 !important;
+                            background: transparent !important;
+                            border: none !important;
+                            cursor: pointer !important;
+                            transition: all 0.15s ease !important;
+                            flex-shrink: 0 !important;
+                            outline: none !important;
+                        }
+                        .fi-icon-btn:hover { background: #f3f4f6 !important; color: #374151 !important; }
+                        .fi-icon-btn:focus-visible { box-shadow: 0 0 0 2px rgba(13,148,136,0.4) !important; }
+                        .fi-icon-btn svg { width: 1.25rem !important; height: 1.25rem !important; display: block !important; }
 
                         .fi-fo-field:has(input[type="checkbox"]) {
                             display: flex !important;
