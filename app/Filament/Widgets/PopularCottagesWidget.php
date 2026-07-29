@@ -9,7 +9,7 @@ use Filament\Widgets\TableWidget as BaseWidget;
 
 class PopularCottagesWidget extends BaseWidget
 {
-    protected ?string $heading = 'Popular Cottages (By Bookings)';
+    protected static ?string $heading = 'Popular Cottages (By Bookings)';
     protected int | string | array $columnSpan = 'full';
 
     public function table(Table $table): Table
