@@ -148,12 +148,21 @@
 }
 
 .fi-input-wrp {
-    @apply rounded-xl border-gray-300 shadow-sm;
+    @apply rounded-xl border-gray-300 shadow-sm flex items-center;
 }
+
+[x-cloak] { display: none !important; }
 
 .fi-input-wrp:focus-within {
     @apply border-primary-500 ring-1 ring-primary-500;
 }
+
+.fi-icon-btn {
+    @apply inline-flex items-center justify-center size-8 rounded-lg text-gray-500 bg-transparent border-none cursor-pointer transition-all duration-150 shrink-0 outline-none;
+}
+.fi-icon-btn:hover { @apply bg-gray-100 text-gray-700; }
+.fi-icon-btn:focus-visible { @apply ring-2 ring-primary-500; }
+.fi-icon-btn svg { @apply size-5 block; }
 
 .fi-fo-rich-editor {
     @apply rounded-xl overflow-hidden border border-gray-200;
