@@ -17,6 +17,8 @@ class EditInquiry extends EditRecord
 {
     protected static string $resource = InquiryResource::class;
 
+    private ?string $previousStatus = null;
+
     protected function getRedirectUrl(): string
     {
         return $this->getResource()::getUrl('index');
@@ -29,18 +31,21 @@ class EditInquiry extends EditRecord
         ];
     }
 
+    protected function mutateFormDataBeforeSave(array $data): array
+    {
+        $this->previousStatus = $this->record->status;
+        return $data;
+    }
+
     protected function afterSave(): void
     {
-        $originalStatus = $this->record->getOriginal('status');
-        $newStatus = $this->record->status;
-
-        if ($originalStatus === $newStatus) {
+        if ($this->previousStatus === $this->record->status) {
             return;
         }
 
-        if ($newStatus === 'confirmed') {
+        if ($this->record->status === 'confirmed') {
             $this->handleConfirmed();
-        } elseif ($newStatus === 'cancelled') {
+        } elseif ($this->record->status === 'cancelled') {
             $this->handleCancelled();
         }
     }
