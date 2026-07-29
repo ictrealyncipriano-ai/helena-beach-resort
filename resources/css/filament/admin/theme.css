@@ -156,7 +156,7 @@
 }
 
 .fi-input-wrp {
-    @apply rounded-xl border-gray-300 shadow-sm;
+    @apply rounded-xl border-gray-300 shadow-sm flex items-center;
 }
 
 .fi-input-wrp:focus-within {

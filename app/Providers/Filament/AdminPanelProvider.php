@@ -129,6 +129,8 @@ class AdminPanelProvider extends PanelProvider
                             transition: all 0.2s ease !important;
                             position: relative !important;
                             box-shadow: none !important;
+                            display: flex !important;
+                            align-items: center !important;
                         }
                         .fi-input-wrp:focus-within {
                             border-color: #0d9488 !important;
@@ -155,7 +157,7 @@ class AdminPanelProvider extends PanelProvider
                         }
                         .fi-simple-page .fi-input::placeholder { color: #9ca3af !important; }
 
-                        .fi-input-wrp-suffix { padding-right: 0.5rem !important; }
+                        .fi-input-wrp-suffix { padding-right: 0.5rem !important; display: flex !important; align-items: center !important; }
 
                         .fi-fo-field:has(input[type="checkbox"]) {
                             display: flex !important;
