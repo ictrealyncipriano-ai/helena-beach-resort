@@ -45,7 +45,7 @@ class AdminPanelProvider extends PanelProvider
             ->renderHook(
                 'panels::styles.after',
                 fn (): string => '<link rel="preconnect" href="https://fonts.bunny.net">
-                    <link href="https://fonts.bunny.net/css?family=inter:400,500,600,700|playfair-display:400,600,700&display=swap" rel="stylesheet" />'
+                    <link href="https://fonts.bunny.net/css?family=playfair-display:400,600,700&display=swap" rel="stylesheet" />'
             )
             ->renderHook(
                 'panels::body.start',
@@ -56,14 +56,17 @@ class AdminPanelProvider extends PanelProvider
                         .fi-sidebar-item-active a { border-left: 3px solid #0d9488; background: linear-gradient(to right, rgba(13,148,136,0.06), transparent); }
                         .fi-logo { filter: drop-shadow(0 1px 2px rgba(0,0,0,0.15)); }
                         .fi-topbar { background: rgba(255,255,255,0.9) !important; backdrop-filter: blur(12px) !important; }
-                        .fi-simple-layout { background: linear-gradient(135deg, #f0fdfa 0%, #ccfbf1 50%, #fef3c7 100%) !important; min-height: 100vh; }
-                        .fi-simple-card { border-radius: 1rem !important; box-shadow: 0 20px 60px rgba(13,148,136,0.15) !important; border: 1px solid rgba(13,148,136,0.1) !important; backdrop-filter: blur(20px) !important; background: rgba(255,255,255,0.95) !important; padding: 2rem !important; }
-                        .fi-simple-card .fi-btn { border-radius: 0.75rem !important; padding: 0.75rem 1.5rem !important; font-weight: 600 !important; transition: all 0.2s !important; }
-                        .fi-simple-card .fi-btn:hover { transform: translateY(-1px) !important; box-shadow: 0 8px 25px rgba(13,148,136,0.25) !important; }
-                        .fi-simple-card .fi-input { border-radius: 0.75rem !important; border-color: #e5e7eb !important; transition: all 0.2s !important; }
-                        .fi-simple-card .fi-input:focus { border-color: #0d9488 !important; box-shadow: 0 0 0 3px rgba(13,148,136,0.1) !important; }
+                        .fi-simple-layout { background: linear-gradient(135deg, #f0fdfa 0%, #ccfbf1 50%, #fef3c7 100%) !important; min-height: 100vh; display: flex !important; align-items: center !important; justify-content: center !important; }
+                        .fi-simple-page { background: white !important; border-radius: 1rem !important; box-shadow: 0 20px 60px rgba(13,148,136,0.15) !important; padding: 2rem !important; max-width: 28rem !important; width: 100% !important; margin: 2rem auto !important; }
+                        .fi-simple-page .fi-btn { border-radius: 0.75rem !important; padding: 0.75rem 1.5rem !important; font-weight: 600 !important; transition: all 0.2s !important; }
+                        .fi-simple-page .fi-btn:hover { transform: translateY(-1px) !important; box-shadow: 0 8px 25px rgba(13,148,136,0.25) !important; }
+                        .fi-simple-page .fi-input { border-radius: 0.75rem !important; border-color: #e5e7eb !important; transition: all 0.2s !important; }
+                        .fi-simple-page .fi-input:focus { border-color: #0d9488 !important; box-shadow: 0 0 0 3px rgba(13,148,136,0.1) !important; }
+                        .fi-simple-header { text-align: center !important; }
+                        .fi-simple-header-heading { font-size: 1.25rem !important; font-weight: 700 !important; color: #111827 !important; margin-top: 0.5rem !important; }
+                        .fi-simple-main { width: 100% !important; max-width: none !important; padding: 0 !important; }
                         @media (max-width: 640px) {
-                            .fi-simple-card { margin: 1rem !important; padding: 1.5rem !important; }
+                            .fi-simple-page { margin: 1rem !important; padding: 1.5rem !important; }
                         }
                     </style>
                 ')
