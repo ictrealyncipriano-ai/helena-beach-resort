@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\Auth\LoginController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\CottageController;
 use App\Http\Controllers\GalleryController;
@@ -83,6 +84,18 @@ Route::post('/booking/{inquiry}/cancel', [App\Http\Controllers\BookingPortalCont
 */
 Route::get('/booking/{inquiry}/invoice', [App\Http\Controllers\InvoiceController::class, 'show'])->name('invoice.show');
 Route::get('/booking/{inquiry}/invoice/pdf', [App\Http\Controllers\InvoiceController::class, 'download'])->name('invoice.download');
+
+/*
+|--------------------------------------------------------------------------
+| Admin Authentication
+|--------------------------------------------------------------------------
+*/
+Route::prefix('admin')->name('admin.')->group(function () {
+    Route::middleware('guest')->group(function () {
+        Route::get('login', [LoginController::class, 'showLoginForm'])->name('login');
+        Route::post('login', [LoginController::class, 'login']);
+    });
+});
 
 /*
 |--------------------------------------------------------------------------
