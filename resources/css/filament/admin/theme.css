@@ -155,6 +155,8 @@
     @apply bg-primary-50 text-primary-700;
 }
 
+[x-cloak] { display: none !important; }
+
 .fi-input-wrp {
     @apply rounded-xl border-gray-300 shadow-sm flex items-center;
 }

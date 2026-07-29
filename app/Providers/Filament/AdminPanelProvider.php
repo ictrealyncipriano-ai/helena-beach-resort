@@ -103,6 +103,7 @@ class AdminPanelProvider extends PanelProvider
                             border-radius: 1.5rem 1.5rem 0 0;
                         }
 
+                        [x-cloak] { display: none !important; }
                         @keyframes loginFadeIn {
                             from { opacity: 0; transform: translateY(12px); }
                             to { opacity: 1; transform: translateY(0); }
