@@ -207,10 +207,9 @@ $editingUser = $editingId ? \App\Models\User::find($editingId) : null;
 @include('admin.components.confirm-dialog', ['name' => 'delete', 'title' => 'Delete User?', 'message' => 'Are you sure you want to delete this user? This action cannot be undone.'])
 @endsection
 
-@push('scripts')
 <script>
-document.addEventListener('alpine:init', () => {
-    Alpine.data('userForm', () => ({
+function userForm() {
+    return {
         isEditing: false,
         editingId: null,
         formAction: '{{ route('admin.users.store') }}',
@@ -265,7 +264,7 @@ document.addEventListener('alpine:init', () => {
                 }
             }
         },
-    }));
-});
+    };
+}
 </script>
 @endpush

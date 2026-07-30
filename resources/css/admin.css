@@ -130,6 +130,13 @@
 .gradient-accent-blue {
     background: linear-gradient(90deg, #2563eb, #3b82f6);
 }
+.gradient-accent-gray {
+    background: linear-gradient(90deg, #6b7280, #9ca3af);
+}
+
+.stat-icon-gray {
+    background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+}
 
 .chart-container {
     position: relative;
