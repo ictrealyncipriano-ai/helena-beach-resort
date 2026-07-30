@@ -22,25 +22,150 @@
 
 [x-cloak] { display: none !important; }
 
+.glass {
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+}
+
+.stat-card {
+    position: relative;
+    isolation: isolate;
+}
+.stat-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    background: linear-gradient(135deg, rgba(255,255,255,0.4), rgba(255,255,255,0));
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask-composite: exclude;
+    -webkit-mask-composite: xor;
+    pointer-events: none;
+}
+
+.stat-card-glow:hover {
+    box-shadow:
+        0 0 0 1px rgba(13, 148, 136, 0.1),
+        0 4px 20px rgba(13, 148, 136, 0.08),
+        0 8px 32px rgba(13, 148, 136, 0.04);
+}
+
+.stat-card-teal:hover {
+    box-shadow:
+        0 0 0 1px rgba(13, 148, 136, 0.15),
+        0 4px 20px rgba(13, 148, 136, 0.1),
+        0 8px 32px rgba(13, 148, 136, 0.05);
+}
+.stat-card-amber:hover {
+    box-shadow:
+        0 0 0 1px rgba(217, 119, 6, 0.15),
+        0 4px 20px rgba(217, 119, 6, 0.1),
+        0 8px 32px rgba(217, 119, 6, 0.05);
+}
+.stat-card-emerald:hover {
+    box-shadow:
+        0 0 0 1px rgba(5, 150, 105, 0.15),
+        0 4px 20px rgba(5, 150, 105, 0.1),
+        0 8px 32px rgba(5, 150, 105, 0.05);
+}
+.stat-card-blue:hover {
+    box-shadow:
+        0 0 0 1px rgba(37, 99, 235, 0.15),
+        0 4px 20px rgba(37, 99, 235, 0.1),
+        0 8px 32px rgba(37, 99, 235, 0.05);
+}
+
+.stat-icon-teal {
+    background: linear-gradient(135deg, #ccfbf1 0%, #99f6e4 100%);
+}
+.stat-icon-amber {
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+}
+.stat-icon-emerald {
+    background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+}
+.stat-icon-blue {
+    background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+}
+
+@keyframes count-up {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+.animate-count {
+    animation: count-up 0.6s ease-out forwards;
+}
+
+.table-card-row {
+    @apply block md:hidden;
+}
+
+/* Mobile table card */
+.mobile-table-card {
+    @apply bg-white rounded-xl border border-gray-100 p-4 space-y-3 shadow-sm;
+}
+
+.mobile-table-card .field {
+    @apply flex items-center justify-between text-sm;
+}
+.mobile-table-card .field-label {
+    @apply text-xs text-gray-500 font-medium uppercase tracking-wider;
+}
+.mobile-table-card .field-value {
+    @apply text-sm font-medium text-gray-900 text-right;
+}
+
+/* Gradient accent bar utility */
+.gradient-accent-teal {
+    background: linear-gradient(90deg, #0d9488, #14b8a6);
+}
+.gradient-accent-amber {
+    background: linear-gradient(90deg, #d97706, #f59e0b);
+}
+.gradient-accent-emerald {
+    background: linear-gradient(90deg, #059669, #10b981);
+}
+.gradient-accent-blue {
+    background: linear-gradient(90deg, #2563eb, #3b82f6);
+}
+
+.chart-container {
+    position: relative;
+}
+.chart-container canvas {
+    max-height: 280px;
+    max-width: 100%;
+}
+
+.popularity-bar {
+    @apply h-1.5 rounded-full bg-gray-100 overflow-hidden;
+}
+.popularity-bar-fill {
+    @apply h-full rounded-full bg-gradient-to-r from-teal-500 to-emerald-400 transition-all duration-500;
+}
+
+.trend-up { color: #059669; }
+.trend-down { color: #dc2626; }
+
+/* Responsive table -> card breakpoint */
+@media (max-width: 767px) {
+    .desktop-table {
+        display: none;
+    }
+}
+@media (min-width: 768px) {
+    .mobile-table-cards {
+        display: none;
+    }
+}
+
 /* Scrollbar styling */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
-
-/* Table helpers */
-.table-container {
-    @apply overflow-x-auto;
-    -webkit-overflow-scrolling: touch;
-}
-
-/* Card hover effect */
-.card-hover {
-    @apply transition-all duration-200;
-}
-.card-hover:hover {
-    @apply shadow-md -translate-y-0.5;
-}
 
 /* Toggle switch animation */
 .toggle-checkbox:checked + .toggle-label {
