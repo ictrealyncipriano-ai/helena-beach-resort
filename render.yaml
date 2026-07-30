@@ -10,7 +10,9 @@ services:
       - key: APP_DEBUG
         value: false
       - key: APP_URL
-        value: https://helena-beach-resort.onrender.com
+        value: https://helena.labcoop.online
+      - key: SESSION_DOMAIN
+        value: .helena.labcoop.online
       - key: APP_KEY
         generateValue: true
       - key: DB_CONNECTION
