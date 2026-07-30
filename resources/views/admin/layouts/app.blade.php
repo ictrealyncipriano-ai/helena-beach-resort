@@ -13,10 +13,10 @@
 </head>
 <body class="font-sans antialiased bg-gray-50 text-gray-900" x-data="adminLayout()" x-on:keydown.escape="sidebarOpen = false">
     <div class="flex h-screen overflow-hidden">
-        <x-admin::sidebar />
+        @include('admin.layouts.partials.sidebar')
 
         <div class="flex flex-1 flex-col overflow-hidden lg:pl-60">
-            <x-admin::topbar />
+            @include('admin.layouts.partials.topbar')
 
             <main class="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
                 {{-- Page Header --}}
