@@ -208,7 +208,7 @@ $editingUser = $editingId ? \App\Models\User::find($editingId) : null;
 @endsection
 
 <script>
-function userForm() {
+window.userForm = function() {
     return {
         isEditing: false,
         editingId: null,
@@ -267,4 +267,3 @@ function userForm() {
     };
 }
 </script>
-@endpush
