@@ -15,7 +15,7 @@
     <div class="flex h-screen overflow-hidden">
         @include('admin.layouts.partials.sidebar')
 
-        <div class="flex flex-1 flex-col overflow-hidden lg:pl-60">
+        <div class="flex flex-1 flex-col overflow-hidden">
             @include('admin.layouts.partials.topbar')
 
             <main class="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
