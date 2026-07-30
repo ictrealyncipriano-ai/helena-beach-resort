@@ -15,7 +15,7 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 WORKDIR /var/www/html
 COPY . .
 
-RUN composer install --no-dev --optimize-autoloader
+RUN mkdir -p bootstrap/cache && composer install --no-dev --optimize-autoloader
 RUN npm ci --ignore-scripts && npm run build
 
 ENV APACHE_DOCUMENT_ROOT=/var/www/html/public
