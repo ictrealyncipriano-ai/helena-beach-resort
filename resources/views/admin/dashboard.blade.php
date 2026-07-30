@@ -266,7 +266,7 @@
                     <span class="w-1.5 h-1.5 rounded-full bg-teal-500"></span>
                     Booking Type Distribution
                 </h2>
-                <span class="text-xs text-gray-500 font-medium">{{ array_sum($bookingTypeData) }} total</span>
+                <span class="text-xs text-gray-500 font-medium">{{ $bookingTypeData->sum() }} total</span>
             </div>
             <div class="relative chart-container flex justify-center" style="max-height: 280px;">
                 <canvas id="bookingTypeChart" x-data x-init="
