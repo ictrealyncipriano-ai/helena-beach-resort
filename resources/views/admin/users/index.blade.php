@@ -1,5 +1,11 @@
 @extends('admin.layouts.app')
 
+@php
+$showUserModal = $errors->hasAny(['name', 'email', 'password', 'role']);
+$editingId = old('_editing', 0);
+$editingUser = $editingId ? \App\Models\User::find($editingId) : null;
+@endphp
+
 @section('title', 'Users')
 @section('header', 'Users')
 @section('description', 'Manage admin users')
@@ -13,7 +19,7 @@
 @endsection
 
 @section('content')
-<div class="space-y-6">
+<div x-data="userForm()" class="space-y-6">
     {{-- Stats --}}
     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div class="relative bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-5 overflow-hidden">
@@ -67,10 +73,10 @@
                     <a href="{{ route('admin.users.index') }}" class="px-3 py-2 text-sm font-medium text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">Clear</a>
                 @endif
             </form>
-            <a href="{{ route('admin.users.create') }}" class="inline-flex items-center gap-2 px-4 py-2 bg-teal-600 text-white text-sm font-medium rounded-lg hover:bg-teal-700 transition-colors shadow-sm whitespace-nowrap">
+            <button type="button" @@click="openCreate()" class="inline-flex items-center gap-2 px-4 py-2 bg-teal-600 text-white text-sm font-medium rounded-lg hover:bg-teal-700 transition-colors shadow-sm whitespace-nowrap">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.5v15m7.5-7.5h-15"/></svg>
                 Add User
-            </a>
+            </button>
         </div>
 
         @if($users->isEmpty())
@@ -78,8 +84,6 @@
                 'icon' => 'inbox',
                 'title' => 'No users yet',
                 'message' => 'Create your first admin user to get started.',
-                'actionUrl' => route('admin.users.create'),
-                'actionLabel' => 'Add User',
             ])
         @else
             {{-- Desktop Table --}}
@@ -118,9 +122,9 @@
                             <td class="px-5 py-3 text-gray-500">{{ $user->created_at->format('M d, Y') }}</td>
                             <td class="px-5 py-3 text-right">
                                 <div class="flex items-center justify-end gap-1">
-                                    <a href="{{ route('admin.users.edit', $user) }}" class="p-1.5 text-gray-400 hover:text-teal-600 hover:bg-teal-50 rounded-lg transition-colors" title="Edit">
+                                    <button type="button" @@click="openEdit(@json($user->only('id', 'name', 'email', 'role')))" class="p-1.5 text-gray-400 hover:text-teal-600 hover:bg-teal-50 rounded-lg transition-colors" title="Edit">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10"/></svg>
-                                    </a>
+                                    </button>
                                     @if($user->id !== auth()->id())
                                     <button type="button" class="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors" title="Delete"
                                         @@click="$dispatch('open-confirm-delete', { url: '{{ route('admin.users.destroy', $user) }}', method: 'DELETE' })">
@@ -148,9 +152,9 @@
                             <p class="text-xs text-gray-500 truncate">{{ $user->email }}</p>
                         </div>
                         <div class="flex items-center gap-1">
-                            <a href="{{ route('admin.users.edit', $user) }}" class="p-2 text-gray-400 hover:text-teal-600 hover:bg-teal-50 rounded-lg transition-colors">
+                            <button type="button" @@click="openEdit(@json($user->only('id', 'name', 'email', 'role')))" class="p-2 text-gray-400 hover:text-teal-600 hover:bg-teal-50 rounded-lg transition-colors">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10"/></svg>
-                            </a>
+                            </button>
                             @if($user->id !== auth()->id())
                             <button type="button" class="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                                 @@click="$dispatch('open-confirm-delete', { url: '{{ route('admin.users.destroy', $user) }}', method: 'DELETE' })">
@@ -180,6 +184,24 @@
             </div>
         @endif
     </div>
+
+    {{-- User Form Modal --}}
+    <x-admin::modal name="user-form" size="lg">
+        <form method="POST" :action="formAction" x-ref="form">
+            @csrf
+            <input type="hidden" name="_method" :value="formMethod" x-show="formMethod !== 'POST'">
+            <input type="hidden" name="_editing" :value="editingId || ''">
+
+            @include('admin.users._form')
+
+            <div class="flex items-center justify-end gap-3 pt-5 mt-6 border-t border-gray-100">
+                <button type="button" @@click="window.dispatchEvent(new CustomEvent('close-modal-user-form'))" class="px-4 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">Cancel</button>
+                <button type="submit" class="px-6 py-2.5 text-sm font-medium text-white bg-teal-600 rounded-lg hover:bg-teal-700 transition-colors shadow-sm">
+                    <span x-text="isEditing ? 'Update User' : 'Create User'"></span>
+                </button>
+            </div>
+        </form>
+    </x-admin::modal>
 </div>
 
 @include('admin.components.confirm-dialog', ['name' => 'delete', 'title' => 'Delete User?', 'message' => 'Are you sure you want to delete this user? This action cannot be undone.'])
@@ -188,14 +210,62 @@
 @push('scripts')
 <script>
 document.addEventListener('alpine:init', () => {
-    Alpine.$store('confirmDelete', {
-        open: false,
-        url: '',
-        method: 'POST',
-    });
-    document.addEventListener('open-confirm-delete', (e) => {
-        Alpine.store('confirmDelete', { open: true, url: e.detail.url, method: e.detail.method || 'DELETE' });
-    });
+    Alpine.data('userForm', () => ({
+        isEditing: false,
+        editingId: null,
+        formAction: '{{ route('admin.users.store') }}',
+        formMethod: 'POST',
+        form: {
+            name: '',
+            email: '',
+            password: '',
+            role: 'admin',
+        },
+
+        openCreate() {
+            this.isEditing = false;
+            this.editingId = null;
+            this.formAction = '{{ route('admin.users.store') }}';
+            this.formMethod = 'POST';
+            this.form = { name: '', email: '', password: '', role: 'admin' };
+            window.dispatchEvent(new CustomEvent('open-modal-user-form', { detail: { title: 'Create User' } }));
+        },
+
+        openEdit(user) {
+            this.isEditing = true;
+            this.editingId = user.id;
+            this.formAction = '/admin/users/' + user.id;
+            this.formMethod = 'PUT';
+            this.form = { name: user.name, email: user.email, password: '', role: user.role };
+            window.dispatchEvent(new CustomEvent('open-modal-user-form', { detail: { title: 'Edit User' } }));
+        },
+
+        init() {
+            const showModal = @json($showUserModal);
+            const editingUser = @json($editingUser ? $editingUser->only('id', 'name', 'email', 'role') : null);
+            const oldName = @json(old('name', ''));
+            const oldEmail = @json(old('email', ''));
+            const oldRole = @json(old('role', 'admin'));
+
+            if (showModal) {
+                if (editingUser) {
+                    this.openEdit(editingUser);
+                    this.$nextTick(() => {
+                        if (oldName) this.form.name = oldName;
+                        if (oldEmail) this.form.email = oldEmail;
+                        this.form.role = oldRole;
+                    });
+                } else {
+                    this.openCreate();
+                    this.$nextTick(() => {
+                        if (oldName) this.form.name = oldName;
+                        if (oldEmail) this.form.email = oldEmail;
+                        this.form.role = oldRole;
+                    });
+                }
+            }
+        },
+    }));
 });
 </script>
 @endpush
