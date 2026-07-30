@@ -36,9 +36,3 @@ class User extends Authenticatable
         ];
     }
 }
-
-    public function canAccessPanel(Panel $panel): bool
-    {
-        return in_array($this->role, [self::ROLE_SUPER_ADMIN, self::ROLE_ADMIN, self::ROLE_STAFF]);
-    }
-}
