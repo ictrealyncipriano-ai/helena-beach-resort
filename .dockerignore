@@ -6,4 +6,3 @@ vendor
 database/database.sqlite
 .gitattributes
 AGENTS.md
-bootstrap/cache/
