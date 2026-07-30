@@ -1,5 +1,5 @@
 @extends('admin.layouts.app')
-
+@section('title', 'Dashboard')
 @section('header', 'Dashboard')
 @section('description', 'Overview of your resort operations')
 
