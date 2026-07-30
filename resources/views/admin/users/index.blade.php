@@ -186,7 +186,7 @@ $editingUser = $editingId ? \App\Models\User::find($editingId) : null;
     </div>
 
     {{-- User Form Modal --}}
-    <x-admin::modal name="user-form" size="lg">
+    <x-admin.modal name="user-form" size="lg">
         <form method="POST" :action="formAction" x-ref="form">
             @csrf
             <input type="hidden" name="_method" :value="formMethod" x-show="formMethod !== 'POST'">
@@ -201,7 +201,7 @@ $editingUser = $editingId ? \App\Models\User::find($editingId) : null;
                 </button>
             </div>
         </form>
-    </x-admin::modal>
+    </x-admin.modal>
 </div>
 
 @include('admin.components.confirm-dialog', ['name' => 'delete', 'title' => 'Delete User?', 'message' => 'Are you sure you want to delete this user? This action cannot be undone.'])
