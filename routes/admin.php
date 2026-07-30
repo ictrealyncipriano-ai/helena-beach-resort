@@ -23,7 +23,8 @@ Route::prefix('admin')->name('admin.')->group(function () {
     Route::middleware(['auth', AdminMiddleware::class])->group(function () {
         Route::post('logout', [LoginController::class, 'logout'])->name('logout');
 
-        Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
+        Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+        Route::get('/', fn() => redirect()->route('admin.dashboard'))->name('home');
 
         Route::resource('cottages', CottageController::class);
         Route::resource('testimonials', TestimonialController::class);
