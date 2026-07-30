@@ -12,6 +12,7 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->trustProxies('*');
+        $middleware->redirectGuestsTo(fn () => route('admin.login'));
         $middleware->validateCsrfTokens(except: [
             'livewire/*',
             'livewire*',
