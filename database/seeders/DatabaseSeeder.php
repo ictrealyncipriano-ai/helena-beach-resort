@@ -8,13 +8,13 @@ use Illuminate\Database\Seeder;
 /**
  * Main seeder: creates default admin/staff users and populates
  * initial data (settings, cottages, FAQs, etc.).
- * Uses updateOrCreate and firstOrCreate to avoid duplicates on re-seed.
+ * Uses firstOrCreate to avoid duplicates on re-seed.
  */
 class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
-        User::updateOrCreate(
+        User::firstOrCreate(
             ['email' => 'admin@helenaresort.com'],
             [
                 'name' => 'Super Admin',
@@ -23,7 +23,7 @@ class DatabaseSeeder extends Seeder
             ]
         );
 
-        User::updateOrCreate(
+        User::firstOrCreate(
             ['email' => 'staff@helenaresort.com'],
             [
                 'name' => 'Staff',

@@ -1,0 +1,51 @@
+@import 'tailwindcss';
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+@source '../**/*.blade.php';
+
+@theme {
+    --font-sans: 'Inter', system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+    --font-heading: 'Playfair Display', Georgia, 'Times New Roman', serif;
+
+    --color-beach-50: #f0fdfa;
+    --color-beach-100: #ccfbf1;
+    --color-beach-200: #99f6e4;
+    --color-beach-300: #5eead4;
+    --color-beach-400: #2dd4bf;
+    --color-beach-500: #14b8a6;
+    --color-beach-600: #0d9488;
+    --color-beach-700: #0f766e;
+    --color-beach-800: #115e59;
+    --color-beach-900: #134e4a;
+}
+
+[x-cloak] { display: none !important; }
+
+/* Scrollbar styling */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
+
+/* Table helpers */
+.table-container {
+    @apply overflow-x-auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* Card hover effect */
+.card-hover {
+    @apply transition-all duration-200;
+}
+.card-hover:hover {
+    @apply shadow-md -translate-y-0.5;
+}
+
+/* Toggle switch animation */
+.toggle-checkbox:checked + .toggle-label {
+    @apply bg-teal-600;
+}
+.toggle-checkbox:checked + .toggle-label::after {
+    @apply translate-x-full;
+}

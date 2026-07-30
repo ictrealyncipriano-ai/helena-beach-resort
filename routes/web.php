@@ -1,12 +1,9 @@
 <?php
 
-use App\Http\Controllers\Admin\Auth\LoginController;
-use App\Http\Controllers\AdminController;
 use App\Http\Controllers\CottageController;
 use App\Http\Controllers\GalleryController;
 use App\Http\Controllers\InquiryController;
 use App\Http\Controllers\PageController;
-use Filament\Http\Middleware\Authenticate;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -87,21 +84,7 @@ Route::get('/booking/{inquiry}/invoice/pdf', [App\Http\Controllers\InvoiceContro
 
 /*
 |--------------------------------------------------------------------------
-| Admin Authentication
+| Admin Routes
 |--------------------------------------------------------------------------
 */
-Route::prefix('admin')->name('admin.')->group(function () {
-    Route::middleware('guest')->group(function () {
-        Route::get('login', [LoginController::class, 'showLoginForm'])->name('login');
-        Route::post('login', [LoginController::class, 'login']);
-    });
-});
-
-/*
-|--------------------------------------------------------------------------
-| Admin Utilities
-|--------------------------------------------------------------------------
-*/
-Route::get('/admin/faqs/activate-all', [AdminController::class, 'activateAllFaqs'])
-    ->middleware([Authenticate::class])
-    ->name('admin.faqs.activate-all');
+require __DIR__.'/admin.php';

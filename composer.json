@@ -8,7 +8,6 @@
     "require": {
         "php": "^8.2",
         "barryvdh/laravel-dompdf": "*",
-        "filament/filament": "*",
         "flowframe/laravel-trend": "*",
         "laravel/framework": "^12.0",
         "laravel/tinker": "^2.10.1",
@@ -55,8 +54,7 @@
         ],
         "post-autoload-dump": [
             "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",
-            "@php artisan package:discover --ansi",
-            "@php artisan filament:upgrade"
+            "@php artisan package:discover --ansi"
         ],
         "post-update-cmd": [
             "@php artisan vendor:publish --tag=laravel-assets --ansi --force"
