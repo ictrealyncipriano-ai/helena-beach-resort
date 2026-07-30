@@ -14,7 +14,7 @@ services:
       - key: SESSION_DOMAIN
         value: .helena.labcoop.online
       - key: APP_KEY
-        generateValue: true
+        value: base64:oSSlyK8+E6NGVJ3tFKw+9W0YiyK+j6gyqn4k0r0OeKs=
       - key: DB_CONNECTION
         value: pgsql
       - key: DB_HOST
