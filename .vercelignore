@@ -14,6 +14,10 @@
 /public/storage
 /storage/*.key
 
+# Not needed on Vercel; api/index.php is the entry point. Excluding it prevents
+# Vercel's static server from serving the raw PHP source at "/".
+/public/index.php
+
 # Local tooling / OS noise.
 /.git
 /.idea
