@@ -1,0 +1,31 @@
+# Vercel build dependencies are installed during the build phase.
+/vendor
+/node_modules
+
+# Environment / secrets are injected by the Vercel dashboard.
+.env
+.env.backup
+.env.production
+
+# Runtime data is redirected to writable /tmp by Vercel env vars.
+/storage/framework
+/storage/logs
+/public/build
+/public/storage
+/storage/*.key
+
+# Local tooling / OS noise.
+/.git
+/.idea
+/.vscode
+/.fleet
+/.nova
+/.zed
+.DS_Store
+Thumbs.db
+
+# Local databases.
+*.sqlite
+*.sqlite-journal
+*.sqlite-shm
+*.sqlite-wal
