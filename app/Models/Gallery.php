@@ -31,7 +31,11 @@ class Gallery extends Model
      */
     protected static function compressImage(string $path): void
     {
-        $disk = Storage::disk('cloudflare');
+        try {
+            $disk = Storage::disk(config('filesystems.default'));
+        } catch (\Throwable) {
+            return;
+        }
 
         if (!$disk->exists($path)) {
             return;
