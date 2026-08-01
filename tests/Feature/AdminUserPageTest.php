@@ -43,44 +43,30 @@ class AdminUserPageTest extends TestCase
             ->assertStatus(403);
     }
 
-    public function test_edit_buttons_pass_user_data_via_json_data_attribute(): void
+    public function test_page_embeds_users_for_client_side_filtering(): void
     {
         $target = User::factory()->create(['name' => 'Editable User', 'email' => 'editable@helena.com', 'role' => 'admin']);
-        $admin = User::factory()->create(['role' => 'super_admin']);
+        $admin = User::factory()->create(['name' => 'Root Admin', 'role' => 'super_admin']);
 
         $response = $this->actingAs($admin)->get(route('admin.users.index'));
 
         $response->assertStatus(200)
             ->assertDontSee('openEdit({', false)
-            ->assertSee("JSON.parse(\$el.getAttribute('data-user'))", false);
+            ->assertSee('x-for="user in filteredUsers"', false)
+            ->assertSee('openEdit(user)', false);
 
-        preg_match_all("/data-user='([^']*)'/", $response->getContent(), $matches);
+        preg_match("/allUsers\s*:\s*JSON\.parse\('([^']*)'\)/", $response->getContent(), $matches);
 
-        $this->assertNotEmpty($matches[1]);
+        $this->assertArrayHasKey(1, $matches);
 
-        $found = collect($matches[1])
-            ->map(fn ($json) => json_decode($json, true))
-            ->first(fn ($user) => ($user['id'] ?? null) === $target->id);
+        $users = json_decode(json_decode('"' . $matches[1] . '"', true), true);
+
+        $found = collect($users)->first(fn ($user) => ($user['id'] ?? null) === $target->id);
 
         $this->assertNotNull($found);
         $this->assertSame($target->name, $found['name']);
         $this->assertSame($target->email, $found['email']);
         $this->assertSame($target->role, $found['role']);
-    }
-
-    public function test_ajax_request_returns_results_fragment_only(): void
-    {
-        $admin = User::factory()->create(['name' => 'Searchable Admin', 'role' => 'super_admin']);
-        $admin2 = User::factory()->create(['name' => 'Another Person', 'role' => 'admin']);
-
-        $this->actingAs($admin)
-            ->get(route('admin.users.index') . '?search=Searchable', [
-                'X-Requested-With' => 'XMLHttpRequest',
-            ])
-            ->assertOk()
-            ->assertSee('Searchable Admin')
-            ->assertDontSee('Another Person')
-            ->assertDontSee('<html', false);
     }
 
     public function test_search_filters_users_server_side(): void

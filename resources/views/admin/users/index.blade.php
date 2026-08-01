@@ -5,6 +5,13 @@ $showUserModal = $errors->hasAny(['name', 'email', 'password', 'role']);
 $editingId = old('_editing', 0);
 $editingUser = $editingId ? \App\Models\User::find($editingId) : null;
 $editingUserJson = $editingUser ? $editingUser->only('id', 'name', 'email', 'role') : null;
+$usersData = $users->map(fn ($u) => [
+    'id' => $u->id,
+    'name' => $u->name,
+    'email' => $u->email,
+    'role' => $u->role,
+    'joined' => $u->created_at->format('M d, Y'),
+])->values();
 @endphp
 
 @section('title', 'Users')
@@ -50,6 +57,9 @@ $editingUserJson = $editingUser ? $editingUser->only('id', 'name', 'email', 'rol
 <script>
 window.userForm = function() {
     return {
+        allUsers: @js($usersData),
+        authId: @js(auth()->id()),
+        search: '',
         isEditing: false,
         editingId: null,
         formAction: '{{ route('admin.users.store') }}',
@@ -59,6 +69,50 @@ window.userForm = function() {
             email: '',
             password: '',
             role: 'admin',
+        },
+
+        get filteredUsers() {
+            const q = this.search.trim().toLowerCase();
+            if (!q) return this.allUsers;
+            return this.allUsers.filter(u =>
+                (u.name || '').toLowerCase().includes(q) ||
+                (u.email || '').toLowerCase().includes(q)
+            );
+        },
+
+        get adminCount() {
+            return this.filteredUsers.filter(u => u.role === 'admin' || u.role === 'super_admin').length;
+        },
+
+        get staffCount() {
+            return this.filteredUsers.filter(u => u.role === 'staff').length;
+        },
+
+        initials(name) {
+            const parts = String(name || '').trim().split(/\s+/);
+            const a = (parts[0] || '')[0] || '';
+            const b = parts.length > 1 ? (parts[1] || '')[0] || '' : (parts[0] || '')[1] || '';
+            return (a + b).toUpperCase();
+        },
+
+        roleClass(role) {
+            return role === 'super_admin' ? 'bg-red-500' : role === 'admin' ? 'bg-teal-500' : 'bg-gray-400';
+        },
+
+        roleBadgeClass(role) {
+            return role === 'super_admin'
+                ? 'bg-red-50 text-red-700 ring-red-600/20'
+                : role === 'admin'
+                    ? 'bg-amber-50 text-amber-700 ring-amber-600/20'
+                    : 'bg-gray-50 text-gray-600 ring-gray-500/20';
+        },
+
+        roleLabel(role) {
+            return role === 'super_admin' ? 'Super Admin' : role === 'admin' ? 'Admin' : 'Staff';
+        },
+
+        clearSearch() {
+            this.search = '';
         },
 
         openCreate() {
@@ -77,25 +131,6 @@ window.userForm = function() {
             this.formMethod = 'PUT';
             this.form = { name: user.name, email: user.email, password: '', role: user.role };
             window.dispatchEvent(new CustomEvent('open-modal-user-form', { detail: { title: 'Edit User' } }));
-        },
-
-        performSearch(q) {
-            clearTimeout(this._searchTimer);
-            this._searchTimer = setTimeout(() => this._runSearch(q), 400);
-        },
-
-        async _runSearch(q) {
-            const url = '/admin/users?search=' + encodeURIComponent(q || '');
-            try {
-                const resp = await fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
-                if (!resp.ok) return;
-                const container = document.getElementById('users-results');
-                container.innerHTML = await resp.text();
-                Alpine.initTree(container);
-                history.replaceState(null, '', url);
-            } catch (e) {
-                // keep previous results if the request fails
-            }
         },
 
         init() {
@@ -122,11 +157,6 @@ window.userForm = function() {
                     });
                 }
             }
-
-            document.addEventListener('input', (e) => {
-                if (e.target.id !== 'user-search') return;
-                this.performSearch(e.target.value);
-            });
         },
     };
 }
