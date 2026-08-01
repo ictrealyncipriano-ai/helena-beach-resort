@@ -21,6 +21,11 @@ class UserController extends Controller
         }
 
         $users = $query->latest()->paginate(15);
+
+        if ($request->header('X-Requested-With') === 'XMLHttpRequest') {
+            return view('admin.users._results', compact('users'));
+        }
+
         return view('admin.users.index', compact('users'));
     }
 

@@ -67,4 +67,33 @@ class AdminUserPageTest extends TestCase
         $this->assertSame($target->email, $found['email']);
         $this->assertSame($target->role, $found['role']);
     }
+
+    public function test_ajax_request_returns_results_fragment_only(): void
+    {
+        $admin = User::factory()->create(['name' => 'Searchable Admin', 'role' => 'super_admin']);
+        $admin2 = User::factory()->create(['name' => 'Another Person', 'role' => 'admin']);
+
+        $this->actingAs($admin)
+            ->get(route('admin.users.index') . '?search=Searchable', [
+                'X-Requested-With' => 'XMLHttpRequest',
+            ])
+            ->assertOk()
+            ->assertSee('Searchable Admin')
+            ->assertDontSee('Another Person')
+            ->assertDontSee('<html', false);
+    }
+
+    public function test_search_filters_users_server_side(): void
+    {
+        User::factory()->create(['name' => 'Alpha Keeper', 'role' => 'admin']);
+        User::factory()->create(['name' => 'Bravo Nobody', 'role' => 'staff']);
+
+        $admin = User::where('role', 'admin')->first();
+
+        $this->actingAs($admin)
+            ->get(route('admin.users.index') . '?search=Alpha')
+            ->assertOk()
+            ->assertSee('Alpha Keeper')
+            ->assertDontSee('Bravo Nobody');
+    }
 }
