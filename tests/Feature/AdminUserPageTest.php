@@ -42,4 +42,29 @@ class AdminUserPageTest extends TestCase
             ->get(route('admin.users.index'))
             ->assertStatus(403);
     }
+
+    public function test_edit_buttons_pass_user_data_via_json_data_attribute(): void
+    {
+        $target = User::factory()->create(['name' => 'Editable User', 'email' => 'editable@helena.com', 'role' => 'admin']);
+        $admin = User::factory()->create(['role' => 'super_admin']);
+
+        $response = $this->actingAs($admin)->get(route('admin.users.index'));
+
+        $response->assertStatus(200)
+            ->assertDontSee('openEdit({', false)
+            ->assertSee("JSON.parse(\$el.getAttribute('data-user'))", false);
+
+        preg_match_all("/data-user='([^']*)'/", $response->getContent(), $matches);
+
+        $this->assertNotEmpty($matches[1]);
+
+        $found = collect($matches[1])
+            ->map(fn ($json) => json_decode($json, true))
+            ->first(fn ($user) => ($user['id'] ?? null) === $target->id);
+
+        $this->assertNotNull($found);
+        $this->assertSame($target->name, $found['name']);
+        $this->assertSame($target->email, $found['email']);
+        $this->assertSame($target->role, $found['role']);
+    }
 }

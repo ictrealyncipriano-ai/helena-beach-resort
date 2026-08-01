@@ -185,8 +185,8 @@
 @push('scripts')
 <script>
 function bookingForm() {
-    const blockedData = @json($blockedByCottage);
-    const rateData = @json($rates);
+    const blockedData = @js($blockedByCottage);
+    const rateData = @js($rates);
 
     return {
         bookingType: 'day_tour',

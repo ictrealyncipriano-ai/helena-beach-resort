@@ -190,9 +190,9 @@ function cottageForm() {
     return {
         slug: '{{ old('slug', $cottage->slug ?? '') }}',
         slugManuallyChanged: {{ $cottage->exists ? 'true' : 'false' }},
-        amenities: @json(old('amenities', $cottage->exists ? $cottage->amenities->toArray() : [])),
-        dateBlocks: @json(old('date_blocks', $cottage->exists ? $cottage->dateBlocks->map(fn($b) => ['date' => $b->date?->format('Y-m-d'), 'reason' => $b->reason])->toArray() : [])),
-        existingPhotos: @json($cottage->exists ? $cottage->photos->map(fn($p) => ['id' => $p->id, 'url' => Storage::url($p->photo_path), 'is_primary' => $p->is_primary])->toArray() : []),
+        amenities: @js(old('amenities', $cottage->exists ? $cottage->amenities->toArray() : [])),
+        dateBlocks: @js(old('date_blocks', $cottage->exists ? $cottage->dateBlocks->map(fn($b) => ['date' => $b->date?->format('Y-m-d'), 'reason' => $b->reason])->toArray() : [])),
+        existingPhotos: @js($cottage->exists ? $cottage->photos->map(fn($p) => ['id' => $p->id, 'url' => Storage::url($p->photo_path), 'is_primary' => $p->is_primary])->toArray() : []),
         newPhotos: [],
         deletedPhotoIds: '',
         addAmenity() { this.amenities.push({ name: '', icon: '' }) },
