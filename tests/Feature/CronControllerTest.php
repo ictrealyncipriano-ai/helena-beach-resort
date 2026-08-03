@@ -64,4 +64,13 @@ class CronControllerTest extends TestCase
             'date' => '2026-09-01',
         ]);
     }
+
+    public function test_migrate_endpoint_requires_bearer_token(): void
+    {
+        $this->post('/cron/migrate')->assertStatus(401);
+
+        $this->withHeader('Authorization', 'Bearer wrong-secret')
+            ->post('/cron/migrate')
+            ->assertStatus(401);
+    }
 }

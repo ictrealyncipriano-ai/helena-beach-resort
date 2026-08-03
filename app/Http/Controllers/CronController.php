@@ -32,4 +32,30 @@ class CronController extends Controller
             return response()->json(['error' => $e->getMessage()], 500);
         }
     }
+
+    /**
+     * Run pending database migrations against the production database.
+     * Guarded by the same CRON_SECRET bearer token so it can be triggered
+     * manually (e.g. `curl -H "Authorization: Bearer <CRON_SECRET>" ...`)
+     * and is never exposed to anonymous traffic.
+     */
+    public function migrate(Request $request): Response
+    {
+        $secret = (string) config('cron.secret');
+
+        if ($secret === '' || $request->bearerToken() !== $secret) {
+            return response()->json(['error' => 'Unauthorized'], 401);
+        }
+
+        try {
+            Artisan::call('migrate --force', [], null);
+
+            return response()->json([
+                'ok' => true,
+                'output' => Artisan::output(),
+            ]);
+        } catch (\Throwable $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
 }
