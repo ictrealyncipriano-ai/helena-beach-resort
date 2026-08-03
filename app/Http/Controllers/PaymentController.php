@@ -33,6 +33,11 @@ class PaymentController extends Controller
                 ->with('success', 'This booking has already been paid.');
         }
 
+        if (! $inquiry->total_amount || (float) $inquiry->total_amount < 1) {
+            return redirect()->route('booking.portal.show', $inquiry)
+                ->with('error', 'This booking has no payable amount set yet. Please contact the resort.');
+        }
+
         try {
             $session = $payMongo->createCheckoutSession($inquiry);
         } catch (\RuntimeException $e) {

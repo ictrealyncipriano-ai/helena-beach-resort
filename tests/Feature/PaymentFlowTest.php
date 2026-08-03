@@ -89,6 +89,20 @@ class PaymentFlowTest extends TestCase
         ]);
     }
 
+    public function test_pay_with_zero_amount_redirects_without_calling_api(): void
+    {
+        $inquiry = $this->confirmedBooking('zero@example.com');
+        $inquiry->update(['total_amount' => 0]);
+
+        Http::fake();
+
+        $this->get(route('payment.pay', $inquiry))
+            ->assertRedirect(route('booking.portal.show', $inquiry))
+            ->assertSessionHas('error');
+
+        Http::assertNothingSent();
+    }
+
     public function test_pay_when_already_paid_redirects_without_calling_api(): void
     {
         $inquiry = $this->confirmedBooking('paid@example.com');

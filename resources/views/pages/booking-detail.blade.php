@@ -140,7 +140,7 @@
         </div>
 
         <div class="flex flex-col sm:flex-row gap-3 mt-6 reveal">
-            @if($inquiry->status === 'confirmed' && ! $inquiry->isPaid())
+            @if($inquiry->status === 'confirmed' && ! $inquiry->isPaid() && $inquiry->total_amount)
             <a href="{{ route('payment.pay', $inquiry) }}"
                 class="flex-1 text-center px-6 py-3 bg-teal-600 text-white font-medium rounded-xl hover:bg-teal-700 transition-all inline-flex items-center justify-center gap-2">
                 <x-icons name="card" class="w-4 h-4" />

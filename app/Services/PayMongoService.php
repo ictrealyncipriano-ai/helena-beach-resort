@@ -23,6 +23,12 @@ class PayMongoService
      */
     public function createCheckoutSession(Inquiry $inquiry): array
     {
+        $amount = $this->toCentavos($inquiry->total_amount);
+
+        if ($amount < 100 || $amount > 99999999999) {
+            throw new \RuntimeException('This booking has an invalid payable amount and cannot be paid.');
+        }
+
         $response = Http::baseUrl(config('paymongo.base_url'))
             ->withBasicAuth(config('paymongo.secret_key'), '')
             ->acceptJson()
@@ -32,7 +38,7 @@ class PayMongoService
                         'line_items' => [
                             [
                                 'name' => $this->lineItemName($inquiry),
-                                'amount' => $this->toCentavos($inquiry->total_amount),
+                                'amount' => $amount,
                                 'currency' => 'PHP',
                                 'quantity' => 1,
                             ],
