@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Mail\BookingCancelled;
 use App\Mail\BookingConfirmed;
-use App\Models\CottageDateBlock;
+use App\Models\Cottage;
 use App\Models\Guest;
 use App\Models\Inquiry;
 use App\Models\SiteSetting;
@@ -21,8 +21,8 @@ class InquiryController extends Controller
         if ($search = $request->get('search')) {
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('email', 'like', "%{$search}%")
-                  ->orWhere('reference_code', 'like', "%{$search}%");
+                    ->orWhere('email', 'like', "%{$search}%")
+                    ->orWhere('reference_code', 'like', "%{$search}%");
             });
         }
 
@@ -43,7 +43,7 @@ class InquiryController extends Controller
         }
 
         $inquiries = $query->latest()->paginate(15);
-        $cottages = \App\Models\Cottage::pluck('name', 'id');
+        $cottages = Cottage::pluck('name', 'id');
 
         return view('admin.inquiries.index', compact('inquiries', 'cottages'));
     }
@@ -51,14 +51,16 @@ class InquiryController extends Controller
     public function show(Inquiry $inquiry)
     {
         $inquiry->load(['cottage', 'guest']);
+
         return view('admin.inquiries.show', compact('inquiry'));
     }
 
     public function edit(Inquiry $inquiry)
     {
         $inquiry->load(['cottage', 'guest']);
-        $cottages = \App\Models\Cottage::pluck('name', 'id');
+        $cottages = Cottage::pluck('name', 'id');
         $guests = Guest::pluck('name', 'id');
+
         return view('admin.inquiries.form', compact('inquiry', 'cottages', 'guests'));
     }
 
@@ -75,11 +77,28 @@ class InquiryController extends Controller
             'pax' => 'nullable|integer|min:1',
             'total_amount' => 'nullable|numeric|min:0',
             'cottage_id' => 'nullable|exists:cottages,id',
-            'status' => 'required|in:pending,confirmed,cancelled',
+            'status' => 'required|in:pending,confirmed,cancelled,expired',
             'message' => 'nullable',
         ]);
 
+        $original = [
+            'cottage_id' => $inquiry->cottage_id,
+            'check_in' => $inquiry->check_in?->format('Y-m-d'),
+            'check_out' => $inquiry->check_out?->format('Y-m-d'),
+        ];
+
         $inquiry->update($data);
+        $inquiry->refresh();
+
+        // Release the blocks held for the original schedule, then re-hold
+        // for the new schedule so stale blocks never linger.
+        $inquiry->releaseBlocks($original);
+
+        if ($inquiry->status === 'confirmed') {
+            $inquiry->bookBlocks();
+        } elseif ($inquiry->status === 'pending') {
+            $inquiry->reserveBlocks();
+        }
 
         return redirect()->route('admin.inquiries.index')
             ->with('success', 'Inquiry updated successfully.');
@@ -87,7 +106,9 @@ class InquiryController extends Controller
 
     public function destroy(Inquiry $inquiry)
     {
+        $inquiry->releaseBlocks();
         $inquiry->delete();
+
         return redirect()->route('admin.inquiries.index')
             ->with('success', 'Inquiry deleted successfully.');
     }
@@ -99,17 +120,7 @@ class InquiryController extends Controller
         }
 
         $inquiry->update(['status' => 'confirmed']);
-
-        if ($inquiry->check_in && $inquiry->check_out) {
-            $period = $inquiry->check_in->copy();
-            while ($period->lte($inquiry->check_out)) {
-                CottageDateBlock::firstOrCreate([
-                    'cottage_id' => $inquiry->cottage_id,
-                    'date' => $period->format('Y-m-d'),
-                ], ['reason' => "Booked: {$inquiry->reference_code}"]);
-                $period->addDay();
-            }
-        }
+        $inquiry->bookBlocks();
 
         if ($inquiry->guest) {
             $inquiry->guest->increment('total_stays');
@@ -133,10 +144,7 @@ class InquiryController extends Controller
         }
 
         $inquiry->update(['status' => 'cancelled']);
-
-        CottageDateBlock::where('cottage_id', $inquiry->cottage_id)
-            ->whereBetween('date', [$inquiry->check_in, $inquiry->check_out])
-            ->delete();
+        $inquiry->releaseBlocks();
 
         if ($inquiry->guest && $inquiry->guest->total_stays > 0) {
             $inquiry->guest->decrement('total_stays');

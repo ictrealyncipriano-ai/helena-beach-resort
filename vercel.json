@@ -2,6 +2,12 @@
     "$schema": "https://openapi.vercel.sh/vercel.json",
     "buildCommand": "npm run build",
     "outputDirectory": "public",
+    "crons": [
+        {
+            "path": "/cron/reservations",
+            "schedule": "0 * * * *"
+        }
+    ],
     "functions": {
         "api/index.php": {
             "runtime": "vercel-php@0.8.0",

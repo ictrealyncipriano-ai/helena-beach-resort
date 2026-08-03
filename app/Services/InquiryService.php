@@ -2,11 +2,12 @@
 
 namespace App\Services;
 
+use App\Mail\InquiryNotification;
 use App\Models\Cottage;
 use App\Models\Guest;
 use App\Models\Inquiry;
-use App\Mail\InquiryNotification;
 use App\Models\SiteSetting;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 
@@ -23,13 +24,13 @@ class InquiryService
     {
         // Calculate total amount based on booking type and cottage rates
         $totalAmount = null;
-        if (!empty($data['booking_type']) && !empty($data['cottage_id'])) {
+        if (! empty($data['booking_type']) && ! empty($data['cottage_id'])) {
             $cottage = Cottage::find($data['cottage_id']);
             if ($cottage) {
                 if ($data['booking_type'] === 'day_tour') {
                     $totalAmount = $cottage->rate_daytour;
-                } elseif ($data['booking_type'] === 'overnight' && !empty($data['check_in']) && !empty($data['check_out'])) {
-                    $nights = \Carbon\Carbon::parse($data['check_in'])->diffInDays(\Carbon\Carbon::parse($data['check_out']));
+                } elseif ($data['booking_type'] === 'overnight' && ! empty($data['check_in']) && ! empty($data['check_out'])) {
+                    $nights = Carbon::parse($data['check_in'])->diffInDays(Carbon::parse($data['check_out']));
                     $totalAmount = $cottage->rate_overnight * max($nights, 1);
                 }
             }
@@ -48,6 +49,9 @@ class InquiryService
             'total_amount' => $totalAmount,
             'source' => $data['source'] ?? 'website',
         ]);
+
+        // Reserve the cottage dates for this inquiry (pending hold).
+        $inquiry->reserveBlocks();
 
         // Create or update guest record linked to this inquiry
         $guest = Guest::updateOrCreate(

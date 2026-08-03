@@ -86,6 +86,7 @@
                         <option value="pending" {{ old('status', $inquiry->status) === 'pending' ? 'selected' : '' }}>Pending</option>
                         <option value="confirmed" {{ old('status', $inquiry->status) === 'confirmed' ? 'selected' : '' }}>Confirmed</option>
                         <option value="cancelled" {{ old('status', $inquiry->status) === 'cancelled' ? 'selected' : '' }}>Cancelled</option>
+                        <option value="expired" {{ old('status', $inquiry->status) === 'expired' ? 'selected' : '' }}>Expired</option>
                     </select>
                 </div>
                 <div class="md:col-span-3">

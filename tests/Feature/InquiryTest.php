@@ -107,4 +107,65 @@ class InquiryTest extends TestCase
             ->assertStatus(200)
             ->assertSee('HB-000001');
     }
+
+    public function test_dated_inquiry_creates_date_blocks(): void
+    {
+        $cottage = Cottage::first();
+
+        $this->post('/contact', [
+            'name' => 'Blocked Guest',
+            'email' => 'blocked@example.com',
+            'cottage_id' => $cottage->id,
+            'check_in' => '2026-08-10',
+            'check_out' => '2026-08-12',
+            'message' => 'Please hold these dates.',
+        ]);
+
+        $inquiry = Inquiry::where('email', 'blocked@example.com')->first();
+
+        foreach (['2026-08-10', '2026-08-11', '2026-08-12'] as $date) {
+            $this->assertDatabaseHas('cottage_date_blocks', [
+                'cottage_id' => $cottage->id,
+                'date' => $date,
+                'reason' => "Pending: {$inquiry->reference_code}",
+            ]);
+        }
+    }
+
+    public function test_releasing_blocks_does_not_touch_other_bookings(): void
+    {
+        $cottage = Cottage::first();
+
+        $this->post('/contact', [
+            'name' => 'First',
+            'email' => 'first@example.com',
+            'cottage_id' => $cottage->id,
+            'check_in' => '2026-08-10',
+            'check_out' => '2026-08-12',
+            'message' => 'Hold one.',
+        ]);
+        $this->post('/contact', [
+            'name' => 'Second',
+            'email' => 'second@example.com',
+            'cottage_id' => $cottage->id,
+            'check_in' => '2026-08-13',
+            'check_out' => '2026-08-14',
+            'message' => 'Hold two.',
+        ]);
+
+        $first = Inquiry::where('email', 'first@example.com')->first();
+        $first->releaseBlocks();
+
+        $this->assertDatabaseMissing('cottage_date_blocks', [
+            'cottage_id' => $cottage->id,
+            'date' => '2026-08-10',
+        ]);
+
+        $second = Inquiry::where('email', 'second@example.com')->first();
+        $this->assertDatabaseHas('cottage_date_blocks', [
+            'cottage_id' => $cottage->id,
+            'date' => '2026-08-13',
+            'reason' => "Pending: {$second->reference_code}",
+        ]);
+    }
 }

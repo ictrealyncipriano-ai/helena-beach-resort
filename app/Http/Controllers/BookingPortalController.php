@@ -2,10 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\CottageDateBlock;
+use App\Mail\BookingCancelled;
 use App\Models\Inquiry;
 use App\Models\SiteSetting;
-use App\Mail\BookingCancelled;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
@@ -34,7 +33,7 @@ class BookingPortalController extends Controller
             ->where('reference_code', $validated['reference_code'])
             ->first();
 
-        if (!$inquiry) {
+        if (! $inquiry) {
             return back()->withErrors([
                 'reference_code' => 'No booking found with that email and reference code.',
             ])->withInput();
@@ -54,18 +53,12 @@ class BookingPortalController extends Controller
     /** Cancel a booking (guest-facing), sends notification to guest and owner */
     public function cancel(Request $request, Inquiry $inquiry)
     {
-        if (!$this->canCancel($inquiry)) {
+        if (! $this->canCancel($inquiry)) {
             return back()->with('error', 'This booking cannot be cancelled. Cancellations must be made at least 48 hours before check-in.');
         }
 
         $inquiry->update(['status' => 'cancelled']);
-
-        if ($inquiry->check_in && $inquiry->check_out && $inquiry->cottage_id) {
-            CottageDateBlock::where('cottage_id', $inquiry->cottage_id)
-                ->whereBetween('date', [$inquiry->check_in, $inquiry->check_out])
-                ->where('reason', "Booked: {$inquiry->reference_code}")
-                ->delete();
-        }
+        $inquiry->releaseBlocks();
 
         if ($inquiry->guest) {
             $inquiry->guest->decrement('total_stays');
@@ -96,7 +89,7 @@ class BookingPortalController extends Controller
      */
     private function canCancel(Inquiry $inquiry): bool
     {
-        if (!in_array($inquiry->status, ['pending', 'confirmed'])) {
+        if (! in_array($inquiry->status, ['pending', 'confirmed'])) {
             return false;
         }
 

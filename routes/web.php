@@ -1,8 +1,12 @@
 <?php
 
+use App\Http\Controllers\BookingController;
+use App\Http\Controllers\BookingPortalController;
 use App\Http\Controllers\CottageController;
+use App\Http\Controllers\CronController;
 use App\Http\Controllers\GalleryController;
 use App\Http\Controllers\InquiryController;
+use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\PageController;
 use Illuminate\Support\Facades\Route;
 
@@ -46,8 +50,8 @@ Route::get('/gallery', [GalleryController::class, 'index'])->name('gallery.index
 | Booking Flow
 |--------------------------------------------------------------------------
 */
-Route::get('/book', [App\Http\Controllers\BookingController::class, 'create'])->name('book');
-Route::post('/book', [App\Http\Controllers\BookingController::class, 'store'])
+Route::get('/book', [BookingController::class, 'create'])->name('book');
+Route::post('/book', [BookingController::class, 'store'])
     ->middleware('throttle:3,1')
     ->name('book.store');
 
@@ -67,10 +71,10 @@ Route::get('/booking/confirmation/{inquiry}', [InquiryController::class, 'show']
 | Guest Booking Portal (lookup + self-cancel)
 |--------------------------------------------------------------------------
 */
-Route::get('/booking/lookup', [App\Http\Controllers\BookingPortalController::class, 'lookupForm'])->name('booking.portal.lookup');
-Route::post('/booking/lookup', [App\Http\Controllers\BookingPortalController::class, 'lookup'])->name('booking.portal.lookup.post');
-Route::get('/booking/{inquiry}', [App\Http\Controllers\BookingPortalController::class, 'show'])->name('booking.portal.show');
-Route::post('/booking/{inquiry}/cancel', [App\Http\Controllers\BookingPortalController::class, 'cancel'])
+Route::get('/booking/lookup', [BookingPortalController::class, 'lookupForm'])->name('booking.portal.lookup');
+Route::post('/booking/lookup', [BookingPortalController::class, 'lookup'])->name('booking.portal.lookup.post');
+Route::get('/booking/{inquiry}', [BookingPortalController::class, 'show'])->name('booking.portal.show');
+Route::post('/booking/{inquiry}/cancel', [BookingPortalController::class, 'cancel'])
     ->middleware('throttle:3,1')
     ->name('booking.portal.cancel');
 
@@ -79,8 +83,15 @@ Route::post('/booking/{inquiry}/cancel', [App\Http\Controllers\BookingPortalCont
 | Invoice
 |--------------------------------------------------------------------------
 */
-Route::get('/booking/{inquiry}/invoice', [App\Http\Controllers\InvoiceController::class, 'show'])->name('invoice.show');
-Route::get('/booking/{inquiry}/invoice/pdf', [App\Http\Controllers\InvoiceController::class, 'download'])->name('invoice.download');
+Route::get('/booking/{inquiry}/invoice', [InvoiceController::class, 'show'])->name('invoice.show');
+Route::get('/booking/{inquiry}/invoice/pdf', [InvoiceController::class, 'download'])->name('invoice.download');
+
+/*
+|--------------------------------------------------------------------------
+| Cron Endpoints (triggered by Vercel Cron)
+|--------------------------------------------------------------------------
+*/
+Route::get('/cron/reservations', [CronController::class, 'releaseExpiredReservations']);
 
 /*
 |--------------------------------------------------------------------------
