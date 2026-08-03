@@ -10,7 +10,8 @@ class Inquiry extends Model
     protected $fillable = [
         'reference_code', 'name', 'email', 'phone', 'check_in', 'check_out',
         'pax', 'cottage_id', 'guest_id', 'message', 'status', 'source',
-        'booking_type', 'total_amount',
+        'booking_type', 'total_amount', 'paid_at', 'paid_amount',
+        'payment_method', 'paymongo_session_id',
     ];
 
     /**
@@ -31,7 +32,14 @@ class Inquiry extends Model
             'check_in' => 'date',
             'check_out' => 'date',
             'total_amount' => 'decimal:2',
+            'paid_at' => 'datetime',
+            'paid_amount' => 'decimal:2',
         ];
+    }
+
+    public function isPaid(): bool
+    {
+        return $this->paid_at !== null;
     }
 
     public function cottage(): BelongsTo

@@ -8,6 +8,8 @@ use App\Http\Controllers\GalleryController;
 use App\Http\Controllers\InquiryController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\PageController;
+use App\Http\Controllers\PaymentController;
+use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -85,6 +87,18 @@ Route::post('/booking/{inquiry}/cancel', [BookingPortalController::class, 'cance
 */
 Route::get('/booking/{inquiry}/invoice', [InvoiceController::class, 'show'])->name('invoice.show');
 Route::get('/booking/{inquiry}/invoice/pdf', [InvoiceController::class, 'download'])->name('invoice.download');
+
+/*
+|--------------------------------------------------------------------------
+| Payments (PayMongo hosted checkout)
+|--------------------------------------------------------------------------
+*/
+Route::get('/booking/{inquiry}/pay', [PaymentController::class, 'pay'])
+    ->middleware('throttle:5,1')
+    ->name('payment.pay');
+Route::post('/paymongo/webhook', [PaymentController::class, 'webhook'])
+    ->withoutMiddleware(VerifyCsrfToken::class)
+    ->name('payment.webhook');
 
 /*
 |--------------------------------------------------------------------------

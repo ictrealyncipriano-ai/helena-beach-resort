@@ -66,6 +66,23 @@
 </table>
 </div>
 
+@if(! $inquiry->isPaid())
+<div style="background: #fffbeb; border-radius: 12px; padding: 16px 20px; margin-bottom: 24px; border: 1px solid #fde68a;">
+<p style="margin: 0 0 12px; font-size: 13px; color: #92400e; line-height: 1.6;">
+To secure your booking, please complete payment of <strong>₱{{ number_format($inquiry->total_amount) }}</strong> via GCash, Maya, or card.
+</p>
+<div style="text-align: center;">
+<table role="presentation" cellpadding="0" cellspacing="0" style="margin: 0 auto;">
+<tr>
+<td style="background: #059669; border-radius: 8px; text-align: center;">
+<a href="{{ route('payment.pay', $inquiry) }}" class="btn" style="display: inline-block; padding: 12px 28px; font-size: 14px; font-weight: 600; color: #ffffff; text-decoration: none; border-radius: 8px;">Pay Now</a>
+</td>
+</tr>
+</table>
+</div>
+</div>
+@endif
+
 <div style="border-top: 1px solid #e2e8f0; padding-top: 20px;">
 <p style="margin: 0 0 8px; font-size: 14px; color: #64748b; line-height: 1.6;">
 If you have any questions, feel free to reply to this email or contact us directly. We look forward to hosting you!

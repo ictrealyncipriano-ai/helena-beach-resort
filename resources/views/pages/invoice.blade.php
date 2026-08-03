@@ -149,7 +149,7 @@
 </head>
 <body>
 
-    <div class="watermark">PAID</div>
+    <div class="watermark">@if($inquiry->isPaid())PAID@elseUNPAID@endif</div>
 
     <div class="top-bar">
         <h1>{{ App\Models\SiteSetting::getValue('site_name', 'Helena Beach Resort') }}</h1>
@@ -180,7 +180,7 @@
             </div>
             <div style="margin-top:6px;">
                 <div class="meta-label">Status</div>
-                <div><span class="badge">Confirmed</span></div>
+                <div><span class="badge">{{ $inquiry->isPaid() ? 'Paid' : 'Confirmed' }}</span></div>
             </div>
         </div>
     </div>
@@ -256,8 +256,12 @@
     </table>
 
     <div class="terms">
-        <strong>Payment Terms:</strong> Full payment due upon booking confirmation.<br>
-        <strong>Payment Methods:</strong> GCash, Bank Transfer, or Cash on site.<br>
+        @if($inquiry->isPaid())
+            <strong>Payment Status:</strong> Paid@if($inquiry->payment_method) via {{ ucfirst($inquiry->payment_method) }}@endif
+            @if($inquiry->paid_at) on {{ $inquiry->paid_at->format('M d, Y') }}@endif.<br>
+        @else
+            <strong>Payment Terms:</strong> Full payment due upon booking confirmation. Pay online via GCash, Maya, or card, or settle via Bank Transfer / Cash on site.<br>
+        @endif
         <strong>Reference Code:</strong> {{ $inquiry->reference_code }}
         &nbsp;&middot;&nbsp;
         <strong>Guests:</strong> {{ $inquiry->pax ?? '—' }}

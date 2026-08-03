@@ -39,11 +39,20 @@
                         <x-icons name="{{ $statusIcons[$inquiry->status] ?? 'info' }}" class="w-3 h-3" />
                         {{ $statusLabels[$inquiry->status] ?? ucfirst($inquiry->status) }}
                     </span>
+                    @if($inquiry->isPaid())
+                    <span class="ml-2 inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold rounded-full bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200">
+                        <x-icons name="check" class="w-3 h-3" />
+                        Paid
+                    </span>
+                    @endif
                 </div>
                 @if($inquiry->total_amount)
                 <div class="text-right">
                     <p class="text-sm text-gray-500 mb-1">Total</p>
                     <p class="text-2xl font-bold text-teal-600">₱{{ number_format($inquiry->total_amount) }}</p>
+                    @if($inquiry->isPaid() && $inquiry->payment_method)
+                    <p class="text-xs text-gray-400 mt-1">via {{ ucfirst($inquiry->payment_method) }} · {{ $inquiry->paid_at->format('M d, Y') }}</p>
+                    @endif
                 </div>
                 @endif
             </div>
@@ -131,6 +140,14 @@
         </div>
 
         <div class="flex flex-col sm:flex-row gap-3 mt-6 reveal">
+            @if($inquiry->status === 'confirmed' && ! $inquiry->isPaid())
+            <a href="{{ route('payment.pay', $inquiry) }}"
+                class="flex-1 text-center px-6 py-3 bg-teal-600 text-white font-medium rounded-xl hover:bg-teal-700 transition-all inline-flex items-center justify-center gap-2">
+                <x-icons name="card" class="w-4 h-4" />
+                Pay Now — ₱{{ number_format($inquiry->total_amount) }}
+            </a>
+            @endif
+
             @if($inquiry->status === 'confirmed')
             <a href="{{ route('invoice.show', $inquiry) }}"
                 class="flex-1 text-center px-6 py-3 bg-white text-teal-600 font-medium rounded-xl border border-teal-200 hover:bg-teal-50 transition-all hover:shadow-sm inline-flex items-center justify-center gap-2">

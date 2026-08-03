@@ -24,7 +24,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::post('logout', [LoginController::class, 'logout'])->name('logout');
 
         Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
-        Route::get('/', fn() => redirect()->route('admin.dashboard'))->name('home');
+        Route::get('/', fn () => redirect()->route('admin.dashboard'))->name('home');
 
         Route::resource('cottages', CottageController::class);
         Route::resource('testimonials', TestimonialController::class);
@@ -43,6 +43,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::delete('{inquiry}', 'destroy')->name('destroy');
             Route::post('{inquiry}/confirm', 'confirm')->name('confirm');
             Route::post('{inquiry}/cancel', 'cancel')->name('cancel');
+            Route::post('{inquiry}/mark-paid', 'markPaid')->name('mark-paid');
         });
 
         Route::post('faqs/activate-all', [FaqController::class, 'activateAll'])->name('faqs.activate-all');

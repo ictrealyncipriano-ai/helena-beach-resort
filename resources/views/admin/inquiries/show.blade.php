@@ -100,6 +100,13 @@
                     <span class="text-xs text-gray-500 uppercase tracking-wider font-medium">Total Amount</span>
                     <p class="mt-1 text-sm font-semibold text-gray-900">₱ {{ number_format($inquiry->total_amount, 2) }}</p>
                 </div>
+                <div>
+                    <span class="text-xs text-gray-500 uppercase tracking-wider font-medium">Payment</span>
+                    <p class="mt-1">@include('admin.components.badge', ['type' => $inquiry->isPaid() ? 'success' : 'gray', 'slot' => $inquiry->isPaid() ? 'Paid' : 'Unpaid'])</p>
+                    @if($inquiry->isPaid())
+                        <p class="mt-1 text-xs text-gray-500">{{ ucfirst($inquiry->payment_method ?? 'online') }} · {{ $inquiry->paid_at?->format('M d, Y') }}</p>
+                    @endif
+                </div>
             </div>
             <div class="flex items-center gap-3">
                 <span class="text-xs text-gray-500 uppercase tracking-wider font-medium">Status</span>
@@ -128,6 +135,12 @@
         </a>
         <div class="flex items-center gap-2">
             <a href="{{ route('admin.inquiries.edit', $inquiry) }}" class="px-4 py-2 text-sm font-medium text-white bg-teal-600 rounded-lg hover:bg-teal-700 transition-colors shadow-sm">Edit</a>
+            @if($inquiry->status === 'confirmed' && ! $inquiry->isPaid())
+                <form action="{{ route('admin.inquiries.mark-paid', $inquiry) }}" method="POST" class="inline" onsubmit="return confirm('Mark this booking as paid (e.g. bank transfer or cash on site)?')">
+                    @csrf
+                    <button type="submit" class="px-4 py-2 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors shadow-sm">Mark as Paid</button>
+                </form>
+            @endif
             @if($inquiry->status === 'pending')
                 <form action="{{ route('admin.inquiries.confirm', $inquiry) }}" method="POST" class="inline" onsubmit="return confirm('Confirm this booking? This will create date blocks and send a confirmation email.')">
                     @csrf

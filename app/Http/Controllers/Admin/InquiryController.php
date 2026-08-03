@@ -164,4 +164,28 @@ class InquiryController extends Controller
         return redirect()->route('admin.inquiries.index')
             ->with('success', "Booking {$inquiry->reference_code} cancelled successfully.");
     }
+
+    /**
+     * Mark a confirmed booking as paid (e.g. manual override for bank
+     * transfer or cash-on-site settlements).
+     */
+    public function markPaid(Inquiry $inquiry)
+    {
+        if ($inquiry->status !== 'confirmed') {
+            return back()->with('error', 'Only confirmed bookings can be marked as paid.');
+        }
+
+        if ($inquiry->isPaid()) {
+            return back()->with('error', 'This booking has already been paid.');
+        }
+
+        $inquiry->update([
+            'paid_at' => now(),
+            'paid_amount' => $inquiry->total_amount,
+            'payment_method' => 'manual',
+        ]);
+
+        return redirect()->route('admin.inquiries.show', $inquiry)
+            ->with('success', "Booking {$inquiry->reference_code} marked as paid.");
+    }
 }
