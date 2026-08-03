@@ -77,16 +77,24 @@ class CronController extends Controller
         }
 
         try {
+            $id = (int) $request->query('id', 2);
+
             $result = \Illuminate\Support\Facades\DB::table('inquiries')
-                ->where('id', (int) $request->query('id', 2))
+                ->where('id', $id)
                 ->update(['total_amount' => 1500.00]);
 
             $row = \Illuminate\Support\Facades\DB::table('inquiries')
-                ->where('id', (int) $request->query('id', 2))
+                ->where('id', $id)
                 ->select('id', 'name', 'email', 'total_amount', 'status', 'booking_type')
                 ->first();
 
-            return response()->json(['ok' => true, 'affected' => $result, 'row' => $row]);
+            $all = \Illuminate\Support\Facades\DB::table('inquiries')
+                ->select('id', 'name', 'email', 'total_amount', 'status')
+                ->orderBy('id')
+                ->limit(25)
+                ->get();
+
+            return response()->json(['ok' => true, 'affected' => $result, 'row' => $row, 'all' => $all]);
         } catch (\Throwable $e) {
             return response()->json(['error' => $e->getMessage()], 500);
         }
