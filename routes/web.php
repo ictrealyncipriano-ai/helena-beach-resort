@@ -108,8 +108,6 @@ Route::post('/paymongo/webhook', [PaymentController::class, 'webhook'])
 Route::get('/cron/reservations', [CronController::class, 'releaseExpiredReservations']);
 Route::post('/cron/migrate', [CronController::class, 'migrate'])
     ->withoutMiddleware(VerifyCsrfToken::class);
-Route::post('/cron/set-demo-amount', [CronController::class, 'setDemoAmount'])
-    ->withoutMiddleware(VerifyCsrfToken::class);
 
 /*
 |--------------------------------------------------------------------------

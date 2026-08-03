@@ -63,40 +63,4 @@ class CronController extends Controller
             return response()->json(['error' => $e->getMessage()], 500);
         }
     }
-
-    /**
-     * TEMPORARY: set a fixed demo total_amount on inquiry #2 (test data) so its
-     * Pay Now flow can be validated end-to-end. Remove after verification.
-     */
-    public function setDemoAmount(Request $request): Response
-    {
-        $secret = (string) config('cron.secret');
-
-        if ($secret === '' || $request->bearerToken() !== $secret) {
-            return response()->json(['error' => 'Unauthorized'], 401);
-        }
-
-        try {
-            $id = (int) $request->query('id', 2);
-
-            $result = \Illuminate\Support\Facades\DB::table('inquiries')
-                ->where('id', $id)
-                ->update(['total_amount' => 1500.00]);
-
-            $row = \Illuminate\Support\Facades\DB::table('inquiries')
-                ->where('id', $id)
-                ->select('id', 'name', 'email', 'total_amount', 'status', 'booking_type')
-                ->first();
-
-            $all = \Illuminate\Support\Facades\DB::table('inquiries')
-                ->select('id', 'name', 'email', 'total_amount', 'status')
-                ->orderBy('id')
-                ->limit(25)
-                ->get();
-
-            return response()->json(['ok' => true, 'affected' => $result, 'row' => $row, 'all' => $all]);
-        } catch (\Throwable $e) {
-            return response()->json(['error' => $e->getMessage()], 500);
-        }
-    }
 }
