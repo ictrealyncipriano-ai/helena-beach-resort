@@ -49,10 +49,15 @@ class CronController extends Controller
 
         try {
             Artisan::call('migrate --force', [], null);
+            $migrateOutput = Artisan::output();
+
+            Artisan::call('migrate:status', [], null);
+            $statusOutput = Artisan::output();
 
             return response()->json([
                 'ok' => true,
-                'output' => Artisan::output(),
+                'output' => $migrateOutput,
+                'status' => $statusOutput,
             ]);
         } catch (\Throwable $e) {
             return response()->json(['error' => $e->getMessage()], 500);
