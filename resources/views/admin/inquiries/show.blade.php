@@ -146,22 +146,23 @@
         <div class="flex items-center gap-2">
             <a href="{{ route('admin.inquiries.edit', $inquiry) }}" class="px-4 py-2 text-sm font-medium text-white bg-teal-600 rounded-lg hover:bg-teal-700 transition-colors shadow-sm">Edit</a>
             @if($inquiry->status === 'confirmed' && ! $inquiry->isPaid())
-                <form action="{{ route('admin.inquiries.mark-paid', $inquiry) }}" method="POST" class="inline" onsubmit="return confirm('Mark this booking as paid (e.g. bank transfer or cash on site)?')">
-                    @csrf
-                    <button type="submit" class="px-4 py-2 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors shadow-sm">Mark as Paid</button>
-                </form>
+                <button type="button"
+                    @@click="$dispatch('open-confirm-mark-paid', { url: '{{ route('admin.inquiries.mark-paid', $inquiry) }}' })"
+                    class="px-4 py-2 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors shadow-sm">Mark as Paid</button>
             @endif
             @if($inquiry->status === 'pending')
-                <form action="{{ route('admin.inquiries.confirm', $inquiry) }}" method="POST" class="inline" onsubmit="return confirm('Confirm this booking? This will create date blocks and send a confirmation email.')">
-                    @csrf
-                    <button type="submit" class="px-4 py-2 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors shadow-sm">Confirm Booking</button>
-                </form>
-                <form action="{{ route('admin.inquiries.cancel', $inquiry) }}" method="POST" class="inline" onsubmit="return confirm('Cancel this booking? This will remove date blocks and send a cancellation email.')">
-                    @csrf
-                    <button type="submit" class="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors shadow-sm">Cancel Booking</button>
-                </form>
+                <button type="button"
+                    @@click="$dispatch('open-confirm-confirm', { url: '{{ route('admin.inquiries.confirm', $inquiry) }}' })"
+                    class="px-4 py-2 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors shadow-sm">Confirm Booking</button>
+                <button type="button"
+                    @@click="$dispatch('open-confirm-cancel', { url: '{{ route('admin.inquiries.cancel', $inquiry) }}' })"
+                    class="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors shadow-sm">Cancel Booking</button>
             @endif
         </div>
     </div>
 </div>
+
+@include('admin.components.confirm-dialog', ['name' => 'confirm', 'title' => 'Confirm Booking?', 'message' => 'Confirm this booking? This will create date blocks and send a confirmation email to the guest.', 'confirmText' => 'Confirm Booking', 'confirmClass' => 'bg-emerald-600 hover:bg-emerald-700 text-white'])
+@include('admin.components.confirm-dialog', ['name' => 'cancel', 'title' => 'Cancel Booking?', 'message' => 'Cancel this booking? This will remove date blocks and send a cancellation email to the guest.', 'confirmText' => 'Cancel Booking', 'confirmClass' => 'bg-red-600 hover:bg-red-700 text-white'])
+@include('admin.components.confirm-dialog', ['name' => 'mark-paid', 'title' => 'Mark as Paid?', 'message' => 'Mark this booking as paid (e.g. bank transfer or cash on site)?', 'confirmText' => 'Mark as Paid', 'confirmClass' => 'bg-emerald-600 hover:bg-emerald-700 text-white'])
 @endsection
