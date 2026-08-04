@@ -63,7 +63,31 @@ class PaymentController extends Controller
         }
 
         $event = $request->json('data');
-        if (($event['type'] ?? null) !== 'checkout_session.payment.paid') {
+        $type = $event['type'] ?? null;
+
+        if ($type === 'payment.failed') {
+            $attributes = $event['data']['attributes'] ?? [];
+            $reference = $attributes['external_reference_number'] ?? $attributes['reference_number'] ?? null;
+
+            $inquiry = $reference
+                ? Inquiry::where('reference_code', $reference)->first()
+                : null;
+
+            Log::warning('PayMongo payment failed', [
+                'inquiry_id' => $inquiry?->id,
+                'reference_number' => $reference,
+                'amount' => $attributes['amount'] ?? null,
+                'source' => $attributes['source']['type'] ?? null,
+            ]);
+
+            if ($inquiry && ! $inquiry->isPaid() && ! $inquiry->hasFailedPayment()) {
+                $inquiry->update(['payment_failed_at' => now()]);
+            }
+
+            return response()->json(['ok' => true, 'failed' => true]);
+        }
+
+        if ($type !== 'checkout_session.payment.paid') {
             return response()->json(['ok' => true, 'ignored' => true]);
         }
 

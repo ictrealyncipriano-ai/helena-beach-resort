@@ -260,7 +260,7 @@
             <strong>Payment Status:</strong> Paid@if($inquiry->payment_method) via {{ ucfirst($inquiry->payment_method) }}@endif
             @if($inquiry->paid_at) on {{ $inquiry->paid_at->format('M d, Y') }}@endif.<br>
         @else
-            <strong>Payment Terms:</strong> Full payment due upon booking confirmation. Pay online via GCash, Maya, or card, or settle via Bank Transfer / Cash on site.<br>
+            <strong>Payment Terms:</strong> Full payment due upon booking confirmation. Pay online via QR Ph, or settle via Bank Transfer / Cash on site.<br>
         @endif
         <strong>Reference Code:</strong> {{ $inquiry->reference_code }}
         &nbsp;&middot;&nbsp;

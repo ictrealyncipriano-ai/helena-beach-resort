@@ -85,6 +85,8 @@
                                 @include('admin.components.badge', ['type' => $inquiry->status === 'confirmed' ? 'success' : ($inquiry->status === 'cancelled' ? 'danger' : ($inquiry->status === 'expired' ? 'gray' : 'warning')), 'slot' => ucfirst($inquiry->status)])
                                 @if($inquiry->isPaid())
                                     @include('admin.components.badge', ['type' => 'primary', 'slot' => 'Paid'])
+                                @elseif($inquiry->hasFailedPayment())
+                                    @include('admin.components.badge', ['type' => 'danger', 'slot' => 'Payment Failed'])
                                 @endif
                             </div>
                         </td>

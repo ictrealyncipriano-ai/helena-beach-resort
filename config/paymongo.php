@@ -21,6 +21,6 @@ return [
      * Payment methods offered on the hosted checkout page.
      * Must be enabled on the PayMongo account.
      */
-    'payment_method_types' => ['gcash', 'paymaya', 'card'],
+    'payment_method_types' => ['qrph'],
 
 ];

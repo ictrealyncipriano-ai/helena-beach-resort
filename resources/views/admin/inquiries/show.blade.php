@@ -102,9 +102,19 @@
                 </div>
                 <div>
                     <span class="text-xs text-gray-500 uppercase tracking-wider font-medium">Payment</span>
-                    <p class="mt-1">@include('admin.components.badge', ['type' => $inquiry->isPaid() ? 'success' : 'gray', 'slot' => $inquiry->isPaid() ? 'Paid' : 'Unpaid'])</p>
+                    <p class="mt-1">
+                        @if($inquiry->isPaid())
+                            @include('admin.components.badge', ['type' => 'success', 'slot' => 'Paid'])
+                        @elseif($inquiry->hasFailedPayment())
+                            @include('admin.components.badge', ['type' => 'danger', 'slot' => 'Payment Failed'])
+                        @else
+                            @include('admin.components.badge', ['type' => 'gray', 'slot' => 'Unpaid'])
+                        @endif
+                    </p>
                     @if($inquiry->isPaid())
-                        <p class="mt-1 text-xs text-gray-500">{{ ucfirst($inquiry->payment_method ?? 'online') }} · {{ $inquiry->paid_at?->format('M d, Y') }}</p>
+                        <p class="mt-1 text-xs text-gray-500">{{ $inquiry->paymentMethodLabel() }} · {{ $inquiry->paid_at?->format('M d, Y') }}</p>
+                    @elseif($inquiry->hasFailedPayment())
+                        <p class="mt-1 text-xs text-red-500">Last attempt failed {{ $inquiry->payment_failed_at?->format('M d, Y \a\t h:i A') }}</p>
                     @endif
                 </div>
             </div>

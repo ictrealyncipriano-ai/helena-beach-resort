@@ -80,7 +80,7 @@ class PaymentFlowTest extends TestCase
                 && $request->hasHeader('Authorization', 'Basic '.base64_encode('sk_test_test-key:'))
                 && $body['data']['attributes']['reference_number'] === $inquiry->reference_code
                 && $body['data']['attributes']['line_items'][0]['amount'] === (int) round($inquiry->total_amount * 100)
-                && $body['data']['attributes']['payment_method_types'] === ['gcash', 'paymaya', 'card'];
+                && $body['data']['attributes']['payment_method_types'] === ['qrph'];
         });
 
         $this->assertDatabaseHas('inquiries', [
@@ -138,7 +138,7 @@ class PaymentFlowTest extends TestCase
                             [
                                 'attributes' => [
                                     'amount' => 10000,
-                                    'source' => ['type' => 'gcash'],
+                                    'source' => ['type' => 'qrph'],
                                 ],
                             ],
                         ],
@@ -155,7 +155,7 @@ class PaymentFlowTest extends TestCase
 
         $this->assertDatabaseHas('inquiries', [
             'id' => $inquiry->id,
-            'payment_method' => 'gcash',
+            'payment_method' => 'qrph',
             'paid_amount' => 100.00,
             'paymongo_session_id' => 'cs_abc',
         ]);
@@ -207,6 +207,50 @@ class PaymentFlowTest extends TestCase
         )->assertOk()->assertJson(['ignored' => true]);
 
         $this->assertNull($inquiry->refresh()->paid_at);
+    }
+
+    public function test_webhook_records_failed_payment(): void
+    {
+        $inquiry = $this->confirmedBooking('fail@example.com');
+
+        $payload = json_encode([
+            'data' => [
+                'type' => 'payment.failed',
+                'data' => [
+                    'attributes' => [
+                        'external_reference_number' => $inquiry->reference_code,
+                        'amount' => 10000,
+                        'source' => ['type' => 'qrph'],
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->postJson(
+            route('payment.webhook'),
+            json_decode($payload, true),
+            ['Paymongo-Signature' => $this->signatureFor($payload)]
+        )->assertOk()->assertJson(['failed' => true]);
+
+        $inquiry->refresh();
+        $this->assertNotNull($inquiry->payment_failed_at);
+        $this->assertNull($inquiry->paid_at);
+    }
+
+    public function test_webhook_failed_payment_without_reference_is_ignored_safely(): void
+    {
+        $payload = json_encode([
+            'data' => [
+                'type' => 'payment.failed',
+                'data' => ['attributes' => ['amount' => 10000]],
+            ],
+        ]);
+
+        $this->postJson(
+            route('payment.webhook'),
+            json_decode($payload, true),
+            ['Paymongo-Signature' => $this->signatureFor($payload)]
+        )->assertOk()->assertJson(['failed' => true]);
     }
 
     public function test_admin_can_mark_confirmed_booking_as_paid(): void

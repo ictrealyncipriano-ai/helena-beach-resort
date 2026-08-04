@@ -51,7 +51,7 @@
                     <p class="text-sm text-gray-500 mb-1">Total</p>
                     <p class="text-2xl font-bold text-teal-600">₱{{ number_format($inquiry->total_amount) }}</p>
                     @if($inquiry->isPaid() && $inquiry->payment_method)
-                    <p class="text-xs text-gray-400 mt-1">via {{ ucfirst($inquiry->payment_method) }} · {{ $inquiry->paid_at->format('M d, Y') }}</p>
+                    <p class="text-xs text-gray-400 mt-1">via {{ $inquiry->paymentMethodLabel() }} · {{ $inquiry->paid_at->format('M d, Y') }}</p>
                     @endif
                 </div>
                 @endif
@@ -143,7 +143,7 @@
             @if($inquiry->status === 'confirmed' && ! $inquiry->isPaid() && $inquiry->total_amount)
             <a href="{{ route('payment.pay', $inquiry) }}"
                 class="flex-1 text-center px-6 py-3 bg-teal-600 text-white font-medium rounded-xl hover:bg-teal-700 transition-all inline-flex items-center justify-center gap-2">
-                <x-icons name="card" class="w-4 h-4" />
+                <x-icons name="qr-code" class="w-4 h-4" />
                 Pay Now — ₱{{ number_format($inquiry->total_amount) }}
             </a>
             @endif

@@ -11,7 +11,7 @@ class Inquiry extends Model
         'reference_code', 'name', 'email', 'phone', 'check_in', 'check_out',
         'pax', 'cottage_id', 'guest_id', 'message', 'status', 'source',
         'booking_type', 'total_amount', 'paid_at', 'paid_amount',
-        'payment_method', 'paymongo_session_id',
+        'payment_method', 'paymongo_session_id', 'payment_failed_at',
     ];
 
     /**
@@ -34,12 +34,32 @@ class Inquiry extends Model
             'total_amount' => 'decimal:2',
             'paid_at' => 'datetime',
             'paid_amount' => 'decimal:2',
+            'payment_failed_at' => 'datetime',
         ];
     }
 
     public function isPaid(): bool
     {
         return $this->paid_at !== null;
+    }
+
+    public function hasFailedPayment(): bool
+    {
+        return $this->payment_failed_at !== null;
+    }
+
+    /**
+     * Human-friendly label for the stored payment method.
+     */
+    public function paymentMethodLabel(): string
+    {
+        return match ($this->payment_method) {
+            'qrph' => 'QR Ph',
+            'gcash' => 'GCash',
+            'paymaya' => 'Maya',
+            'manual' => 'Manual',
+            default => $this->payment_method ? ucfirst($this->payment_method) : 'Online',
+        };
     }
 
     public function cottage(): BelongsTo
