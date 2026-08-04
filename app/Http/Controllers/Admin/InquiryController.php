@@ -10,6 +10,7 @@ use App\Models\Guest;
 use App\Models\Inquiry;
 use App\Models\SiteSetting;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 
 class InquiryController extends Controller
@@ -87,6 +88,8 @@ class InquiryController extends Controller
             'check_out' => $inquiry->check_out?->format('Y-m-d'),
         ];
 
+        $wasConfirmed = $inquiry->status === 'confirmed';
+
         $inquiry->update($data);
         $inquiry->refresh();
 
@@ -96,6 +99,10 @@ class InquiryController extends Controller
 
         if ($inquiry->status === 'confirmed') {
             $inquiry->bookBlocks();
+
+            if (! $wasConfirmed) {
+                $this->markConfirmed($inquiry);
+            }
         } elseif ($inquiry->status === 'pending') {
             $inquiry->reserveBlocks();
         }
@@ -122,6 +129,19 @@ class InquiryController extends Controller
         $inquiry->update(['status' => 'confirmed']);
         $inquiry->bookBlocks();
 
+        $this->markConfirmed($inquiry);
+
+        return redirect()->route('admin.inquiries.index')
+            ->with('success', "Booking {$inquiry->reference_code} confirmed successfully.");
+    }
+
+    /**
+     * Record the stay on the guest profile and email the guest to confirm
+     * their booking. Shared by the Confirm button and the edit form so
+     * both confirmation paths behave identically.
+     */
+    private function markConfirmed(Inquiry $inquiry): void
+    {
         if ($inquiry->guest) {
             $inquiry->guest->increment('total_stays');
             $inquiry->guest->update(['last_stay_at' => now()]);
@@ -130,11 +150,11 @@ class InquiryController extends Controller
         try {
             Mail::to($inquiry->email)->send(new BookingConfirmed($inquiry));
         } catch (\Exception $e) {
-            // Log error but don't break the flow
+            Log::error('Failed to send booking confirmation email', [
+                'inquiry_id' => $inquiry->id,
+                'error' => $e->getMessage(),
+            ]);
         }
-
-        return redirect()->route('admin.inquiries.index')
-            ->with('success', "Booking {$inquiry->reference_code} confirmed successfully.");
     }
 
     public function cancel(Inquiry $inquiry)
@@ -158,7 +178,10 @@ class InquiryController extends Controller
                 Mail::to($ownerEmail)->send(new BookingCancelled($inquiry));
             }
         } catch (\Exception $e) {
-            // Log error
+            Log::error('Failed to send booking cancelled email', [
+                'inquiry_id' => $inquiry->id,
+                'error' => $e->getMessage(),
+            ]);
         }
 
         return redirect()->route('admin.inquiries.index')

@@ -41,7 +41,7 @@
 </td>
 <td width="50%" style="padding: 6px 0 6px 12px; vertical-align: top;">
 <p style="margin: 0 0 2px; font-size: 11px; font-weight: 600; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em;">Check-out</p>
-<p style="margin: 0; font-size: 14px; color: #1e293b;">{{ $inquiry->check_out->format('M d, Y') }}</p>
+<p style="margin: 0; font-size: 14px; color: #1e293b;">{{ $inquiry->check_out?->format('M d, Y') ?? 'Same day' }}</p>
 </td>
 </tr>
 @endif
@@ -66,10 +66,10 @@
 </table>
 </div>
 
-@if(! $inquiry->isPaid())
+@if(! $inquiry->isPaid() && $inquiry->total_amount)
 <div style="background: #fffbeb; border-radius: 12px; padding: 16px 20px; margin-bottom: 24px; border: 1px solid #fde68a;">
 <p style="margin: 0 0 12px; font-size: 13px; color: #92400e; line-height: 1.6;">
-To secure your booking, please complete payment of <strong>₱{{ number_format($inquiry->total_amount) }}</strong> via GCash, Maya, or card.
+To secure your booking, please complete payment of <strong>₱{{ number_format($inquiry->total_amount) }}</strong> via QR Ph.
 </p>
 <div style="text-align: center;">
 <table role="presentation" cellpadding="0" cellspacing="0" style="margin: 0 auto;">
