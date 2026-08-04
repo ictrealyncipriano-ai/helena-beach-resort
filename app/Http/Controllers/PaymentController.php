@@ -116,6 +116,8 @@ class PaymentController extends Controller
                 ? $payment['amount'] / 100
                 : $inquiry->total_amount,
             'payment_method' => $method,
+            'paymongo_payment_id' => $attributes['payments'][0]['id']
+                ?? $inquiry->paymongo_payment_id,
             'paymongo_session_id' => $event['data']['id'] ?? $inquiry->paymongo_session_id,
         ]);
 

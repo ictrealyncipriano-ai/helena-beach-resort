@@ -27,7 +27,20 @@ class GuestController extends Controller
     public function show(Guest $guest)
     {
         $guest->load('inquiries.cottage');
-        return view('admin.guests.show', compact('guest'));
+
+        $inquiries = $guest->inquiries;
+        $paidCount = $inquiries->filter(fn ($i) => $i->isPaid())->count();
+        $paidAmount = $inquiries->filter(fn ($i) => $i->isPaid())->sum('paid_amount');
+        $failedCount = $inquiries->filter(fn ($i) => $i->hasFailedPayment())->count();
+        $refundedCount = $inquiries->filter(fn ($i) => $i->isRefunded())->count();
+
+        return view('admin.guests.show', compact(
+            'guest',
+            'paidCount',
+            'paidAmount',
+            'failedCount',
+            'refundedCount',
+        ));
     }
 
     public function edit(Guest $guest)

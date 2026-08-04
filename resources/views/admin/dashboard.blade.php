@@ -69,7 +69,7 @@
             @if($revenueThisMonth)
                 <p class="text-xs text-emerald-600 font-medium mt-2 flex items-center gap-1">
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v12m-3-2.818l.879.659c0 0 .5.159 1.121.159 1.621 0 2.5-1.1 2.5-2.5 0-1.4-.879-2.5-2.5-2.5-.621 0-1.121.159-1.121.159l-.879.659M3 13.125V5.625A2.625 2.625 0 015.625 3h12.75A2.625 2.625 0 0121 5.625v7.5A2.625 2.625 0 0118.375 15.75h-5.25L7.5 21v-5.25H5.625A2.625 2.625 0 013 13.125z"/></svg>
-                    ₱ {{ number_format($revenueThisMonth, 2) }} revenue
+                    ₱ {{ number_format($revenueThisMonth, 2) }} collected · {{ $paidThisMonth }} paid
                 </p>
             @endif
         </div>

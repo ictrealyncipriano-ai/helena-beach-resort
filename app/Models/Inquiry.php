@@ -12,6 +12,7 @@ class Inquiry extends Model
         'pax', 'cottage_id', 'guest_id', 'message', 'status', 'source',
         'booking_type', 'total_amount', 'paid_at', 'paid_amount',
         'payment_method', 'paymongo_session_id', 'payment_failed_at',
+        'paymongo_payment_id', 'refunded_at', 'refund_amount',
     ];
 
     /**
@@ -35,6 +36,8 @@ class Inquiry extends Model
             'paid_at' => 'datetime',
             'paid_amount' => 'decimal:2',
             'payment_failed_at' => 'datetime',
+            'refunded_at' => 'datetime',
+            'refund_amount' => 'decimal:2',
         ];
     }
 
@@ -46,6 +49,11 @@ class Inquiry extends Model
     public function hasFailedPayment(): bool
     {
         return $this->payment_failed_at !== null;
+    }
+
+    public function isRefunded(): bool
+    {
+        return $this->refunded_at !== null;
     }
 
     /**

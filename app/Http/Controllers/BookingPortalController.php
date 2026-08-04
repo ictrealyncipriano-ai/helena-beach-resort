@@ -3,8 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Mail\BookingCancelled;
+use App\Mail\RefundReceived;
 use App\Models\Inquiry;
 use App\Models\SiteSetting;
+use App\Services\PayMongoService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
@@ -51,13 +53,36 @@ class BookingPortalController extends Controller
     }
 
     /** Cancel a booking (guest-facing), sends notification to guest and owner */
-    public function cancel(Request $request, Inquiry $inquiry)
+    public function cancel(Request $request, Inquiry $inquiry, PayMongoService $payMongo)
     {
         if (! $this->canCancel($inquiry)) {
             return back()->with('error', 'This booking cannot be cancelled. Cancellations must be made at least 48 hours before check-in.');
         }
 
-        $inquiry->update(['status' => 'cancelled']);
+        $refunded = false;
+        $refundFailed = false;
+
+        // Auto-refund the full amount if this booking was already paid.
+        if ($inquiry->isPaid() && ! $inquiry->isRefunded()) {
+            try {
+                $payMongo->refund($inquiry);
+                $refunded = true;
+            } catch (\RuntimeException $e) {
+                Log::warning('Auto-refund failed on guest cancellation', [
+                    'inquiry_id' => $inquiry->id,
+                    'error' => $e->getMessage(),
+                ]);
+                $refundFailed = true;
+            }
+        }
+
+        $inquiry->update([
+            'status' => 'cancelled',
+            'refunded_at' => $refunded ? now() : $inquiry->refunded_at,
+            'refund_amount' => $refunded
+                ? ($inquiry->paid_amount ?? $inquiry->total_amount)
+                : $inquiry->refund_amount,
+        ]);
         $inquiry->releaseBlocks();
 
         if ($inquiry->guest) {
@@ -66,6 +91,10 @@ class BookingPortalController extends Controller
 
         try {
             Mail::to($inquiry->email)->send(new BookingCancelled($inquiry));
+
+            if ($refunded) {
+                Mail::to($inquiry->email)->send(new RefundReceived($inquiry->fresh()));
+            }
 
             $ownerEmail = SiteSetting::getValue('contact_email');
             if ($ownerEmail) {
@@ -79,7 +108,14 @@ class BookingPortalController extends Controller
         }
 
         return redirect()->route('booking.portal.show', $inquiry)
-            ->with('success', 'Your booking has been cancelled.');
+            ->with(
+                $refundFailed ? 'warning' : 'success',
+                $refundFailed
+                    ? 'Your booking has been cancelled, but the refund could not be processed automatically. Please contact the resort to complete your refund.'
+                    : ($refunded
+                        ? 'Your booking has been cancelled and your payment has been refunded.'
+                        : 'Your booking has been cancelled.')
+            );
     }
 
     /**

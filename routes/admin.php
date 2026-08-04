@@ -44,6 +44,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::post('{inquiry}/confirm', 'confirm')->name('confirm');
             Route::post('{inquiry}/cancel', 'cancel')->name('cancel');
             Route::post('{inquiry}/mark-paid', 'markPaid')->name('mark-paid');
+            Route::post('{inquiry}/refund', 'refund')->name('refund');
         });
 
         Route::post('faqs/activate-all', [FaqController::class, 'activateAll'])->name('faqs.activate-all');

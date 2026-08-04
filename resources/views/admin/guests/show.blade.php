@@ -43,6 +43,27 @@
                 <p class="mt-1 text-sm text-gray-700">{{ $guest->last_stay_at?->format('M d, Y') ?? '—' }}</p>
             </div>
         </div>
+
+        @if($guest->inquiries->isNotEmpty())
+            <div class="px-5 pb-5 pt-4 border-t border-gray-100 grid grid-cols-2 sm:grid-cols-4 gap-4">
+                <div>
+                    <span class="text-xs text-gray-500 uppercase tracking-wider font-medium">Paid Bookings</span>
+                    <p class="mt-1 text-sm font-semibold text-emerald-600">{{ $paidCount }}</p>
+                </div>
+                <div>
+                    <span class="text-xs text-gray-500 uppercase tracking-wider font-medium">Total Paid Amount</span>
+                    <p class="mt-1 text-sm font-semibold text-gray-900">₱ {{ number_format($paidAmount, 2) }}</p>
+                </div>
+                <div>
+                    <span class="text-xs text-gray-500 uppercase tracking-wider font-medium">Payment Failures</span>
+                    <p class="mt-1 text-sm font-semibold text-red-600">{{ $failedCount }}</p>
+                </div>
+                <div>
+                    <span class="text-xs text-gray-500 uppercase tracking-wider font-medium">Refunded</span>
+                    <p class="mt-1 text-sm font-semibold text-gray-900">{{ $refundedCount }}</p>
+                </div>
+            </div>
+        @endif
         @if($guest->notes)
             <div class="px-5 pb-5">
                 <span class="text-xs text-gray-500 uppercase tracking-wider font-medium">Notes</span>
@@ -69,6 +90,7 @@
                             <th class="text-left px-5 py-3 font-medium">Check Out</th>
                             <th class="text-left px-5 py-3 font-medium">Type</th>
                             <th class="text-left px-5 py-3 font-medium">Status</th>
+                            <th class="text-left px-5 py-3 font-medium">Payment</th>
                             <th class="text-right px-5 py-3 font-medium">Amount</th>
                         </tr>
                     </thead>
@@ -81,6 +103,18 @@
                             <td class="px-5 py-3 text-gray-600">{{ $inquiry->check_out?->format('M d, Y') ?? '—' }}</td>
                             <td class="px-5 py-3">@include('admin.components.badge', ['type' => $inquiry->booking_type === 'day_tour' ? 'info' : ($inquiry->booking_type === 'overnight' ? 'warning' : 'gray'), 'slot' => $inquiry->booking_type ? ucfirst(str_replace('_', ' ', $inquiry->booking_type)) : 'Inquiry'])</td>
                             <td class="px-5 py-3">@include('admin.components.badge', ['type' => $inquiry->status === 'confirmed' ? 'success' : ($inquiry->status === 'cancelled' ? 'danger' : 'warning'), 'slot' => ucfirst($inquiry->status)])</td>
+                            <td class="px-5 py-3">
+                                @if($inquiry->isRefunded())
+                                    @include('admin.components.badge', ['type' => 'danger', 'slot' => 'Refunded'])
+                                @elseif($inquiry->isPaid())
+                                    @include('admin.components.badge', ['type' => 'success', 'slot' => 'Paid'])
+                                    <p class="mt-0.5 text-[11px] text-gray-400">{{ $inquiry->paymentMethodLabel() }}</p>
+                                @elseif($inquiry->hasFailedPayment())
+                                    @include('admin.components.badge', ['type' => 'danger', 'slot' => 'Payment Failed'])
+                                @else
+                                    @include('admin.components.badge', ['type' => 'gray', 'slot' => 'Unpaid'])
+                                @endif
+                            </td>
                             <td class="px-5 py-3 text-right font-medium">₱ {{ number_format($inquiry->total_amount, 2) }}</td>
                         </tr>
                         @endforeach

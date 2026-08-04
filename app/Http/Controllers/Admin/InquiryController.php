@@ -5,10 +5,12 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Mail\BookingCancelled;
 use App\Mail\BookingConfirmed;
+use App\Mail\RefundReceived;
 use App\Models\Cottage;
 use App\Models\Guest;
 use App\Models\Inquiry;
 use App\Models\SiteSetting;
+use App\Services\PayMongoService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
@@ -210,5 +212,54 @@ class InquiryController extends Controller
 
         return redirect()->route('admin.inquiries.show', $inquiry)
             ->with('success', "Booking {$inquiry->reference_code} marked as paid.");
+    }
+
+    /**
+     * Refund a paid booking via PayMongo and cancel it. Guards against
+     * refunding unpaid or already-refunded bookings.
+     */
+    public function refund(Inquiry $inquiry, PayMongoService $payMongo)
+    {
+        if (! $inquiry->isPaid()) {
+            return redirect()->route('admin.inquiries.show', $inquiry)
+                ->with('error', 'This booking has no payment to refund.');
+        }
+
+        if ($inquiry->isRefunded()) {
+            return redirect()->route('admin.inquiries.show', $inquiry)
+                ->with('error', 'This booking has already been refunded.');
+        }
+
+        try {
+            $payMongo->refund($inquiry);
+        } catch (\RuntimeException $e) {
+            return redirect()->route('admin.inquiries.show', $inquiry)
+                ->with('error', $e->getMessage());
+        }
+
+        $wasConfirmed = $inquiry->status === 'confirmed';
+
+        $inquiry->update([
+            'status' => 'cancelled',
+            'refunded_at' => now(),
+            'refund_amount' => $inquiry->paid_amount ?? $inquiry->total_amount,
+        ]);
+        $inquiry->releaseBlocks();
+
+        if ($wasConfirmed && $inquiry->guest && $inquiry->guest->total_stays > 0) {
+            $inquiry->guest->decrement('total_stays');
+        }
+
+        try {
+            Mail::to($inquiry->email)->send(new RefundReceived($inquiry));
+        } catch (\Exception $e) {
+            Log::error('Failed to send refund email', [
+                'inquiry_id' => $inquiry->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
+
+        return redirect()->route('admin.inquiries.show', $inquiry)
+            ->with('success', "Payment for {$inquiry->reference_code} refunded and booking cancelled.");
     }
 }

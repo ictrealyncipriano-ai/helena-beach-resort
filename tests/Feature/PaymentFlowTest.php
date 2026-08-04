@@ -2,11 +2,15 @@
 
 namespace Tests\Feature;
 
+use App\Mail\BookingCancelled;
+use App\Mail\RefundReceived;
 use App\Models\Cottage;
 use App\Models\Inquiry;
 use App\Models\User;
+use App\Services\PayMongoService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Mail;
 use Tests\TestCase;
 
 class PaymentFlowTest extends TestCase
@@ -289,6 +293,201 @@ class PaymentFlowTest extends TestCase
             ->assertSessionHas('error');
 
         $this->assertNull($inquiry->refresh()->paid_at);
+    }
+
+    public function test_webhook_stores_paymongo_payment_id(): void
+    {
+        $inquiry = $this->confirmedBooking('payid@example.com');
+
+        $payload = json_encode([
+            'data' => [
+                'type' => 'checkout_session.payment.paid',
+                'data' => [
+                    'id' => 'cs_abc',
+                    'attributes' => [
+                        'reference_number' => $inquiry->reference_code,
+                        'payments' => [
+                            [
+                                'id' => 'pay_123',
+                                'attributes' => ['amount' => 10000, 'source' => ['type' => 'qrph']],
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->postJson(
+            route('payment.webhook'),
+            json_decode($payload, true),
+            ['Paymongo-Signature' => $this->signatureFor($payload)]
+        )->assertOk();
+
+        $this->assertDatabaseHas('inquiries', [
+            'id' => $inquiry->id,
+            'paymongo_payment_id' => 'pay_123',
+        ]);
+    }
+
+    public function test_refund_service_calls_paymongo_refunds_api(): void
+    {
+        $inquiry = $this->confirmedBooking('refundsvc@example.com');
+        $inquiry->update([
+            'paid_at' => now(),
+            'paid_amount' => 250.00,
+            'payment_method' => 'qrph',
+            'paymongo_payment_id' => 'pay_123',
+        ]);
+
+        Http::fake([
+            'api.paymongo.com/v1/refunds' => Http::response(['data' => ['id' => 'rfnd_1']], 200),
+        ]);
+
+        $result = app(PayMongoService::class)->refund($inquiry);
+
+        Http::assertSent(function ($request) {
+            $body = $request->data();
+
+            return $request->url() === 'https://api.paymongo.com/v1/refunds'
+                && $request->hasHeader('Authorization', 'Basic '.base64_encode('sk_test_test-key:'))
+                && $body['data']['attributes']['payment_id'] === 'pay_123'
+                && $body['data']['attributes']['amount'] === 25000
+                && $body['data']['attributes']['reason'] === 'requested_by_customer';
+        });
+
+        $this->assertSame('rfnd_1', $result['id']);
+    }
+
+    public function test_admin_refund_refunds_and_cancels_booking(): void
+    {
+        Mail::fake();
+        $inquiry = $this->confirmedBooking('adminrefund@example.com');
+        $inquiry->update([
+            'paid_at' => now(),
+            'paid_amount' => $inquiry->total_amount,
+            'payment_method' => 'qrph',
+            'paymongo_payment_id' => 'pay_123',
+        ]);
+
+        Http::fake([
+            'api.paymongo.com/v1/refunds' => Http::response(['data' => ['id' => 'rfnd_1']], 200),
+        ]);
+
+        $admin = User::factory()->create(['role' => 'super_admin']);
+
+        $this->actingAs($admin)
+            ->post(route('admin.inquiries.refund', $inquiry))
+            ->assertRedirect(route('admin.inquiries.show', $inquiry));
+
+        $inquiry->refresh();
+        $this->assertSame('cancelled', $inquiry->status);
+        $this->assertNotNull($inquiry->refunded_at);
+        $this->assertSame((float) $inquiry->total_amount, (float) $inquiry->refund_amount);
+        $this->assertSame(0, $inquiry->guest->fresh()->total_stays);
+        $this->assertDatabaseMissing('cottage_date_blocks', [
+            'cottage_id' => $inquiry->cottage_id,
+            'date' => '2026-09-01',
+        ]);
+
+        Mail::assertSent(RefundReceived::class, fn ($mailable) => $mailable->hasTo($inquiry->email));
+    }
+
+    public function test_admin_cannot_refund_unpaid_booking(): void
+    {
+        $inquiry = $this->confirmedBooking('norefund@example.com');
+        $admin = User::factory()->create(['role' => 'super_admin']);
+
+        Http::fake();
+        $this->actingAs($admin)
+            ->post(route('admin.inquiries.refund', $inquiry))
+            ->assertRedirect(route('admin.inquiries.show', $inquiry))
+            ->assertSessionHas('error');
+
+        Http::assertNothingSent();
+        $this->assertNull($inquiry->refresh()->refunded_at);
+    }
+
+    public function test_admin_cannot_refund_twice(): void
+    {
+        $inquiry = $this->confirmedBooking('twice@example.com');
+        $inquiry->update([
+            'paid_at' => now(),
+            'paid_amount' => $inquiry->total_amount,
+            'payment_method' => 'qrph',
+            'paymongo_payment_id' => 'pay_123',
+            'refunded_at' => now(),
+            'refund_amount' => $inquiry->total_amount,
+        ]);
+        $admin = User::factory()->create(['role' => 'super_admin']);
+
+        Http::fake();
+        $this->actingAs($admin)
+            ->post(route('admin.inquiries.refund', $inquiry))
+            ->assertSessionHas('error');
+
+        Http::assertNothingSent();
+    }
+
+    public function test_guest_cancel_refunds_paid_booking(): void
+    {
+        Mail::fake();
+        $inquiry = $this->confirmedBooking('guestrefund@example.com');
+        $inquiry->update([
+            'paid_at' => now(),
+            'paid_amount' => $inquiry->total_amount,
+            'payment_method' => 'qrph',
+            'paymongo_payment_id' => 'pay_123',
+        ]);
+
+        Http::fake([
+            'api.paymongo.com/v1/refunds' => Http::response(['data' => ['id' => 'rfnd_1']], 200),
+        ]);
+
+        $this->post(route('booking.portal.cancel', $inquiry))
+            ->assertRedirect(route('booking.portal.show', $inquiry));
+
+        $inquiry->refresh();
+        $this->assertSame('cancelled', $inquiry->status);
+        $this->assertNotNull($inquiry->refunded_at);
+        $this->assertSame((float) $inquiry->total_amount, (float) $inquiry->refund_amount);
+
+        Mail::assertSent(RefundReceived::class, fn ($mailable) => $mailable->hasTo($inquiry->email));
+        Mail::assertSent(BookingCancelled::class, fn ($mailable) => $mailable->hasTo($inquiry->email));
+    }
+
+    public function test_guest_cancel_paid_booking_refund_failure_still_cancels(): void
+    {
+        $inquiry = $this->confirmedBooking('refundfail@example.com');
+        $inquiry->update([
+            'paid_at' => now(),
+            'paid_amount' => $inquiry->total_amount,
+            'payment_method' => 'qrph',
+            'paymongo_payment_id' => 'pay_123',
+        ]);
+
+        Http::fake([
+            'api.paymongo.com/v1/refunds' => Http::response(['errors' => ['Something failed']], 500),
+        ]);
+
+        $this->post(route('booking.portal.cancel', $inquiry))
+            ->assertRedirect(route('booking.portal.show', $inquiry));
+
+        $inquiry->refresh();
+        $this->assertSame('cancelled', $inquiry->status);
+        $this->assertNull($inquiry->refunded_at);
+    }
+
+    public function test_guest_cancel_unpaid_booking_does_not_call_refund(): void
+    {
+        $inquiry = $this->confirmedBooking('unpaidcancel@example.com');
+
+        Http::fake();
+        $this->post(route('booking.portal.cancel', $inquiry))
+            ->assertRedirect(route('booking.portal.show', $inquiry));
+
+        Http::assertNothingSent();
+        $this->assertSame('cancelled', $inquiry->refresh()->status);
+        $this->assertNull($inquiry->refresh()->refunded_at);
     }
 
     private function signatureFor(string $payload): string

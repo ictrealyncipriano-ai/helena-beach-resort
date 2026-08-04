@@ -19,10 +19,15 @@ class DashboardController extends Controller
             ->whereMonth('created_at', now()->month)
             ->whereYear('created_at', now()->year)
             ->count();
+        $paidThisMonth = Inquiry::whereNotNull('paid_at')
+            ->whereMonth('paid_at', now()->month)
+            ->whereYear('paid_at', now()->year)
+            ->count();
         $revenueThisMonth = Inquiry::where('status', 'confirmed')
-            ->whereMonth('created_at', now()->month)
-            ->whereYear('created_at', now()->year)
-            ->sum('total_amount');
+            ->whereNotNull('paid_at')
+            ->whereMonth('paid_at', now()->month)
+            ->whereYear('paid_at', now()->year)
+            ->sum('paid_amount');
         $upcomingCheckIns = Inquiry::where('status', 'confirmed')
             ->where('check_in', '>=', now()->startOfDay())
             ->orderBy('check_in')
@@ -46,15 +51,16 @@ class DashboardController extends Controller
             : ($driver === 'sqlite' ? "strftime('%Y-%m', created_at)" : "DATE_FORMAT(created_at, '%Y-%m')");
 
         $revenueData = Inquiry::where('status', 'confirmed')
-            ->where('created_at', '>=', now()->subMonths(6)->startOfMonth())
-            ->select(DB::raw("{$monthExpr} as month"), DB::raw('sum(total_amount) as total'))
+            ->whereNotNull('paid_at')
+            ->where('paid_at', '>=', now()->subMonths(6)->startOfMonth())
+            ->select(DB::raw("{$monthExpr} as month"), DB::raw('sum(paid_amount) as total'))
             ->groupBy('month')
             ->orderBy('month')
             ->pluck('total', 'month');
 
         return view('admin.dashboard', compact(
             'totalCottages', 'availableCottages',
-            'pendingInquiries', 'confirmedThisMonth',
+            'pendingInquiries', 'confirmedThisMonth', 'paidThisMonth',
             'revenueThisMonth', 'upcomingCheckIns',
             'recentInquiries', 'popularCottages',
             'bookingTypeData', 'revenueData'

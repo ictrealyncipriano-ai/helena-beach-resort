@@ -26,6 +26,13 @@
         </div>
         @endif
 
+        @if(session('warning'))
+        <div class="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-xl text-sm text-amber-700 flex items-center gap-2 reveal">
+            <x-icons name="clock" class="w-5 h-5 shrink-0" />
+            {{ session('warning') }}
+        </div>
+        @endif
+
         <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 reveal">
             <div class="flex items-center justify-between mb-8 pb-6 border-b border-gray-100">
                 <div>

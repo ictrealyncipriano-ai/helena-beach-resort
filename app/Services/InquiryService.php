@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Mail\InquiryAcknowledgment;
 use App\Mail\InquiryNotification;
 use App\Models\Cottage;
 use App\Models\Guest;
@@ -71,6 +72,17 @@ class InquiryService
                     'error' => $e->getMessage(),
                 ]);
             }
+        }
+
+        // Send the guest an acknowledgment with their reference code so they
+        // don't lose track of the request before it is confirmed.
+        try {
+            Mail::to($inquiry->email)->send(new InquiryAcknowledgment($inquiry));
+        } catch (\Exception $e) {
+            Log::warning('Failed to send inquiry acknowledgment to guest', [
+                'inquiry_id' => $inquiry->id,
+                'error' => $e->getMessage(),
+            ]);
         }
 
         return $inquiry;

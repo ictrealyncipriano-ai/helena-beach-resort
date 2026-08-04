@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Mail;
 use Tests\TestCase;
 
 use App\Mail\BookingConfirmed;
+use App\Mail\InquiryAcknowledgment;
 
 class BookingFlowTest extends TestCase
 {
@@ -118,6 +119,20 @@ class BookingFlowTest extends TestCase
             'cottage_id' => $inquiry->cottage_id,
             'date' => '2026-09-01',
         ]);
+    }
+
+    public function test_booking_submission_emails_guest_with_reference_code(): void
+    {
+        Mail::fake();
+
+        $this->book('ack@example.com');
+
+        $inquiry = Inquiry::where('email', 'ack@example.com')->first();
+
+        Mail::assertSent(InquiryAcknowledgment::class, function ($mailable) use ($inquiry) {
+            return $mailable->hasTo($inquiry->email)
+                && $mailable->inquiry->reference_code === $inquiry->reference_code;
+        });
     }
 
     public function test_admin_confirm_button_emails_guest_and_updates_stay(): void

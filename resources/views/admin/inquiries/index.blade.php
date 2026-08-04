@@ -83,7 +83,9 @@
                         <td class="px-5 py-3">
                             <div class="flex items-center gap-1.5">
                                 @include('admin.components.badge', ['type' => $inquiry->status === 'confirmed' ? 'success' : ($inquiry->status === 'cancelled' ? 'danger' : ($inquiry->status === 'expired' ? 'gray' : 'warning')), 'slot' => ucfirst($inquiry->status)])
-                                @if($inquiry->isPaid())
+                                @if($inquiry->isRefunded())
+                                    @include('admin.components.badge', ['type' => 'danger', 'slot' => 'Refunded'])
+                                @elseif($inquiry->isPaid())
                                     @include('admin.components.badge', ['type' => 'primary', 'slot' => 'Paid'])
                                 @elseif($inquiry->hasFailedPayment())
                                     @include('admin.components.badge', ['type' => 'danger', 'slot' => 'Payment Failed'])

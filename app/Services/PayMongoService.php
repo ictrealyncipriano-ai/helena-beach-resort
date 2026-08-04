@@ -111,6 +111,49 @@ class PayMongoService
         return hash_equals($expected, hash_hmac('sha256', $payload, $secret));
     }
 
+    /**
+     * Issue a full refund for a paid booking via PayMongo's Refunds API.
+     *
+     * @throws \RuntimeException when the inquiry has no recorded PayMongo
+     *         payment, or when PayMongo returns an error.
+     */
+    public function refund(Inquiry $inquiry): array
+    {
+        $paymentId = $inquiry->paymongo_payment_id;
+
+        if (! $paymentId) {
+            throw new \RuntimeException('This booking has no PayMongo payment reference, so it cannot be refunded online.');
+        }
+
+        $amount = $this->toCentavos($inquiry->paid_amount ?? $inquiry->total_amount);
+
+        $response = Http::baseUrl(config('paymongo.base_url'))
+            ->withBasicAuth(config('paymongo.secret_key'), '')
+            ->acceptJson()
+            ->post('/v1/refunds', [
+                'data' => [
+                    'attributes' => [
+                        'payment_id' => $paymentId,
+                        'amount' => $amount,
+                        'reason' => 'requested_by_customer',
+                    ],
+                ],
+            ]);
+
+        if ($response->failed()) {
+            Log::error('PayMongo refund failed', [
+                'inquiry_id' => $inquiry->id,
+                'payment_id' => $paymentId,
+                'status' => $response->status(),
+                'body' => $response->json(),
+            ]);
+
+            throw new \RuntimeException('Unable to process the refund. Please try again later.');
+        }
+
+        return $response->json('data') ?? [];
+    }
+
     public function isLiveMode(): bool
     {
         return str_starts_with((string) config('paymongo.secret_key'), 'sk_live_');

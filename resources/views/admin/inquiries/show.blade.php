@@ -103,7 +103,9 @@
                 <div>
                     <span class="text-xs text-gray-500 uppercase tracking-wider font-medium">Payment</span>
                     <p class="mt-1">
-                        @if($inquiry->isPaid())
+                        @if($inquiry->isRefunded())
+                            @include('admin.components.badge', ['type' => 'danger', 'slot' => 'Refunded'])
+                        @elseif($inquiry->isPaid())
                             @include('admin.components.badge', ['type' => 'success', 'slot' => 'Paid'])
                         @elseif($inquiry->hasFailedPayment())
                             @include('admin.components.badge', ['type' => 'danger', 'slot' => 'Payment Failed'])
@@ -111,8 +113,10 @@
                             @include('admin.components.badge', ['type' => 'gray', 'slot' => 'Unpaid'])
                         @endif
                     </p>
-                    @if($inquiry->isPaid())
-                        <p class="mt-1 text-xs text-gray-500">{{ $inquiry->paymentMethodLabel() }} · {{ $inquiry->paid_at?->format('M d, Y') }}</p>
+                    @if($inquiry->isRefunded())
+                        <p class="mt-1 text-xs text-red-500">Refunded ₱{{ number_format($inquiry->refund_amount ?? $inquiry->paid_amount, 2) }} on {{ $inquiry->refunded_at?->format('M d, Y') }}</p>
+                    @elseif($inquiry->isPaid())
+                        <p class="mt-1 text-xs text-gray-500">₱{{ number_format($inquiry->paid_amount, 2) }} · {{ $inquiry->paymentMethodLabel() }} · {{ $inquiry->paid_at?->format('M d, Y') }}</p>
                     @elseif($inquiry->hasFailedPayment())
                         <p class="mt-1 text-xs text-red-500">Last attempt failed {{ $inquiry->payment_failed_at?->format('M d, Y \a\t h:i A') }}</p>
                     @endif
@@ -150,6 +154,11 @@
                     @@click="$dispatch('open-confirm-mark-paid', { url: '{{ route('admin.inquiries.mark-paid', $inquiry) }}' })"
                     class="px-4 py-2 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors shadow-sm">Mark as Paid</button>
             @endif
+            @if($inquiry->isPaid() && ! $inquiry->isRefunded())
+                <button type="button"
+                    @@click="$dispatch('open-confirm-refund', { url: '{{ route('admin.inquiries.refund', $inquiry) }}' })"
+                    class="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors shadow-sm">Refund</button>
+            @endif
             @if($inquiry->status === 'pending')
                 <button type="button"
                     @@click="$dispatch('open-confirm-confirm', { url: '{{ route('admin.inquiries.confirm', $inquiry) }}' })"
@@ -165,4 +174,5 @@
 @include('admin.components.confirm-dialog', ['name' => 'confirm', 'title' => 'Confirm Booking?', 'message' => 'Confirm this booking? This will create date blocks and send a confirmation email to the guest.', 'confirmText' => 'Confirm Booking', 'confirmClass' => 'bg-emerald-600 hover:bg-emerald-700 text-white'])
 @include('admin.components.confirm-dialog', ['name' => 'cancel', 'title' => 'Cancel Booking?', 'message' => 'Cancel this booking? This will remove date blocks and send a cancellation email to the guest.', 'confirmText' => 'Cancel Booking', 'confirmClass' => 'bg-red-600 hover:bg-red-700 text-white'])
 @include('admin.components.confirm-dialog', ['name' => 'mark-paid', 'title' => 'Mark as Paid?', 'message' => 'Mark this booking as paid (e.g. bank transfer or cash on site)?', 'confirmText' => 'Mark as Paid', 'confirmClass' => 'bg-emerald-600 hover:bg-emerald-700 text-white'])
+@include('admin.components.confirm-dialog', ['name' => 'refund', 'title' => 'Refund Payment?', 'message' => 'Refund the full paid amount via PayMongo and cancel this booking? The guest will be notified by email.', 'confirmText' => 'Refund & Cancel', 'confirmClass' => 'bg-red-600 hover:bg-red-700 text-white'])
 @endsection
