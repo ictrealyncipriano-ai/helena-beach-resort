@@ -11,6 +11,7 @@ use App\Models\Guest;
 use App\Models\Inquiry;
 use App\Models\SiteSetting;
 use App\Services\PayMongoService;
+use App\Services\InquiryService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
@@ -50,6 +51,69 @@ class InquiryController extends Controller
         $guests = Guest::pluck('name', 'id');
 
         return view('admin.inquiries.index', compact('inquiries', 'cottages', 'guests'));
+    }
+
+    /**
+     * Store a walk-in booking taken over the counter or by phone. Tags it
+     * with source = walk-in, auto-creates/links a guest profile when no
+     * existing guest is selected, and auto-calculates the total from the
+     * cottage rate when the amount is left blank.
+     */
+    public function store(Request $request, InquiryService $inquiryService)
+    {
+        $data = $request->validate([
+            'name' => 'required|max:255',
+            'email' => 'required|email|max:255',
+            'phone' => 'nullable|max:255',
+            'guest_id' => 'nullable|exists:guests,id',
+            'booking_type' => 'nullable|in:day_tour,overnight',
+            'check_in' => 'nullable|date',
+            'check_out' => 'nullable|date',
+            'pax' => 'nullable|integer|min:1',
+            'total_amount' => 'nullable|numeric|min:0',
+            'cottage_id' => 'nullable|exists:cottages,id',
+            'status' => 'required|in:pending,confirmed,cancelled,expired',
+            'message' => 'nullable',
+        ]);
+
+        $totalAmount = $data['total_amount'] ?? null;
+        if ($totalAmount === null || $totalAmount === '') {
+            $totalAmount = $inquiryService->calculateTotal($data);
+        }
+
+        $inquiry = Inquiry::create([
+            'name' => $data['name'],
+            'email' => $data['email'],
+            'phone' => $data['phone'] ?? null,
+            'check_in' => $data['check_in'] ?? null,
+            'check_out' => $data['check_out'] ?? null,
+            'pax' => $data['pax'] ?? null,
+            'cottage_id' => $data['cottage_id'] ?? null,
+            'guest_id' => $data['guest_id'] ?? null,
+            'message' => $data['message'] ?? null,
+            'booking_type' => $data['booking_type'] ?? null,
+            'total_amount' => $totalAmount,
+            'status' => $data['status'],
+            'source' => 'walk-in',
+        ]);
+
+        if (empty($inquiry->guest_id) && $inquiry->email) {
+            $guest = Guest::updateOrCreate(
+                ['email' => $inquiry->email],
+                ['name' => $inquiry->name, 'phone' => $inquiry->phone]
+            );
+            $inquiry->guest()->associate($guest)->save();
+        }
+
+        if ($inquiry->status === 'confirmed') {
+            $inquiry->bookBlocks();
+            $this->markConfirmed($inquiry);
+        } elseif ($inquiry->status === 'pending') {
+            $inquiry->reserveBlocks();
+        }
+
+        return redirect()->route('admin.inquiries.index')
+            ->with('success', "Walk-in inquiry {$inquiry->reference_code} created successfully.");
     }
 
     public function show(Inquiry $inquiry)

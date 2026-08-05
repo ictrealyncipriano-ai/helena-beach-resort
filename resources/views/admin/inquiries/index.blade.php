@@ -87,8 +87,8 @@ if ($editingId) {
 @section('content')
 <div x-data="inquiryModal()" class="space-y-6">
     <div class="bg-white rounded-xl shadow-sm border border-gray-100">
-        <div class="p-4 sm:p-5 border-b border-gray-100">
-            <form method="GET" class="flex flex-wrap gap-3">
+        <div class="p-4 sm:p-5 border-b border-gray-100 flex flex-col lg:flex-row lg:items-center gap-3">
+            <form method="GET" class="flex flex-wrap gap-3 flex-1">
                 <div class="relative flex-1 min-w-[200px]">
                     <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"/></svg>
                     <input type="text" name="search" value="{{ request('search') }}" placeholder="Search name, email, ref #..." class="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-300 focus:border-teal-400">
@@ -108,6 +108,7 @@ if ($editingId) {
                 <select name="source" class="px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-300 focus:border-teal-400 bg-white">
                     <option value="">All Sources</option>
                     <option value="booking" {{ request('source') === 'booking' ? 'selected' : '' }}>Booking</option>
+                    <option value="walk-in" {{ request('source') === 'walk-in' ? 'selected' : '' }}>Walk-In</option>
                     <option value="website" {{ request('source') === 'website' ? 'selected' : '' }}>Website</option>
                 </select>
                 <select name="cottage_id" class="px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-300 focus:border-teal-400 bg-white">
@@ -121,6 +122,10 @@ if ($editingId) {
                     <a href="{{ route('admin.inquiries.index') }}" class="px-3 py-2 text-sm font-medium text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">Clear</a>
                 @endif
             </form>
+            <button type="button" @@click="openCreate()" class="inline-flex items-center justify-center gap-2 px-4 py-2 bg-teal-600 text-white text-sm font-medium rounded-lg hover:bg-teal-700 transition-colors shadow-sm whitespace-nowrap">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.5v15m7.5-7.5h-15"/></svg>
+                Add Inquiry
+            </button>
         </div>
 
         @if($inquiries->isEmpty())
@@ -246,7 +251,9 @@ if ($editingId) {
 
             <div class="flex items-center justify-end gap-3 pt-5 mt-6 border-t border-gray-100">
                 <button type="button" @@click="window.dispatchEvent(new CustomEvent('close-modal-inquiry-form'))" class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">Cancel</button>
-                <button type="submit" class="px-6 py-2 text-sm font-medium text-white bg-teal-600 rounded-lg hover:bg-teal-700 transition-colors shadow-sm">Update Inquiry</button>
+                <button type="submit" class="px-6 py-2 text-sm font-medium text-white bg-teal-600 rounded-lg hover:bg-teal-700 transition-colors shadow-sm">
+                    <span x-text="isEditing ? 'Update Inquiry' : 'Add Inquiry'"></span>
+                </button>
             </div>
         </form>
     </x-admin.modal>
@@ -264,6 +271,7 @@ window.inquiryModal = function() {
     return {
         inquiries: @js($inquiriesData),
         view: {},
+        isEditing: false,
         editingId: null,
         form: {
             name: '',
@@ -289,9 +297,33 @@ window.inquiryModal = function() {
             window.dispatchEvent(new CustomEvent('open-modal-inquiry-view', { detail: { title: 'Inquiry ' + inquiry.reference_code } }));
         },
 
+        openCreate() {
+            this.isEditing = false;
+            this.editingId = null;
+            this.form = {
+                name: '',
+                email: '',
+                phone: '',
+                guest_id: '',
+                booking_type: '',
+                check_in: '',
+                check_out: '',
+                pax: '',
+                total_amount: '',
+                cottage_id: '',
+                status: 'pending',
+                message: '',
+            };
+            this.formAction = '{{ route('admin.inquiries.store') }}';
+            this.formMethod = 'POST';
+            window.dispatchEvent(new CustomEvent('close-modal-inquiry-view'));
+            window.dispatchEvent(new CustomEvent('open-modal-inquiry-form', { detail: { title: 'Add Inquiry' } }));
+        },
+
         openEdit(id) {
             const inquiry = this.inquiries.find(i => i.id === id);
             if (!inquiry) return;
+            this.isEditing = true;
             this.editingId = inquiry.id;
             this.form = {
                 name: inquiry.name,
@@ -352,8 +384,12 @@ window.inquiryModal = function() {
             const oldStatus = @js(old('status', ''));
             const oldMessage = @js(old('message', ''));
 
-            if (showModal && editingId) {
-                this.openEdit(Number(editingId));
+            if (showModal) {
+                if (editingId) {
+                    this.openEdit(Number(editingId));
+                } else {
+                    this.openCreate();
+                }
                 this.$nextTick(() => {
                     if (oldName) this.form.name = oldName;
                     if (oldEmail) this.form.email = oldEmail;

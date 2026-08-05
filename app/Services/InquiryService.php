@@ -24,18 +24,7 @@ class InquiryService
     public function store(array $data): Inquiry
     {
         // Calculate total amount based on booking type and cottage rates
-        $totalAmount = null;
-        if (! empty($data['booking_type']) && ! empty($data['cottage_id'])) {
-            $cottage = Cottage::find($data['cottage_id']);
-            if ($cottage) {
-                if ($data['booking_type'] === 'day_tour') {
-                    $totalAmount = $cottage->rate_daytour;
-                } elseif ($data['booking_type'] === 'overnight' && ! empty($data['check_in']) && ! empty($data['check_out'])) {
-                    $nights = Carbon::parse($data['check_in'])->diffInDays(Carbon::parse($data['check_out']));
-                    $totalAmount = $cottage->rate_overnight * max($nights, 1);
-                }
-            }
-        }
+        $totalAmount = $this->calculateTotal($data);
 
         $inquiry = Inquiry::create([
             'name' => $data['name'],
@@ -86,5 +75,33 @@ class InquiryService
         }
 
         return $inquiry;
+    }
+
+    /**
+     * Calculate the total amount for a booking based on booking type and
+     * cottage rates. Returns null when the amount cannot be determined
+     * (e.g. missing cottage or incomplete overnight dates).
+     */
+    public function calculateTotal(array $data): ?string
+    {
+        if (empty($data['booking_type']) || empty($data['cottage_id'])) {
+            return null;
+        }
+
+        $cottage = Cottage::find($data['cottage_id']);
+        if (! $cottage) {
+            return null;
+        }
+
+        if ($data['booking_type'] === 'day_tour') {
+            return $cottage->rate_daytour;
+        }
+
+        if ($data['booking_type'] === 'overnight' && ! empty($data['check_in']) && ! empty($data['check_out'])) {
+            $nights = Carbon::parse($data['check_in'])->diffInDays(Carbon::parse($data['check_out']));
+            return $cottage->rate_overnight * max($nights, 1);
+        }
+
+        return null;
     }
 }

@@ -37,6 +37,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
 
         Route::prefix('inquiries')->name('inquiries.')->controller(InquiryController::class)->group(function () {
             Route::get('/', 'index')->name('index');
+            Route::post('/', 'store')->name('store');
             Route::get('{inquiry}', 'show')->name('show');
             Route::get('{inquiry}/edit', 'edit')->name('edit');
             Route::put('{inquiry}', 'update')->name('update');
