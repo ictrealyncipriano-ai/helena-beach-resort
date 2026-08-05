@@ -270,9 +270,11 @@ if ($editingId) {
 window.inquiryModal = function() {
     return {
         inquiries: @js($inquiriesData),
+        cottageRates: @js($cottageRates),
         view: {},
         isEditing: false,
         editingId: null,
+        lastAutoTotal: null,
         form: {
             name: '',
             email: '',
@@ -290,6 +292,40 @@ window.inquiryModal = function() {
         formAction: '',
         formMethod: 'PUT',
 
+        get suggestedTotal() {
+            if (!this.form.cottage_id || !this.cottageRates[this.form.cottage_id]) {
+                return null;
+            }
+            const r = this.cottageRates[this.form.cottage_id];
+            if (this.form.booking_type === 'day_tour') {
+                return Number(r.day_tour);
+            }
+            if (this.form.booking_type === 'overnight') {
+                if (!this.form.check_in || !this.form.check_out) {
+                    return null;
+                }
+                const a = new Date(this.form.check_in + 'T00:00:00');
+                const b = new Date(this.form.check_out + 'T00:00:00');
+                const nights = Math.max(1, Math.round((b - a) / (1000 * 60 * 60 * 24)));
+                return Number(r.overnight) * nights;
+            }
+            return null;
+        },
+
+        applySuggestedTotal() {
+            const suggested = this.suggestedTotal;
+            const current = this.form.total_amount === null || this.form.total_amount === undefined ? '' : String(this.form.total_amount);
+            const last = this.lastAutoTotal === null ? '' : String(this.lastAutoTotal);
+
+            if (suggested !== null && (current === '' || current === last)) {
+                this.form.total_amount = suggested;
+                this.lastAutoTotal = suggested;
+            } else if (suggested === null && current === last) {
+                this.form.total_amount = '';
+                this.lastAutoTotal = null;
+            }
+        },
+
         openView(id) {
             const inquiry = this.inquiries.find(i => i.id === id);
             if (!inquiry) return;
@@ -300,6 +336,7 @@ window.inquiryModal = function() {
         openCreate() {
             this.isEditing = false;
             this.editingId = null;
+            this.lastAutoTotal = null;
             this.form = {
                 name: '',
                 email: '',
@@ -325,6 +362,7 @@ window.inquiryModal = function() {
             if (!inquiry) return;
             this.isEditing = true;
             this.editingId = inquiry.id;
+            this.lastAutoTotal = null;
             this.form = {
                 name: inquiry.name,
                 email: inquiry.email,
@@ -369,6 +407,10 @@ window.inquiryModal = function() {
         },
 
         init() {
+            ['form.cottage_id', 'form.booking_type', 'form.check_in', 'form.check_out'].forEach(path => {
+                this.$watch(path, () => this.applySuggestedTotal());
+            });
+
             const showModal = @js($showEditModal);
             const editingId = @js($editingData ? $editingData['id'] : 0);
             const oldName = @js(old('name', ''));

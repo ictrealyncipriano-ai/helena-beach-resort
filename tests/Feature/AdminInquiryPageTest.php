@@ -154,6 +154,19 @@ class AdminInquiryPageTest extends TestCase
             ->assertSee('value="walk-in"', false);
     }
 
+    public function test_inquiries_index_embeds_cottage_rates_for_auto_calc(): void
+    {
+        $this->cottage('Sunset Cottage', 2200, 4400);
+
+        $this->actingAs($this->admin())
+            ->get(route('admin.inquiries.index'))
+            ->assertOk()
+            ->assertSee('cottageRates', false)
+            ->assertSee('Sunset Cottage', false)
+            ->assertSee('2200', false)
+            ->assertSee('4400', false);
+    }
+
     public function test_index_filters_walk_in_inquiries_by_source(): void
     {
         Inquiry::create([

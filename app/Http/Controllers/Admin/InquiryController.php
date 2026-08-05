@@ -49,8 +49,15 @@ class InquiryController extends Controller
         $inquiries = $query->latest()->paginate(15);
         $cottages = Cottage::pluck('name', 'id');
         $guests = Guest::pluck('name', 'id');
+        $cottageRates = Cottage::get()->mapWithKeys(fn ($c) => [
+            $c->id => [
+                'name' => $c->name,
+                'day_tour' => (float) $c->rate_daytour,
+                'overnight' => (float) $c->rate_overnight,
+            ],
+        ]);
 
-        return view('admin.inquiries.index', compact('inquiries', 'cottages', 'guests'));
+        return view('admin.inquiries.index', compact('inquiries', 'cottages', 'guests', 'cottageRates'));
     }
 
     /**

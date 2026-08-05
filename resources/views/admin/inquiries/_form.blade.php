@@ -70,6 +70,12 @@
                 <input type="number" step="0.01" name="total_amount" x-model="form.total_amount" min="0"
                     class="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-300 focus:border-teal-400 transition-all @error('total_amount') border-red-300 @enderror">
                 @error('total_amount') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
+                <template x-if="suggestedTotal !== null">
+                    <p class="mt-1 text-xs text-teal-600">Suggested amount: ₱<span x-text="suggestedTotal.toLocaleString()"></span> — auto-calculated. Edit to override.</p>
+                </template>
+                <template x-else-if="form.booking_type === 'overnight' && form.cottage_id && !(form.check_in && form.check_out)">
+                    <p class="mt-1 text-xs text-gray-400">Select check-in and check-out to calculate the overnight rate.</p>
+                </template>
             </div>
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Status <span class="text-red-500">*</span></label>
