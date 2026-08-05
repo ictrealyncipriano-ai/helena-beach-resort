@@ -131,19 +131,21 @@ class PaymentFlowTest extends TestCase
     {
         $inquiry = $this->confirmedBooking('webhook@example.com');
 
+        // PayMongo delivers the raw checkout-session resource.
         $payload = json_encode([
             'data' => [
-                'type' => 'checkout_session.payment.paid',
-                'data' => [
-                    'id' => 'cs_abc',
-                    'attributes' => [
-                        'reference_number' => $inquiry->reference_code,
-                        'payments' => [
-                            [
-                                'attributes' => [
-                                    'amount' => 10000,
-                                    'source' => ['type' => 'qrph'],
-                                ],
+                'id' => 'cs_abc',
+                'type' => 'checkout_session',
+                'attributes' => [
+                    'reference_number' => $inquiry->reference_code,
+                    'paid_at' => 1785892089,
+                    'payments' => [
+                        [
+                            'id' => 'pay_123',
+                            'attributes' => [
+                                'status' => 'paid',
+                                'amount' => 10000,
+                                'source' => ['type' => 'qrph'],
                             ],
                         ],
                     ],
@@ -167,6 +169,132 @@ class PaymentFlowTest extends TestCase
         $this->assertNotNull($inquiry->refresh()->paid_at);
     }
 
+    public function test_webhook_marks_paid_for_resource_delivered_without_data_wrapper(): void
+    {
+        $inquiry = $this->confirmedBooking('nowrap@example.com');
+
+        // PayMongo delivers the checkout session with no outer `data` wrapper.
+        $payload = json_encode([
+            'id' => 'cs_nw',
+            'type' => 'checkout_session',
+            'attributes' => [
+                'reference_number' => $inquiry->reference_code,
+                'paid_at' => 1785892089,
+                'payments' => [
+                    [
+                        'id' => 'pay_nw',
+                        'attributes' => ['status' => 'paid', 'amount' => 10000, 'source' => ['type' => 'qrph']],
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->postJson(
+            route('payment.webhook'),
+            json_decode($payload, true),
+            ['Paymongo-Signature' => $this->signatureFor($payload)]
+        )->assertOk()->assertJson(['ok' => true]);
+
+        $this->assertDatabaseHas('inquiries', [
+            'id' => $inquiry->id,
+            'payment_method' => 'qrph',
+            'paid_amount' => 100.00,
+            'paymongo_payment_id' => 'pay_nw',
+            'paymongo_session_id' => 'cs_nw',
+        ]);
+        $this->assertNotNull($inquiry->refresh()->paid_at);
+    }
+
+    public function test_webhook_marks_paid_for_event_envelope_payload(): void
+    {
+        $inquiry = $this->confirmedBooking('envelope@example.com');
+
+        // PayMongo's standard V1 webhook event wrapper nests the resource
+        // under data.attributes.data.
+        $payload = json_encode([
+            'data' => [
+                'id' => 'evt_1',
+                'type' => 'checkout_session.payment.paid',
+                'attributes' => [
+                    'data' => [
+                        'id' => 'cs_abc',
+                        'type' => 'checkout_session',
+                        'attributes' => [
+                            'reference_number' => $inquiry->reference_code,
+                            'paid_at' => 1785892089,
+                            'payments' => [
+                                [
+                                    'id' => 'pay_456',
+                                    'attributes' => ['status' => 'paid', 'amount' => 10000, 'source' => ['type' => 'qrph']],
+                                ],
+                            ],
+                        ],
+                    ],
+                    'previous_data' => null,
+                ],
+            ],
+        ]);
+
+        $this->postJson(
+            route('payment.webhook'),
+            json_decode($payload, true),
+            ['Paymongo-Signature' => $this->signatureFor($payload)]
+        )->assertOk()->assertJson(['ok' => true]);
+
+        $this->assertDatabaseHas('inquiries', [
+            'id' => $inquiry->id,
+            'payment_method' => 'qrph',
+            'paid_amount' => 100.00,
+            'paymongo_payment_id' => 'pay_456',
+        ]);
+        $this->assertNotNull($inquiry->refresh()->paid_at);
+    }
+
+    public function test_webhook_marks_paid_for_generic_event_envelope_payload(): void
+    {
+        $inquiry = $this->confirmedBooking('genericevent@example.com');
+
+        // PayMongo's actual deliveries wrap the resource in an envelope whose
+        // data.type is the generic "event" rather than the event subtype.
+        $payload = json_encode([
+            'data' => [
+                'id' => 'evt_gen',
+                'type' => 'event',
+                'attributes' => [
+                    'data' => [
+                        'id' => 'cs_gen',
+                        'type' => 'checkout_session',
+                        'attributes' => [
+                            'reference_number' => $inquiry->reference_code,
+                            'paid_at' => 1785892089,
+                            'payments' => [
+                                [
+                                    'id' => 'pay_gen',
+                                    'attributes' => ['status' => 'paid', 'amount' => 10000, 'source' => ['type' => 'qrph']],
+                                ],
+                            ],
+                        ],
+                    ],
+                    'previous_data' => null,
+                ],
+            ],
+        ]);
+
+        $this->postJson(
+            route('payment.webhook'),
+            json_decode($payload, true),
+            ['Paymongo-Signature' => $this->signatureFor($payload)]
+        )->assertOk()->assertJson(['ok' => true]);
+
+        $this->assertDatabaseHas('inquiries', [
+            'id' => $inquiry->id,
+            'payment_method' => 'qrph',
+            'paid_amount' => 100.00,
+            'paymongo_payment_id' => 'pay_gen',
+        ]);
+        $this->assertNotNull($inquiry->refresh()->paid_at);
+    }
+
     public function test_webhook_is_idempotent_for_repeat_payments(): void
     {
         $inquiry = $this->confirmedBooking('repeat@example.com');
@@ -174,12 +302,19 @@ class PaymentFlowTest extends TestCase
 
         $payload = json_encode([
             'data' => [
+                'id' => 'evt_1',
                 'type' => 'checkout_session.payment.paid',
-                'data' => [
-                    'attributes' => [
-                        'reference_number' => $inquiry->reference_code,
-                        'payments' => [['attributes' => ['amount' => 50000, 'source' => ['type' => 'card']]]],
+                'attributes' => [
+                    'data' => [
+                        'id' => 'cs_abc',
+                        'type' => 'checkout_session',
+                        'attributes' => [
+                            'reference_number' => $inquiry->reference_code,
+                            'paid_at' => 1785892089,
+                            'payments' => [['id' => 'pay_1', 'attributes' => ['status' => 'paid', 'amount' => 50000, 'source' => ['type' => 'card']]]],
+                        ],
                     ],
+                    'previous_data' => null,
                 ],
             ],
         ]);
@@ -219,13 +354,19 @@ class PaymentFlowTest extends TestCase
 
         $payload = json_encode([
             'data' => [
+                'id' => 'evt_1',
                 'type' => 'payment.failed',
-                'data' => [
-                    'attributes' => [
-                        'external_reference_number' => $inquiry->reference_code,
-                        'amount' => 10000,
-                        'source' => ['type' => 'qrph'],
+                'attributes' => [
+                    'data' => [
+                        'id' => 'pay_123',
+                        'type' => 'payment',
+                        'attributes' => [
+                            'external_reference_number' => $inquiry->reference_code,
+                            'amount' => 10000,
+                            'source' => ['type' => 'qrph'],
+                        ],
                     ],
+                    'previous_data' => null,
                 ],
             ],
         ]);
@@ -301,18 +442,24 @@ class PaymentFlowTest extends TestCase
 
         $payload = json_encode([
             'data' => [
+                'id' => 'evt_1',
                 'type' => 'checkout_session.payment.paid',
-                'data' => [
-                    'id' => 'cs_abc',
-                    'attributes' => [
-                        'reference_number' => $inquiry->reference_code,
-                        'payments' => [
-                            [
-                                'id' => 'pay_123',
-                                'attributes' => ['amount' => 10000, 'source' => ['type' => 'qrph']],
+                'attributes' => [
+                    'data' => [
+                        'id' => 'cs_abc',
+                        'type' => 'checkout_session',
+                        'attributes' => [
+                            'reference_number' => $inquiry->reference_code,
+                            'paid_at' => 1785892089,
+                            'payments' => [
+                                [
+                                    'id' => 'pay_123',
+                                    'attributes' => ['status' => 'paid', 'amount' => 10000, 'source' => ['type' => 'qrph']],
+                                ],
                             ],
                         ],
                     ],
+                    'previous_data' => null,
                 ],
             ],
         ]);

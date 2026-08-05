@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\Mail;
 
 /**
  * Guest-facing booking portal: lookup bookings by email + reference code,
- * view booking details, and self-cancel (with 48h cutoff).
+ * view booking details, and self-cancel (with 24h cutoff).
  */
 class BookingPortalController extends Controller
 {
@@ -49,14 +49,18 @@ class BookingPortalController extends Controller
     {
         $canCancel = $this->canCancel($inquiry);
 
-        return view('pages.booking-detail', compact('inquiry', 'canCancel'));
+        return view('pages.booking-detail', [
+            'inquiry' => $inquiry,
+            'canCancel' => $canCancel,
+            'cancelBlockReason' => $canCancel ? null : $this->cannotCancelReason($inquiry),
+        ]);
     }
 
     /** Cancel a booking (guest-facing), sends notification to guest and owner */
     public function cancel(Request $request, Inquiry $inquiry, PayMongoService $payMongo)
     {
         if (! $this->canCancel($inquiry)) {
-            return back()->with('error', 'This booking cannot be cancelled. Cancellations must be made at least 48 hours before check-in.');
+            return back()->with('error', 'This booking cannot be cancelled. Cancellations must be made at least 24 hours before check-in.');
         }
 
         $refunded = false;
@@ -121,7 +125,7 @@ class BookingPortalController extends Controller
     /**
      * Check if cancellation is allowed:
      * - Status must be pending or confirmed
-     * - Must be at least 48 hours before check-in
+     * - Must have a check-in date that is at least 24 hours in the future
      */
     private function canCancel(Inquiry $inquiry): bool
     {
@@ -129,10 +133,37 @@ class BookingPortalController extends Controller
             return false;
         }
 
-        if ($inquiry->check_in && now()->diffInHours($inquiry->check_in) < 48) {
+        if (! $inquiry->check_in || $inquiry->check_in->isPast()) {
+            return false;
+        }
+
+        if (now()->diffInHours($inquiry->check_in) < 24) {
             return false;
         }
 
         return true;
+    }
+
+    /**
+     * Explain why a pending/confirmed booking cannot be cancelled, so the
+     * portal can show a clear reason instead of silently omitting the action.
+     * Returns null when the booking can be cancelled.
+     */
+    private function cannotCancelReason(Inquiry $inquiry): ?string
+    {
+        if (! in_array($inquiry->status, ['pending', 'confirmed'])) {
+            return null;
+        }
+
+        if (! $inquiry->check_in || $inquiry->check_in->isPast()) {
+            return 'This booking can no longer be cancelled.';
+        }
+
+        if (now()->diffInHours($inquiry->check_in) < 24) {
+            return 'Cancellation is no longer available. This booking can be cancelled until 24 hours before check-in (cutoff: '
+                .$inquiry->check_in->format('M d, Y').').';
+        }
+
+        return null;
     }
 }

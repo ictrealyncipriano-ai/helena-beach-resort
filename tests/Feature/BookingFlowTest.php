@@ -2,15 +2,14 @@
 
 namespace Tests\Feature;
 
+use App\Mail\BookingConfirmed;
+use App\Mail\InquiryAcknowledgment;
 use App\Models\Cottage;
 use App\Models\Inquiry;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Mail;
 use Tests\TestCase;
-
-use App\Mail\BookingConfirmed;
-use App\Mail\InquiryAcknowledgment;
 
 class BookingFlowTest extends TestCase
 {
@@ -229,5 +228,85 @@ class BookingFlowTest extends TestCase
             ->assertRedirect();
 
         Mail::assertSent(BookingConfirmed::class, fn ($mailable) => $mailable->hasTo($inquiry->email));
+    }
+
+    public function test_booking_detail_shows_cancel_button_when_check_in_is_at_least_24h_away(): void
+    {
+        $this->book('cancelok@example.com');
+        $inquiry = Inquiry::where('email', 'cancelok@example.com')->first();
+
+        $this->get(route('booking.portal.show', $inquiry))
+            ->assertOk()
+            ->assertSee('Cancel Booking')
+            ->assertSee('Cancel Booking?')
+            ->assertSee('This will cancel your booking and it cannot be undone.')
+            ->assertSee('Keep Booking')
+            ->assertDontSee('Cancellation is no longer available');
+    }
+
+    public function test_booking_detail_explains_cancellation_blocked_within_24h(): void
+    {
+        $inquiry = Inquiry::create([
+            'reference_code' => 'HB-000099',
+            'name' => 'Grace',
+            'email' => 'grace@example.com',
+            'phone' => '09170000000',
+            'check_in' => now()->addDay()->toDateString(),
+            'check_out' => now()->addDays(2)->toDateString(),
+            'pax' => 2,
+            'booking_type' => 'overnight',
+            'status' => 'confirmed',
+            'source' => 'website',
+        ]);
+
+        $this->get(route('booking.portal.show', $inquiry))
+            ->assertOk()
+            ->assertSee('Cancellation is no longer available')
+            ->assertDontSee('Cancel Booking')
+            ->assertDontSee('Cancel Booking?')
+            ->assertDontSee('Keep Booking');
+    }
+
+    public function test_guest_cancel_rejected_within_24h(): void
+    {
+        $inquiry = Inquiry::create([
+            'reference_code' => 'HB-000098',
+            'name' => 'Hannah',
+            'email' => 'hannah@example.com',
+            'phone' => '09170000000',
+            'check_in' => now()->addDay()->toDateString(),
+            'check_out' => now()->addDays(2)->toDateString(),
+            'pax' => 2,
+            'booking_type' => 'overnight',
+            'status' => 'confirmed',
+            'source' => 'website',
+        ]);
+
+        $this->post(route('booking.portal.cancel', $inquiry))
+            ->assertRedirect()
+            ->assertSessionHas('error');
+
+        $this->assertSame('confirmed', $inquiry->refresh()->status);
+    }
+
+    public function test_booking_detail_explains_past_check_in_cannot_be_cancelled(): void
+    {
+        $inquiry = Inquiry::create([
+            'reference_code' => 'HB-000097',
+            'name' => 'Ivan',
+            'email' => 'ivan@example.com',
+            'phone' => '09170000000',
+            'check_in' => now()->subDays(3)->toDateString(),
+            'check_out' => now()->subDays(2)->toDateString(),
+            'pax' => 2,
+            'booking_type' => 'overnight',
+            'status' => 'confirmed',
+            'source' => 'website',
+        ]);
+
+        $this->get(route('booking.portal.show', $inquiry))
+            ->assertOk()
+            ->assertSee('can no longer be cancelled')
+            ->assertDontSee('Cancel Booking');
     }
 }

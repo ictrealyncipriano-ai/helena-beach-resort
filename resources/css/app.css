@@ -114,6 +114,10 @@
     overflow: hidden;
 }
 
+[x-cloak] {
+    display: none !important;
+}
+
 .line-clamp-3 {
     display: -webkit-box;
     -webkit-line-clamp: 3;

@@ -10,7 +10,7 @@
 <div style="background: #fffbeb; border-radius: 12px; padding: 20px 24px; margin-bottom: 24px; border: 1px solid #fde68a; text-align: center;">
 <p style="margin: 0 0 4px; font-size: 11px; font-weight: 600; color: #b45309; text-transform: uppercase; letter-spacing: 0.05em;">Your Reference Code</p>
 <p style="margin: 0; font-size: 26px; font-weight: 700; color: #0d9488; font-family: 'Courier New', monospace; letter-spacing: 0.08em;">{{ $inquiry->reference_code }}</p>
-<p style="margin: 8px 0 0; font-size: 12px; color: #92400e; line-height: 1.5;">Keep this code safe — you'll need it to <strong>view or cancel</strong> your booking.</p>
+<p style="margin: 8px 0 0; font-size: 12px; color: #92400e; line-height: 1.5;">Keep this code safe — you'll need it to <strong>view your booking</strong>.</p>
 </div>
 
 <div style="background: #f8fafc; border-radius: 12px; padding: 20px 24px; margin-bottom: 24px; border: 1px solid #e2e8f0;">
@@ -85,7 +85,7 @@
 <table role="presentation" cellpadding="0" cellspacing="0" style="margin: 0 auto;">
 <tr>
 <td style="background: #0d9488; border-radius: 8px; text-align: center;">
-<a href="{{ route('booking.portal.lookup') }}" class="btn" style="display: inline-block; padding: 14px 32px; font-size: 14px; font-weight: 600; color: #ffffff; text-decoration: none; border-radius: 8px;">View or Cancel My Booking</a>
+<a href="{{ route('booking.portal.lookup') }}" class="btn" style="display: inline-block; padding: 14px 32px; font-size: 14px; font-weight: 600; color: #ffffff; text-decoration: none; border-radius: 8px;">View My Booking</a>
 </td>
 </tr>
 </table>

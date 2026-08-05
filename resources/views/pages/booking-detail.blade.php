@@ -11,7 +11,7 @@
 </x-hero>
 
 <section class="py-20 bg-white">
-    <div class="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8" x-data="{ showCancelModal: false }" @keydown.escape.window="showCancelModal = false">
         @if(session('success'))
         <div class="mb-6 p-4 bg-green-50 border border-green-200 rounded-xl text-sm text-green-700 flex items-center gap-2 reveal">
             <x-icons name="check" class="w-5 h-5 shrink-0" />
@@ -168,18 +168,65 @@
             </a>
             @endif
 
-            @if($canCancel)
-            <form method="POST" action="{{ route('booking.portal.cancel', $inquiry) }}"
-                onsubmit="return confirm('Are you sure you want to cancel this booking? This action cannot be undone.')">
-                @csrf
-                <button type="submit"
+            <div>
+                @if($canCancel)
+                <button type="button" @click="showCancelModal = true"
                     class="w-full px-6 py-3 bg-white text-red-600 font-medium rounded-xl border border-red-200 hover:bg-red-50 transition-all inline-flex items-center justify-center gap-2">
                     <x-icons name="x" class="w-4 h-4" />
                     Cancel Booking
                 </button>
-            </form>
-            @endif
+                @elseif($cancelBlockReason)
+                <div class="w-full px-6 py-3 bg-gray-50 text-gray-500 rounded-xl border border-gray-200 text-sm flex items-center gap-2">
+                    <x-icons name="info" class="w-4 h-4 shrink-0 text-gray-400" />
+                    {{ $cancelBlockReason }}
+                </div>
+                @endif
+            </div>
         </div>
+
+        @if($canCancel)
+        <div x-cloak x-show="showCancelModal"
+            x-transition:enter="transition-opacity ease-out duration-200"
+            x-transition:enter-start="opacity-0"
+            x-transition:enter-end="opacity-100"
+            x-transition:leave="transition-opacity ease-in duration-150"
+            x-transition:leave-start="opacity-100"
+            x-transition:leave-end="opacity-0"
+            class="fixed inset-0 bg-gray-900/50 backdrop-blur-sm z-50"
+            @click.self="showCancelModal = false"></div>
+
+        <div x-cloak x-show="showCancelModal" role="dialog" aria-modal="true"
+            x-transition:enter="transition ease-out duration-200"
+            x-transition:enter-start="opacity-0 scale-95 translate-y-4"
+            x-transition:enter-end="opacity-100 scale-100 translate-y-0"
+            x-transition:leave="transition ease-in duration-150"
+            x-transition:leave-start="opacity-100 scale-100 translate-y-0"
+            x-transition:leave-end="opacity-0 scale-95 translate-y-4"
+            class="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div class="bg-white rounded-2xl border border-gray-100 shadow-xl w-full max-w-md p-8">
+                <div class="text-center">
+                    <div class="mx-auto w-12 h-12 rounded-full bg-red-100 flex items-center justify-center mb-4">
+                        <x-icons name="x" class="w-6 h-6 text-red-600" />
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-2">Cancel Booking?</h3>
+                    <p class="text-sm text-gray-500 mb-6">This will cancel your booking and it cannot be undone.</p>
+                </div>
+                <div class="flex items-center justify-center gap-3">
+                    <button type="button" @click="showCancelModal = false"
+                        class="px-5 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-xl hover:bg-gray-50 transition-colors">
+                        Keep Booking
+                    </button>
+                    <form method="POST" action="{{ route('booking.portal.cancel', $inquiry) }}">
+                        @csrf
+                        <button type="submit"
+                            class="px-5 py-2.5 text-sm font-medium text-white bg-red-600 rounded-xl hover:bg-red-700 transition-colors">
+                            Cancel Booking
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        @endif
 
         <div class="text-center mt-6">
             <a href="{{ route('home') }}" class="text-sm text-teal-600 hover:text-teal-700 inline-flex items-center gap-1">

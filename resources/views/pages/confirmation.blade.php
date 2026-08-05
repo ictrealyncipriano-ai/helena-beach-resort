@@ -127,7 +127,7 @@
             <x-icons name="info" class="w-5 h-5 shrink-0 mt-0.5" />
             <div>
                 <strong>We've emailed these details to {{ $inquiry->email }}.</strong> Keep your reference code safe — you can use it later to
-                <a href="{{ route('booking.portal.lookup') }}" class="underline font-medium hover:text-teal-800">view or cancel your booking</a>.
+                <a href="{{ route('booking.portal.lookup') }}" class="underline font-medium hover:text-teal-800">view your booking</a>.
             </div>
         </div>
 
