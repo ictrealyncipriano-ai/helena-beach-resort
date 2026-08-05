@@ -47,8 +47,9 @@ class InquiryController extends Controller
 
         $inquiries = $query->latest()->paginate(15);
         $cottages = Cottage::pluck('name', 'id');
+        $guests = Guest::pluck('name', 'id');
 
-        return view('admin.inquiries.index', compact('inquiries', 'cottages'));
+        return view('admin.inquiries.index', compact('inquiries', 'cottages', 'guests'));
     }
 
     public function show(Inquiry $inquiry)
