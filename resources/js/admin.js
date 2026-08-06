@@ -64,6 +64,7 @@ function themeToggle() {
             this.mode = m;
             localStorage.setItem('theme', m);
             this.dark = this.isDarkMode();
+            this.open = false;
             document.documentElement.classList.toggle('dark', this.dark);
         }
     };
