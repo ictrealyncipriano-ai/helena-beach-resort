@@ -13,7 +13,7 @@
     <div class="flex items-center gap-3">
         <x-theme-toggle />
         {{-- User dropdown --}}
-        <div class="relative" x-data="{ open: false }" @click.outside="open = false">
+        <div x-data="{ open: false }" @click.outside="open = false">
             <button type="button" @click="open = !open" class="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-gray-50 transition-colors dark:hover:bg-slate-700/50">
                 <div class="w-7 h-7 rounded-full bg-teal-600 flex items-center justify-center text-white text-xs font-bold shrink-0">
                     {{ substr(Auth::user()->name ?? 'A', 0, 1) }}
@@ -23,7 +23,7 @@
             </button>
 
             {{-- Dropdown --}}
-            <div x-show="open" x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100" x-transition:leave="transition ease-in duration-100" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95" class="absolute right-0 top-12 w-48 bg-white rounded-xl shadow-lg border border-gray-100 py-1 z-50 dark:bg-slate-800 dark:border-slate-700">
+            <div x-show="open" x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100" x-transition:leave="transition ease-in duration-100" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95" class="absolute right-4 top-14 w-48 bg-white rounded-xl shadow-lg border border-gray-100 py-1 z-50 dark:bg-slate-800 dark:border-slate-700">
                 <div class="px-4 py-2 border-b border-gray-50 dark:border-slate-700">
                     <p class="text-sm font-medium text-gray-900 truncate dark:text-white">{{ Auth::user()->name }}</p>
                     <p class="text-xs text-gray-500 truncate dark:text-slate-400">{{ Auth::user()->email }}</p>
