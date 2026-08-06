@@ -83,4 +83,8 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
+// Expose to global scope so Alpine can resolve x-data="themeToggle()"
+// (module-scoped functions are tree-shaken out of the production bundle).
+window.themeToggle = themeToggle;
+
 Alpine.start();
