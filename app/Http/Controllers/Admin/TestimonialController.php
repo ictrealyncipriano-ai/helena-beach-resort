@@ -29,7 +29,23 @@ class TestimonialController extends Controller
         }
 
         $testimonials = $query->orderBy('sort_order')->paginate(15);
-        return view('admin.testimonials.index', compact('testimonials'));
+
+        $testimonialsData = $testimonials->map(function ($testimonial) {
+            return [
+                'id' => $testimonial->id,
+                'guest_name' => $testimonial->guest_name,
+                'rating' => $testimonial->rating,
+                'content' => $testimonial->content,
+                'cottage_id' => $testimonial->cottage_id,
+                'guest_avatar' => $testimonial->guest_avatar ? Storage::url($testimonial->guest_avatar) : null,
+                'is_active' => (bool) $testimonial->is_active,
+                'sort_order' => $testimonial->sort_order,
+            ];
+        })->values();
+
+        $cottages = \App\Models\Cottage::pluck('name', 'id');
+
+        return view('admin.testimonials.index', compact('testimonials', 'testimonialsData', 'cottages'));
     }
 
     public function create()
