@@ -15,7 +15,7 @@ class CottageController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Cottage::withCount('inquiries')->with('primaryPhoto');
+        $query = Cottage::withCount('inquiries')->with(['primaryPhoto', 'amenities', 'photos', 'dateBlocks']);
 
         if ($search = $request->get('search')) {
             $query->where(function ($q) use ($search) {
@@ -30,7 +30,34 @@ class CottageController extends Controller
 
         $cottages = $query->orderBy('sort_order')->paginate(15);
 
-        return view('admin.cottages.index', compact('cottages'));
+        $cottagesData = $cottages->map(function ($cottage) {
+            return [
+                'id' => $cottage->id,
+                'name' => $cottage->name,
+                'slug' => $cottage->slug,
+                'description' => $cottage->description,
+                'capacity' => $cottage->capacity,
+                'rate_daytour' => $cottage->rate_daytour,
+                'rate_overnight' => $cottage->rate_overnight,
+                'sort_order' => $cottage->sort_order,
+                'is_available' => (bool) $cottage->is_available,
+                'amenities' => $cottage->amenities->map(fn ($a) => [
+                    'name' => $a->name,
+                    'icon' => $a->icon,
+                ])->values(),
+                'photos' => $cottage->photos->map(fn ($p) => [
+                    'id' => $p->id,
+                    'url' => Storage::url($p->photo_path),
+                    'is_primary' => (bool) $p->is_primary,
+                ])->values(),
+                'date_blocks' => $cottage->dateBlocks->map(fn ($b) => [
+                    'date' => $b->date?->format('Y-m-d'),
+                    'reason' => $b->reason,
+                ])->values(),
+            ];
+        })->values();
+
+        return view('admin.cottages.index', compact('cottages', 'cottagesData'));
     }
 
     public function create()

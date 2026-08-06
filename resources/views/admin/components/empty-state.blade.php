@@ -3,6 +3,7 @@
     'title' => 'No data found',
     'message' => 'There are no records to display.',
     'actionUrl' => null,
+    'actionClick' => null,
     'actionLabel' => 'Add New',
 ])
 
@@ -28,5 +29,10 @@
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.5v15m7.5-7.5h-15"/></svg>
             {{ $actionLabel }}
         </a>
+    @elseif($actionClick)
+        <button type="button" @@click="{{ $actionClick }}" class="inline-flex items-center gap-2 px-4 py-2 bg-teal-600 text-white text-sm font-medium rounded-lg hover:bg-teal-700 transition-colors shadow-sm">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.5v15m7.5-7.5h-15"/></svg>
+            {{ $actionLabel }}
+        </button>
     @endif
 </div>
