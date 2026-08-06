@@ -7,20 +7,20 @@
 <x-hero title="Gallery" subtitle="Explore the beauty of Helena Beach Resort through photos." />
 
 {{-- Gallery Grid --}}
-<section class="py-20 sm:py-28 bg-white">
+<section class="py-20 sm:py-28 bg-white dark:bg-slate-800">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         @if($galleries->isEmpty())
         <div class="text-center py-20">
-            <div class="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-6 text-gray-400">
+            <div class="w-16 h-16 bg-gray-100 dark:bg-slate-700 rounded-2xl flex items-center justify-center mx-auto mb-6 text-gray-400 dark:text-slate-500">
                 <x-icons name="photo" class="w-8 h-8" />
             </div>
-            <h2 class="text-xl font-semibold text-gray-600">Gallery coming soon</h2>
-            <p class="text-gray-400 mt-2">We're adding photos. Check back later!</p>
+            <h2 class="text-xl font-semibold text-gray-600 dark:text-slate-300">Gallery coming soon</h2>
+            <p class="text-gray-400 dark:text-slate-500 mt-2">We're adding photos. Check back later!</p>
         </div>
         @else
         <div id="gallery-grid" class="columns-2 sm:columns-3 lg:columns-4 gap-4 space-y-4">
             @foreach($galleries as $i => $item)
-            <div class="break-inside-avoid rounded-xl overflow-hidden bg-gray-100 group cursor-pointer relative reveal {{ $i > 0 ? 'reveal-delay-' . min($i % 4 + 1, 4) : '' }}"
+            <div class="break-inside-avoid rounded-xl overflow-hidden bg-gray-100 dark:bg-slate-800 group cursor-pointer relative reveal {{ $i > 0 ? 'reveal-delay-' . min($i % 4 + 1, 4) : '' }}"
                  onclick="openModal(this)"
                  data-src="{{ Storage::url($item->photo_path) }}"
                  data-title="{{ $item->title ?? '' }}">

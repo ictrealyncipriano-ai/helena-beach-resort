@@ -1,19 +1,28 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <script>
+        // Apply light/dark before first paint to avoid a flash.
+        (function () {
+            var mode = localStorage.getItem('theme') || 'system';
+            var dark = mode === 'dark' || (mode === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+            document.documentElement.classList.toggle('dark', dark);
+        })();
+    </script>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Sign in — Helena Beach Resort</title>
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=inter:400,500,600,700|playfair-display:400,600,700&display=swap" rel="stylesheet">
+    @vite(['resources/css/admin.css'])
     <style>
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         html { height: 100%; }
         body {
             font-family: 'Inter', system-ui, sans-serif;
             height: 100%;
-            background: linear-gradient(135deg, #0d9488 0%, #0f766e 40%, #115e59 100%);
+            background: linear-gradient(135deg, var(--color-teal-600) 0%, var(--color-teal-700) 40%, var(--color-teal-800) 100%);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -36,7 +45,7 @@
         .bg-blob-1 {
             top: -20%; right: -10%;
             width: 50%; height: 80%;
-            background: radial-gradient(ellipse, rgba(20,184,166,0.15), transparent 70%);
+            background: radial-gradient(ellipse, color-mix(in srgb, var(--color-teal-500) 15%, transparent), transparent 70%);
         }
         .bg-blob-2 {
             bottom: -15%; left: -10%;
@@ -78,13 +87,13 @@
             width: auto;
             border-radius: 0.5rem;
             flex-shrink: 0;
-            box-shadow: 0 2px 8px rgba(13,148,136,0.2);
+            box-shadow: 0 2px 8px color-mix(in srgb, var(--color-teal-600) 20%, transparent);
         }
         .login-brand span {
             font-family: 'Playfair Display', Georgia, serif;
             font-size: 1.25rem;
             font-weight: 700;
-            color: #0d9488;
+            color: var(--color-teal-600);
         }
 
         .login-heading {
@@ -121,9 +130,9 @@
             transition: all 0.2s ease;
         }
         .input-group:focus-within {
-            border-color: #0d9488;
+            border-color: var(--color-teal-600);
             background: white;
-            box-shadow: 0 0 0 4px rgba(13,148,136,0.1);
+            box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-teal-600) 10%, transparent);
         }
 
         .input-group .icon {
@@ -134,7 +143,7 @@
             color: #9ca3af;
             pointer-events: none;
         }
-        .input-group:focus-within .icon { color: #0d9488; }
+        .input-group:focus-within .icon { color: var(--color-teal-600); }
 
         .input-group input {
             flex: 1;
@@ -166,7 +175,7 @@
             outline: none;
         }
         .input-group .toggle-pw:hover { background: #f3f4f6; color: #374151; }
-        .input-group .toggle-pw:focus-visible { box-shadow: 0 0 0 2px rgba(13,148,136,0.4); }
+        .input-group .toggle-pw:focus-visible { box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-teal-600) 40%, transparent); }
         .input-group .toggle-pw svg { width: 1.25rem; height: 1.25rem; display: block; }
 
         .form-check {
@@ -183,7 +192,7 @@
             height: 1rem;
             border-radius: 0.375rem;
             border: 1.5px solid #d1d5db;
-            accent-color: #0d9488;
+            accent-color: var(--color-teal-600);
             cursor: pointer;
             flex-shrink: 0;
         }
@@ -194,11 +203,11 @@
             padding: 0.75rem 1.5rem;
             font-weight: 600;
             font-size: 0.9375rem;
-            background: linear-gradient(135deg, #0d9488, #14b8a6);
+            background: linear-gradient(135deg, var(--color-teal-600), var(--color-teal-500));
             border: none;
             color: white;
             transition: all 0.2s ease;
-            box-shadow: 0 4px 14px rgba(13,148,136,0.3);
+            box-shadow: 0 4px 14px color-mix(in srgb, var(--color-teal-600) 30%, transparent);
             cursor: pointer;
             font-family: inherit;
             display: inline-flex;
@@ -208,7 +217,7 @@
         }
         .btn-submit:hover {
             transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(13,148,136,0.4);
+            box-shadow: 0 8px 25px color-mix(in srgb, var(--color-teal-600) 40%, transparent);
         }
         .btn-submit:active { transform: translateY(0); }
         .btn-submit:disabled { opacity: 0.7; cursor: not-allowed; transform: none; }
@@ -234,7 +243,7 @@
         }
         .login-footer a {
             font-size: 0.75rem;
-            color: #0d9488;
+            color: var(--color-teal-600);
             text-decoration: none;
             font-weight: 500;
         }
@@ -260,6 +269,20 @@
             .login-card { padding: 1.5rem; max-width: 100%; margin: 0 0.5rem; }
             .input-group input { font-size: 1rem; }
         }
+
+        .dark body { background: linear-gradient(135deg, #134e4a 0%, #115e59 40%, #134e4a 100%); }
+        .dark .login-card { background: #0f172a; box-shadow: 0 25px 60px rgba(0,0,0,0.5); }
+        .dark .login-heading { color: #f1f5f9; }
+        .dark .login-sub { color: #94a3b8; }
+        .dark .form-label { color: #e2e8f0; }
+        .dark .input-group { background: #1e293b; border-color: #334155; }
+        .dark .input-group:focus-within { background: #1e293b; }
+        .dark .input-group input { color: #f1f5f9; }
+        .dark .input-group input::placeholder { color: #64748b; }
+        .dark .input-group .icon { color: #64748b; }
+        .dark .form-check { color: #cbd5e1; }
+        .dark .login-footer { border-color: #1e293b; }
+        .dark .login-footer .copyright { color: #64748b; }
     </style>
 </head>
 <body>

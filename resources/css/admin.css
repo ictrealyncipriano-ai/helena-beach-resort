@@ -1,5 +1,7 @@
 @import 'tailwindcss';
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 @source '../../storage/framework/views/*.php';
 @source '../**/*.blade.php';
@@ -47,16 +49,16 @@
 
 .stat-card-glow:hover {
     box-shadow:
-        0 0 0 1px rgba(13, 148, 136, 0.1),
-        0 4px 20px rgba(13, 148, 136, 0.08),
-        0 8px 32px rgba(13, 148, 136, 0.04);
+        0 0 0 1px color-mix(in srgb, var(--color-teal-600) 10%, transparent),
+        0 4px 20px color-mix(in srgb, var(--color-teal-600) 8%, transparent),
+        0 8px 32px color-mix(in srgb, var(--color-teal-600) 4%, transparent);
 }
 
 .stat-card-teal:hover {
     box-shadow:
-        0 0 0 1px rgba(13, 148, 136, 0.15),
-        0 4px 20px rgba(13, 148, 136, 0.1),
-        0 8px 32px rgba(13, 148, 136, 0.05);
+        0 0 0 1px color-mix(in srgb, var(--color-teal-600) 15%, transparent),
+        0 4px 20px color-mix(in srgb, var(--color-teal-600) 10%, transparent),
+        0 8px 32px color-mix(in srgb, var(--color-teal-600) 5%, transparent);
 }
 .stat-card-amber:hover {
     box-shadow:
@@ -76,9 +78,15 @@
         0 4px 20px rgba(37, 99, 235, 0.1),
         0 8px 32px rgba(37, 99, 235, 0.05);
 }
+.stat-card-gray:hover {
+    box-shadow:
+        0 0 0 1px rgba(107, 114, 128, 0.15),
+        0 4px 20px rgba(107, 114, 128, 0.1),
+        0 8px 32px rgba(107, 114, 128, 0.05);
+}
 
 .stat-icon-teal {
-    background: linear-gradient(135deg, #ccfbf1 0%, #99f6e4 100%);
+    background: linear-gradient(135deg, var(--color-teal-100) 0%, var(--color-teal-200) 100%);
 }
 .stat-icon-amber {
     background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
@@ -119,7 +127,7 @@
 
 /* Gradient accent bar utility */
 .gradient-accent-teal {
-    background: linear-gradient(90deg, #0d9488, #14b8a6);
+    background: linear-gradient(90deg, var(--color-teal-600), var(--color-teal-500));
 }
 .gradient-accent-amber {
     background: linear-gradient(90deg, #d97706, #f59e0b);
@@ -180,4 +188,92 @@
 }
 .toggle-checkbox:checked + .toggle-label::after {
     @apply translate-x-full;
+}
+
+/* ============================================================
+   Dark mode overrides
+   ============================================================ */
+
+/* Frosted glass card */
+.dark .glass {
+    background: rgba(30, 41, 59, 0.7);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+}
+
+/* Stat card gradient border - soften for dark */
+.dark .stat-card::before {
+    background: linear-gradient(135deg, rgba(255,255,255,0.15), rgba(255,255,255,0));
+}
+
+/* Stat icon gradients -> dark */
+.dark .stat-icon-teal {
+    background: linear-gradient(135deg, #134e4a 0%, #115e59 100%);
+}
+.dark .stat-icon-amber {
+    background: linear-gradient(135deg, #78350f 0%, #92400e 100%);
+}
+.dark .stat-icon-emerald {
+    background: linear-gradient(135deg, #064e3b 0%, #065f46 100%);
+}
+.dark .stat-icon-blue {
+    background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
+}
+.dark .stat-icon-gray {
+    background: linear-gradient(135deg, #334155 0%, #475569 100%);
+}
+
+/* Gradient accent bars */
+.dark .gradient-accent-teal {
+    background: linear-gradient(90deg, #0f766e, #0d9488);
+}
+.dark .gradient-accent-amber {
+    background: linear-gradient(90deg, #b45309, #d97706);
+}
+.dark .gradient-accent-emerald {
+    background: linear-gradient(90deg, #047857, #059669);
+}
+.dark .gradient-accent-blue {
+    background: linear-gradient(90deg, #1d4ed8, #2563eb);
+}
+.dark .gradient-accent-gray {
+    background: linear-gradient(90deg, #475569, #64748b);
+}
+
+/* Mobile table cards */
+.dark .mobile-table-card {
+    background: rgba(30, 41, 59, 0.6);
+    border-color: rgb(51 65 85 / 1);
+}
+.dark .mobile-table-card .field-label {
+    color: rgb(100 116 139);
+}
+.dark .mobile-table-card .field-value {
+    color: rgb(241 245 249);
+}
+
+/* Popularity bars */
+.dark .popularity-bar {
+    background-color: rgb(51 65 85);
+}
+
+/* Trending colors */
+.dark .trend-up { color: #34d399; }
+.dark .trend-down { color: #f87171; }
+
+/* Chart grid lines */
+.dark .chart-container {
+    color: rgb(100 116 139);
+}
+
+/* Dark scrollbars */
+.dark *::-webkit-scrollbar-thumb {
+    background-color: rgb(51 65 85 / .8);
+    border-radius: 3px;
+}
+.dark *::-webkit-scrollbar-thumb:hover {
+    background-color: rgb(71 85 105 / .9);
+}
+.dark *::-webkit-scrollbar-track {
+    background-color: rgb(15 23 42);
 }

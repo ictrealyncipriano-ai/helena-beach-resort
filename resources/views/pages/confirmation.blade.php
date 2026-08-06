@@ -24,98 +24,98 @@
     </div>
 </section>
 
-<section class="py-20 bg-white">
+<section class="py-20 bg-white dark:bg-slate-800">
     <div class="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 reveal">
-            <div class="text-center mb-8 pb-8 border-b border-gray-100">
-                <p class="text-sm text-gray-500 mb-2">Reference Number</p>
-                <p class="text-3xl font-bold text-teal-600 font-mono tracking-wider">{{ $inquiry->reference_code }}</p>
+        <div class="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm p-8 reveal">
+            <div class="text-center mb-8 pb-8 border-b border-gray-100 dark:border-slate-700">
+                <p class="text-sm text-gray-500 dark:text-slate-400 mb-2">Reference Number</p>
+                <p class="text-3xl font-bold text-teal-600 dark:text-teal-300 font-mono tracking-wider">{{ $inquiry->reference_code }}</p>
             </div>
 
             <div class="space-y-6">
-                <h2 class="text-lg font-semibold text-gray-900">Submitted Details</h2>
+                <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Submitted Details</h2>
 
                 <div class="grid grid-cols-2 gap-4 text-sm">
                     <div>
-                        <p class="text-gray-500">Name</p>
-                        <p class="font-medium text-gray-900">{{ $inquiry->name }}</p>
+                        <p class="text-gray-500 dark:text-slate-400">Name</p>
+                        <p class="font-medium text-gray-900 dark:text-white">{{ $inquiry->name }}</p>
                     </div>
                     <div>
-                        <p class="text-gray-500">Email</p>
-                        <p class="font-medium text-gray-900">{{ $inquiry->email }}</p>
+                        <p class="text-gray-500 dark:text-slate-400">Email</p>
+                        <p class="font-medium text-gray-900 dark:text-white">{{ $inquiry->email }}</p>
                     </div>
                     @if($inquiry->phone)
                     <div>
-                        <p class="text-gray-500">Phone</p>
-                        <p class="font-medium text-gray-900">{{ $inquiry->phone }}</p>
+                        <p class="text-gray-500 dark:text-slate-400">Phone</p>
+                        <p class="font-medium text-gray-900 dark:text-white">{{ $inquiry->phone }}</p>
                     </div>
                     @endif
                     @if($inquiry->cottage)
                     <div>
-                        <p class="text-gray-500">Cottage</p>
-                        <p class="font-medium text-gray-900">{{ $inquiry->cottage->name }}</p>
+                        <p class="text-gray-500 dark:text-slate-400">Cottage</p>
+                        <p class="font-medium text-gray-900 dark:text-white">{{ $inquiry->cottage->name }}</p>
                     </div>
                     @endif
                 </div>
 
                 @if($inquiry->booking_type)
-                <div class="pt-4 border-t border-gray-100 text-sm flex items-center gap-2">
-                    <x-icons name="{{ $inquiry->booking_type === 'day_tour' ? 'sun' : 'moon' }}" class="w-4 h-4 text-gray-400" />
+                <div class="pt-4 border-t border-gray-100 dark:border-slate-700 text-sm flex items-center gap-2">
+                    <x-icons name="{{ $inquiry->booking_type === 'day_tour' ? 'sun' : 'moon' }}" class="w-4 h-4 text-gray-400 dark:text-slate-500" />
                     <div>
-                        <p class="text-gray-500">Booking Type</p>
-                        <p class="font-medium text-gray-900">{{ $inquiry->booking_type === 'day_tour' ? 'Day Tour' : 'Overnight' }}</p>
+                        <p class="text-gray-500 dark:text-slate-400">Booking Type</p>
+                        <p class="font-medium text-gray-900 dark:text-white">{{ $inquiry->booking_type === 'day_tour' ? 'Day Tour' : 'Overnight' }}</p>
                     </div>
                 </div>
                 @endif
 
                 @if($inquiry->check_in || $inquiry->check_out)
-                <div class="grid grid-cols-2 gap-4 text-sm pt-4 border-t border-gray-100">
+                <div class="grid grid-cols-2 gap-4 text-sm pt-4 border-t border-gray-100 dark:border-slate-700">
                     @if($inquiry->check_in)
                     <div>
-                        <p class="text-gray-500">
-                            <x-icons name="calendar" class="w-3.5 h-3.5 inline -mt-0.5 mr-1 text-gray-400" />
+                        <p class="text-gray-500 dark:text-slate-400">
+                            <x-icons name="calendar" class="w-3.5 h-3.5 inline -mt-0.5 mr-1 text-gray-400 dark:text-slate-500" />
                             Check-in
                         </p>
-                        <p class="font-medium text-gray-900">{{ $inquiry->check_in->format('M d, Y') }}</p>
+                        <p class="font-medium text-gray-900 dark:text-white">{{ $inquiry->check_in->format('M d, Y') }}</p>
                     </div>
                     @endif
                     @if($inquiry->check_out)
                     <div>
-                        <p class="text-gray-500">
-                            <x-icons name="calendar" class="w-3.5 h-3.5 inline -mt-0.5 mr-1 text-gray-400" />
+                        <p class="text-gray-500 dark:text-slate-400">
+                            <x-icons name="calendar" class="w-3.5 h-3.5 inline -mt-0.5 mr-1 text-gray-400 dark:text-slate-500" />
                             Check-out
                         </p>
-                        <p class="font-medium text-gray-900">{{ $inquiry->check_out->format('M d, Y') }}</p>
+                        <p class="font-medium text-gray-900 dark:text-white">{{ $inquiry->check_out->format('M d, Y') }}</p>
                     </div>
                     @endif
                     @if($inquiry->pax)
                     <div>
-                        <p class="text-gray-500">
-                            <x-icons name="users" class="w-3.5 h-3.5 inline -mt-0.5 mr-1 text-gray-400" />
+                        <p class="text-gray-500 dark:text-slate-400">
+                            <x-icons name="users" class="w-3.5 h-3.5 inline -mt-0.5 mr-1 text-gray-400 dark:text-slate-500" />
                             Guests
                         </p>
-                        <p class="font-medium text-gray-900">{{ $inquiry->pax }}</p>
+                        <p class="font-medium text-gray-900 dark:text-white">{{ $inquiry->pax }}</p>
                     </div>
                     @endif
                     @if($inquiry->total_amount)
                     <div>
-                        <p class="text-gray-500">Total</p>
-                        <p class="font-medium text-teal-600">₱{{ number_format($inquiry->total_amount) }}</p>
+                        <p class="text-gray-500 dark:text-slate-400">Total</p>
+                        <p class="font-medium text-teal-600 dark:text-teal-300">₱{{ number_format($inquiry->total_amount) }}</p>
                     </div>
                     @endif
                 </div>
                 @endif
 
                 @if($inquiry->message)
-                <div class="pt-4 border-t border-gray-100 text-sm">
-                    <p class="text-gray-500 mb-1">Message</p>
-                    <p class="text-gray-700 bg-gray-50 rounded-xl p-4">{{ $inquiry->message }}</p>
+                <div class="pt-4 border-t border-gray-100 dark:border-slate-700 text-sm">
+                    <p class="text-gray-500 dark:text-slate-400 mb-1">Message</p>
+                    <p class="text-gray-700 dark:text-slate-200 bg-gray-50 dark:bg-slate-800/50 rounded-xl p-4">{{ $inquiry->message }}</p>
                 </div>
                 @endif
 
-                <div class="pt-4 border-t border-gray-100 text-sm">
-                    <p class="text-gray-500">Status</p>
-                    <p class="inline-flex items-center gap-1.5 mt-1 px-3 py-1 bg-yellow-50 text-yellow-700 text-xs font-semibold rounded-full ring-1 ring-yellow-200">
+                <div class="pt-4 border-t border-gray-100 dark:border-slate-700 text-sm">
+                    <p class="text-gray-500 dark:text-slate-400">Status</p>
+                    <p class="inline-flex items-center gap-1.5 mt-1 px-3 py-1 bg-yellow-50 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300 text-xs font-semibold rounded-full ring-1 ring-yellow-200 dark:ring-yellow-800">
                         <x-icons name="clock" class="w-3 h-3" />
                         Pending
                     </p>
@@ -123,16 +123,16 @@
             </div>
         </div>
 
-        <div class="mt-6 p-4 bg-teal-50 border border-teal-200 rounded-xl text-sm text-teal-700 flex items-start gap-3 reveal">
+        <div class="mt-6 p-4 bg-teal-50 dark:bg-teal-900/30 border border-teal-200 dark:border-teal-800 rounded-xl text-sm text-teal-700 dark:text-teal-300 flex items-start gap-3 reveal">
             <x-icons name="info" class="w-5 h-5 shrink-0 mt-0.5" />
             <div>
                 <strong>We've emailed these details to {{ $inquiry->email }}.</strong> Keep your reference code safe — you can use it later to
-                <a href="{{ route('booking.portal.lookup') }}" class="underline font-medium hover:text-teal-800">view your booking</a>.
+                <a href="{{ route('booking.portal.lookup') }}" class="underline font-medium hover:text-teal-800 dark:hover:text-teal-200">view your booking</a>.
             </div>
         </div>
 
         <div class="text-center mt-6">
-            <a href="{{ route('home') }}" class="text-sm text-teal-600 hover:text-teal-700 inline-flex items-center gap-1">
+            <a href="{{ route('home') }}" class="text-sm text-teal-600 dark:text-teal-300 hover:text-teal-700 dark:hover:text-teal-300 inline-flex items-center gap-1">
                 <x-icons name="arrow-left" class="w-3 h-3" />
                 Back to Home
             </a>

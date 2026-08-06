@@ -6,25 +6,25 @@
 @section('content')
 <x-hero title="Amenities & Services" subtitle="Everything you need for a memorable beach getaway." />
 
-<section class="py-20 sm:py-28 bg-white">
+<section class="py-20 sm:py-28 bg-white dark:bg-slate-800">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         @if($services->isEmpty())
         <div class="text-center py-20">
-            <div class="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-6 text-gray-400">
+            <div class="w-16 h-16 bg-gray-100 dark:bg-slate-700 rounded-2xl flex items-center justify-center mx-auto mb-6 text-gray-400 dark:text-slate-500">
                 <x-icons name="grid" class="w-8 h-8" />
             </div>
-            <h2 class="text-xl font-semibold text-gray-600">Services coming soon</h2>
-            <p class="text-gray-400 mt-2">We're adding more information about our amenities.</p>
+            <h2 class="text-xl font-semibold text-gray-600 dark:text-slate-300">Services coming soon</h2>
+            <p class="text-gray-400 dark:text-slate-500 mt-2">We're adding more information about our amenities.</p>
         </div>
         @else
         @foreach($services as $category => $items)
         <div class="mb-16 last:mb-0 reveal">
-            <h2 class="text-2xl sm:text-3xl font-bold text-gray-900 mb-2 font-heading">{{ $category }}</h2>
+            <h2 class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2 font-heading">{{ $category }}</h2>
             <div class="w-16 h-1 bg-teal-500 rounded-full mb-8"></div>
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 @foreach($items as $service)
-                <div class="group bg-white rounded-2xl p-6 border border-gray-100 shadow-sm hover:shadow-lg hover:border-teal-100 transition-all duration-300">
-                    <div class="w-12 h-12 bg-teal-50 rounded-xl flex items-center justify-center text-teal-600 mb-4 group-hover:bg-teal-100 transition-colors">
+                <div class="group bg-white dark:bg-slate-800 rounded-2xl p-6 border border-gray-100 dark:border-slate-700 shadow-sm hover:shadow-lg hover:border-teal-100 transition-all duration-300">
+                    <div class="w-12 h-12 bg-teal-50 dark:bg-teal-900/30 rounded-xl flex items-center justify-center text-teal-600 dark:text-teal-300 mb-4 group-hover:bg-teal-100 dark:group-hover:bg-teal-900/50 transition-colors">
                         @if($service->icon === '🏖️')
                         <x-icons name="sun" class="w-6 h-6" />
                         @elseif($service->icon === '🅿️')
@@ -51,9 +51,9 @@
                         <x-icons name="sparkles" class="w-6 h-6" />
                         @endif
                     </div>
-                    <h3 class="text-lg font-semibold text-gray-900 mb-2">{{ $service->name }}</h3>
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">{{ $service->name }}</h3>
                     @if($service->description)
-                    <p class="text-sm text-gray-600 leading-relaxed">{{ $service->description }}</p>
+                    <p class="text-sm text-gray-600 dark:text-slate-300 leading-relaxed">{{ $service->description }}</p>
                     @endif
                 </div>
                 @endforeach

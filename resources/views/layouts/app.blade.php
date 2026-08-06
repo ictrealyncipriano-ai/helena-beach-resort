@@ -1,6 +1,14 @@
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="scroll-smooth">
 <head>
+    <script>
+        // Apply light/dark before first paint to avoid a flash.
+        (function () {
+            var mode = localStorage.getItem('theme') || 'system';
+            var dark = mode === 'dark' || (mode === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+            document.documentElement.classList.toggle('dark', dark);
+        })();
+    </script>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
@@ -23,7 +31,7 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @stack('styles')
 </head>
-<body class="font-sans antialiased text-gray-800 bg-white" x-data="{ mobileMenu: false }" x-on:keydown.escape="mobileMenu = false">
+<body class="font-sans antialiased text-gray-800 bg-white dark:bg-slate-900 dark:text-slate-100" x-data="{ mobileMenu: false }" x-on:keydown.escape="mobileMenu = false">
     <x-navbar />
 
     <main>

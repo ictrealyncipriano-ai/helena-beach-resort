@@ -1,29 +1,29 @@
 <div class="space-y-6">
     <div>
-        <h4 class="text-sm font-semibold text-gray-900 mb-3">Guest Details</h4>
+        <h4 class="text-sm font-semibold text-gray-900 mb-3 dark:text-white">Guest Details</h4>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Name <span class="text-red-500">*</span></label>
+                <label class="block text-sm font-medium text-gray-700 mb-1 dark:text-slate-200">Name <span class="text-red-500">*</span></label>
                 <input type="text" name="name" x-model="form.name" required maxlength="255"
-                    class="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-300 focus:border-teal-400 transition-all @error('name') border-red-300 @enderror">
+                    class="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-300 focus:border-teal-400 transition-all @error('name') border-red-300 @enderror dark:bg-slate-800 dark:border-slate-600 dark:text-white dark:placeholder-slate-400 dark:focus:border-teal-500 dark:focus:ring-teal-500/20">
                 @error('name') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
             </div>
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Email <span class="text-red-500">*</span></label>
+                <label class="block text-sm font-medium text-gray-700 mb-1 dark:text-slate-200">Email <span class="text-red-500">*</span></label>
                 <input type="email" name="email" x-model="form.email" required maxlength="255"
-                    class="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-300 focus:border-teal-400 transition-all @error('email') border-red-300 @enderror">
+                    class="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-300 focus:border-teal-400 transition-all @error('email') border-red-300 @enderror dark:bg-slate-800 dark:border-slate-600 dark:text-white dark:placeholder-slate-400 dark:focus:border-teal-500 dark:focus:ring-teal-500/20">
                 @error('email') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
             </div>
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+                <label class="block text-sm font-medium text-gray-700 mb-1 dark:text-slate-200">Phone</label>
                 <input type="text" name="phone" x-model="form.phone" maxlength="255"
-                    class="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-300 focus:border-teal-400 transition-all @error('phone') border-red-300 @enderror">
+                    class="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-300 focus:border-teal-400 transition-all @error('phone') border-red-300 @enderror dark:bg-slate-800 dark:border-slate-600 dark:text-white dark:placeholder-slate-400 dark:focus:border-teal-500 dark:focus:ring-teal-500/20">
                 @error('phone') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
             </div>
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Linked Guest</label>
+                <label class="block text-sm font-medium text-gray-700 mb-1 dark:text-slate-200">Linked guest</label>
                 <select name="guest_id" x-model="form.guest_id"
-                    class="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-300 focus:border-teal-400 transition-all bg-white @error('guest_id') border-red-300 @enderror">
+                    class="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-300 focus:border-teal-400 transition-all bg-white @error('guest_id') border-red-300 @enderror dark:bg-slate-800 dark:border-slate-600 dark:text-white dark:focus:border-teal-500 dark:focus:ring-teal-500/20">
                     <option value="">None</option>
                     @foreach($guests as $id => $name)
                         <option value="{{ $id }}">{{ $name }}</option>
@@ -35,12 +35,12 @@
     </div>
 
     <div>
-        <h4 class="text-sm font-semibold text-gray-900 mb-3">Booking Details</h4>
+        <h4 class="text-sm font-semibold text-gray-900 mb-3 dark:text-white">Booking Details</h4>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Booking Type</label>
+                <label class="block text-sm font-medium text-gray-700 mb-1 dark:text-slate-200">Booking Type</label>
                 <select name="booking_type" x-model="form.booking_type"
-                    class="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-300 focus:border-teal-400 transition-all bg-white @error('booking_type') border-red-300 @enderror">
+                    class="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-300 focus:border-teal-400 transition-all bg-white @error('booking_type') border-red-300 @enderror dark:bg-slate-800 dark:border-slate-600 dark:text-white dark:focus:border-teal-500 dark:focus:ring-teal-500/20">
                     <option value="">Inquiry</option>
                     <option value="day_tour">Day Tour</option>
                     <option value="overnight">Overnight</option>
@@ -48,39 +48,39 @@
                 @error('booking_type') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
             </div>
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Check In</label>
+                <label class="block text-sm font-medium text-gray-700 mb-1 dark:text-slate-200">Check In</label>
                 <input type="date" name="check_in" x-model="form.check_in"
-                    class="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-300 focus:border-teal-400 transition-all @error('check_in') border-red-300 @enderror">
+                    class="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-300 focus:border-teal-400 transition-all @error('check_in') border-red-300 @enderror dark:bg-slate-800 dark:border-slate-600 dark:text-white dark:placeholder-slate-400 dark:focus:border-teal-500 dark:focus:ring-teal-500/20">
                 @error('check_in') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
             </div>
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Check Out</label>
+                <label class="block text-sm font-medium text-gray-700 mb-1 dark:text-slate-200">Check Out</label>
                 <input type="date" name="check_out" x-model="form.check_out"
-                    class="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-300 focus:border-teal-400 transition-all @error('check_out') border-red-300 @enderror">
+                    class="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-300 focus:border-teal-400 transition-all @error('check_out') border-red-300 @enderror dark:bg-slate-800 dark:border-slate-600 dark:text-white dark:placeholder-slate-400 dark:focus:border-teal-500 dark:focus:ring-teal-500/20">
                 @error('check_out') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
             </div>
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Pax</label>
+                <label class="block text-sm font-medium text-gray-700 mb-1 dark:text-slate-200">Pax</label>
                 <input type="number" name="pax" x-model="form.pax" min="1"
-                    class="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-300 focus:border-teal-400 transition-all @error('pax') border-red-300 @enderror">
+                    class="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-300 focus:border-teal-400 transition-all @error('pax') border-red-300 @enderror dark:bg-slate-800 dark:border-slate-600 dark:text-white dark:placeholder-slate-400 dark:focus:border-teal-500 dark:focus:ring-teal-500/20">
                 @error('pax') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
             </div>
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Total Amount (₱)</label>
+                <label class="block text-sm font-medium text-gray-700 mb-1 dark:text-slate-200">Total Amount (₱)</label>
                 <input type="number" step="0.01" name="total_amount" x-model="form.total_amount" min="0"
-                    class="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-300 focus:border-teal-400 transition-all @error('total_amount') border-red-300 @enderror">
+                    class="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-300 focus:border-teal-400 transition-all @error('total_amount') border-red-300 @enderror dark:bg-slate-800 dark:border-slate-600 dark:text-white dark:placeholder-slate-400 dark:focus:border-teal-500 dark:focus:ring-teal-500/20">
                 @error('total_amount') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
                 <template x-if="suggestedTotal !== null">
-                    <p class="mt-1 text-xs text-teal-600">Suggested amount: ₱<span x-text="suggestedTotal.toLocaleString()"></span> — auto-calculated. Edit to override.</p>
+                    <p class="mt-1 text-xs text-teal-600 dark:text-teal-300">Suggested amount: ₱<span x-text="suggestedTotal.toLocaleString()"></span> — auto-calculated. Edit to override.</p>
                 </template>
                 <template x-else-if="form.booking_type === 'overnight' && form.cottage_id && !(form.check_in && form.check_out)">
-                    <p class="mt-1 text-xs text-gray-400">Select check-in and check-out to calculate the overnight rate.</p>
+                    <p class="mt-1 text-xs text-gray-400 dark:text-slate-500">Select check-in and check-out to calculate the overnight rate.</p>
                 </template>
             </div>
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Status <span class="text-red-500">*</span></label>
+                <label class="block text-sm font-medium text-gray-700 mb-1 dark:text-slate-200">Status <span class="text-red-500">*</span></label>
                 <select name="status" x-model="form.status" required
-                    class="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-300 focus:border-teal-400 transition-all bg-white @error('status') border-red-300 @enderror">
+                    class="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-300 focus:border-teal-400 transition-all bg-white @error('status') border-red-300 @enderror dark:bg-slate-800 dark:border-slate-600 dark:text-white dark:focus:border-teal-500 dark:focus:ring-teal-500/20">
                     <option value="pending">Pending</option>
                     <option value="confirmed">Confirmed</option>
                     <option value="cancelled">Cancelled</option>
@@ -89,9 +89,9 @@
                 @error('status') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
             </div>
             <div class="sm:col-span-2">
-                <label class="block text-sm font-medium text-gray-700 mb-1">Cottage</label>
+                <label class="block text-sm font-medium text-gray-700 mb-1 dark:text-slate-200">Cottage</label>
                 <select name="cottage_id" x-model="form.cottage_id"
-                    class="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-300 focus:border-teal-400 transition-all bg-white @error('cottage_id') border-red-300 @enderror">
+                    class="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-300 focus:border-teal-400 transition-all bg-white @error('cottage_id') border-red-300 @enderror dark:bg-slate-800 dark:border-slate-600 dark:text-white dark:focus:border-teal-500 dark:focus:ring-teal-500/20">
                     <option value="">None</option>
                     @foreach($cottages as $id => $name)
                         <option value="{{ $id }}">{{ $name }}</option>
@@ -103,9 +103,9 @@
     </div>
 
     <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1.5">Message</label>
+        <label class="block text-sm font-medium text-gray-700 mb-1.5 dark:text-slate-200">Message</label>
         <textarea name="message" rows="4" x-model="form.message"
-            class="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-300 focus:border-teal-400 transition-all @error('message') border-red-300 @enderror">{{ old('message') }}</textarea>
+            class="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-300 focus:border-teal-400 transition-all @error('message') border-red-300 @enderror dark:bg-slate-800 dark:border-slate-600 dark:text-white dark:placeholder-slate-400 dark:focus:border-teal-500 dark:focus:ring-teal-500/20">{{ old('message') }}</textarea>
         @error('message') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
     </div>
 </div>

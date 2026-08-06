@@ -4,8 +4,8 @@
     <input type="checkbox" name="{{ $name }}" value="1" class="sr-only peer"
         {{ $checked ? 'checked' : '' }}
         {{ $disabled ? 'disabled' : '' }}>
-    <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-teal-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-teal-600"></div>
+    <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-teal-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-teal-600 dark:bg-slate-600 dark:peer-focus:ring-teal-500/50 dark:after:border-slate-500"></div>
     @if($label)
-        <span class="ms-2 text-sm font-medium text-gray-700">{{ $label }}</span>
+        <span class="ms-2 text-sm font-medium text-gray-700 dark:text-slate-200">{{ $label }}</span>
     @endif
 </label>

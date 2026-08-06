@@ -26,7 +26,17 @@ class GalleryController extends Controller
         }
 
         $galleries = $query->orderBy('sort_order')->paginate(15);
-        return view('admin.gallery.index', compact('galleries'));
+
+        $galleriesData = $galleries->map(fn ($gallery) => [
+            'id' => $gallery->id,
+            'title' => $gallery->title,
+            'category' => $gallery->category,
+            'sort_order' => $gallery->sort_order,
+            'is_active' => $gallery->is_active,
+            'photo_url' => $gallery->photo_path ? Storage::url($gallery->photo_path) : null,
+        ])->values();
+
+        return view('admin.gallery.index', compact('galleries', 'galleriesData'));
     }
 
     public function create()

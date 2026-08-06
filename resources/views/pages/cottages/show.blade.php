@@ -26,7 +26,7 @@
     </div>
 </section>
 
-<section class="py-8 sm:py-12 bg-white">
+<section class="py-8 sm:py-12 bg-white dark:bg-slate-800">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-10">
             <div class="lg:col-span-2 space-y-10">
@@ -34,7 +34,7 @@
                 @if($cottage->photos->isNotEmpty())
                 <div class="grid grid-cols-2 gap-4 reveal">
                     @foreach($cottage->photos as $photo)
-                    <div class="aspect-[4/3] rounded-xl overflow-hidden bg-teal-50 cursor-pointer group"
+                    <div class="aspect-[4/3] rounded-xl overflow-hidden bg-teal-50 dark:bg-teal-900/30 cursor-pointer group"
                          onclick="openPhotoLightbox('{{ Storage::url($photo->photo_path) }}')">
                         <img src="{{ Storage::url($photo->photo_path) }}" alt="{{ $cottage->name }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy">
                         <div class="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
@@ -44,17 +44,17 @@
                     @endforeach
                 </div>
                 @else
-                <div class="aspect-video rounded-xl bg-gradient-to-br from-teal-100 to-teal-50 flex items-center justify-center text-teal-300/50">
+                <div class="aspect-video rounded-xl bg-gradient-to-br from-teal-100 to-teal-50 dark:from-teal-900/50 dark:to-teal-900/30 flex items-center justify-center text-teal-300/50">
                     <x-icons name="building" class="w-24 h-24" />
                 </div>
                 @endif
 
                 {{-- Description --}}
                 <div class="reveal">
-                    <span class="inline-block text-xs font-semibold tracking-widest uppercase text-teal-600 mb-3">Details</span>
-                    <h2 class="text-2xl font-bold text-gray-900 mb-4 font-heading">About this Cottage</h2>
+                    <span class="inline-block text-xs font-semibold tracking-widest uppercase text-teal-600 dark:text-teal-300 mb-3">Details</span>
+                    <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-4 font-heading">About this Cottage</h2>
                     <div class="w-12 h-1 bg-teal-500 rounded-full mb-6"></div>
-                    <div class="prose prose-teal max-w-none text-gray-600 leading-relaxed">
+                    <div class="prose prose-teal max-w-none text-gray-600 dark:text-slate-300 leading-relaxed">
                         {!! $cottage->description !!}
                     </div>
                 </div>
@@ -62,12 +62,12 @@
                 {{-- Amenities --}}
                 @if($cottage->amenities->isNotEmpty())
                 <div class="reveal">
-                    <span class="inline-block text-xs font-semibold tracking-widest uppercase text-teal-600 mb-3">Features</span>
-                    <h2 class="text-2xl font-bold text-gray-900 mb-4 font-heading">Amenities</h2>
+                    <span class="inline-block text-xs font-semibold tracking-widest uppercase text-teal-600 dark:text-teal-300 mb-3">Features</span>
+                    <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-4 font-heading">Amenities</h2>
                     <div class="w-12 h-1 bg-teal-500 rounded-full mb-6"></div>
                     <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
                         @foreach($cottage->amenities as $amenity)
-                        <div class="flex items-center gap-2 px-4 py-3 bg-gray-50 rounded-xl text-sm text-gray-700 border border-gray-100 hover:border-teal-100 hover:bg-teal-50/50 transition-all">
+                        <div class="flex items-center gap-2 px-4 py-3 bg-gray-50 dark:bg-slate-800/50 rounded-xl text-sm text-gray-700 dark:text-slate-200 border border-gray-100 dark:border-slate-700 hover:border-teal-100 hover:bg-teal-50/50 transition-all">
                             <x-icons name="check" class="w-4 h-4 text-teal-500 shrink-0" />
                             <span>{{ $amenity->name }}</span>
                         </div>
@@ -81,41 +81,41 @@
             <div class="lg:col-span-1">
                 <div class="sticky top-24 space-y-6 reveal reveal-delay-1">
                     {{-- Pricing Card --}}
-                    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-6 hover:shadow-lg transition-shadow">
+                    <div class="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm p-6 space-y-6 hover:shadow-lg transition-shadow">
                         @if($cottage->rate_daytour)
-                        <div class="flex items-center justify-between pb-4 border-b border-gray-100">
-                            <span class="text-gray-600 text-sm">
-                                <x-icons name="sun" class="w-4 h-4 inline -mt-0.5 mr-1 text-gray-400" />
+                        <div class="flex items-center justify-between pb-4 border-b border-gray-100 dark:border-slate-700">
+                            <span class="text-gray-600 dark:text-slate-300 text-sm">
+                                <x-icons name="sun" class="w-4 h-4 inline -mt-0.5 mr-1 text-gray-400 dark:text-slate-500" />
                                 Day Tour
                             </span>
-                            <span class="text-xl font-bold text-teal-600">₱{{ number_format($cottage->rate_daytour) }}</span>
+                            <span class="text-xl font-bold text-teal-600 dark:text-teal-300">₱{{ number_format($cottage->rate_daytour) }}</span>
                         </div>
                         @endif
                         @if($cottage->rate_overnight)
-                        <div class="flex items-center justify-between pb-4 border-b border-gray-100">
-                            <span class="text-gray-600 text-sm">
-                                <x-icons name="moon" class="w-4 h-4 inline -mt-0.5 mr-1 text-gray-400" />
+                        <div class="flex items-center justify-between pb-4 border-b border-gray-100 dark:border-slate-700">
+                            <span class="text-gray-600 dark:text-slate-300 text-sm">
+                                <x-icons name="moon" class="w-4 h-4 inline -mt-0.5 mr-1 text-gray-400 dark:text-slate-500" />
                                 Overnight
                             </span>
-                            <span class="text-xl font-bold text-teal-600">₱{{ number_format($cottage->rate_overnight) }}</span>
+                            <span class="text-xl font-bold text-teal-600 dark:text-teal-300">₱{{ number_format($cottage->rate_overnight) }}</span>
                         </div>
                         @endif
-                        <div class="flex items-center justify-between pb-4 border-b border-gray-100">
-                            <span class="text-gray-600 text-sm">
-                                <x-icons name="users" class="w-4 h-4 inline -mt-0.5 mr-1 text-gray-400" />
+                        <div class="flex items-center justify-between pb-4 border-b border-gray-100 dark:border-slate-700">
+                            <span class="text-gray-600 dark:text-slate-300 text-sm">
+                                <x-icons name="users" class="w-4 h-4 inline -mt-0.5 mr-1 text-gray-400 dark:text-slate-500" />
                                 Capacity
                             </span>
-                            <span class="font-medium text-gray-900">Up to {{ $cottage->capacity }} guests</span>
+                            <span class="font-medium text-gray-900 dark:text-white">Up to {{ $cottage->capacity }} guests</span>
                         </div>
                         <div class="flex items-center justify-between">
-                            <span class="text-gray-600 text-sm">Status</span>
+                            <span class="text-gray-600 dark:text-slate-300 text-sm">Status</span>
                             @if($cottage->is_available)
-                            <span class="text-sm font-semibold text-green-600 bg-green-50 px-3 py-1 rounded-full inline-flex items-center gap-1">
+                            <span class="text-sm font-semibold text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/30 px-3 py-1 rounded-full inline-flex items-center gap-1">
                                 <x-icons name="check" class="w-3 h-3" />
                                 Available
                             </span>
                             @else
-                            <span class="text-sm font-semibold text-red-600 bg-red-50 px-3 py-1 rounded-full">Unavailable</span>
+                            <span class="text-sm font-semibold text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30 px-3 py-1 rounded-full">Unavailable</span>
                             @endif
                         </div>
                         <a href="{{ route('book') }}?cottage_id={{ $cottage->id }}"
@@ -125,24 +125,24 @@
                     </div>
 
                     {{-- Availability Calendar --}}
-                    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 hover:shadow-lg transition-shadow">
-                        <h3 class="font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                            <x-icons name="calendar" class="w-4 h-4 text-teal-600" />
+                    <div class="bg-white dark:bg-slate-800 rounded-2xl border border-gray-200 dark:border-slate-700 shadow-sm p-6 hover:shadow-lg transition-shadow">
+                        <h3 class="font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                            <x-icons name="calendar" class="w-4 h-4 text-teal-600 dark:text-teal-300" />
                             Availability Calendar
                         </h3>
                         <div x-data="calendar('{{ json_encode($blockedDates) }}')">
                             <div class="flex items-center justify-between mb-3">
-                                <button @click="prevMonth" class="w-8 h-8 flex items-center justify-center hover:bg-gray-100 rounded-lg transition-colors text-gray-500">
+                                <button @click="prevMonth" class="w-8 h-8 flex items-center justify-center hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg transition-colors text-gray-500 dark:text-slate-400">
                                     <x-icons name="chevron-left" class="w-4 h-4" />
                                 </button>
-                                <span class="text-sm font-semibold text-gray-700" x-text="monthLabel"></span>
-                                <button @click="nextMonth" class="w-8 h-8 flex items-center justify-center hover:bg-gray-100 rounded-lg transition-colors text-gray-500">
+                                <span class="text-sm font-semibold text-gray-700 dark:text-slate-200" x-text="monthLabel"></span>
+                                <button @click="nextMonth" class="w-8 h-8 flex items-center justify-center hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg transition-colors text-gray-500 dark:text-slate-400">
                                     <x-icons name="chevron-right" class="w-4 h-4" />
                                 </button>
                             </div>
                             <div class="grid grid-cols-7 gap-0 text-center mb-1">
                                 <template x-for="day in ['Sun','Mon','Tue','Wed','Thu','Fri','Sat']" :key="day">
-                                    <span class="text-xs font-medium text-gray-400 py-1" x-text="day"></span>
+                                    <span class="text-xs font-medium text-gray-400 dark:text-slate-500 py-1" x-text="day"></span>
                                 </template>
                             </div>
                             <div class="grid grid-cols-7 gap-0">
@@ -159,13 +159,13 @@
                                     </div>
                                 </template>
                             </div>
-                            <div class="mt-4 flex items-center gap-4 text-xs text-gray-500">
+                            <div class="mt-4 flex items-center gap-4 text-xs text-gray-500 dark:text-slate-400">
                                 <span class="flex items-center gap-1.5">
-                                    <span class="w-2.5 h-2.5 rounded-sm bg-red-100 border border-red-200"></span>
+                                    <span class="w-2.5 h-2.5 rounded-sm bg-red-100 dark:bg-red-900/40 border border-red-200 dark:border-red-800"></span>
                                     Booked
                                 </span>
                                 <span class="flex items-center gap-1.5">
-                                    <span class="w-2.5 h-2.5 rounded-sm bg-green-100 border border-green-200"></span>
+                                    <span class="w-2.5 h-2.5 rounded-sm bg-green-100 dark:bg-green-900/40 border border-green-200 dark:border-green-800"></span>
                                     Available
                                 </span>
                             </div>

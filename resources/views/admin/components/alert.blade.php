@@ -2,10 +2,10 @@
 
 @php
 $styles = [
-    'success' => 'bg-emerald-50 border-emerald-200 text-emerald-700',
-    'error' => 'bg-red-50 border-red-200 text-red-700',
-    'warning' => 'bg-amber-50 border-amber-200 text-amber-700',
-    'info' => 'bg-blue-50 border-blue-200 text-blue-700',
+    'success' => 'bg-emerald-50 border-emerald-200 text-emerald-700 dark:bg-emerald-500/10 dark:border-emerald-500/30 dark:text-emerald-300',
+    'error' => 'bg-red-50 border-red-200 text-red-700 dark:bg-red-500/10 dark:border-red-500/30 dark:text-red-300',
+    'warning' => 'bg-amber-50 border-amber-200 text-amber-700 dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-300',
+    'info' => 'bg-blue-50 border-blue-200 text-blue-700 dark:bg-blue-500/10 dark:border-blue-500/30 dark:text-blue-300',
 ];
 $icons = [
     'success' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>',
