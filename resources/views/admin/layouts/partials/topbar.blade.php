@@ -10,35 +10,37 @@
     </div>
 
     {{-- Right side --}}
-    <div class="flex items-center gap-3" x-data="{ open: false }" @click.outside="open = false">
+    <div class="flex items-center gap-3">
         <x-theme-toggle />
         {{-- User dropdown --}}
-        <button type="button" @click="open = !open" class="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-gray-50 transition-colors dark:hover:bg-slate-700/50">
-            <div class="w-7 h-7 rounded-full bg-teal-600 flex items-center justify-center text-white text-xs font-bold shrink-0">
-                {{ substr(Auth::user()->name ?? 'A', 0, 1) }}
-            </div>
-            <span class="text-sm font-medium text-gray-700 hidden md:block dark:text-slate-200">{{ Auth::user()->name ?? 'Admin' }}</span>
-            <svg class="w-4 h-4 text-gray-400 dark:text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.5 8.25l-7.5 7.5-7.5-7.5"/></svg>
-        </button>
+        <div class="relative" x-data="{ open: false }" @click.outside="open = false">
+            <button type="button" @click="open = !open" class="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-gray-50 transition-colors dark:hover:bg-slate-700/50">
+                <div class="w-7 h-7 rounded-full bg-teal-600 flex items-center justify-center text-white text-xs font-bold shrink-0">
+                    {{ substr(Auth::user()->name ?? 'A', 0, 1) }}
+                </div>
+                <span class="text-sm font-medium text-gray-700 hidden md:block dark:text-slate-200">{{ Auth::user()->name ?? 'Admin' }}</span>
+                <svg class="w-4 h-4 text-gray-400 dark:text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.5 8.25l-7.5 7.5-7.5-7.5"/></svg>
+            </button>
 
-        {{-- Dropdown --}}
-        <div x-show="open" x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100" x-transition:leave="transition ease-in duration-100" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95" class="absolute right-4 top-14 w-48 bg-white rounded-xl shadow-lg border border-gray-100 py-1 z-50 dark:bg-slate-800 dark:border-slate-700">
-            <div class="px-4 py-2 border-b border-gray-50 dark:border-slate-700">
-                <p class="text-sm font-medium text-gray-900 truncate dark:text-white">{{ Auth::user()->name }}</p>
-                <p class="text-xs text-gray-500 truncate dark:text-slate-400">{{ Auth::user()->email }}</p>
-            </div>
-            <a href="{{ route('home') }}" target="_blank" class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors dark:text-slate-200 dark:hover:bg-slate-700/50">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
-                Visit Website
-            </a>
-            <div class="border-t border-gray-50 mt-1 pt-1 dark:border-slate-700">
-                <form method="POST" action="{{ route('admin.logout') }}">
-                    @csrf
-                    <button type="submit" class="flex items-center gap-2 w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors dark:text-red-400 dark:hover:bg-red-500/10">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9"/></svg>
-                        Sign out
-                    </button>
-                </form>
+            {{-- Dropdown --}}
+            <div x-show="open" x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100" x-transition:leave="transition ease-in duration-100" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95" class="absolute right-0 top-12 w-48 bg-white rounded-xl shadow-lg border border-gray-100 py-1 z-50 dark:bg-slate-800 dark:border-slate-700">
+                <div class="px-4 py-2 border-b border-gray-50 dark:border-slate-700">
+                    <p class="text-sm font-medium text-gray-900 truncate dark:text-white">{{ Auth::user()->name }}</p>
+                    <p class="text-xs text-gray-500 truncate dark:text-slate-400">{{ Auth::user()->email }}</p>
+                </div>
+                <a href="{{ route('home') }}" target="_blank" class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors dark:text-slate-200 dark:hover:bg-slate-700/50">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+                    Visit Website
+                </a>
+                <div class="border-t border-gray-50 mt-1 pt-1 dark:border-slate-700">
+                    <form method="POST" action="{{ route('admin.logout') }}">
+                        @csrf
+                        <button type="submit" class="flex items-center gap-2 w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors dark:text-red-400 dark:hover:bg-red-500/10">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9"/></svg>
+                            Sign out
+                        </button>
+                    </form>
+                </div>
             </div>
         </div>
     </div>
