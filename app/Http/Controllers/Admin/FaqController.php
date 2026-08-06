@@ -24,7 +24,18 @@ class FaqController extends Controller
         }
 
         $faqs = $query->orderBy('sort_order')->paginate(15);
-        return view('admin.faqs.index', compact('faqs'));
+
+        $faqsData = $faqs->map(function ($faq) {
+            return [
+                'id' => $faq->id,
+                'question' => $faq->question,
+                'answer' => $faq->answer,
+                'is_active' => (bool) $faq->is_active,
+                'sort_order' => $faq->sort_order,
+            ];
+        })->values();
+
+        return view('admin.faqs.index', compact('faqs', 'faqsData'));
     }
 
     public function create()

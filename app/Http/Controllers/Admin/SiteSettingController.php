@@ -11,7 +11,17 @@ class SiteSettingController extends Controller
     public function index(Request $request)
     {
         $settings = SiteSetting::orderBy('key')->paginate(20);
-        return view('admin.site-settings.index', compact('settings'));
+
+        $settingsData = $settings->map(function ($setting) {
+            return [
+                'id' => $setting->id,
+                'key' => $setting->key,
+                'value' => $setting->value,
+                'type' => $setting->type,
+            ];
+        })->values();
+
+        return view('admin.site-settings.index', compact('settings', 'settingsData'));
     }
 
     public function create()

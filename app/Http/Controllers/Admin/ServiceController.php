@@ -28,7 +28,20 @@ class ServiceController extends Controller
         }
 
         $services = $query->orderBy('sort_order')->paginate(15);
-        return view('admin.services.index', compact('services'));
+
+        $servicesData = $services->map(function ($service) {
+            return [
+                'id' => $service->id,
+                'name' => $service->name,
+                'icon' => $service->icon,
+                'description' => $service->description,
+                'category' => $service->category,
+                'is_active' => (bool) $service->is_active,
+                'sort_order' => $service->sort_order,
+            ];
+        })->values();
+
+        return view('admin.services.index', compact('services', 'servicesData'));
     }
 
     public function create()
