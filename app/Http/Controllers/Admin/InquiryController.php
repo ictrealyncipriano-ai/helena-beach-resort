@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Exceptions\BookingConflictException;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\InquiryRequest;
 use App\Mail\BookingCancelled;
 use App\Mail\BookingConfirmed;
 use App\Mail\RefundReceived;
@@ -13,11 +15,23 @@ use App\Models\SiteSetting;
 use App\Services\PayMongoService;
 use App\Services\InquiryService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 
 class InquiryController extends Controller
 {
+    /**
+     * Drop the cached admin dashboard aggregates so the next dashboard view
+     * reflects the mutation. Called by every action that changes the counts,
+     * revenue, or booking-type distribution shown on the dashboard.
+     */
+    private function forgetDashboardCache(): void
+    {
+        Cache::forget(DashboardController::cacheKey());
+    }
+
     public function index(Request $request)
     {
         $query = Inquiry::with(['cottage', 'guest']);
@@ -49,7 +63,9 @@ class InquiryController extends Controller
         $inquiries = $query->latest()->paginate(15);
         $cottages = Cottage::pluck('name', 'id');
         $guests = Guest::pluck('name', 'id');
-        $cottageRates = Cottage::get()->mapWithKeys(fn ($c) => [
+        $cottageRates = Cottage::select('id', 'name', 'rate_daytour', 'rate_overnight')
+            ->get()
+            ->mapWithKeys(fn ($c) => [
             $c->id => [
                 'name' => $c->name,
                 'day_tour' => (float) $c->rate_daytour,
@@ -66,22 +82,9 @@ class InquiryController extends Controller
      * existing guest is selected, and auto-calculates the total from the
      * cottage rate when the amount is left blank.
      */
-    public function store(Request $request, InquiryService $inquiryService)
+    public function store(InquiryRequest $request, InquiryService $inquiryService)
     {
-        $data = $request->validate([
-            'name' => 'required|max:255',
-            'email' => 'required|email|max:255',
-            'phone' => 'nullable|max:255',
-            'guest_id' => 'nullable|exists:guests,id',
-            'booking_type' => 'nullable|in:day_tour,overnight',
-            'check_in' => 'nullable|date',
-            'check_out' => 'nullable|date',
-            'pax' => 'nullable|integer|min:1',
-            'total_amount' => 'nullable|numeric|min:0',
-            'cottage_id' => 'nullable|exists:cottages,id',
-            'status' => 'required|in:pending,confirmed,cancelled,expired',
-            'message' => 'nullable',
-        ]);
+        $data = $request->validated();
 
         $totalAmount = $data['total_amount'] ?? null;
         if ($totalAmount === null || $totalAmount === '') {
@@ -102,6 +105,7 @@ class InquiryController extends Controller
             'total_amount' => $totalAmount,
             'status' => $data['status'],
             'source' => 'walk-in',
+            'reference_code' => Inquiry::generateReferenceCode(),
         ]);
 
         if (empty($inquiry->guest_id) && $inquiry->email) {
@@ -112,12 +116,24 @@ class InquiryController extends Controller
             $inquiry->guest()->associate($guest)->save();
         }
 
-        if ($inquiry->status === 'confirmed') {
-            $inquiry->bookBlocks();
-            $this->markConfirmed($inquiry);
-        } elseif ($inquiry->status === 'pending') {
-            $inquiry->reserveBlocks();
+        try {
+            DB::transaction(function () use ($inquiry) {
+                if ($inquiry->status === 'confirmed') {
+                    $inquiry->bookBlocks();
+                    $this->markConfirmed($inquiry);
+                } elseif ($inquiry->status === 'pending') {
+                    $inquiry->reserveBlocks();
+                }
+            });
+        } catch (BookingConflictException $e) {
+            // The inquiry was never usable (its blocks rolled back), so it
+            // should not linger as a trashed row — fully remove it.
+            $inquiry->forceDelete();
+
+            return back()->with('error', $e->getMessage())->withInput();
         }
+
+        $this->forgetDashboardCache();
 
         return redirect()->route('admin.inquiries.index')
             ->with('success', "Walk-in inquiry {$inquiry->reference_code} created successfully.");
@@ -139,22 +155,9 @@ class InquiryController extends Controller
         return view('admin.inquiries.form', compact('inquiry', 'cottages', 'guests'));
     }
 
-    public function update(Request $request, Inquiry $inquiry)
+    public function update(InquiryRequest $request, Inquiry $inquiry)
     {
-        $data = $request->validate([
-            'name' => 'required|max:255',
-            'email' => 'required|email|max:255',
-            'phone' => 'nullable|max:255',
-            'guest_id' => 'nullable|exists:guests,id',
-            'booking_type' => 'nullable|in:day_tour,overnight',
-            'check_in' => 'nullable|date',
-            'check_out' => 'nullable|date',
-            'pax' => 'nullable|integer|min:1',
-            'total_amount' => 'nullable|numeric|min:0',
-            'cottage_id' => 'nullable|exists:cottages,id',
-            'status' => 'required|in:pending,confirmed,cancelled,expired',
-            'message' => 'nullable',
-        ]);
+        $data = $request->validated();
 
         $original = [
             'cottage_id' => $inquiry->cottage_id,
@@ -164,22 +167,40 @@ class InquiryController extends Controller
 
         $wasConfirmed = $inquiry->status === 'confirmed';
 
-        $inquiry->update($data);
-        $inquiry->refresh();
-
         // Release the blocks held for the original schedule, then re-hold
-        // for the new schedule so stale blocks never linger.
-        $inquiry->releaseBlocks($original);
+        // for the new schedule so stale blocks never linger. All changes are
+        // transactional: if the new dates are taken, nothing is changed and
+        // the original hold is preserved.
+        try {
+            DB::transaction(function () use ($inquiry, $data, $original, $wasConfirmed) {
+                $inquiry->update($data);
+                $inquiry->refresh();
 
-        if ($inquiry->status === 'confirmed') {
-            $inquiry->bookBlocks();
+                $inquiry->releaseBlocks($original);
 
-            if (! $wasConfirmed) {
-                $this->markConfirmed($inquiry);
-            }
-        } elseif ($inquiry->status === 'pending') {
-            $inquiry->reserveBlocks();
+                if ($inquiry->status === 'confirmed') {
+                    $inquiry->bookBlocks();
+
+                    if (! $wasConfirmed) {
+                        $this->markConfirmed($inquiry);
+                    }
+                } elseif ($inquiry->status === 'pending') {
+                    $inquiry->reserveBlocks();
+                }
+
+                // A previously-confirmed booking moved off confirmed
+                // (cancelled/expired): reverse the stay that markConfirmed()
+                // recorded so the guest's count never drifts upward.
+                if ($wasConfirmed && $inquiry->status !== 'confirmed'
+                    && $inquiry->guest && $inquiry->guest->total_stays > 0) {
+                    $inquiry->guest->decrement('total_stays');
+                }
+            });
+        } catch (BookingConflictException $e) {
+            return back()->with('error', $e->getMessage())->withInput();
         }
+
+        $this->forgetDashboardCache();
 
         return redirect()->route('admin.inquiries.index')
             ->with('success', 'Inquiry updated successfully.');
@@ -189,6 +210,7 @@ class InquiryController extends Controller
     {
         $inquiry->releaseBlocks();
         $inquiry->delete();
+        $this->forgetDashboardCache();
 
         return redirect()->route('admin.inquiries.index')
             ->with('success', 'Inquiry deleted successfully.');
@@ -200,10 +222,17 @@ class InquiryController extends Controller
             return back()->with('error', 'Only pending inquiries can be confirmed.');
         }
 
-        $inquiry->update(['status' => 'confirmed']);
-        $inquiry->bookBlocks();
+        try {
+            DB::transaction(function () use ($inquiry) {
+                $inquiry->update(['status' => 'confirmed']);
+                $inquiry->bookBlocks();
+                $this->markConfirmed($inquiry);
+            });
+        } catch (BookingConflictException $e) {
+            return back()->with('error', $e->getMessage());
+        }
 
-        $this->markConfirmed($inquiry);
+        $this->forgetDashboardCache();
 
         return redirect()->route('admin.inquiries.index')
             ->with('success', "Booking {$inquiry->reference_code} confirmed successfully.");
@@ -244,6 +273,8 @@ class InquiryController extends Controller
             $inquiry->guest->decrement('total_stays');
         }
 
+        $this->forgetDashboardCache();
+
         try {
             Mail::to($inquiry->email)->send(new BookingCancelled($inquiry));
 
@@ -282,6 +313,8 @@ class InquiryController extends Controller
             'payment_method' => 'manual',
         ]);
 
+        $this->forgetDashboardCache();
+
         return redirect()->route('admin.inquiries.show', $inquiry)
             ->with('success', "Booking {$inquiry->reference_code} marked as paid.");
     }
@@ -297,7 +330,14 @@ class InquiryController extends Controller
                 ->with('error', 'This booking has no payment to refund.');
         }
 
-        if ($inquiry->isRefunded()) {
+        // Atomically claim the refund BEFORE calling PayMongo so two
+        // concurrent requests can never double-refund (TOCTOU guard).
+        $claimed = Inquiry::where('id', $inquiry->id)
+            ->whereNotNull('paid_at')
+            ->whereNull('refunded_at')
+            ->update(['refunded_at' => now()]);
+
+        if ($claimed !== 1) {
             return redirect()->route('admin.inquiries.show', $inquiry)
                 ->with('error', 'This booking has already been refunded.');
         }
@@ -305,10 +345,17 @@ class InquiryController extends Controller
         try {
             $payMongo->refund($inquiry);
         } catch (\RuntimeException $e) {
+            // Roll the claim back so the admin can retry after fixing the cause.
+            // A model-level update() would skip the column: the in-memory
+            // refunded_at is still null (the claim was a bulk update), so it
+            // never registers as dirty. Update at the query level instead.
+            Inquiry::where('id', $inquiry->id)->update(['refunded_at' => null]);
+
             return redirect()->route('admin.inquiries.show', $inquiry)
                 ->with('error', $e->getMessage());
         }
 
+        $inquiry->refresh();
         $wasConfirmed = $inquiry->status === 'confirmed';
 
         $inquiry->update([
@@ -321,6 +368,8 @@ class InquiryController extends Controller
         if ($wasConfirmed && $inquiry->guest && $inquiry->guest->total_stays > 0) {
             $inquiry->guest->decrement('total_stays');
         }
+
+        $this->forgetDashboardCache();
 
         try {
             Mail::to($inquiry->email)->send(new RefundReceived($inquiry));

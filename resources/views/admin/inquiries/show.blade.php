@@ -6,9 +6,9 @@
 
 @section('breadcrumb')
     <nav class="flex items-center gap-1 text-xs text-gray-500 dark:text-slate-400">
-        <a href="{{ route('admin.dashboard') }}" class="hover:text-teal-600 transition-colors dark:hover:text-teal-300">Dashboard</a>
+        <a href="{{ route('admin.dashboard') }}" class="hover:text-teal-700 transition-colors dark:hover:text-teal-300">Dashboard</a>
         <span>/</span>
-        <a href="{{ route('admin.inquiries.index') }}" class="hover:text-teal-600 transition-colors dark:hover:text-teal-300">Inquiries</a>
+        <a href="{{ route('admin.inquiries.index') }}" class="hover:text-teal-700 transition-colors dark:hover:text-teal-300">Inquiries</a>
         <span>/</span>
         <span class="text-gray-700 font-medium dark:text-slate-200">{{ $inquiry->reference_code }}</span>
     </nav>
@@ -42,7 +42,7 @@
     <div class="bg-white rounded-xl shadow-sm border border-gray-100 dark:bg-slate-800 dark:border-slate-700">
         <div class="px-5 py-4 border-b border-gray-100 flex items-center justify-between dark:border-slate-700">
             <h2 class="text-sm font-semibold text-gray-900 dark:text-white">Guest Profile</h2>
-            <a href="{{ route('admin.guests.show', $inquiry->guest) }}" class="text-xs font-medium text-teal-600 hover:text-teal-700 dark:text-teal-300 dark:hover:text-teal-200">View Profile</a>
+            <a href="{{ route('admin.guests.show', $inquiry->guest) }}" class="text-xs font-medium text-teal-700 hover:text-teal-700 dark:text-teal-300 dark:hover:text-teal-200">View Profile</a>
         </div>
         <div class="p-5 grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-5 gap-6">
             <div>
@@ -148,7 +148,7 @@
             Back to List
         </a>
         <div class="flex items-center gap-2">
-            <a href="{{ route('admin.inquiries.edit', $inquiry) }}" class="px-4 py-2 text-sm font-medium text-white bg-teal-600 rounded-lg hover:bg-teal-700 transition-colors shadow-sm">Edit</a>
+            <a href="{{ route('admin.inquiries.edit', $inquiry) }}" class="px-4 py-2 text-sm font-medium text-white bg-teal-700 rounded-lg hover:bg-teal-700 transition-colors shadow-sm">Edit</a>
             @if($inquiry->status === 'confirmed' && ! $inquiry->isPaid())
                 <button type="button"
                     @@click="$dispatch('open-confirm-mark-paid', { url: '{{ route('admin.inquiries.mark-paid', $inquiry) }}' })"

@@ -24,7 +24,7 @@
 <div x-show="sidebarOpen" x-transition:enter="transition-opacity ease-linear duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="transition-opacity ease-linear duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="fixed inset-0 z-40 bg-gray-900/50 lg:hidden" @@click="sidebarOpen = false"></div>
 
 {{-- Sidebar --}}
-<aside :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'" class="fixed inset-y-0 left-0 z-50 w-60 bg-teal-800 flex flex-col transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:z-auto">
+<aside id="admin-sidebar" :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'" class="fixed inset-y-0 left-0 z-50 w-60 bg-teal-800 flex flex-col transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:z-auto">
     {{-- Brand --}}
     <div class="flex h-16 items-center gap-2.5 px-5 border-b border-teal-700/50 shrink-0">
         <img src="{{ asset('images/logo.jpg') }}" alt="Helena Beach" class="h-8 w-8 rounded-lg shadow-lg shrink-0">

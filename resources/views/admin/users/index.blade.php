@@ -20,7 +20,7 @@ $usersData = $users->map(fn ($u) => [
 
 @section('breadcrumb')
     <nav class="flex items-center gap-1 text-xs text-gray-500 dark:text-slate-400">
-        <a href="{{ route('admin.dashboard') }}" class="hover:text-teal-600 transition-colors dark:hover:text-teal-300">Dashboard</a>
+        <a href="{{ route('admin.dashboard') }}" class="hover:text-teal-700 transition-colors dark:hover:text-teal-300">Dashboard</a>
         <span>/</span>
         <span class="text-gray-700 font-medium dark:text-slate-200">Users</span>
     </nav>
@@ -43,7 +43,7 @@ $usersData = $users->map(fn ($u) => [
 
             <div class="flex items-center justify-end gap-3 pt-5 mt-6 border-t border-gray-100 dark:border-slate-700">
                 <button type="button" @@click="window.dispatchEvent(new CustomEvent('close-modal-user-form'))" class="px-4 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors dark:bg-slate-800 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-700">Cancel</button>
-                <button type="submit" class="px-6 py-2.5 text-sm font-medium text-white bg-teal-600 rounded-lg hover:bg-teal-700 transition-colors shadow-sm">
+                <button type="submit" class="px-6 py-2.5 text-sm font-medium text-white bg-teal-700 rounded-lg hover:bg-teal-700 transition-colors shadow-sm">
                     <span x-text="isEditing ? 'Update User' : 'Create User'"></span>
                 </button>
             </div>

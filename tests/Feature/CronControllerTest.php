@@ -39,10 +39,10 @@ class CronControllerTest extends TestCase
 
     public function test_cron_endpoint_requires_bearer_token(): void
     {
-        $this->get('/cron/reservations')->assertStatus(401);
+        $this->post('/cron/reservations')->assertStatus(401);
 
         $this->withHeader('Authorization', 'Bearer wrong-secret')
-            ->get('/cron/reservations')
+            ->post('/cron/reservations')
             ->assertStatus(401);
     }
 
@@ -51,7 +51,7 @@ class CronControllerTest extends TestCase
         $inquiry = $this->createStalePendingInquiry();
 
         $this->withHeader('Authorization', 'Bearer test-cron-secret')
-            ->get('/cron/reservations')
+            ->post('/cron/reservations')
             ->assertOk()
             ->assertJson(['ok' => true]);
 

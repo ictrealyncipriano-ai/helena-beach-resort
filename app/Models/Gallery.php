@@ -32,7 +32,10 @@ class Gallery extends Model
     protected static function compressImage(string $path): void
     {
         try {
-            $disk = Storage::disk(config('filesystems.default'));
+            // Uploads are stored on the 'cloudflare' disk (see
+            // Admin\GalleryController), so compression must read/write the
+            // same disk or it silently never runs.
+            $disk = Storage::disk('cloudflare');
         } catch (\Throwable) {
             return;
         }

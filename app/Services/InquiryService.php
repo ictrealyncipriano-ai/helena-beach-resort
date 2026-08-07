@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Exceptions\BookingConflictException;
 use App\Mail\InquiryAcknowledgment;
 use App\Mail\InquiryNotification;
 use App\Models\Cottage;
@@ -9,8 +10,11 @@ use App\Models\Guest;
 use App\Models\Inquiry;
 use App\Models\SiteSetting;
 use Carbon\Carbon;
+use Illuminate\Database\UniqueConstraintViolationException;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Validation\ValidationException;
 
 /**
  * Handles the business logic for storing new inquiries/bookings.
@@ -20,36 +24,84 @@ class InquiryService
 {
     /**
      * Store a new inquiry with automatic total calculation and owner notification.
+     *
+     * The inquiry, its date blocks and the guest link are created inside a
+     * single transaction. On a (cottage_id, date) block conflict we convert
+     * the failure into a ValidationException ("These dates are no longer
+     * available") instead of a 500, and the rollback guarantees no orphaned
+     * inquiry row. Reference codes are regenerated on a unique-violation
+     * retry (up to 3 attempts) so concurrent creates stay race-free.
      */
     public function store(array $data): Inquiry
     {
         // Calculate total amount based on booking type and cottage rates
         $totalAmount = $this->calculateTotal($data);
+        $data['source'] = $data['source'] ?? 'website';
 
-        $inquiry = Inquiry::create([
-            'name' => $data['name'],
-            'email' => $data['email'],
-            'phone' => $data['phone'] ?? null,
-            'check_in' => $data['check_in'] ?? null,
-            'check_out' => $data['check_out'] ?? null,
-            'pax' => $data['pax'] ?? null,
-            'cottage_id' => $data['cottage_id'] ?? null,
-            'message' => $data['message'] ?? null,
-            'booking_type' => $data['booking_type'] ?? null,
-            'total_amount' => $totalAmount,
-            'source' => $data['source'] ?? 'website',
-        ]);
+        $lastException = null;
 
-        // Reserve the cottage dates for this inquiry (pending hold).
-        $inquiry->reserveBlocks();
+        for ($attempt = 1; $attempt <= 3; $attempt++) {
+            try {
+                $inquiry = DB::transaction(function () use ($data, $totalAmount) {
+                    $inquiry = Inquiry::create([
+                        'name' => $data['name'],
+                        'email' => $data['email'],
+                        'phone' => $data['phone'] ?? null,
+                        'check_in' => $data['check_in'] ?? null,
+                        'check_out' => $data['check_out'] ?? null,
+                        'pax' => $data['pax'] ?? null,
+                        'cottage_id' => $data['cottage_id'] ?? null,
+                        'message' => $data['message'] ?? null,
+                        'booking_type' => $data['booking_type'] ?? null,
+                        'total_amount' => $totalAmount,
+                        'source' => $data['source'],
+                        'reference_code' => Inquiry::generateReferenceCode(),
+                    ]);
 
-        // Create or update guest record linked to this inquiry
-        $guest = Guest::updateOrCreate(
-            ['email' => $data['email']],
-            ['name' => $data['name'], 'phone' => $data['phone'] ?? null]
-        );
-        $inquiry->guest()->associate($guest)->save();
+                    // Atomically hold the cottage dates. Throws a
+                    // BookingConflictException (converted below) when any
+                    // date in the range is already taken.
+                    $inquiry->reserveBlocks();
 
+                    // Create or update guest record linked to this inquiry
+                    $guest = Guest::updateOrCreate(
+                        ['email' => $data['email']],
+                        ['name' => $data['name'], 'phone' => $data['phone'] ?? null]
+                    );
+                    $inquiry->guest()->associate($guest)->save();
+
+                    return $inquiry;
+                });
+            } catch (BookingConflictException $e) {
+                // The transaction rolled back — no orphaned inquiry row and
+                // no email side effects (emails are only sent after commit).
+                throw ValidationException::withMessages([
+                    'check_in' => 'These dates are no longer available.',
+                ]);
+            } catch (UniqueConstraintViolationException $e) {
+                // Almost certainly a reference-code collision on this attempt;
+                // the transaction already rolled back, so retry with a fresh code.
+                $lastException = $e;
+                continue;
+            }
+
+            // Emails go out only after the transaction committed.
+            $this->sendNotifications($inquiry);
+
+            return $inquiry;
+        }
+
+        throw $lastException;
+    }
+
+    /**
+     * Send the owner notification and guest acknowledgment. Deliberately runs
+     * outside the DB transaction so a failed email can never be the cause of
+     * a rollback, and a rollback can never cause a half-sent email for a
+     * booking that does not exist.
+     */
+    private function sendNotifications(Inquiry $inquiry): void
+    {
         // Notify resort owner about new inquiry
         $ownerEmail = SiteSetting::getValue('contact_email');
         if ($ownerEmail) {
@@ -73,8 +125,6 @@ class InquiryService
                 'error' => $e->getMessage(),
             ]);
         }
-
-        return $inquiry;
     }
 
     /**

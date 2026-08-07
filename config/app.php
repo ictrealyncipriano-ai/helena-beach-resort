@@ -123,4 +123,21 @@ return [
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | dompdf writeable paths
+    |--------------------------------------------------------------------------
+    |
+    | Vercel's function filesystem is read-only except /tmp, so dompdf's
+    | writeable directories are redirected here. Referenced via config() (not
+    | env()) so they survive `config:cache`.
+    |
+    */
+
+    'dompdf' => [
+        'font_dir' => env('DOMPDF_FONT_DIR', storage_path('fonts')),
+        'font_cache' => env('DOMPDF_FONT_CACHE', storage_path('fonts')),
+        'temp_dir' => env('DOMPDF_TEMP_DIR', sys_get_temp_dir()),
+    ],
+
 ];

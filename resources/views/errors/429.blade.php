@@ -9,13 +9,19 @@
             <h1 class="text-7xl font-bold mb-2">429</h1>
             <p class="text-xl font-semibold">Too Many Requests</p>
         </div>
-        <p class="text-gray-600 mb-8 text-lg">
+        <p class="text-gray-600 dark:text-slate-300 mb-8 text-lg">
             You've made too many requests. Please wait a moment before trying again.
         </p>
-        <a href="{{ route('home') }}"
-           class="inline-block bg-teal-600 hover:bg-teal-700 text-white font-semibold px-8 py-3 rounded-lg transition-colors">
-            Back to Home
-        </a>
+        <div class="flex flex-col sm:flex-row items-center justify-center gap-3">
+            <a href="{{ route('home') }}"
+               class="inline-block bg-teal-700 hover:bg-teal-700 text-white font-semibold px-8 py-3 rounded-lg transition-colors">
+                Back to Home
+            </a>
+            <a href="#" onclick="history.back(); return false;"
+               class="inline-block bg-gray-100 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 text-gray-700 dark:text-slate-200 font-semibold px-8 py-3 rounded-lg transition-colors">
+                Go Back and Try Again Shortly
+            </a>
+        </div>
     </div>
 </div>
 @endsection

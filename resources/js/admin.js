@@ -1,8 +1,12 @@
 import Alpine from 'alpinejs';
+import focus from '@alpinejs/focus';
 import flatpickr from 'flatpickr';
+import 'flatpickr/dist/flatpickr.min.css';
 
 window.Alpine = Alpine;
 window.flatpickr = flatpickr;
+
+Alpine.plugin(focus);
 
 Alpine.store('toasts', {
     items: [],

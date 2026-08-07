@@ -55,7 +55,7 @@ class AdminMiddleware
             abort(403, 'You do not have permission to access this resource.');
         }
 
-        $writeActions = ['create', 'store', 'edit', 'update', 'destroy', 'confirm', 'cancel', 'activate-all'];
+        $writeActions = ['create', 'store', 'edit', 'update', 'destroy', 'confirm', 'cancel', 'activate-all', 'mark-paid', 'refund'];
         if (in_array($action, $writeActions) && isset($this->writeAccess[$resource])) {
             if (!in_array($user->role, $this->writeAccess[$resource])) {
                 abort(403, 'You do not have permission to perform this action.');

@@ -302,7 +302,7 @@
         <p class="login-sub">Sign in to your account to continue.</p>
 
         @if ($errors->any())
-            <div class="alert">
+            <div class="alert" role="alert">
                 {{ $errors->first('email') }}
             </div>
         @endif

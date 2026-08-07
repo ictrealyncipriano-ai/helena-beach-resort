@@ -2,7 +2,7 @@
 
 namespace App\Http\Requests;
 
-use App\Models\Cottage;
+use App\Rules\CottageAvailability;
 use Illuminate\Foundation\Http\FormRequest;
 
 class BookingRequest extends FormRequest
@@ -20,8 +20,14 @@ class BookingRequest extends FormRequest
             'phone' => ['nullable', 'string', 'max:20'],
             'booking_type' => ['required', 'string', 'in:day_tour,overnight'],
             'cottage_id' => ['required', 'exists:cottages,id'],
-            'check_in' => ['required', 'date', 'after_or_equal:today', $this->validateAvailability()],
-            'check_out' => ['nullable', 'required_if:booking_type,overnight', 'date', 'after_or_equal:check_in'],
+            'check_in' => ['required', 'date', 'after_or_equal:today', new CottageAvailability(
+                $this->input('cottage_id'),
+                $this->input('email'),
+                $this->input('booking_type'),
+                $this->input('check_out'),
+                true,
+            )],
+            'check_out' => ['nullable', 'required_if:booking_type,overnight', 'date', 'after:check_in'],
             'pax' => ['required', 'integer', 'min:1', 'max:50'],
             'message' => ['nullable', 'string', 'max:1000'],
         ];
@@ -31,30 +37,7 @@ class BookingRequest extends FormRequest
     {
         return [
             'check_out.required_if' => 'Check-out date is required for overnight bookings.',
-            'check_out.after_or_equal' => 'Check-out must be on or after check-in.',
+            'check_out.after' => 'Check-out must be after check-in.',
         ];
-    }
-
-    private function validateAvailability(): ?\Closure
-    {
-        return function (string $attribute, mixed $value, \Closure $fail) {
-            $cottageId = $this->input('cottage_id');
-            if (!$cottageId || !$value) return;
-
-            $cottage = Cottage::find($cottageId);
-            if (!$cottage) return;
-
-            $checkOut = $this->input('check_out') ?? $value;
-
-            $blockedDates = $cottage->dateBlocks()
-                ->whereBetween('date', [$value, $checkOut])
-                ->pluck('date')
-                ->map(fn ($d) => $d->format('M d, Y'))
-                ->implode(', ');
-
-            if ($blockedDates) {
-                $fail("The cottage is not available on: {$blockedDates}.");
-            }
-        };
     }
 }

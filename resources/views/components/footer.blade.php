@@ -43,12 +43,17 @@
                         </span>
                         <span class="text-teal-200/80 pt-1.5">Purok Buyan, Brgy. Dinahican, Infanta, Quezon</span>
                     </li>
+                    @php
+                        $contactPhone = trim((string) App\Models\SiteSetting::getValue('contact_phone', ''));
+                    @endphp
+                    @if($contactPhone && $contactPhone !== 'N/A')
                     <li class="flex items-start gap-3">
                         <span class="shrink-0 w-9 h-9 rounded-full bg-teal-800/50 flex items-center justify-center text-teal-300">
                             <x-icons name="phone" class="w-4 h-4" />
                         </span>
-                        <span class="text-teal-200/80 pt-1.5">Contact number available upon request</span>
+                        <a href="tel:{{ $contactPhone }}" class="text-teal-200/80 pt-1.5 hover:text-white transition-colors">{{ $contactPhone }}</a>
                     </li>
+                    @endif
                     <li class="flex items-start gap-3">
                         <span class="shrink-0 w-9 h-9 rounded-full bg-teal-800/50 flex items-center justify-center text-teal-300">
                             <x-icons name="email" class="w-4 h-4" />

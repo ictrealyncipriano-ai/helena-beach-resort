@@ -13,7 +13,7 @@
             The page you're looking for doesn't exist or has been moved.
         </p>
         <a href="{{ route('home') }}"
-           class="inline-block bg-teal-600 hover:bg-teal-700 text-white font-semibold px-8 py-3 rounded-lg transition-colors">
+           class="inline-block bg-teal-700 hover:bg-teal-700 text-white font-semibold px-8 py-3 rounded-lg transition-colors">
             Back to Home
         </a>
     </div>

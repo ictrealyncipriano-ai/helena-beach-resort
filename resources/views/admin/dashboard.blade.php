@@ -33,9 +33,9 @@
             <div class="absolute inset-x-0 top-0 h-0.5 gradient-accent-teal"></div>
             <div class="flex items-start justify-between mb-4">
                 <div class="w-11 h-11 rounded-xl stat-icon-teal flex items-center justify-center shadow-sm">
-                    <svg class="w-5 h-5 text-teal-600 dark:text-teal-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8.25 21v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21m0 0h4.5V3.545M12.75 21h7.5V10.75M2.25 21h1.5m18 0h-18M2.25 9l4.5-1.636M18.75 3l-1.5.545m0 6.205l3 1m1.5.5l-1.5-.5M6.75 7.364V3h-3v18m3-13.636l10.5-3.819"/></svg>
+                    <svg class="w-5 h-5 text-teal-700 dark:text-teal-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8.25 21v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21m0 0h4.5V3.545M12.75 21h7.5V10.75M2.25 21h1.5m18 0h-18M2.25 9l4.5-1.636M18.75 3l-1.5.545m0 6.205l3 1m1.5.5l-1.5-.5M6.75 7.364V3h-3v18m3-13.636l10.5-3.819"/></svg>
                 </div>
-                <span class="text-[11px] font-semibold text-teal-600 bg-teal-50/80 px-2.5 py-1 rounded-full border border-teal-100/50 dark:text-teal-300 dark:bg-teal-900/30 dark:border-teal-900/50">Available: {{ $availableCottages }}</span>
+                <span class="text-[11px] font-semibold text-teal-700 bg-teal-50/80 px-2.5 py-1 rounded-full border border-teal-100/50 dark:text-teal-300 dark:bg-teal-900/30 dark:border-teal-900/50">Available: {{ $availableCottages }}</span>
             </div>
             <p class="text-3xl font-bold text-gray-900 tracking-tight dark:text-white" x-text="count"></p>
             <p class="text-sm text-gray-500 mt-1.5 font-medium dark:text-slate-400">Total Cottages</p>
@@ -105,7 +105,7 @@ class="relative bg-white rounded-2xl shadow-sm border border-gray-100 p-5 overfl
                     <span class="w-1.5 h-1.5 rounded-full bg-teal-500"></span>
                     Upcoming Check-Ins
                 </h2>
-                <a href="{{ route('admin.inquiries.index') }}" class="text-xs font-medium text-teal-600 hover:text-teal-700 transition-colors flex items-center gap-1 dark:text-teal-300 dark:hover:text-teal-200">
+                <a href="{{ route('admin.inquiries.index') }}" class="text-xs font-medium text-teal-700 hover:text-teal-700 transition-colors flex items-center gap-1 dark:text-teal-300 dark:hover:text-teal-200">
                     View all
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.25 4.5l7.5 7.5-7.5 7.5"/></svg>
                 </a>
@@ -180,7 +180,7 @@ class="relative bg-white rounded-2xl shadow-sm border border-gray-100 p-5 overfl
                     <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
                     Recent Inquiries
                 </h2>
-                <a href="{{ route('admin.inquiries.index') }}" class="text-xs font-medium text-teal-600 hover:text-teal-700 transition-colors flex items-center gap-1 dark:text-teal-300 dark:hover:text-teal-200">
+                <a href="{{ route('admin.inquiries.index') }}" class="text-xs font-medium text-teal-700 hover:text-teal-700 transition-colors flex items-center gap-1 dark:text-teal-300 dark:hover:text-teal-200">
                     View all
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.25 4.5l7.5 7.5-7.5 7.5"/></svg>
                 </a>
@@ -274,7 +274,7 @@ class="relative bg-white rounded-2xl shadow-sm border border-gray-100 p-5 overfl
                 <span class="text-xs text-gray-500 font-medium dark:text-slate-400">{{ $bookingTypeData->sum() }} total</span>
             </div>
             <div class="relative chart-container flex justify-center" style="max-height: 280px;">
-                <canvas id="bookingTypeChart" x-data x-init="
+                <canvas id="bookingTypeChart" role="img" aria-label="Booking type distribution doughnut chart" x-data x-init="
                     new Chart($el, {
                         type: 'doughnut',
                         data: {
@@ -345,7 +345,7 @@ class="relative bg-white rounded-2xl shadow-sm border border-gray-100 p-5 overfl
                 <span class="text-xs text-gray-500 font-medium dark:text-slate-400">₱ {{ number_format($revenueData->sum(), 2) }} total</span>
             </div>
             <div class="relative chart-container" style="max-height: 300px;">
-                <canvas id="revenueChart" x-data x-init="
+                <canvas id="revenueChart" role="img" aria-label="Revenue over the last 6 months line chart" x-data x-init="
                     new Chart($el, {
                         type: 'line',
                         data: {
@@ -463,7 +463,7 @@ class="relative bg-white rounded-2xl shadow-sm border border-gray-100 p-5 overfl
                                     <div class="popularity-bar flex-1 max-w-[120px]">
                                         <div class="popularity-bar-fill" style="width: {{ $pct }}%"></div>
                                     </div>
-                                    <span class="text-xs text-gray-400 font-medium w-8 dark:text-slate-500">{{ $pct }}%</span>
+                                    <span class="text-xs text-gray-500 font-medium w-8 dark:text-slate-400">{{ $pct }}%</span>
                                 </div>
                             </td>
                             <td class="px-5 py-3.5 text-center text-gray-600 dark:text-slate-300">{{ $cottage->capacity }}</td>
@@ -505,19 +505,19 @@ class="relative bg-white rounded-2xl shadow-sm border border-gray-100 p-5 overfl
                         </div>
                         <div class="grid grid-cols-2 gap-2 text-xs">
                             <div>
-                                <span class="text-gray-400 dark:text-slate-500">Day Tour</span>
+                                <span class="text-gray-500 dark:text-slate-400">Day Tour</span>
                                 <p class="font-medium text-gray-700 dark:text-slate-200">₱ {{ number_format($cottage->rate_daytour, 2) }}</p>
                             </div>
                             <div>
-                                <span class="text-gray-400 dark:text-slate-500">Overnight</span>
+                                <span class="text-gray-500 dark:text-slate-400">Overnight</span>
                                 <p class="font-medium text-gray-700 dark:text-slate-200">₱ {{ number_format($cottage->rate_overnight, 2) }}</p>
                             </div>
                             <div>
-                                <span class="text-gray-400 dark:text-slate-500">Max Pax</span>
+                                <span class="text-gray-500 dark:text-slate-400">Max Pax</span>
                                 <p class="font-medium text-gray-700 dark:text-slate-200">{{ $cottage->capacity }}</p>
                             </div>
                             <div>
-                                <span class="text-gray-400 dark:text-slate-500">Popularity</span>
+                                <span class="text-gray-500 dark:text-slate-400">Popularity</span>
                                 <p class="font-medium text-gray-700 dark:text-slate-200">{{ $pct }}%</p>
                             </div>
                         </div>

@@ -2,7 +2,7 @@
     <div>
         <div class="flex items-center gap-2 mb-3">
             <span class="text-sm font-semibold text-gray-900 dark:text-white">Guest Details</span>
-            <span class="font-mono text-xs text-gray-400 dark:text-slate-500" x-text="view.reference_code"></span>
+            <span class="font-mono text-xs text-gray-500 dark:text-slate-400" x-text="view.reference_code"></span>
         </div>
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
@@ -24,7 +24,7 @@
         <div>
             <div class="flex items-center justify-between mb-3">
                 <span class="text-sm font-semibold text-gray-900 dark:text-white">Guest Profile</span>
-                <a x-bind:href="'/admin/guests/' + view.guest.id" class="text-xs font-medium text-teal-600 hover:text-teal-700 dark:text-teal-300 dark:hover:text-teal-200">View Profile</a>
+                <a x-bind:href="'/admin/guests/' + view.guest.id" class="text-xs font-medium text-teal-700 hover:text-teal-700 dark:text-teal-300 dark:hover:text-teal-200">View Profile</a>
             </div>
             <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
                 <div class="min-w-0">
@@ -100,6 +100,6 @@
     </template>
 
     <div class="pt-4 border-t border-gray-100 flex items-center justify-between dark:border-slate-700">
-        <span class="text-xs text-gray-400 dark:text-slate-500">Submitted <span x-text="view.created_at"></span></span>
+        <span class="text-xs text-gray-500 dark:text-slate-400">Submitted <span x-text="view.created_at"></span></span>
     </div>
 </div>

@@ -10,11 +10,11 @@
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         @if($services->isEmpty())
         <div class="text-center py-20">
-            <div class="w-16 h-16 bg-gray-100 dark:bg-slate-700 rounded-2xl flex items-center justify-center mx-auto mb-6 text-gray-400 dark:text-slate-500">
+            <div class="w-16 h-16 bg-gray-100 dark:bg-slate-700 rounded-2xl flex items-center justify-center mx-auto mb-6 text-gray-500 dark:text-slate-400">
                 <x-icons name="grid" class="w-8 h-8" />
             </div>
             <h2 class="text-xl font-semibold text-gray-600 dark:text-slate-300">Services coming soon</h2>
-            <p class="text-gray-400 dark:text-slate-500 mt-2">We're adding more information about our amenities.</p>
+            <p class="text-gray-500 dark:text-slate-400 mt-2">We're adding more information about our amenities.</p>
         </div>
         @else
         @foreach($services as $category => $items)
@@ -24,7 +24,7 @@
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 @foreach($items as $service)
                 <div class="group bg-white dark:bg-slate-800 rounded-2xl p-6 border border-gray-100 dark:border-slate-700 shadow-sm hover:shadow-lg hover:border-teal-100 transition-all duration-300">
-                    <div class="w-12 h-12 bg-teal-50 dark:bg-teal-900/30 rounded-xl flex items-center justify-center text-teal-600 dark:text-teal-300 mb-4 group-hover:bg-teal-100 dark:group-hover:bg-teal-900/50 transition-colors">
+                    <div class="w-12 h-12 bg-teal-50 dark:bg-teal-900/30 rounded-xl flex items-center justify-center text-teal-700 dark:text-teal-300 mb-4 group-hover:bg-teal-100 dark:group-hover:bg-teal-900/50 transition-colors">
                         @if($service->icon === '🏖️')
                         <x-icons name="sun" class="w-6 h-6" />
                         @elseif($service->icon === '🅿️')

@@ -43,6 +43,15 @@ class PaymentFlowTest extends TestCase
         return $inquiry->refresh();
     }
 
+    /**
+     * Simulate a successful booking lookup: the session holds the inquiry's
+     * non-enumerable token, which is the only thing that grants portal access.
+     */
+    private function portalSession(Inquiry $inquiry): array
+    {
+        return ['booking_access_tokens' => [$inquiry->id => $inquiry->token]];
+    }
+
     public function test_pay_link_redirects_pending_booking_to_portal_with_error(): void
     {
         $this->post('/book', [
@@ -56,7 +65,8 @@ class PaymentFlowTest extends TestCase
 
         $inquiry = Inquiry::where('email', 'pending@example.com')->first();
 
-        $this->get(route('payment.pay', $inquiry))
+        $this->withSession($this->portalSession($inquiry))
+            ->post(route('payment.pay', $inquiry))
             ->assertRedirect(route('booking.portal.show', $inquiry))
             ->assertSessionHas('error');
     }
@@ -74,7 +84,8 @@ class PaymentFlowTest extends TestCase
             ], 200),
         ]);
 
-        $response = $this->get(route('payment.pay', $inquiry));
+        $response = $this->withSession($this->portalSession($inquiry))
+            ->post(route('payment.pay', $inquiry));
         $response->assertRedirect('https://checkout.paymongo.com/test123');
 
         Http::assertSent(function ($request) use ($inquiry) {
@@ -100,7 +111,8 @@ class PaymentFlowTest extends TestCase
 
         Http::fake();
 
-        $this->get(route('payment.pay', $inquiry))
+        $this->withSession($this->portalSession($inquiry))
+            ->post(route('payment.pay', $inquiry))
             ->assertRedirect(route('booking.portal.show', $inquiry))
             ->assertSessionHas('error');
 
@@ -114,7 +126,8 @@ class PaymentFlowTest extends TestCase
 
         Http::fake();
 
-        $this->get(route('payment.pay', $inquiry))
+        $this->withSession($this->portalSession($inquiry))
+            ->post(route('payment.pay', $inquiry))
             ->assertRedirect(route('booking.portal.show', $inquiry))
             ->assertSessionHas('success');
 
@@ -144,7 +157,7 @@ class PaymentFlowTest extends TestCase
                             'id' => 'pay_123',
                             'attributes' => [
                                 'status' => 'paid',
-                                'amount' => 10000,
+                                'amount' => (int) round($inquiry->total_amount * 100),
                                 'source' => ['type' => 'qrph'],
                             ],
                         ],
@@ -162,7 +175,7 @@ class PaymentFlowTest extends TestCase
         $this->assertDatabaseHas('inquiries', [
             'id' => $inquiry->id,
             'payment_method' => 'qrph',
-            'paid_amount' => 100.00,
+            'paid_amount' => (float) $inquiry->total_amount,
             'paymongo_session_id' => 'cs_abc',
         ]);
 
@@ -183,7 +196,7 @@ class PaymentFlowTest extends TestCase
                 'payments' => [
                     [
                         'id' => 'pay_nw',
-                        'attributes' => ['status' => 'paid', 'amount' => 10000, 'source' => ['type' => 'qrph']],
+                        'attributes' => ['status' => 'paid', 'amount' => (int) round($inquiry->total_amount * 100), 'source' => ['type' => 'qrph']],
                     ],
                 ],
             ],
@@ -198,7 +211,7 @@ class PaymentFlowTest extends TestCase
         $this->assertDatabaseHas('inquiries', [
             'id' => $inquiry->id,
             'payment_method' => 'qrph',
-            'paid_amount' => 100.00,
+            'paid_amount' => (float) $inquiry->total_amount,
             'paymongo_payment_id' => 'pay_nw',
             'paymongo_session_id' => 'cs_nw',
         ]);
@@ -225,7 +238,7 @@ class PaymentFlowTest extends TestCase
                             'payments' => [
                                 [
                                     'id' => 'pay_456',
-                                    'attributes' => ['status' => 'paid', 'amount' => 10000, 'source' => ['type' => 'qrph']],
+                                    'attributes' => ['status' => 'paid', 'amount' => (int) round($inquiry->total_amount * 100), 'source' => ['type' => 'qrph']],
                                 ],
                             ],
                         ],
@@ -244,7 +257,7 @@ class PaymentFlowTest extends TestCase
         $this->assertDatabaseHas('inquiries', [
             'id' => $inquiry->id,
             'payment_method' => 'qrph',
-            'paid_amount' => 100.00,
+            'paid_amount' => (float) $inquiry->total_amount,
             'paymongo_payment_id' => 'pay_456',
         ]);
         $this->assertNotNull($inquiry->refresh()->paid_at);
@@ -270,7 +283,7 @@ class PaymentFlowTest extends TestCase
                             'payments' => [
                                 [
                                     'id' => 'pay_gen',
-                                    'attributes' => ['status' => 'paid', 'amount' => 10000, 'source' => ['type' => 'qrph']],
+                                    'attributes' => ['status' => 'paid', 'amount' => (int) round($inquiry->total_amount * 100), 'source' => ['type' => 'qrph']],
                                 ],
                             ],
                         ],
@@ -289,7 +302,7 @@ class PaymentFlowTest extends TestCase
         $this->assertDatabaseHas('inquiries', [
             'id' => $inquiry->id,
             'payment_method' => 'qrph',
-            'paid_amount' => 100.00,
+            'paid_amount' => (float) $inquiry->total_amount,
             'paymongo_payment_id' => 'pay_gen',
         ]);
         $this->assertNotNull($inquiry->refresh()->paid_at);
@@ -454,7 +467,7 @@ class PaymentFlowTest extends TestCase
                             'payments' => [
                                 [
                                     'id' => 'pay_123',
-                                    'attributes' => ['status' => 'paid', 'amount' => 10000, 'source' => ['type' => 'qrph']],
+                                    'attributes' => ['status' => 'paid', 'amount' => (int) round($inquiry->total_amount * 100), 'source' => ['type' => 'qrph']],
                                 ],
                             ],
                         ],
@@ -590,7 +603,8 @@ class PaymentFlowTest extends TestCase
             'api.paymongo.com/v1/refunds' => Http::response(['data' => ['id' => 'rfnd_1']], 200),
         ]);
 
-        $this->post(route('booking.portal.cancel', $inquiry))
+        $this->withSession($this->portalSession($inquiry))
+            ->post(route('booking.portal.cancel', $inquiry))
             ->assertRedirect(route('booking.portal.show', $inquiry));
 
         $inquiry->refresh();
@@ -616,7 +630,8 @@ class PaymentFlowTest extends TestCase
             'api.paymongo.com/v1/refunds' => Http::response(['errors' => ['Something failed']], 500),
         ]);
 
-        $this->post(route('booking.portal.cancel', $inquiry))
+        $this->withSession($this->portalSession($inquiry))
+            ->post(route('booking.portal.cancel', $inquiry))
             ->assertRedirect(route('booking.portal.show', $inquiry));
 
         $inquiry->refresh();
@@ -629,12 +644,135 @@ class PaymentFlowTest extends TestCase
         $inquiry = $this->confirmedBooking('unpaidcancel@example.com');
 
         Http::fake();
-        $this->post(route('booking.portal.cancel', $inquiry))
+        $this->withSession($this->portalSession($inquiry))
+            ->post(route('booking.portal.cancel', $inquiry))
             ->assertRedirect(route('booking.portal.show', $inquiry));
 
         Http::assertNothingSent();
         $this->assertSame('cancelled', $inquiry->refresh()->status);
         $this->assertNull($inquiry->refresh()->refunded_at);
+    }
+
+    public function test_webhook_rejects_stale_timestamp_signature(): void
+    {
+        $inquiry = $this->confirmedBooking('stale@example.com');
+
+        $payload = json_encode([
+            'data' => [
+                'id' => 'cs_stale',
+                'type' => 'checkout_session',
+                'attributes' => [
+                    'reference_number' => $inquiry->reference_code,
+                    'paid_at' => 1785892089,
+                    'payments' => [
+                        ['id' => 'pay_stale', 'attributes' => ['status' => 'paid', 'amount' => (int) round($inquiry->total_amount * 100), 'source' => ['type' => 'qrph']]],
+                    ],
+                ],
+            ],
+        ]);
+
+        // Validly signed, but the `t` timestamp is an hour old → rejected.
+        $stale = time() - 3600;
+        $signature = hash_hmac('sha256', $stale.'.'.$payload, 'test-webhook-secret');
+
+        $this->postJson(
+            route('payment.webhook'),
+            json_decode($payload, true),
+            ['Paymongo-Signature' => "t={$stale},te={$signature},li="]
+        )->assertStatus(401);
+
+        $this->assertNull($inquiry->refresh()->paid_at);
+    }
+
+    public function test_webhook_does_not_mark_paid_on_amount_mismatch(): void
+    {
+        $inquiry = $this->confirmedBooking('mismatch@example.com');
+
+        // Signed payload with a valid timestamp but a WRONG paid amount.
+        $payload = json_encode([
+            'data' => [
+                'id' => 'cs_mm',
+                'type' => 'checkout_session',
+                'attributes' => [
+                    'reference_number' => $inquiry->reference_code,
+                    'paid_at' => 1785892089,
+                    'payments' => [
+                        ['id' => 'pay_mm', 'attributes' => ['status' => 'paid', 'amount' => 1, 'source' => ['type' => 'qrph']]],
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->postJson(
+            route('payment.webhook'),
+            json_decode($payload, true),
+            ['Paymongo-Signature' => $this->signatureFor($payload)]
+        )->assertStatus(400)->assertJson(['error' => 'Payment amount mismatch']);
+
+        $inquiry->refresh();
+        $this->assertNull($inquiry->paid_at);
+        $this->assertNull($inquiry->paymongo_payment_id);
+    }
+
+    public function test_webhook_marks_paid_when_amount_matches(): void
+    {
+        $inquiry = $this->confirmedBooking('match@example.com');
+
+        $payload = json_encode([
+            'data' => [
+                'id' => 'cs_match',
+                'type' => 'checkout_session',
+                'attributes' => [
+                    'reference_number' => $inquiry->reference_code,
+                    'paid_at' => 1785892089,
+                    'payments' => [
+                        ['id' => 'pay_match', 'attributes' => ['status' => 'paid', 'amount' => (int) round($inquiry->total_amount * 100), 'source' => ['type' => 'qrph']]],
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->postJson(
+            route('payment.webhook'),
+            json_decode($payload, true),
+            ['Paymongo-Signature' => $this->signatureFor($payload)]
+        )->assertOk()->assertJson(['ok' => true]);
+
+        $this->assertNotNull($inquiry->refresh()->paid_at);
+    }
+
+    public function test_guest_cancel_issues_single_refund_for_duplicate_requests(): void
+    {
+        $inquiry = $this->confirmedBooking('idem@example.com');
+        $inquiry->update([
+            'paid_at' => now(),
+            'paid_amount' => $inquiry->total_amount,
+            'payment_method' => 'qrph',
+            'paymongo_payment_id' => 'pay_123',
+        ]);
+
+        $payMongo = $this->mock(PayMongoService::class);
+        $payMongo->shouldReceive('refund')->once()->andReturn(['id' => 'rfnd_1']);
+
+        // First cancel: refund is processed.
+        $this->withSession($this->portalSession($inquiry))
+            ->post(route('booking.portal.cancel', $inquiry))
+            ->assertRedirect(route('booking.portal.show', $inquiry));
+
+        $inquiry->refresh();
+        $this->assertNotNull($inquiry->refunded_at);
+        $this->assertSame('cancelled', $inquiry->status);
+
+        // Simulate a concurrent second request that raced past canCancel
+        // (status restored, refund already claimed): it must abort the
+        // refund and not call PayMongo a second time.
+        $inquiry->update(['status' => 'confirmed']);
+
+        $this->withSession($this->portalSession($inquiry))
+            ->post(route('booking.portal.cancel', $inquiry))
+            ->assertRedirect(route('booking.portal.show', $inquiry));
+
+        $payMongo->shouldHaveReceived('refund')->once();
     }
 
     private function signatureFor(string $payload): string

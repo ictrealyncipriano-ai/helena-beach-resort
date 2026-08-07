@@ -6,9 +6,9 @@
 
 @section('breadcrumb')
     <nav class="flex items-center gap-1 text-xs text-gray-500 dark:text-slate-400">
-        <a href="{{ route('admin.dashboard') }}" class="hover:text-teal-600 transition-colors dark:hover:text-teal-300">Dashboard</a>
+        <a href="{{ route('admin.dashboard') }}" class="hover:text-teal-700 transition-colors dark:hover:text-teal-300">Dashboard</a>
         <span>/</span>
-        <a href="{{ route('admin.guests.index') }}" class="hover:text-teal-600 transition-colors dark:hover:text-teal-300">Guests</a>
+        <a href="{{ route('admin.guests.index') }}" class="hover:text-teal-700 transition-colors dark:hover:text-teal-300">Guests</a>
         <span>/</span>
         <span class="text-gray-700 font-medium dark:text-slate-200">{{ $guest->name }}</span>
     </nav>
@@ -19,7 +19,7 @@
     <div class="bg-white rounded-xl shadow-sm border border-gray-100 dark:bg-slate-800 dark:border-slate-700">
         <div class="px-5 py-4 border-b border-gray-100 flex items-center justify-between dark:border-slate-700">
             <h2 class="text-sm font-semibold text-gray-900 dark:text-white">Guest Information</h2>
-            <a href="{{ route('admin.guests.edit', $guest) }}" class="px-3 py-1.5 text-xs font-medium text-teal-600 bg-teal-50 rounded-lg hover:bg-teal-100 transition-colors dark:bg-teal-900/30 dark:text-teal-300 dark:hover:bg-teal-900/40">Edit</a>
+            <a href="{{ route('admin.guests.edit', $guest) }}" class="px-3 py-1.5 text-xs font-medium text-teal-700 bg-teal-50 rounded-lg hover:bg-teal-100 transition-colors dark:bg-teal-900/30 dark:text-teal-300 dark:hover:bg-teal-900/40">Edit</a>
         </div>
         <div class="p-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
             <div>
@@ -78,7 +78,7 @@
             <h2 class="text-sm font-semibold text-gray-900 dark:text-white">Booking History</h2>
         </div>
         @if($guest->inquiries->isEmpty())
-            <div class="p-5 text-sm text-gray-400 dark:text-slate-500 text-center">No bookings found for this guest.</div>
+            <div class="p-5 text-sm text-gray-500 dark:text-slate-400 text-center">No bookings found for this guest.</div>
         @else
             <div class="overflow-x-auto">
                 <table class="w-full text-sm">
@@ -108,7 +108,7 @@
                                     @include('admin.components.badge', ['type' => 'danger', 'slot' => 'Refunded'])
                                 @elseif($inquiry->isPaid())
                                     @include('admin.components.badge', ['type' => 'success', 'slot' => 'Paid'])
-                                    <p class="mt-0.5 text-[11px] text-gray-400 dark:text-slate-500">{{ $inquiry->paymentMethodLabel() }}</p>
+                                    <p class="mt-0.5 text-[11px] text-gray-500 dark:text-slate-400">{{ $inquiry->paymentMethodLabel() }}</p>
                                 @elseif($inquiry->hasFailedPayment())
                                     @include('admin.components.badge', ['type' => 'danger', 'slot' => 'Payment Failed'])
                                 @else

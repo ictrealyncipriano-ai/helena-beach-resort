@@ -59,7 +59,7 @@
     <div>
         <div class="flex items-center justify-between mb-3">
             <span class="text-sm font-semibold text-gray-900 dark:text-white">Booking History</span>
-            <span class="text-xs text-gray-400 dark:text-slate-500" x-text="view.inquiries_count + ' total'"></span>
+            <span class="text-xs text-gray-500 dark:text-slate-400" x-text="view.inquiries_count + ' total'"></span>
         </div>
         <template x-if="view.inquiries && view.inquiries.length">
             <div class="overflow-x-auto rounded-lg border border-gray-100 dark:border-slate-700">
@@ -92,7 +92,7 @@
                                 <td class="px-4 py-3">
                                     <span class="inline-flex items-center rounded-md font-medium ring-1 ring-inset px-1.5 py-0.5 text-xs" :class="paymentBadgeClass(inquiry.payment_key)" x-text="inquiry.payment_label"></span>
                                     <template x-if="inquiry.payment_key === 'paid' && inquiry.payment_method">
-                                        <p class="mt-0.5 text-[11px] text-gray-400 dark:text-slate-500" x-text="inquiry.payment_method"></p>
+                                        <p class="mt-0.5 text-[11px] text-gray-500 dark:text-slate-400" x-text="inquiry.payment_method"></p>
                                     </template>
                                 </td>
                                 <td class="px-4 py-3 text-right font-medium dark:text-white" x-text="inquiry.total_amount"></td>
@@ -103,11 +103,11 @@
             </div>
         </template>
         <template x-else>
-            <p class="text-sm text-gray-400 dark:text-slate-500">No bookings found for this guest.</p>
+            <p class="text-sm text-gray-500 dark:text-slate-400">No bookings found for this guest.</p>
         </template>
     </div>
 
     <div class="pt-4 border-t border-gray-100 dark:border-slate-700 flex items-center justify-between">
-        <span class="text-xs text-gray-400 dark:text-slate-500">Guest since <span x-text="view.created"></span></span>
+        <span class="text-xs text-gray-500 dark:text-slate-400">Guest since <span x-text="view.created"></span></span>
     </div>
 </div>

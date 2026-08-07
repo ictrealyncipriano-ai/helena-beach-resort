@@ -36,7 +36,7 @@
 <table role="presentation" cellpadding="0" cellspacing="0" style="margin: 0 auto;">
 <tr>
 <td style="background: #0d9488; border-radius: 8px; text-align: center;">
-<a href="{{ route('booking.portal.show', $inquiry) }}" class="btn" style="display: inline-block; padding: 14px 32px; font-size: 14px; font-weight: 600; color: #ffffff; text-decoration: none; border-radius: 8px;">View Booking</a>
+<a href="{{ route('booking.portal.lookup') }}" class="btn" style="display: inline-block; padding: 14px 32px; font-size: 14px; font-weight: 600; color: #ffffff; text-decoration: none; border-radius: 8px;">View Booking</a>
 </td>
 </tr>
 </table>

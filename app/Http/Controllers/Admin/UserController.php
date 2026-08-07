@@ -39,6 +39,13 @@ class UserController extends Controller
             'role' => 'required|in:super_admin,admin,staff',
         ]);
 
+        // Only an existing super_admin may create another super_admin.
+        if ($data['role'] === 'super_admin' && auth()->user()->role !== User::ROLE_SUPER_ADMIN) {
+            return back()->withInput()->withErrors([
+                'role' => 'Only a super administrator can create a super administrator account.',
+            ]);
+        }
+
         $data['password'] = Hash::make($data['password']);
         User::create($data);
 
@@ -60,6 +67,27 @@ class UserController extends Controller
             'role' => 'required|in:super_admin,admin,staff',
         ]);
 
+        // A user may never change their own role (prevents self-escalation).
+        if ($user->id === auth()->id() && $data['role'] !== $user->role) {
+            return back()->withInput()->withErrors([
+                'role' => 'You cannot change your own role.',
+            ]);
+        }
+
+        // Only a super_admin may assign the super_admin role...
+        if ($data['role'] === User::ROLE_SUPER_ADMIN && auth()->user()->role !== User::ROLE_SUPER_ADMIN) {
+            return back()->withInput()->withErrors([
+                'role' => 'Only a super administrator can assign the super administrator role.',
+            ]);
+        }
+
+        // ...and only a super_admin may modify a super_admin's record.
+        if ($user->role === User::ROLE_SUPER_ADMIN && auth()->user()->role !== User::ROLE_SUPER_ADMIN) {
+            return back()->withInput()->withErrors([
+                'role' => 'Only a super administrator can modify a super administrator account.',
+            ]);
+        }
+
         if (empty($data['password'])) {
             unset($data['password']);
         } else {
@@ -76,6 +104,11 @@ class UserController extends Controller
     {
         if ($user->id === auth()->id()) {
             return back()->with('error', 'You cannot delete your own account.');
+        }
+
+        // Only a super_admin may delete another super_admin's account.
+        if ($user->role === User::ROLE_SUPER_ADMIN && auth()->user()->role !== User::ROLE_SUPER_ADMIN) {
+            return back()->with('error', 'Only a super administrator can delete a super administrator account.');
         }
 
         $user->delete();

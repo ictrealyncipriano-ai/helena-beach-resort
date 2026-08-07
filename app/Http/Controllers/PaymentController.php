@@ -2,12 +2,16 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Concerns\GuardsBookingAccess;
 use App\Mail\PaymentReceived;
 use App\Models\Inquiry;
 use App\Services\PayMongoService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 
@@ -17,12 +21,16 @@ use Illuminate\Support\Facades\Mail;
  */
 class PaymentController extends Controller
 {
+    use GuardsBookingAccess;
+
     /**
      * Create a hosted checkout session for a confirmed, unpaid booking and
      * redirect the guest to PayMongo.
      */
     public function pay(Inquiry $inquiry, PayMongoService $payMongo): RedirectResponse
     {
+        $this->authorizeBookingAccess($inquiry);
+
         if ($inquiry->status !== 'confirmed') {
             return redirect()->route('booking.portal.show', $inquiry)
                 ->with('error', 'This booking is not confirmed yet and cannot be paid.');
@@ -43,6 +51,13 @@ class PaymentController extends Controller
         } catch (\RuntimeException $e) {
             return redirect()->route('booking.portal.show', $inquiry)
                 ->with('error', $e->getMessage());
+        }
+
+        // A malformed 200 can omit checkout_url/session_id; never redirect to
+        // null or persist a null session id.
+        if (empty($session['checkout_url'])) {
+            return redirect()->route('booking.portal.show', $inquiry)
+                ->with('error', 'Unable to create a payment session. Please try again later.');
         }
 
         $inquiry->update(['paymongo_session_id' => $session['session_id']]);
@@ -109,21 +124,28 @@ class PaymentController extends Controller
             'data_has_reference' => isset($event['data']['attributes']['reference_number']),
         ];
 
+        // Security: this endpoint never logs the raw payload (it contains
+        // guest name/email/phone/amount). Only non-sensitive identifiers and
+        // the outcome are written, and each branch logs a single line.
         Log::channel('stderr')->info('PAYMONGO webhook enter', [
-            'received' => $received,
-            'body_has_data_wrapper' => array_key_exists('data', $body),
-            'body_keys' => array_keys($body),
-            'raw_body' => substr($request->getContent(), 0, 4000),
+            'type' => $effectiveType,
+            'shape' => $shape,
+            'reference_number' => $reference,
         ]);
 
         if (! $payMongo->verifyWebhookSignature($request)) {
-            Log::warning('PayMongo webhook rejected: invalid signature');
-            Log::channel('stderr')->info('PAYMONGO branch invalid_signature', ['received' => $received]);
+            Log::warning('PayMongo webhook rejected: invalid signature', [
+                'type' => $effectiveType,
+                'reference_number' => $reference,
+            ]);
 
             return response()->json(['error' => 'Invalid signature', 'received' => $received], 401);
         }
 
-        Log::channel('stderr')->info('PAYMONGO signature ok', ['received' => $received]);
+        Log::channel('stderr')->info('PAYMONGO signature ok', [
+            'type' => $effectiveType,
+            'reference_number' => $reference,
+        ]);
 
         if ($effectiveType === 'payment.failed') {
             $reference = $attributes['external_reference_number'] ?? $attributes['reference_number'] ?? null;
@@ -135,19 +157,25 @@ class PaymentController extends Controller
             Log::warning('PayMongo payment failed', [
                 'inquiry_id' => $inquiry?->id,
                 'reference_number' => $reference,
-                'amount' => $attributes['amount'] ?? null,
-                'source' => $attributes['source']['type'] ?? null,
             ]);
 
             if ($inquiry && ! $inquiry->isPaid() && ! $inquiry->hasFailedPayment()) {
                 $inquiry->update(['payment_failed_at' => now()]);
+
+                // The dashboard's paid/revenue aggregates are unchanged by a
+                // failed payment, but the booking's payment state is part of
+                // the stats block — drop it defensively like the paid branch.
+                Cache::forget(DashboardController::cacheKey());
             }
 
             return response()->json(['ok' => true, 'failed' => true, 'received' => $received]);
         }
 
         if (! in_array($effectiveType, ['event', 'checkout_session', 'checkout_session.payment.paid'], true)) {
-            Log::channel('stderr')->info('PAYMONGO branch ignored', ['received' => $received]);
+            Log::channel('stderr')->info('PAYMONGO branch ignored', [
+                'type' => $effectiveType,
+                'reference_number' => $reference,
+            ]);
 
             return response()->json(['ok' => true, 'ignored' => true, 'received' => $received]);
         }
@@ -155,7 +183,10 @@ class PaymentController extends Controller
         // Only record a payment once the session actually reports one ($paid
         // is computed above).
         if (! $paid) {
-            Log::channel('stderr')->info('PAYMONGO branch not_paid', ['received' => $received]);
+            Log::channel('stderr')->info('PAYMONGO branch not_paid', [
+                'type' => $effectiveType,
+                'reference_number' => $reference,
+            ]);
 
             return response()->json(['ok' => true, 'not_paid' => true, 'received' => $received]);
         }
@@ -166,14 +197,13 @@ class PaymentController extends Controller
             Log::warning('PayMongo webhook: no inquiry found', [
                 'reference_number' => $attributes['reference_number'] ?? null,
             ]);
-            Log::channel('stderr')->info('PAYMONGO branch no_inquiry', ['received' => $received]);
 
             return response()->json(['error' => 'Inquiry not found', 'received' => $received], 404);
         }
 
         // Idempotency: ignore repeats of the same payment.
         if ($inquiry->isPaid()) {
-            Log::channel('stderr')->info('PAYMONGO branch already_paid', ['received' => $received, 'inquiry_id' => $inquiry->id]);
+            Log::channel('stderr')->info('PAYMONGO branch already_paid', ['inquiry_id' => $inquiry->id]);
 
             return response()->json(['ok' => true, 'already_paid' => true, 'received' => $received]);
         }
@@ -181,43 +211,61 @@ class PaymentController extends Controller
         $payment = $attributes['payments'][0]['attributes'] ?? [];
         $method = $payment['source']['type'] ?? null;
 
-        try {
-            $inquiry->update([
-                'paid_at' => now(),
-                'paid_amount' => isset($payment['amount'])
-                    ? $payment['amount'] / 100
-                    : $inquiry->total_amount,
-                'payment_method' => $method,
-                'paymongo_payment_id' => $attributes['payments'][0]['id']
-                    ?? $inquiry->paymongo_payment_id,
-                'paymongo_session_id' => $event['attributes']['data']['id']
-                    ?? $event['id']
-                    ?? $inquiry->paymongo_session_id,
+        // Verify the paid amount/currency actually matches the booking's
+        // payable total before recording anything. A missing, mismatched, or
+        // non-PHP amount means the payment must not be trusted as settled —
+        // we log a warning and do NOT mark the booking paid.
+        $expectedCentavos = (int) round((float) $inquiry->total_amount * 100);
+        $paidCentavos = isset($payment['amount']) ? (int) $payment['amount'] : null;
+        $currency = $payment['currency'] ?? $attributes['currency'] ?? 'PHP';
+
+        if ($paidCentavos === null || $paidCentavos !== $expectedCentavos || $currency !== 'PHP') {
+            Log::warning('PayMongo webhook: amount/currency mismatch; payment NOT recorded', [
+                'inquiry_id' => $inquiry->id,
+                'reference_number' => $inquiry->reference_code,
+                'expected_centavos' => $expectedCentavos,
+                'received_centavos' => $paidCentavos,
+                'currency' => $currency,
             ]);
+
+            return response()->json(['error' => 'Payment amount mismatch', 'received' => $received], 400);
+        }
+
+        try {
+            // The payment write and the receipt dispatch are transactional:
+            // the receipt is only queued (never sent inline) after the write
+            // has committed, so a rolled-back record can never email a guest.
+            DB::transaction(function () use ($inquiry, $method, $attributes, $event) {
+                $inquiry->update([
+                    'paid_at' => now(),
+                    'paid_amount' => $inquiry->total_amount,
+                    'payment_method' => $method,
+                    'paymongo_payment_id' => $attributes['payments'][0]['id']
+                        ?? $inquiry->paymongo_payment_id,
+                    'paymongo_session_id' => $event['attributes']['data']['id']
+                        ?? $event['id']
+                        ?? $inquiry->paymongo_session_id,
+                ]);
+
+                DB::afterCommit(fn () => Mail::to($inquiry->email)->send(new PaymentReceived($inquiry)));
+            });
         } catch (\Throwable $e) {
             Log::error('PayMongo webhook: failed to record payment', [
                 'inquiry_id' => $inquiry->id,
                 'error' => $e->getMessage(),
             ]);
-            Log::channel('stderr')->info('PAYMONGO branch update_failed', [
-                'inquiry_id' => $inquiry->id,
-                'error' => $e->getMessage(),
-                'received' => $received,
-            ]);
 
             return response()->json(['error' => 'Failed to record payment', 'received' => $received], 500);
         }
 
-        try {
-            Mail::to($inquiry->email)->send(new PaymentReceived($inquiry));
-        } catch (\Exception $e) {
-            Log::warning('Failed to send payment receipt', [
-                'inquiry_id' => $inquiry->id,
-                'error' => $e->getMessage(),
-            ]);
-        }
+        // A payment landing changes the dashboard's paid-this-month and
+        // revenue aggregates, so invalidate the cached stats block.
+        Cache::forget(DashboardController::cacheKey());
 
-        Log::channel('stderr')->info('PAYMONGO branch recorded', ['inquiry_id' => $inquiry->id, 'received' => $received]);
+        Log::channel('stderr')->info('PAYMONGO branch recorded', [
+            'inquiry_id' => $inquiry->id,
+            'reference_number' => $inquiry->reference_code,
+        ]);
 
         return response()->json(['ok' => true, 'received' => $received]);
     }

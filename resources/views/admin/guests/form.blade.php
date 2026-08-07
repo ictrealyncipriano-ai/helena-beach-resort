@@ -5,11 +5,11 @@
 
 @section('breadcrumb')
     <nav class="flex items-center gap-1 text-xs text-gray-500 dark:text-slate-400">
-        <a href="{{ route('admin.dashboard') }}" class="hover:text-teal-600 transition-colors dark:hover:text-teal-300">Dashboard</a>
+        <a href="{{ route('admin.dashboard') }}" class="hover:text-teal-700 transition-colors dark:hover:text-teal-300">Dashboard</a>
         <span>/</span>
-        <a href="{{ route('admin.guests.index') }}" class="hover:text-teal-600 transition-colors dark:hover:text-teal-300">Guests</a>
+        <a href="{{ route('admin.guests.index') }}" class="hover:text-teal-700 transition-colors dark:hover:text-teal-300">Guests</a>
         <span>/</span>
-        <a href="{{ route('admin.guests.show', $guest) }}" class="hover:text-teal-600 transition-colors dark:hover:text-teal-300">{{ $guest->name }}</a>
+        <a href="{{ route('admin.guests.show', $guest) }}" class="hover:text-teal-700 transition-colors dark:hover:text-teal-300">{{ $guest->name }}</a>
         <span>/</span>
         <span class="text-gray-700 font-medium dark:text-slate-200">Edit</span>
     </nav>
@@ -25,26 +25,26 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1 dark:text-slate-300">Name <span class="text-red-500">*</span></label>
-                    <input type="text" name="name" value="{{ old('name', $guest->name) }}" required maxlength="255" class="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-300 focus:border-teal-400 dark:bg-slate-800 dark:border-slate-600 dark:text-white dark:placeholder-slate-400 dark:focus:border-teal-500 dark:focus:ring-teal-500/20">
+                    <input type="text" name="name" value="{{ old('name', $guest->name) }}" required maxlength="255" class="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-600 focus:border-teal-400 dark:bg-slate-800 dark:border-slate-600 dark:text-white dark:placeholder-slate-400 dark:focus:border-teal-500 dark:focus:ring-teal-500/20">
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1 dark:text-slate-300">Email <span class="text-red-500">*</span></label>
-                    <input type="email" name="email" value="{{ old('email', $guest->email) }}" required maxlength="255" class="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-300 focus:border-teal-400 dark:bg-slate-800 dark:border-slate-600 dark:text-white dark:placeholder-slate-400 dark:focus:border-teal-500 dark:focus:ring-teal-500/20">
+                    <input type="email" name="email" value="{{ old('email', $guest->email) }}" required maxlength="255" class="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-600 focus:border-teal-400 dark:bg-slate-800 dark:border-slate-600 dark:text-white dark:placeholder-slate-400 dark:focus:border-teal-500 dark:focus:ring-teal-500/20">
                 </div>
             </div>
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1 dark:text-slate-300">Phone</label>
-                <input type="text" name="phone" value="{{ old('phone', $guest->phone) }}" maxlength="20" class="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-300 focus:border-teal-400 dark:bg-slate-800 dark:border-slate-600 dark:text-white dark:placeholder-slate-400 dark:focus:border-teal-500 dark:focus:ring-teal-500/20">
+                <input type="text" name="phone" value="{{ old('phone', $guest->phone) }}" maxlength="20" class="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-600 focus:border-teal-400 dark:bg-slate-800 dark:border-slate-600 dark:text-white dark:placeholder-slate-400 dark:focus:border-teal-500 dark:focus:ring-teal-500/20">
             </div>
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1 dark:text-slate-300">Notes</label>
-                <textarea name="notes" rows="4" class="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-300 focus:border-teal-400 dark:bg-slate-800 dark:border-slate-600 dark:text-white dark:placeholder-slate-400 dark:focus:border-teal-500 dark:focus:ring-teal-500/20">{{ old('notes', $guest->notes) }}</textarea>
+                <textarea name="notes" rows="4" class="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-600 focus:border-teal-400 dark:bg-slate-800 dark:border-slate-600 dark:text-white dark:placeholder-slate-400 dark:focus:border-teal-500 dark:focus:ring-teal-500/20">{{ old('notes', $guest->notes) }}</textarea>
             </div>
         </div>
 
         <div class="flex items-center justify-end gap-3">
             <a href="{{ route('admin.guests.show', $guest) }}" class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors dark:bg-slate-800 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-700">Cancel</a>
-            <button type="submit" class="px-6 py-2 text-sm font-medium text-white bg-teal-600 rounded-lg hover:bg-teal-700 transition-colors shadow-sm">Update Guest</button>
+            <button type="submit" class="px-6 py-2 text-sm font-medium text-white bg-teal-700 rounded-lg hover:bg-teal-700 transition-colors shadow-sm">Update Guest</button>
         </div>
     </form>
 </div>

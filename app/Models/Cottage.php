@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Support\HtmlSanitizer;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
@@ -17,6 +19,19 @@ class Cottage extends Model
     protected function casts(): array
     {
         return ['is_available' => 'boolean'];
+    }
+
+    /**
+     * Descriptions are rendered with {!! !!} on the public cottage page, so
+     * they are sanitized through an allow-list on every write. This keeps
+     * admin-entered rich text (<p>, <strong>, …) but strips any script,
+     * event-handler attribute, or javascript: URL before it can be persisted.
+     */
+    protected function description(): Attribute
+    {
+        return Attribute::make(
+            set: fn (?string $value) => app(HtmlSanitizer::class)->sanitize($value),
+        );
     }
 
     /**
@@ -50,15 +65,5 @@ class Cottage extends Model
     public function dateBlocks(): HasMany
     {
         return $this->hasMany(CottageDateBlock::class);
-    }
-
-    public function isAvailableOn(string $date): bool
-    {
-        return !$this->dateBlocks()->where('date', $date)->exists();
-    }
-
-    public function scopeAvailableOn($q, string $date)
-    {
-        $q->whereDoesntHave('dateBlocks', fn ($q) => $q->where('date', $date));
     }
 }

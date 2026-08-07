@@ -13,7 +13,7 @@ class SyncGalleries extends Command
 
     public function handle(): int
     {
-        $disk = Storage::disk(env('FILESYSTEM_DISK', 'public'));
+        $disk = Storage::disk(config('filesystems.default', 'public'));
         $fixed = 0;
         $skipped = 0;
 

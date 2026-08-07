@@ -69,13 +69,18 @@ class CottageController extends Controller
     {
         $data = $request->validate([
             'name' => 'required|max:255',
-            'slug' => 'required|max:255|unique:cottages,slug',
+            'slug' => 'nullable|max:255|unique:cottages,slug',
             'description' => 'nullable',
             'capacity' => 'nullable|integer|min:0',
             'rate_daytour' => 'nullable|numeric|min:0',
             'rate_overnight' => 'nullable|numeric|min:0',
             'is_available' => 'boolean',
             'sort_order' => 'nullable|integer|min:0',
+            // Uploads are validated as real images (magic-bytes checked) and
+            // capped at 5 MB; stored files get a random name + content-derived
+            // extension so a malicious filename can never reach the disk.
+            'photos' => 'nullable|array',
+            'photos.*' => 'image|mimes:jpeg,png,jpg,webp|max:5120',
         ]);
 
         $data['is_available'] = $request->boolean('is_available');
@@ -124,16 +129,22 @@ class CottageController extends Controller
     {
         $data = $request->validate([
             'name' => 'required|max:255',
-            'slug' => 'required|max:255|unique:cottages,slug,' . $cottage->id,
+            'slug' => 'nullable|max:255|unique:cottages,slug,' . $cottage->id,
             'description' => 'nullable',
             'capacity' => 'nullable|integer|min:0',
             'rate_daytour' => 'nullable|numeric|min:0',
             'rate_overnight' => 'nullable|numeric|min:0',
             'is_available' => 'boolean',
             'sort_order' => 'nullable|integer|min:0',
+            // Same upload rules as store(); delete_photos is a comma-separated
+            // string of integer ids (see admin cottage form).
+            'photos' => 'nullable|array',
+            'photos.*' => 'image|mimes:jpeg,png,jpg,webp|max:5120',
+            'delete_photos' => 'nullable|string|regex:/^[0-9,]*$/',
         ]);
 
         $data['is_available'] = $request->boolean('is_available');
+        $data['slug'] = $data['slug'] ?: $cottage->slug;
         $cottage->update($data);
 
         $cottage->amenities()->delete();
@@ -145,12 +156,30 @@ class CottageController extends Controller
             }
         }
 
-        $cottage->dateBlocks()->delete();
+        // Delete only non-inquiry date blocks. Blocks whose reason contains
+        // "HB-" are held by live inquiries (Pending:/Booked:) and must never
+        // be wiped by a cottage edit — otherwise a confirmed guest's dates
+        // could be silently freed.
+        $cottage->dateBlocks()
+            ->where(fn ($q) => $q->whereNull('reason')->orWhere('reason', 'not like', '%HB-%'))
+            ->delete();
+
         if ($request->has('date_blocks')) {
             foreach ($request->input('date_blocks', []) as $block) {
-                if (!empty($block['date'])) {
-                    $cottage->dateBlocks()->create($block);
+                if (empty($block['date'])) {
+                    continue;
                 }
+
+                // Defense in depth: never touch a block that an inquiry holds.
+                $existing = $cottage->dateBlocks()->where('date', $block['date'])->first();
+                if ($existing && str_contains((string) $existing->reason, 'HB-')) {
+                    continue;
+                }
+
+                $cottage->dateBlocks()->updateOrCreate(
+                    ['date' => $block['date']],
+                    ['reason' => $block['reason'] ?? null]
+                );
             }
         }
 
@@ -165,12 +194,17 @@ class CottageController extends Controller
             }
         }
 
-        if ($request->input('delete_photos')) {
-            $ids = explode(',', $request->input('delete_photos'));
-            $photos = CottagePhoto::whereIn('id', $ids)->get();
-            foreach ($photos as $p) {
-                Storage::disk('cloudflare')->delete($p->photo_path);
-                $p->delete();
+        if ($request->filled('delete_photos')) {
+            // Only integer ids, and only photos belonging to THIS cottage, so
+            // a crafted id list can never delete another cottage's images.
+            $ids = array_values(array_filter(array_map('intval', explode(',', $request->input('delete_photos')))));
+
+            if ($ids !== []) {
+                $photos = CottagePhoto::where('cottage_id', $cottage->id)->whereIn('id', $ids)->get();
+                foreach ($photos as $p) {
+                    Storage::disk('cloudflare')->delete($p->photo_path);
+                    $p->delete();
+                }
             }
         }
 

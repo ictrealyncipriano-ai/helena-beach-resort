@@ -18,7 +18,24 @@ use Illuminate\Support\Facades\Route;
 |--------------------------------------------------------------------------
 */
 Route::get('/health', [PageController::class, 'health'])->name('health');
-Route::get('/test-mail', [PageController::class, 'testMail']);
+
+/*
+|--------------------------------------------------------------------------
+| robots.txt (served dynamically so the Sitemap host can never drift from
+| config('app.url')). A static public/robots.txt also exists as a fallback
+| for hosts that serve static files before reaching Laravel.
+|--------------------------------------------------------------------------
+*/
+Route::get('/robots.txt', function () {
+    $base = rtrim(config('app.url'), '/');
+    $content = "User-agent: *\n"
+        . "Allow: /\n"
+        . "Disallow: /admin\n"
+        . "\n"
+        . "Sitemap: {$base}/sitemap.xml\n";
+
+    return response($content, 200)->header('Content-Type', 'text/plain');
+});
 
 /*
 |--------------------------------------------------------------------------
@@ -74,8 +91,11 @@ Route::get('/booking/confirmation/{inquiry}', [InquiryController::class, 'show']
 |--------------------------------------------------------------------------
 */
 Route::get('/booking/lookup', [BookingPortalController::class, 'lookupForm'])->name('booking.portal.lookup');
-Route::post('/booking/lookup', [BookingPortalController::class, 'lookup'])->name('booking.portal.lookup.post');
+Route::post('/booking/lookup', [BookingPortalController::class, 'lookup'])
+    ->middleware('throttle:5,1')
+    ->name('booking.portal.lookup.post');
 Route::get('/booking/{inquiry}', [BookingPortalController::class, 'show'])->name('booking.portal.show');
+Route::get('/booking/{inquiry}/status', [BookingPortalController::class, 'status'])->name('booking.portal.status');
 Route::post('/booking/{inquiry}/cancel', [BookingPortalController::class, 'cancel'])
     ->middleware('throttle:3,1')
     ->name('booking.portal.cancel');
@@ -93,7 +113,9 @@ Route::get('/booking/{inquiry}/invoice/pdf', [InvoiceController::class, 'downloa
 | Payments (PayMongo hosted checkout)
 |--------------------------------------------------------------------------
 */
-Route::get('/booking/{inquiry}/pay', [PaymentController::class, 'pay'])
+// POST only: creating a checkout session is a side-effecting action and must
+// not be triggered by a plain GET. Ownership is enforced in the controller.
+Route::post('/booking/{inquiry}/pay', [PaymentController::class, 'pay'])
     ->middleware('throttle:5,1')
     ->name('payment.pay');
 Route::post('/paymongo/webhook', [PaymentController::class, 'webhook'])
@@ -105,8 +127,12 @@ Route::post('/paymongo/webhook', [PaymentController::class, 'webhook'])
 | Cron Endpoints (triggered by Vercel Cron)
 |--------------------------------------------------------------------------
 */
-Route::get('/cron/reservations', [CronController::class, 'releaseExpiredReservations']);
-Route::post('/cron/migrate', [CronController::class, 'migrate'])
+// Vercel Cron fires GET requests; the bearer CRON_SECRET (hash_equals, fail-closed)
+// is the only auth, so a GET that mutates state is safe here. POST is kept so the
+// endpoints can still be triggered manually with curl.
+Route::match(['get', 'post'], '/cron/reservations', [CronController::class, 'releaseExpiredReservations'])
+    ->withoutMiddleware(VerifyCsrfToken::class);
+Route::match(['get', 'post'], '/cron/migrate', [CronController::class, 'migrate'])
     ->withoutMiddleware(VerifyCsrfToken::class);
 
 /*

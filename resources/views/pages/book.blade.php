@@ -2,12 +2,20 @@
 
 @section('title', 'Book Your Stay')
 @section('description', 'Book your stay at Helena Beach Resort in Infanta, Quezon.')
+@section('canonical', route('book'))
 
 @section('content')
 <section class="pt-32 pb-16 bg-gradient-to-br from-teal-600 to-teal-800">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
         <h1 class="text-4xl sm:text-5xl font-bold text-white mb-4">Book Your Stay</h1>
-        <p class="text-teal-100 text-lg max-w-2xl mx-auto">Select your cottage, choose your dates, and send us your booking request.</p>
+        <p class="text-teal-100 text-lg max-w-2xl mx-auto mb-6">Select your cottage, choose your dates, and send us your booking request.</p>
+        <div class="inline-flex items-center gap-2 sm:gap-3 text-sm text-teal-100 bg-teal-800/50 backdrop-blur-sm rounded-full px-5 py-2.5 font-medium">
+            <span>1 <span class="font-semibold text-white">Request</span></span>
+            <x-icons name="chevron-right" class="w-3.5 h-3.5 opacity-60" />
+            <span>2 <span class="font-semibold text-white">We confirm</span></span>
+            <x-icons name="chevron-right" class="w-3.5 h-3.5 opacity-60" />
+            <span>3 <span class="font-semibold text-white">You pay</span></span>
+        </div>
     </div>
 </section>
 
@@ -16,39 +24,44 @@
         <div x-data="bookingForm()" x-init="initFlatpickr()" class="grid grid-cols-1 lg:grid-cols-5 gap-12">
             {{-- Form --}}
             <div class="lg:col-span-3">
-                <form method="POST" action="{{ route('book.store') }}" class="space-y-6">
+                <form method="POST" action="{{ route('book.store') }}" class="space-y-6" x-on:submit="submitting = true">
                     @csrf
 
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
                         <div>
-                            <label for="name" class="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">Name <span class="text-red-500">*</span></label>
-                            <input type="text" id="name" name="name" value="{{ old('name') }}" required
-                                class="w-full px-4 py-2.5 border border-gray-300 dark:bg-slate-800 dark:border-slate-600 dark:text-white dark:placeholder-slate-400 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 dark:focus:border-teal-500 dark:ring-teal-500/20 outline-none transition-colors text-sm @error('name') border-red-400 @enderror">
-                            @error('name') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
+                            <label for="name" class="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">Name <span class="text-red-600">*</span></label>
+                            <input type="text" id="name" name="name" value="{{ old('name') }}" required autocomplete="name"
+                                aria-invalid="{{ $errors->has('name') ? 'true' : 'false' }}"
+                                @error('name') aria-describedby="name-error" @enderror
+                                class="w-full px-4 py-2.5 border border-gray-300 dark:bg-slate-800 dark:border-slate-600 dark:text-white dark:placeholder-slate-400 rounded-lg focus:ring-2 focus:ring-teal-700 focus:border-teal-700 dark:focus:border-teal-700 dark:ring-teal-700/20 outline-none transition-colors text-sm @error('name') border-red-400 @enderror">
+                            @error('name') <p id="name-error" class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                         </div>
                         <div>
-                            <label for="email" class="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">Email <span class="text-red-500">*</span></label>
-                            <input type="email" id="email" name="email" value="{{ old('email') }}" required
-                                class="w-full px-4 py-2.5 border border-gray-300 dark:bg-slate-800 dark:border-slate-600 dark:text-white dark:placeholder-slate-400 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 dark:focus:border-teal-500 dark:ring-teal-500/20 outline-none transition-colors text-sm @error('email') border-red-400 @enderror">
-                            @error('email') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
+                            <label for="email" class="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">Email <span class="text-red-600">*</span></label>
+                            <input type="email" id="email" name="email" value="{{ old('email') }}" required autocomplete="email"
+                                aria-invalid="{{ $errors->has('email') ? 'true' : 'false' }}"
+                                @error('email') aria-describedby="email-error" @enderror
+                                class="w-full px-4 py-2.5 border border-gray-300 dark:bg-slate-800 dark:border-slate-600 dark:text-white dark:placeholder-slate-400 rounded-lg focus:ring-2 focus:ring-teal-700 focus:border-teal-700 dark:focus:border-teal-700 dark:ring-teal-700/20 outline-none transition-colors text-sm @error('email') border-red-400 @enderror">
+                            @error('email') <p id="email-error" class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                         </div>
                     </div>
 
                     <div>
                         <label for="phone" class="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">Phone</label>
-                        <input type="tel" id="phone" name="phone" value="{{ old('phone') }}"
-                            class="w-full px-4 py-2.5 border border-gray-300 dark:bg-slate-800 dark:border-slate-600 dark:text-white dark:placeholder-slate-400 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 dark:focus:border-teal-500 dark:ring-teal-500/20 outline-none transition-colors text-sm">
+                        <input type="tel" id="phone" name="phone" value="{{ old('phone') }}" autocomplete="tel"
+                            class="w-full px-4 py-2.5 border border-gray-300 dark:bg-slate-800 dark:border-slate-600 dark:text-white dark:placeholder-slate-400 rounded-lg focus:ring-2 focus:ring-teal-700 focus:border-teal-700 dark:focus:border-teal-700 dark:ring-teal-700/20 outline-none transition-colors text-sm">
                     </div>
 
                     {{-- Booking Type --}}
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-3">Type of Booking <span class="text-red-500">*</span></label>
+                    <fieldset>
+                        <legend class="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-3">Type of Booking <span class="text-red-600">*</span></legend>
                         <div class="flex gap-4">
                             <label class="flex-1 cursor-pointer">
                                 <input type="radio" name="booking_type" value="day_tour"
-                                    x-model="bookingType"
+                                    x-model="bookingType" required
+                                    aria-required="true"
                                     class="sr-only peer">
-                                <div class="text-center px-4 py-3 border-2 border-gray-200 dark:border-slate-700 rounded-xl peer-checked:border-teal-500 peer-checked:bg-teal-50 dark:peer-checked:bg-teal-900/30 peer-checked:text-teal-700 dark:peer-checked:text-teal-300 transition-colors">
+                                <div class="text-center px-4 py-3 border-2 border-gray-200 dark:border-slate-700 rounded-xl peer-checked:border-teal-700 peer-checked:bg-teal-50 dark:peer-checked:bg-teal-900/30 peer-checked:text-teal-700 dark:peer-checked:text-teal-300 transition-colors">
                                     <div class="text-2xl mb-1">☀️</div>
                                     <div class="font-medium text-sm">Day Tour</div>
                                     <div class="text-xs text-gray-500 dark:text-slate-400">8 AM - 6 PM</div>
@@ -56,23 +69,26 @@
                             </label>
                             <label class="flex-1 cursor-pointer">
                                 <input type="radio" name="booking_type" value="overnight"
-                                    x-model="bookingType"
+                                    x-model="bookingType" required
+                                    aria-required="true"
                                     class="sr-only peer">
-                                <div class="text-center px-4 py-3 border-2 border-gray-200 dark:border-slate-700 rounded-xl peer-checked:border-teal-500 peer-checked:bg-teal-50 dark:peer-checked:bg-teal-900/30 peer-checked:text-teal-700 dark:peer-checked:text-teal-300 transition-colors">
+                                <div class="text-center px-4 py-3 border-2 border-gray-200 dark:border-slate-700 rounded-xl peer-checked:border-teal-700 peer-checked:bg-teal-50 dark:peer-checked:bg-teal-900/30 peer-checked:text-teal-700 dark:peer-checked:text-teal-300 transition-colors">
                                     <div class="text-2xl mb-1">🌙</div>
                                     <div class="font-medium text-sm">Overnight</div>
                                     <div class="text-xs text-gray-500 dark:text-slate-400">Check-in after 2 PM</div>
                                 </div>
                             </label>
                         </div>
-                        @error('booking_type') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
-                    </div>
+                        @error('booking_type') <p id="booking-type-error" class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                    </fieldset>
 
                     {{-- Cottage --}}
                     <div>
-                        <label for="cottage_id" class="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">Select Cottage <span class="text-red-500">*</span></label>
+                        <label for="cottage_id" class="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">Select Cottage <span class="text-red-600">*</span></label>
                         <select id="cottage_id" name="cottage_id" x-model="cottageId" required
-                            class="w-full px-4 py-2.5 border border-gray-300 dark:bg-slate-800 dark:border-slate-600 dark:text-white dark:placeholder-slate-400 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 dark:focus:border-teal-500 dark:ring-teal-500/20 outline-none transition-colors text-sm @error('cottage_id') border-red-400 @enderror">
+                            aria-invalid="{{ $errors->has('cottage_id') ? 'true' : 'false' }}"
+                            @error('cottage_id') aria-describedby="cottage-id-error" @enderror
+                            class="w-full px-4 py-2.5 border border-gray-300 dark:bg-slate-800 dark:border-slate-600 dark:text-white dark:placeholder-slate-400 rounded-lg focus:ring-2 focus:ring-teal-700 focus:border-teal-700 dark:focus:border-teal-700 dark:ring-teal-700/20 outline-none transition-colors text-sm @error('cottage_id') border-red-400 @enderror">
                             <option value="">Choose a cottage</option>
                             @foreach($cottages as $cottage)
                             <option value="{{ $cottage->id }}" {{ old('cottage_id') == $cottage->id ? 'selected' : '' }}>
@@ -80,44 +96,53 @@
                             </option>
                             @endforeach
                         </select>
-                        @error('cottage_id') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
+                        @error('cottage_id') <p id="cottage-id-error" class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                     </div>
 
                     {{-- Dates --}}
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
                         <div>
-                            <label for="check_in" class="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">Check-in <span class="text-red-500">*</span></label>
+                            <label for="check_in" class="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">Check-in <span class="text-red-600">*</span></label>
                             <input type="text" id="check_in" name="check_in" x-ref="checkIn" x-model="checkIn" readonly
-                                class="w-full px-4 py-2.5 border border-gray-300 dark:bg-slate-800 dark:border-slate-600 dark:text-white dark:placeholder-slate-400 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 dark:focus:border-teal-500 dark:ring-teal-500/20 outline-none transition-colors text-sm @error('check_in') border-red-400 @enderror"
+                                aria-invalid="{{ $errors->has('check_in') ? 'true' : 'false' }}"
+                                @error('check_in') aria-describedby="check-in-error" @enderror
+                                class="w-full px-4 py-2.5 border border-gray-300 dark:bg-slate-800 dark:border-slate-600 dark:text-white dark:placeholder-slate-400 rounded-lg focus:ring-2 focus:ring-teal-700 focus:border-teal-700 dark:focus:border-teal-700 dark:ring-teal-700/20 outline-none transition-colors text-sm @error('check_in') border-red-400 @enderror"
                                 placeholder="Select date">
-                            @error('check_in') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
+                            @error('check_in') <p id="check-in-error" class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                         </div>
                         <div x-show="bookingType === 'overnight'">
-                            <label for="check_out" class="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">Check-out <span class="text-red-500">*</span></label>
+                            <label for="check_out" class="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">Check-out <span class="text-red-600">*</span></label>
                             <input type="text" id="check_out" name="check_out" x-ref="checkOut" x-model="checkOut" readonly
-                                class="w-full px-4 py-2.5 border border-gray-300 dark:bg-slate-800 dark:border-slate-600 dark:text-white dark:placeholder-slate-400 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 dark:focus:border-teal-500 dark:ring-teal-500/20 outline-none transition-colors text-sm @error('check_out') border-red-400 @enderror"
+                                aria-invalid="{{ $errors->has('check_out') ? 'true' : 'false' }}"
+                                @error('check_out') aria-describedby="check-out-error" @enderror
+                                class="w-full px-4 py-2.5 border border-gray-300 dark:bg-slate-800 dark:border-slate-600 dark:text-white dark:placeholder-slate-400 rounded-lg focus:ring-2 focus:ring-teal-700 focus:border-teal-700 dark:focus:border-teal-700 dark:ring-teal-700/20 outline-none transition-colors text-sm @error('check_out') border-red-400 @enderror"
                                 placeholder="Select date">
-                            @error('check_out') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
+                            @error('check_out') <p id="check-out-error" class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                         </div>
                     </div>
 
                     {{-- Pax --}}
                     <div>
-                        <label for="pax" class="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">Number of Guests <span class="text-red-500">*</span></label>
+                        <label for="pax" class="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">Number of Guests <span class="text-red-600">*</span></label>
                         <input type="number" id="pax" name="pax" x-model.number="pax" min="1" max="50" value="{{ old('pax', 1) }}" required
-                            class="w-full px-4 py-2.5 border border-gray-300 dark:bg-slate-800 dark:border-slate-600 dark:text-white dark:placeholder-slate-400 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 dark:focus:border-teal-500 dark:ring-teal-500/20 outline-none transition-colors text-sm @error('pax') border-red-400 @enderror">
-                        @error('pax') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
+                            aria-invalid="{{ $errors->has('pax') ? 'true' : 'false' }}"
+                            @error('pax') aria-describedby="pax-error" @enderror
+                            class="w-full px-4 py-2.5 border border-gray-300 dark:bg-slate-800 dark:border-slate-600 dark:text-white dark:placeholder-slate-400 rounded-lg focus:ring-2 focus:ring-teal-700 focus:border-teal-700 dark:focus:border-teal-700 dark:ring-teal-700/20 outline-none transition-colors text-sm @error('pax') border-red-400 @enderror">
+                        @error('pax') <p id="pax-error" class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                     </div>
 
                     {{-- Message --}}
                     <div>
                         <label for="message" class="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">Special Requests</label>
                         <textarea id="message" name="message" rows="4"
-                            class="w-full px-4 py-2.5 border border-gray-300 dark:bg-slate-800 dark:border-slate-600 dark:text-white dark:placeholder-slate-400 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 dark:focus:border-teal-500 dark:ring-teal-500/20 outline-none transition-colors text-sm">{{ old('message') }}</textarea>
+                            class="w-full px-4 py-2.5 border border-gray-300 dark:bg-slate-800 dark:border-slate-600 dark:text-white dark:placeholder-slate-400 rounded-lg focus:ring-2 focus:ring-teal-700 focus:border-teal-700 dark:focus:border-teal-700 dark:ring-teal-700/20 outline-none transition-colors text-sm">{{ old('message') }}</textarea>
                     </div>
 
-                    <button type="submit" class="w-full sm:w-auto px-8 py-3 bg-teal-600 text-white font-medium rounded-full hover:bg-teal-700 transition-colors">
-                        Submit Booking Request
+                    <button type="submit" :disabled="submitting"
+                        :class="submitting ? 'opacity-60 cursor-not-allowed' : 'hover:bg-teal-700 transition-colors'"
+                        class="w-full sm:w-auto px-8 py-3 bg-teal-700 text-white font-medium rounded-full inline-flex items-center justify-center gap-2">
+                        <span x-show="submitting" class="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" x-cloak></span>
+                        <span x-text="submitting ? 'Submitting…' : 'Submit Booking Request'"></span>
                     </button>
                 </form>
             </div>
@@ -129,7 +154,7 @@
                         <h3 class="font-semibold text-gray-900 dark:text-white text-lg">Booking Summary</h3>
 
                         <template x-if="!cottageId">
-                            <p class="text-sm text-gray-400 dark:text-slate-500">Select a cottage to see the summary.</p>
+                            <p class="text-sm text-gray-500 dark:text-slate-400">Select a cottage to see the summary.</p>
                         </template>
 
                         <template x-if="cottageId">
@@ -171,7 +196,7 @@
 
                                 <div class="flex items-center justify-between pt-1">
                                     <span class="text-base font-semibold text-gray-900 dark:text-white">Total</span>
-                                    <span class="text-xl font-bold text-teal-600 dark:text-teal-300" x-text="totalDisplay"></span>
+                                    <span class="text-xl font-bold text-teal-700 dark:text-teal-300" x-text="totalDisplay"></span>
                                 </div>
                             </div>
                         </template>
@@ -183,6 +208,7 @@
 </section>
 
 @push('scripts')
+@vite('resources/js/flatpickr.js')
 <script>
 function bookingForm() {
     const blockedData = @js($blockedByCottage);
@@ -190,12 +216,13 @@ function bookingForm() {
 
     return {
         bookingType: 'day_tour',
-        cottageId: '{{ old('cottage_id', request('cottage_id')) }}',
+        cottageId: '{{ old('cottage_id', $prefillCottageId ?? '') }}',
         checkIn: '{{ old('check_in') }}',
         checkOut: '{{ old('check_out') }}',
-        pax: {{ old('pax', 1) }},
+        pax: @js((int) old('pax', 1)),
         fpIn: null,
         fpOut: null,
+        submitting: false,
 
         get selectedCottageName() {
             return this.cottageId && rateData[this.cottageId] ? rateData[this.cottageId].name : '';
@@ -221,44 +248,73 @@ function bookingForm() {
             if (this.bookingType === 'day_tour') {
                 return '₱' + Number(r.day_tour).toLocaleString();
             }
-            if (this.nights > 0) {
-                return '₱' + (Number(r.overnight) * this.nights).toLocaleString();
-            }
-            return '—';
+            // Overnight always shows at least the 1-night minimum so the
+            // summary never shows a bare "—" (same-day stays are rejected
+            // server-side anyway).
+            const nights = Math.max(this.nights, 1);
+            return '₱' + (Number(r.overnight) * nights).toLocaleString();
         },
 
         get blockedDates() {
             return this.cottageId && blockedData[this.cottageId] ? blockedData[this.cottageId] : [];
         },
 
+        addDays(dateStr, days) {
+            const d = new Date(dateStr + 'T00:00:00');
+            d.setDate(d.getDate() + days);
+            const y = d.getFullYear();
+            const m = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            return `${y}-${m}-${day}`;
+        },
+
         initFlatpickr() {
-            this.$nextTick(() => {
-                const self = this;
+            const self = this;
 
-                this.fpIn = flatpickr(this.$refs.checkIn, {
-                    dateFormat: 'Y-m-d',
-                    minDate: 'today',
-                    disable: this.blockedDates,
-                    onChange: function(selectedDates, dateStr) {
-                        self.checkIn = dateStr;
-                        if (self.fpOut) {
-                            self.fpOut.set('minDate', dateStr);
-                        }
-                    },
+            // flatpickr.js is a deferred ES module at the end of <body>, so it
+            // runs AFTER app.js has already called Alpine.start() (which fires
+            // x-init synchronously). window.flatpickr may not exist yet, so
+            // poll until the module registers it before binding the pickers.
+            const boot = () => {
+                this.$nextTick(() => {
+                    this.fpIn = flatpickr(this.$refs.checkIn, {
+                        dateFormat: 'Y-m-d',
+                        minDate: 'today',
+                        disable: this.blockedDates,
+                        onChange: function(selectedDates, dateStr) {
+                            self.checkIn = dateStr;
+                            if (self.fpOut) {
+                                // Same-day checkout is not allowed: the earliest
+                                // check-out is the day after check-in.
+                                self.fpOut.set('minDate', self.addDays(dateStr, 1));
+                            }
+                        },
+                    });
+
+                    this.fpOut = flatpickr(this.$refs.checkOut, {
+                        dateFormat: 'Y-m-d',
+                        minDate: 'today',
+                        disable: this.blockedDates,
+                        onChange: function(selectedDates, dateStr) {
+                            self.checkOut = dateStr;
+                        },
+                    });
+
+                    if (this.checkIn) this.fpIn.setDate(this.checkIn);
+                    if (this.checkOut) this.fpOut.setDate(this.checkOut);
                 });
+            };
 
-                this.fpOut = flatpickr(this.$refs.checkOut, {
-                    dateFormat: 'Y-m-d',
-                    minDate: 'today',
-                    disable: this.blockedDates,
-                    onChange: function(selectedDates, dateStr) {
-                        self.checkOut = dateStr;
-                    },
-                });
-
-                if (this.checkIn) this.fpIn.setDate(this.checkIn);
-                if (this.checkOut) this.fpOut.setDate(this.checkOut);
-            });
+            if (typeof window.flatpickr === 'function') {
+                boot();
+            } else {
+                const timer = window.setInterval(() => {
+                    if (typeof window.flatpickr === 'function') {
+                        window.clearInterval(timer);
+                        boot();
+                    }
+                }, 50);
+            }
         },
 
         init() {
@@ -270,6 +326,7 @@ function bookingForm() {
                 }
                 if (this.fpOut) {
                     this.fpOut.set('disable', this.blockedDates);
+                    this.fpOut.set('minDate', 'today');
                     this.fpOut.clear();
                     this.checkOut = '';
                 }
@@ -277,7 +334,10 @@ function bookingForm() {
 
             this.$watch('bookingType', () => {
                 if (this.fpIn) this.fpIn.clear();
-                if (this.fpOut) this.fpOut.clear();
+                if (this.fpOut) {
+                    this.fpOut.set('minDate', 'today');
+                    this.fpOut.clear();
+                }
                 this.checkIn = '';
                 this.checkOut = '';
             });

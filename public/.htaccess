@@ -23,3 +23,51 @@
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteRule ^ index.php [L]
 </IfModule>
+
+# ----------------------------------------------------------------------
+# HTTP caching headers (Phase 3 performance).
+# Vite emits hashed assets into /build/assets/* and uploaded photos live
+# under /storage/* — both are immutable once deployed, so they can be
+# cached aggressively. HTML (served via index.php) must stay revalidated.
+# Render's Apache image honours these rules too.
+# ----------------------------------------------------------------------
+
+<IfModule mod_expires.c>
+    ExpiresActive On
+
+    # Vite build output: CSS/JS are content-hashed, cache "forever".
+    ExpiresByType text/css "access plus 1 year"
+    ExpiresByType application/javascript "access plus 1 year"
+    ExpiresByType text/javascript "access plus 1 year"
+
+    # Images (including /storage/* photos) and web fonts.
+    ExpiresByType image/jpeg "access plus 1 year"
+    ExpiresByType image/png "access plus 1 year"
+    ExpiresByType image/webp "access plus 1 year"
+    ExpiresByType image/avif "access plus 1 year"
+    ExpiresByType image/gif "access plus 1 year"
+    ExpiresByType image/svg+xml "access plus 1 year"
+    ExpiresByType image/x-icon "access plus 1 year"
+    ExpiresByType font/woff2 "access plus 1 year"
+    ExpiresByType font/woff "access plus 1 year"
+
+    # Everything else (HTML etc.) revalidates on every request.
+    ExpiresDefault "access plus 0 seconds"
+</IfModule>
+
+<IfModule mod_headers.c>
+    # Hashed, immutable build assets (Vite outputs to /build/assets/).
+    <FilesMatch "\.(css|js)$">
+        Header set Cache-Control "public, max-age=31536000, immutable"
+    </FilesMatch>
+
+    # Uploaded photos and other static media (/storage/*).
+    <FilesMatch "\.(jpg|jpeg|png|webp|avif|gif|svg|ico|woff2?)$">
+        Header set Cache-Control "public, max-age=31536000, immutable"
+    </FilesMatch>
+
+    # HTML served through the front controller must never be cached hard.
+    <FilesMatch "^$|index\.php$">
+        Header set Cache-Control "no-cache, private, must-revalidate"
+    </FilesMatch>
+</IfModule>

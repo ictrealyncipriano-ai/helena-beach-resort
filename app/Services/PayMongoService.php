@@ -51,8 +51,8 @@ class PayMongoService
                             'email' => $inquiry->email,
                             'phone' => $inquiry->phone,
                         ],
-                        'success_url' => route('booking.portal.show', $inquiry),
-                        'cancel_url' => route('booking.portal.show', $inquiry),
+                        'success_url' => route('booking.portal.show', [$inquiry, 'result' => 'success']),
+                        'cancel_url' => route('booking.portal.show', [$inquiry, 'result' => 'cancelled']),
                         'description' => "Booking {$inquiry->reference_code} — {$inquiry->name}",
                     ],
                 ],
@@ -108,7 +108,15 @@ class PayMongoService
 
         $payload = $parts['t'].'.'.$request->getContent();
 
-        return hash_equals($expected, hash_hmac('sha256', $payload, $secret));
+        if (! hash_equals($expected, hash_hmac('sha256', $payload, $secret))) {
+            return false;
+        }
+
+        // Reject stale timestamps: a validly-signed but old webhook must not
+        // be replayed. Allow 5 minutes of clock skew, then fail closed.
+        $timestamp = (int) $parts['t'];
+
+        return $timestamp > 0 && abs(time() - $timestamp) <= 300;
     }
 
     /**
@@ -127,8 +135,14 @@ class PayMongoService
 
         $amount = $this->toCentavos($inquiry->paid_amount ?? $inquiry->total_amount);
 
+        // Idempotency-Key derived from the inquiry + when it was paid, so a
+        // retried refund of the same payment is a no-op at PayMongo rather
+        // than a double refund.
+        $idempotencyKey = 'refund-'.$inquiry->id.'-'.($inquiry->paid_at?->getTimestamp() ?? $inquiry->id);
+
         $response = Http::baseUrl(config('paymongo.base_url'))
             ->withBasicAuth(config('paymongo.secret_key'), '')
+            ->withHeaders(['Idempotency-Key' => $idempotencyKey])
             ->acceptJson()
             ->post('/v1/refunds', [
                 'data' => [
@@ -161,10 +175,24 @@ class PayMongoService
 
     /**
      * Convert a decimal amount (pesos) to centavos as an integer.
+     *
+     * Uses exact integer/string math (never `(float)`), so float precision
+     * can never corrupt the centavo conversion for normal 2-decimal amounts.
      */
     public function toCentavos(mixed $amount): int
     {
-        return (int) round((float) $amount * 100);
+        if ($amount === null || $amount === '') {
+            return 0;
+        }
+
+        $amount = (string) $amount;
+        $parts = explode('.', $amount);
+        $whole = (int) $parts[0];
+        $fraction = isset($parts[1])
+            ? str_pad(substr($parts[1], 0, 2), 2, '0')
+            : '00';
+
+        return $whole * 100 + (int) $fraction;
     }
 
     private function lineItemName(Inquiry $inquiry): string

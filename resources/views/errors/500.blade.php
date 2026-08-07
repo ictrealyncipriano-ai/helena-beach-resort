@@ -13,7 +13,7 @@
             We're experiencing a temporary issue. Please try again later.
         </p>
         <a href="{{ route('home') }}"
-           class="inline-block bg-teal-600 hover:bg-teal-700 text-white font-semibold px-8 py-6 rounded-lg transition-colors">
+           class="inline-block bg-teal-700 hover:bg-teal-700 text-white font-semibold px-8 py-6 rounded-lg transition-colors">
             Back to Home
         </a>
     </div>

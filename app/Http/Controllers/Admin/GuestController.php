@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Cottage;
 use App\Models\Guest;
 use Illuminate\Http\Request;
 
@@ -10,7 +11,16 @@ class GuestController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Guest::withCount('inquiries')->with('inquiries.cottage');
+        // Aggregate stats in SQL instead of hydrating every inquiry and its
+        // cottage model for the page. The inquiry rows are still loaded (lean,
+        // no cottage relation) for the booking-history modal, and cottage
+        // names come from a single lightweight pluck.
+        $query = Guest::withCount('inquiries')
+            ->withCount(['inquiries as paid_count' => fn ($q) => $q->whereNotNull('paid_at')])
+            ->withCount(['inquiries as failed_count' => fn ($q) => $q->whereNotNull('payment_failed_at')])
+            ->withCount(['inquiries as refunded_count' => fn ($q) => $q->whereNotNull('refunded_at')])
+            ->withSum(['inquiries as paid_amount' => fn ($q) => $q->whereNotNull('paid_at')], 'paid_amount')
+            ->with('inquiries');
 
         if ($search = $request->get('search')) {
             $query->where(function ($q) use ($search) {
@@ -22,11 +32,10 @@ class GuestController extends Controller
 
         $guests = $query->latest()->paginate(15);
 
-        $guestsData = $guests->map(function ($guest) {
+        $cottageNames = Cottage::pluck('name', 'id');
+
+        $guestsData = $guests->map(function ($guest) use ($cottageNames) {
             $inquiries = $guest->inquiries;
-            $paid = $inquiries->filter(fn ($i) => $i->isPaid());
-            $failed = $inquiries->filter(fn ($i) => $i->hasFailedPayment());
-            $refunded = $inquiries->filter(fn ($i) => $i->isRefunded());
 
             return [
                 'id' => $guest->id,
@@ -39,14 +48,14 @@ class GuestController extends Controller
                 'created' => $guest->created_at->format('M d, Y'),
                 'inquiries_count' => $guest->inquiries_count,
                 'stats' => [
-                    'paid_count' => $paid->count(),
-                    'paid_amount' => $paid->sum('paid_amount'),
-                    'failed_count' => $failed->count(),
-                    'refunded_count' => $refunded->count(),
+                    'paid_count' => (int) $guest->paid_count,
+                    'paid_amount' => $guest->paid_amount ?? 0,
+                    'failed_count' => (int) $guest->failed_count,
+                    'refunded_count' => (int) $guest->refunded_count,
                 ],
                 'inquiries' => $inquiries->map(fn ($i) => [
                     'reference_code' => $i->reference_code,
-                    'cottage_name' => $i->cottage?->name ?? 'N/A',
+                    'cottage_name' => $cottageNames[$i->cottage_id] ?? 'N/A',
                     'check_in' => $i->check_in?->format('M d, Y') ?? '—',
                     'check_out' => $i->check_out?->format('M d, Y') ?? '—',
                     'booking_type' => $i->booking_type,

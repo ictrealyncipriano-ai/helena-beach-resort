@@ -1,0 +1,40 @@
+<?php
+
+namespace App\Http\Requests\Admin;
+
+use Illuminate\Foundation\Http\FormRequest;
+
+/**
+ * Validation for admin walk-in inquiry create/update. Shared by store() and
+ * update() so both paths enforce identical rules. check_out is allowed to
+ * equal check_in (a same-day day tour) but must never precede it.
+ */
+class InquiryRequest extends FormRequest
+{
+    public function authorize(): bool
+    {
+        return true;
+    }
+
+    public function rules(): array
+    {
+        return [
+            'name' => 'required|max:255',
+            'email' => 'required|email|max:255',
+            'phone' => 'nullable|max:255',
+            'guest_id' => 'nullable|exists:guests,id',
+            'booking_type' => 'nullable|in:day_tour,overnight',
+            'check_in' => 'nullable|date',
+            'check_out' => ['nullable', 'date', function ($attribute, $value, $fail) {
+                if ($value && $this->input('check_in') && $value < $this->input('check_in')) {
+                    $fail('Check-out must be on or after check-in.');
+                }
+            }],
+            'pax' => 'nullable|integer|min:1',
+            'total_amount' => 'nullable|numeric|min:0',
+            'cottage_id' => 'nullable|exists:cottages,id',
+            'status' => 'required|in:pending,confirmed,cancelled,expired',
+            'message' => 'nullable',
+        ];
+    }
+}

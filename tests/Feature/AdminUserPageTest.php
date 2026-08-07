@@ -82,4 +82,80 @@ class AdminUserPageTest extends TestCase
             ->assertSee('Alpha Keeper')
             ->assertDontSee('Bravo Nobody');
     }
+
+    public function test_admin_cannot_change_own_role(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+
+        $this->actingAs($admin)
+            ->put(route('admin.users.update', $admin), [
+                'name' => $admin->name,
+                'email' => $admin->email,
+                'role' => 'super_admin',
+                'password' => '',
+            ])
+            ->assertSessionHasErrors('role');
+
+        $this->assertSame('admin', $admin->refresh()->role);
+    }
+
+    public function test_admin_cannot_modify_super_admin_record(): void
+    {
+        $superAdmin = User::factory()->create(['role' => 'super_admin']);
+        $admin = User::factory()->create(['role' => 'admin']);
+
+        $this->actingAs($admin)
+            ->put(route('admin.users.update', $superAdmin), [
+                'name' => 'Hacked Name',
+                'email' => $superAdmin->email,
+                'role' => 'super_admin',
+            ])
+            ->assertSessionHasErrors('role');
+
+        $this->assertSame($superAdmin->name, $superAdmin->refresh()->name);
+    }
+
+    public function test_admin_cannot_create_super_admin(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+
+        $this->actingAs($admin)
+            ->post(route('admin.users.store'), [
+                'name' => 'New SA',
+                'email' => 'new-sa@helena.com',
+                'password' => 'password',
+                'role' => 'super_admin',
+            ])
+            ->assertSessionHasErrors('role');
+
+        $this->assertDatabaseMissing('users', ['email' => 'new-sa@helena.com']);
+    }
+
+    public function test_super_admin_can_assign_super_admin_role(): void
+    {
+        $superAdmin = User::factory()->create(['role' => 'super_admin']);
+        $admin = User::factory()->create(['role' => 'admin']);
+
+        $this->actingAs($superAdmin)
+            ->put(route('admin.users.update', $admin), [
+                'name' => $admin->name,
+                'email' => $admin->email,
+                'role' => 'super_admin',
+            ])
+            ->assertRedirect(route('admin.users.index'));
+
+        $this->assertSame('super_admin', $admin->refresh()->role);
+    }
+
+    public function test_admin_cannot_delete_super_admin_record(): void
+    {
+        $superAdmin = User::factory()->create(['role' => 'super_admin']);
+        $admin = User::factory()->create(['role' => 'admin']);
+
+        $this->actingAs($admin)
+            ->delete(route('admin.users.destroy', $superAdmin))
+            ->assertSessionHas('error');
+
+        $this->assertDatabaseHas('users', ['id' => $superAdmin->id]);
+    }
 }

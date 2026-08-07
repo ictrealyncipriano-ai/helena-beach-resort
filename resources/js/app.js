@@ -1,10 +1,10 @@
 import './bootstrap';
 import Alpine from 'alpinejs';
-import flatpickr from 'flatpickr';
-import 'flatpickr/dist/flatpickr.min.css';
+import focus from '@alpinejs/focus';
 
 window.Alpine = Alpine;
-window.flatpickr = flatpickr;
+
+Alpine.plugin(focus);
 
 function themeToggle() {
     return {

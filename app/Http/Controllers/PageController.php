@@ -6,12 +6,8 @@ use App\Models\Cottage;
 use App\Models\Faq;
 use App\Models\Gallery;
 use App\Models\Service;
-use App\Models\SiteSetting;
 use App\Models\Testimonial;
-use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Mail;
 
 /**
  * Handles all public pages (home, about, faq, services, reviews, sitemap).
@@ -21,30 +17,19 @@ class PageController extends Controller
 {
     public function home()
     {
-        try {
-            $cottages = Cottage::where('is_available', true)
-                ->orderBy('sort_order')
-                ->take(6)
-                ->get();
+        $cottages = Cottage::with('primaryPhoto')
+            ->where('is_available', true)
+            ->orderBy('sort_order')
+            ->take(6)
+            ->get();
 
-            $gallery = Gallery::where('is_active', true)
-                ->orderBy('sort_order')
-                ->take(8)
-                ->get();
-        } catch (QueryException $e) {
-            Log::error('Home page query failed: ' . $e->getMessage());
-            $cottages = collect();
-            $gallery = collect();
-        }
+        $gallery = Gallery::where('is_active', true)
+            ->orderBy('sort_order')
+            ->take(8)
+            ->get();
 
-        try {
-            $testimonials = Testimonial::active()->take(3)->get();
-            $avgRating = Testimonial::where('is_active', true)->avg('rating');
-        } catch (QueryException $e) {
-            Log::error('Home page testimonial query failed: ' . $e->getMessage());
-            $testimonials = collect();
-            $avgRating = null;
-        }
+        $testimonials = Testimonial::active()->with('cottage')->take(3)->get();
+        $avgRating = Testimonial::where('is_active', true)->avg('rating');
 
         return view('pages.home', compact('cottages', 'gallery', 'testimonials', 'avgRating'));
     }
@@ -58,14 +43,9 @@ class PageController extends Controller
     /** Display FAQs sorted by sort_order */
     public function faq()
     {
-        try {
-            $faqs = Faq::where('is_active', true)
-                ->orderBy('sort_order')
-                ->get();
-        } catch (QueryException $e) {
-            Log::error('FAQ query failed: ' . $e->getMessage());
-            $faqs = collect();
-        }
+        $faqs = Faq::where('is_active', true)
+            ->orderBy('sort_order')
+            ->get();
 
         return view('pages.faq', compact('faqs'));
     }
@@ -73,12 +53,7 @@ class PageController extends Controller
     /** Display resort services grouped by category */
     public function services()
     {
-        try {
-            $services = Service::active()->get()->groupBy('category');
-        } catch (QueryException $e) {
-            Log::error('Services page query failed: ' . $e->getMessage());
-            $services = collect();
-        }
+        $services = Service::active()->get()->groupBy('category');
 
         return view('pages.services', compact('services'));
     }
@@ -86,12 +61,7 @@ class PageController extends Controller
     /** Paginated guest reviews/testimonials */
     public function reviews()
     {
-        try {
-            $testimonials = Testimonial::active()->paginate(12);
-        } catch (QueryException $e) {
-            Log::error('Reviews page query failed: ' . $e->getMessage());
-            $testimonials = new \Illuminate\Pagination\LengthAwarePaginator([], 0, 12);
-        }
+        $testimonials = Testimonial::active()->with('cottage')->paginate(12);
 
         return view('pages.reviews', compact('testimonials'));
     }
@@ -102,25 +72,12 @@ class PageController extends Controller
         return response('ok', 200);
     }
 
-    /** Debug endpoint to test email delivery via the configured mailer */
-    public function testMail()
-    {
-        $ownerEmail = SiteSetting::getValue('contact_email', 'ict.realyncipriano@gmail.com');
-        try {
-            Mail::raw('Test email from Helena Beach Resort at ' . now(), function ($msg) use ($ownerEmail) {
-                $msg->to($ownerEmail)->subject('SMTP Test – ' . now()->format('Y-m-d H:i:s'));
-            });
-            return response('Mail sent successfully to ' . $ownerEmail, 200);
-        } catch (\Exception $e) {
-            return response('Mail failed: ' . $e->getMessage(), 500);
-        }
-    }
-
     /** Generate XML sitemap for SEO, cached for 1 hour */
     public function sitemap()
     {
         $xml = Cache::remember('sitemap', 3600, function () {
             $cottages = Cottage::where('is_available', true)->get();
+            $galleryLastmod = Gallery::where('is_active', true)->max('updated_at');
 
             $pages = [
                 ['loc' => route('home'), 'priority' => '1.0', 'changefreq' => 'daily'],
@@ -130,7 +87,7 @@ class PageController extends Controller
                 ['loc' => route('services'), 'priority' => '0.6', 'changefreq' => 'weekly'],
                 ['loc' => route('reviews'), 'priority' => '0.6', 'changefreq' => 'weekly'],
                 ['loc' => route('cottages.index'), 'priority' => '0.9', 'changefreq' => 'daily'],
-                ['loc' => route('gallery.index'), 'priority' => '0.7', 'changefreq' => 'weekly'],
+                ['loc' => route('gallery.index'), 'priority' => '0.7', 'changefreq' => 'weekly', 'lastmod' => $galleryLastmod],
                 ['loc' => route('contact'), 'priority' => '0.6', 'changefreq' => 'monthly'],
             ];
 
@@ -139,6 +96,7 @@ class PageController extends Controller
                     'loc' => route('cottages.show', $cottage),
                     'priority' => '0.8',
                     'changefreq' => 'weekly',
+                    'lastmod' => $cottage->updated_at,
                 ];
             }
 
@@ -148,6 +106,10 @@ class PageController extends Controller
             foreach ($pages as $page) {
                 $xml .= '  <url>' . "\n";
                 $xml .= '    <loc>' . e($page['loc']) . '</loc>' . "\n";
+                if (!empty($page['lastmod'])) {
+                    $lastmod = $page['lastmod'];
+                    $xml .= '    <lastmod>' . ($lastmod instanceof \Carbon\CarbonInterface ? $lastmod->toDateString() : date('Y-m-d', strtotime((string) $lastmod))) . '</lastmod>' . "\n";
+                }
                 $xml .= '    <priority>' . $page['priority'] . '</priority>' . "\n";
                 $xml .= '    <changefreq>' . $page['changefreq'] . '</changefreq>' . "\n";
                 $xml .= '  </url>' . "\n";

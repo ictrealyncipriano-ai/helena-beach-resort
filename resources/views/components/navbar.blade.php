@@ -28,22 +28,22 @@
                 @foreach($routes as $route => $label)
                 <a href="{{ route($route) }}"
                    class="px-3 py-2 text-sm font-medium rounded-lg transition-colors
-                   {{ $current === $route ? 'text-teal-700 bg-teal-50 dark:text-teal-300 dark:bg-teal-900/40' : 'text-gray-600 hover:text-teal-600 hover:bg-gray-50 dark:text-slate-300 dark:hover:text-teal-300 dark:hover:bg-slate-700/50' }}">
+                   {{ $current === $route ? 'text-teal-700 bg-teal-50 dark:text-teal-300 dark:bg-teal-900/40' : 'text-gray-600 hover:text-teal-700 hover:bg-gray-50 dark:text-slate-300 dark:hover:text-teal-300 dark:hover:bg-slate-700/50' }}">
                     {{ $label }}
                 </a>
                 @endforeach
                 <div class="flex items-center gap-3 ml-3 pl-3 border-l border-gray-200 dark:border-slate-700">
                     <a href="{{ route('booking.portal.lookup') }}"
-                       class="text-sm font-medium transition-colors {{ $current === 'booking.portal.lookup' || str_starts_with($current, 'booking.portal') ? 'text-teal-700 dark:text-teal-300' : 'text-gray-500 hover:text-teal-600 dark:text-slate-400 dark:hover:text-teal-300' }}">
+                       class="text-sm font-medium transition-colors {{ $current === 'booking.portal.lookup' || str_starts_with($current, 'booking.portal') ? 'text-teal-700 dark:text-teal-300' : 'text-gray-500 hover:text-teal-700 dark:text-slate-400 dark:hover:text-teal-300' }}">
                         My Booking
                     </a>
                     <x-theme-toggle />
                     <a href="{{ App\Models\SiteSetting::getValue('facebook_url', '#') }}" target="_blank" rel="noopener noreferrer"
-                       class="text-gray-400 hover:text-teal-600 dark:text-slate-400 dark:hover:text-teal-300 transition-colors" aria-label="Facebook">
+                       class="text-gray-500 hover:text-teal-700 dark:text-slate-400 dark:hover:text-teal-300 transition-colors" aria-label="Facebook">
                         <x-icons name="facebook" class="w-5 h-5" />
                     </a>
                     <a href="{{ route('book') }}"
-                       class="inline-flex items-center px-4 py-2 bg-teal-600 text-white text-sm font-medium rounded-full hover:bg-teal-700 transition-all hover:shadow-lg hover:shadow-teal-600/20 active:scale-95">
+                       class="inline-flex items-center px-4 py-2 bg-teal-700 text-white text-sm font-medium rounded-full hover:bg-teal-700 transition-all hover:shadow-lg hover:shadow-teal-600/20 active:scale-95">
                         Book Now
                     </a>
                 </div>
@@ -51,8 +51,10 @@
 
             {{-- Mobile Menu Button --}}
             <button type="button"
-                    class="md:hidden p-2 text-gray-600 hover:text-teal-600 rounded-lg hover:bg-gray-50 dark:text-slate-300 dark:hover:text-teal-300 dark:hover:bg-slate-700/50 transition-colors"
+                    class="md:hidden p-2 text-gray-600 hover:text-teal-700 rounded-lg hover:bg-gray-50 dark:text-slate-300 dark:hover:text-teal-300 dark:hover:bg-slate-700/50 transition-colors"
                     aria-label="Toggle menu"
+                    :aria-expanded="mobileMenu"
+                    aria-controls="mobile-menu-drawer"
                     @click="mobileMenu = !mobileMenu">
                 <template x-if="!mobileMenu">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -70,6 +72,7 @@
 
     {{-- Mobile Drawer --}}
     <div x-show="mobileMenu"
+         x-cloak
          x-transition:enter="transition ease-out duration-200"
          x-transition:enter-start="opacity-0"
          x-transition:enter-end="opacity-100"
@@ -80,18 +83,23 @@
          @click="mobileMenu = false">
     </div>
     <div x-show="mobileMenu"
+         x-cloak
          x-transition:enter="transition ease-out duration-300"
          x-transition:enter-start="translate-x-full"
          x-transition:enter-end="translate-x-0"
          x-transition:leave="transition ease-in duration-200"
          x-transition:leave-start="translate-x-0"
          x-transition:leave-end="translate-x-full"
+         id="mobile-menu-drawer"
+         role="dialog"
+         aria-modal="true"
+         aria-label="Menu"
          class="md:hidden fixed top-0 right-0 bottom-0 z-50 w-72 bg-white shadow-2xl dark:bg-slate-800 dark:border-l dark:border-slate-700">
         <div class="flex items-center justify-between px-4 h-16 border-b border-gray-100 dark:border-slate-700">
             <span class="font-semibold text-teal-700 dark:text-teal-300">Menu</span>
             <div class="flex items-center gap-2">
                 <x-theme-toggle class="[&_.theme-items]:w-36 [&_.theme-items]:-right-3" />
-                <button type="button" class="p-2 text-gray-400 hover:text-gray-600 dark:text-slate-400 dark:hover:text-slate-200" @click="mobileMenu = false">
+                <button type="button" class="p-2 text-gray-500 hover:text-gray-600 dark:text-slate-400 dark:hover:text-slate-200" @click="mobileMenu = false" aria-label="Close menu">
                     <x-icons name="x" class="w-5 h-5" />
                 </button>
             </div>
@@ -100,25 +108,25 @@
             @foreach($routes as $route => $label)
             <a href="{{ route($route) }}"
                class="block px-4 py-2.5 text-sm font-medium rounded-lg transition-colors
-               {{ $current === $route ? 'text-teal-700 bg-teal-50 dark:text-teal-300 dark:bg-teal-900/40' : 'text-gray-600 hover:text-teal-600 hover:bg-gray-50 dark:text-slate-300 dark:hover:text-teal-300 dark:hover:bg-slate-700/50' }}"
+               {{ $current === $route ? 'text-teal-700 bg-teal-50 dark:text-teal-300 dark:bg-teal-900/40' : 'text-gray-600 hover:text-teal-700 hover:bg-gray-50 dark:text-slate-300 dark:hover:text-teal-300 dark:hover:bg-slate-700/50' }}"
                @click="mobileMenu = false">
                 {{ $label }}
             </a>
             @endforeach
             <hr class="my-3 border-gray-100 dark:border-slate-700">
             <a href="{{ route('booking.portal.lookup') }}"
-               class="block px-4 py-2.5 text-sm font-medium rounded-lg transition-colors {{ str_starts_with($current, 'booking.portal') ? 'text-teal-700 bg-teal-50 dark:text-teal-300 dark:bg-teal-900/40' : 'text-gray-600 hover:text-teal-600 hover:bg-gray-50 dark:text-slate-300 dark:hover:text-teal-300 dark:hover:bg-slate-700/50' }}"
+               class="block px-4 py-2.5 text-sm font-medium rounded-lg transition-colors {{ str_starts_with($current, 'booking.portal') ? 'text-teal-700 bg-teal-50 dark:text-teal-300 dark:bg-teal-900/40' : 'text-gray-600 hover:text-teal-700 hover:bg-gray-50 dark:text-slate-300 dark:hover:text-teal-300 dark:hover:bg-slate-700/50' }}"
                @click="mobileMenu = false">
                 My Booking
             </a>
             <a href="{{ App\Models\SiteSetting::getValue('facebook_url', '#') }}" target="_blank" rel="noopener noreferrer"
-               class="block px-4 py-2.5 text-sm font-medium text-gray-600 hover:text-teal-600 rounded-lg hover:bg-gray-50 dark:text-slate-300 dark:hover:text-teal-300 dark:hover:bg-slate-700/50"
+               class="block px-4 py-2.5 text-sm font-medium text-gray-600 hover:text-teal-700 rounded-lg hover:bg-gray-50 dark:text-slate-300 dark:hover:text-teal-300 dark:hover:bg-slate-700/50"
                @click="mobileMenu = false">
                 Facebook
             </a>
             <div class="pt-3">
                 <a href="{{ route('book') }}"
-                   class="block text-center px-4 py-3 bg-teal-600 text-white text-sm font-medium rounded-full hover:bg-teal-700 transition-colors"
+                   class="block text-center px-4 py-3 bg-teal-700 text-white text-sm font-medium rounded-full hover:bg-teal-700 transition-colors"
                    @click="mobileMenu = false">
                     Book Now
                 </a>

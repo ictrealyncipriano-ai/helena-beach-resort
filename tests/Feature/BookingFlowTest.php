@@ -34,6 +34,15 @@ class BookingFlowTest extends TestCase
         ], $overrides));
     }
 
+    /**
+     * Simulate a successful booking lookup: the session holds the inquiry's
+     * non-enumerable token, which is the only thing that grants portal access.
+     */
+    private function portalSession(Inquiry $inquiry): array
+    {
+        return ['booking_access_tokens' => [$inquiry->id => $inquiry->token]];
+    }
+
     public function test_booking_creates_pending_date_blocks_for_full_range(): void
     {
         $cottage = Cottage::first();
@@ -111,7 +120,8 @@ class BookingFlowTest extends TestCase
         $this->book('first@example.com');
         $inquiry = Inquiry::where('email', 'first@example.com')->first();
 
-        $this->post(route('booking.portal.cancel', $inquiry))
+        $this->withSession($this->portalSession($inquiry))
+            ->post(route('booking.portal.cancel', $inquiry))
             ->assertRedirect();
 
         $this->assertDatabaseMissing('cottage_date_blocks', [
@@ -235,7 +245,8 @@ class BookingFlowTest extends TestCase
         $this->book('cancelok@example.com');
         $inquiry = Inquiry::where('email', 'cancelok@example.com')->first();
 
-        $this->get(route('booking.portal.show', $inquiry))
+        $this->withSession($this->portalSession($inquiry))
+            ->get(route('booking.portal.show', $inquiry))
             ->assertOk()
             ->assertSee('Cancel Booking')
             ->assertSee('Cancel Booking?')
@@ -259,7 +270,8 @@ class BookingFlowTest extends TestCase
             'source' => 'website',
         ]);
 
-        $this->get(route('booking.portal.show', $inquiry))
+        $this->withSession($this->portalSession($inquiry))
+            ->get(route('booking.portal.show', $inquiry))
             ->assertOk()
             ->assertSee('Cancellation is no longer available')
             ->assertDontSee('Cancel Booking')
@@ -282,7 +294,8 @@ class BookingFlowTest extends TestCase
             'source' => 'website',
         ]);
 
-        $this->post(route('booking.portal.cancel', $inquiry))
+        $this->withSession($this->portalSession($inquiry))
+            ->post(route('booking.portal.cancel', $inquiry))
             ->assertRedirect()
             ->assertSessionHas('error');
 
@@ -304,7 +317,8 @@ class BookingFlowTest extends TestCase
             'source' => 'website',
         ]);
 
-        $this->get(route('booking.portal.show', $inquiry))
+        $this->withSession($this->portalSession($inquiry))
+            ->get(route('booking.portal.show', $inquiry))
             ->assertOk()
             ->assertSee('can no longer be cancelled')
             ->assertDontSee('Cancel Booking');

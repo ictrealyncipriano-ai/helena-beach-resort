@@ -1,17 +1,65 @@
 @extends('layouts.app')
 
 @section('title', $cottage->name)
-@section('description', strip_tags($cottage->description))
+@section('description', \Illuminate\Support\Str::limit(strip_tags(html_entity_decode($cottage->description)), 150))
 
 @if($cottage->primaryPhoto)
 @section('og_image', Storage::url($cottage->primaryPhoto->photo_path))
+@section('og_image_alt', $cottage->name)
 @endif
 
-@section('og_type', 'article')
+@section('og_type', 'product')
+
+@php
+    $cottagePrice = $cottage->rate_overnight ?: $cottage->rate_daytour;
+    $productSchema = null;
+    if ($cottagePrice) {
+        $productSchema = [
+            '@context' => 'https://schema.org',
+            '@type' => 'Product',
+            'name' => $cottage->name,
+            'description' => \Illuminate\Support\Str::limit(strip_tags(html_entity_decode($cottage->description)), 200),
+            'image' => $cottage->primaryPhoto ? Storage::url($cottage->primaryPhoto->photo_path) : null,
+            'url' => route('cottages.show', $cottage),
+            'offers' => [
+                '@type' => 'Offer',
+                'priceCurrency' => 'PHP',
+                'price' => $cottagePrice,
+                'availability' => $cottage->is_available ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+            ],
+        ];
+    }
+    $breadcrumbSchema = [
+        '@context' => 'https://schema.org',
+        '@type' => 'BreadcrumbList',
+        'itemListElement' => [
+            ['@type' => 'ListItem', 'position' => 1, 'name' => 'Home', 'item' => route('home')],
+            ['@type' => 'ListItem', 'position' => 2, 'name' => 'Cottages', 'item' => route('cottages.index')],
+            ['@type' => 'ListItem', 'position' => 3, 'name' => $cottage->name, 'item' => route('cottages.show', $cottage)],
+        ],
+    ];
+@endphp
+@push('head')
+@if($productSchema)
+<script type="application/ld+json">
+@json($productSchema)
+</script>
+@endif
+<script type="application/ld+json">
+@json($breadcrumbSchema)
+</script>
+@endpush
 
 @section('content')
 <section class="relative pt-32 pb-12 overflow-hidden bg-gradient-to-br from-teal-600 via-teal-700 to-cyan-800">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 reveal">
+        <nav class="text-sm text-teal-200/80 mb-4" aria-label="Breadcrumb">
+            <a href="{{ route('home') }}" class="hover:text-white transition-colors">Home</a>
+            <span class="mx-2 text-teal-200/50">›</span>
+            <a href="{{ route('cottages.index') }}" class="hover:text-white transition-colors">Cottages</a>
+            <span class="mx-2 text-teal-200/50">›</span>
+            <span class="text-white font-medium">{{ $cottage->name }}</span>
+        </nav>
         <a href="{{ route('cottages.index') }}" class="inline-flex items-center text-teal-200 hover:text-white text-sm mb-4 transition-colors group">
             <x-icons name="chevron-left" class="w-4 h-4 mr-1 group-hover:-translate-x-0.5 transition-transform" />
             Back to Cottages
@@ -33,14 +81,17 @@
                 {{-- Photos --}}
                 @if($cottage->photos->isNotEmpty())
                 <div class="grid grid-cols-2 gap-4 reveal">
+                    @php $photoLabels = ['exterior view', 'interior view', 'bedroom', 'bathroom', 'amenities', 'beach view']; @endphp
                     @foreach($cottage->photos as $photo)
-                    <div class="aspect-[4/3] rounded-xl overflow-hidden bg-teal-50 dark:bg-teal-900/30 cursor-pointer group"
-                         onclick="openPhotoLightbox('{{ Storage::url($photo->photo_path) }}')">
-                        <img src="{{ Storage::url($photo->photo_path) }}" alt="{{ $cottage->name }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy">
-                        <div class="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
+                    @php $photoAlt = $cottage->name . ' — ' . $photoLabels[$loop->index % count($photoLabels)]; @endphp
+                    <button type="button" class="relative block w-full aspect-[4/3] rounded-xl overflow-hidden bg-teal-50 dark:bg-teal-900/30 cursor-pointer group"
+                         onclick="openPhotoLightbox(this, '{{ Storage::url($photo->photo_path) }}', '{{ $photoAlt }}')"
+                         aria-haspopup="dialog">
+                        <img src="{{ Storage::url($photo->photo_path) }}" alt="{{ $photoAlt }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy">
+                        <span class="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
                             <x-icons name="search" class="w-8 h-8 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
-                        </div>
-                    </div>
+                        </span>
+                    </button>
                     @endforeach
                 </div>
                 @else
@@ -51,7 +102,7 @@
 
                 {{-- Description --}}
                 <div class="reveal">
-                    <span class="inline-block text-xs font-semibold tracking-widest uppercase text-teal-600 dark:text-teal-300 mb-3">Details</span>
+                    <span class="inline-block text-xs font-semibold tracking-widest uppercase text-teal-700 dark:text-teal-300 mb-3">Details</span>
                     <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-4 font-heading">About this Cottage</h2>
                     <div class="w-12 h-1 bg-teal-500 rounded-full mb-6"></div>
                     <div class="prose prose-teal max-w-none text-gray-600 dark:text-slate-300 leading-relaxed">
@@ -62,7 +113,7 @@
                 {{-- Amenities --}}
                 @if($cottage->amenities->isNotEmpty())
                 <div class="reveal">
-                    <span class="inline-block text-xs font-semibold tracking-widest uppercase text-teal-600 dark:text-teal-300 mb-3">Features</span>
+                    <span class="inline-block text-xs font-semibold tracking-widest uppercase text-teal-700 dark:text-teal-300 mb-3">Features</span>
                     <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-4 font-heading">Amenities</h2>
                     <div class="w-12 h-1 bg-teal-500 rounded-full mb-6"></div>
                     <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
@@ -85,24 +136,24 @@
                         @if($cottage->rate_daytour)
                         <div class="flex items-center justify-between pb-4 border-b border-gray-100 dark:border-slate-700">
                             <span class="text-gray-600 dark:text-slate-300 text-sm">
-                                <x-icons name="sun" class="w-4 h-4 inline -mt-0.5 mr-1 text-gray-400 dark:text-slate-500" />
+                                <x-icons name="sun" class="w-4 h-4 inline -mt-0.5 mr-1 text-gray-500 dark:text-slate-400" />
                                 Day Tour
                             </span>
-                            <span class="text-xl font-bold text-teal-600 dark:text-teal-300">₱{{ number_format($cottage->rate_daytour) }}</span>
+                            <span class="text-xl font-bold text-teal-700 dark:text-teal-300">₱{{ number_format($cottage->rate_daytour) }}</span>
                         </div>
                         @endif
                         @if($cottage->rate_overnight)
                         <div class="flex items-center justify-between pb-4 border-b border-gray-100 dark:border-slate-700">
                             <span class="text-gray-600 dark:text-slate-300 text-sm">
-                                <x-icons name="moon" class="w-4 h-4 inline -mt-0.5 mr-1 text-gray-400 dark:text-slate-500" />
+                                <x-icons name="moon" class="w-4 h-4 inline -mt-0.5 mr-1 text-gray-500 dark:text-slate-400" />
                                 Overnight
                             </span>
-                            <span class="text-xl font-bold text-teal-600 dark:text-teal-300">₱{{ number_format($cottage->rate_overnight) }}</span>
+                            <span class="text-xl font-bold text-teal-700 dark:text-teal-300">₱{{ number_format($cottage->rate_overnight) }}</span>
                         </div>
                         @endif
                         <div class="flex items-center justify-between pb-4 border-b border-gray-100 dark:border-slate-700">
                             <span class="text-gray-600 dark:text-slate-300 text-sm">
-                                <x-icons name="users" class="w-4 h-4 inline -mt-0.5 mr-1 text-gray-400 dark:text-slate-500" />
+                                <x-icons name="users" class="w-4 h-4 inline -mt-0.5 mr-1 text-gray-500 dark:text-slate-400" />
                                 Capacity
                             </span>
                             <span class="font-medium text-gray-900 dark:text-white">Up to {{ $cottage->capacity }} guests</span>
@@ -118,19 +169,26 @@
                             <span class="text-sm font-semibold text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30 px-3 py-1 rounded-full">Unavailable</span>
                             @endif
                         </div>
+                        @if($cottage->is_available)
                         <a href="{{ route('book') }}?cottage_id={{ $cottage->id }}"
-                           class="block w-full text-center px-6 py-3.5 bg-teal-600 text-white font-semibold rounded-full hover:bg-teal-700 transition-all hover:shadow-lg hover:shadow-teal-600/20 active:scale-[0.98]">
+                           class="block w-full text-center px-6 py-3.5 bg-teal-700 text-white font-semibold rounded-full hover:bg-teal-700 transition-all hover:shadow-lg hover:shadow-teal-600/20 active:scale-[0.98]">
                             Book This Cottage
                         </a>
+                        @else
+                        <a href="{{ route('contact') }}"
+                           class="block w-full text-center px-6 py-3.5 bg-gray-400 text-white font-semibold rounded-full cursor-not-allowed hover:bg-gray-400 hover:shadow-none" aria-disabled="true">
+                            Currently Unavailable — Contact Us
+                        </a>
+                        @endif
                     </div>
 
                     {{-- Availability Calendar --}}
                     <div class="bg-white dark:bg-slate-800 rounded-2xl border border-gray-200 dark:border-slate-700 shadow-sm p-6 hover:shadow-lg transition-shadow">
                         <h3 class="font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-                            <x-icons name="calendar" class="w-4 h-4 text-teal-600 dark:text-teal-300" />
+                            <x-icons name="calendar" class="w-4 h-4 text-teal-700 dark:text-teal-300" />
                             Availability Calendar
                         </h3>
-                        <div x-data="calendar('{{ json_encode($blockedDates) }}')">
+                        <div x-data="calendar(@js($blockedDates))">
                             <div class="flex items-center justify-between mb-3">
                                 <button @click="prevMonth" class="w-8 h-8 flex items-center justify-center hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg transition-colors text-gray-500 dark:text-slate-400">
                                     <x-icons name="chevron-left" class="w-4 h-4" />
@@ -142,7 +200,7 @@
                             </div>
                             <div class="grid grid-cols-7 gap-0 text-center mb-1">
                                 <template x-for="day in ['Sun','Mon','Tue','Wed','Thu','Fri','Sat']" :key="day">
-                                    <span class="text-xs font-medium text-gray-400 dark:text-slate-500 py-1" x-text="day"></span>
+                                    <span class="text-xs font-medium text-gray-500 dark:text-slate-400 py-1" x-text="day"></span>
                                 </template>
                             </div>
                             <div class="grid grid-cols-7 gap-0">
@@ -152,7 +210,7 @@
                                             'text-gray-300': !day,
                                             'text-gray-900': day && !day.blocked && !day.isPast,
                                             'text-red-400 line-through': day && day.blocked,
-                                            'text-gray-400': day && day.isPast && !day.blocked,
+                                            'text-gray-500': day && day.isPast && !day.blocked,
                                             'text-red-300 line-through': day && day.isPast && day.blocked
                                         }"
                                         x-text="day ? day.label : ''">
@@ -178,8 +236,8 @@
 </section>
 
 {{-- Photo Lightbox --}}
-<div id="photo-lightbox" class="fixed inset-0 z-50 bg-black/95 hidden items-center justify-center p-4" onclick="closePhotoLightbox(event)">
-    <button onclick="closePhotoLightbox(event)" class="absolute top-4 right-4 w-12 h-12 flex items-center justify-center text-white/60 hover:text-white rounded-full hover:bg-white/10 transition-all z-30">
+<div id="photo-lightbox" role="dialog" aria-modal="true" aria-label="Cottage photo" tabindex="-1" class="fixed inset-0 z-50 bg-black/95 hidden items-center justify-center p-4" onclick="closePhotoLightbox(event)">
+    <button onclick="closePhotoLightbox(event)" class="absolute top-4 right-4 w-12 h-12 flex items-center justify-center text-white/60 hover:text-white rounded-full hover:bg-white/10 transition-all z-30" aria-label="Close">
         <x-icons name="x" class="w-6 h-6" />
     </button>
     <img id="photo-lightbox-img" src="" alt="" class="max-w-full max-h-[85vh] object-contain rounded-xl transition-all duration-300 shadow-2xl">
@@ -187,17 +245,24 @@
 
 @push('scripts')
 <script>
-    function openPhotoLightbox(src) {
-        document.getElementById('photo-lightbox-img').src = src;
-        document.getElementById('photo-lightbox').classList.remove('hidden');
-        document.getElementById('photo-lightbox').classList.add('flex');
+    let lastPhotoTrigger = null;
+    function openPhotoLightbox(el, src, alt) {
+        lastPhotoTrigger = el;
+        const img = document.getElementById('photo-lightbox-img');
+        img.src = src;
+        img.alt = alt || '';
+        const lb = document.getElementById('photo-lightbox');
+        lb.classList.remove('hidden');
+        lb.classList.add('flex');
         document.body.style.overflow = 'hidden';
+        lb.focus({ preventScroll: true });
     }
     function closePhotoLightbox(e) {
         if (e.target === e.currentTarget || e.target.closest('button')) {
             document.getElementById('photo-lightbox').classList.add('hidden');
             document.getElementById('photo-lightbox').classList.remove('flex');
             document.body.style.overflow = '';
+            if (lastPhotoTrigger) lastPhotoTrigger.focus({ preventScroll: true });
         }
     }
     document.addEventListener('keydown', function(e) {
@@ -207,11 +272,20 @@
             lb.classList.add('hidden');
             lb.classList.remove('flex');
             document.body.style.overflow = '';
+            if (lastPhotoTrigger) lastPhotoTrigger.focus({ preventScroll: true });
         }
     });
 
-    function calendar(blockedJson) {
-        const blocked = JSON.parse(blockedJson || '[]');
+    function calendar(blockedData) {
+        // The Blade js directive now passes a real array literal; older
+        // JSON-string payloads are still accepted so both render paths
+        // produce the same structure.
+        let blocked = blockedData;
+        if (typeof blockedData === 'string') {
+            try { blocked = JSON.parse(blockedData || '[]'); } catch { blocked = []; }
+        }
+        blocked = Array.isArray(blocked) ? blocked : [];
+
         const today = new Date();
         today.setHours(0,0,0,0);
 

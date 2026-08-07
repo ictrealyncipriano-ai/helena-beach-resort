@@ -149,7 +149,7 @@
 </head>
 <body>
 
-    <div class="watermark">@if($inquiry->isPaid())PAID@elseUNPAID@endif</div>
+    <div class="watermark">{{ $inquiry->isPaid() ? 'PAID' : 'UNPAID' }}</div>
 
     <div class="top-bar">
         <h1>{{ App\Models\SiteSetting::getValue('site_name', 'Helena Beach Resort') }}</h1>
@@ -257,8 +257,7 @@
 
     <div class="terms">
         @if($inquiry->isPaid())
-            <strong>Payment Status:</strong> Paid@if($inquiry->payment_method) via {{ ucfirst($inquiry->payment_method) }}@endif
-            @if($inquiry->paid_at) on {{ $inquiry->paid_at->format('M d, Y') }}@endif.<br>
+            <strong>Payment Status:</strong> Paid{{ $inquiry->payment_method ? ' via ' . ucfirst($inquiry->payment_method) : '' }}{{ $inquiry->paid_at ? ' on ' . $inquiry->paid_at->format('M d, Y') : '' }}.<br>
         @else
             <strong>Payment Terms:</strong> Full payment due upon booking confirmation. Pay online via QR Ph, or settle via Bank Transfer / Cash on site.<br>
         @endif

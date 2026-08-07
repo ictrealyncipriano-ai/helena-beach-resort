@@ -12,7 +12,7 @@ class CottageDateBlock extends Model
      * Created when an inquiry status changes to 'confirmed'.
      */
     protected $fillable = [
-        'cottage_id', 'date', 'reason',
+        'cottage_id', 'date', 'reason', 'inquiry_id',
     ];
 
     protected function casts(): array
@@ -23,6 +23,11 @@ class CottageDateBlock extends Model
     public function cottage(): BelongsTo
     {
         return $this->belongsTo(Cottage::class);
+    }
+
+    public function inquiry(): BelongsTo
+    {
+        return $this->belongsTo(Inquiry::class);
     }
 
     public function scopeFuture($q)

@@ -16,6 +16,10 @@
 /public/build
 /public/hot
 /public/storage
+# Orphaned Filament assets (Filament is not installed) — ignore if they regenerate
+/public/js/filament
+/public/css/filament
+/public/fonts/filament
 /storage/*.key
 /storage/pail
 /vendor

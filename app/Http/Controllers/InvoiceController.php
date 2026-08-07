@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\GuardsBookingAccess;
 use App\Models\Inquiry;
 use Barryvdh\DomPDF\Facade\Pdf;
 
@@ -10,9 +11,13 @@ use Barryvdh\DomPDF\Facade\Pdf;
  */
 class InvoiceController extends Controller
 {
+    use GuardsBookingAccess;
+
     /** Display invoice in-browser (HTML) */
     public function show(Inquiry $inquiry)
     {
+        $this->authorizeBookingAccess($inquiry);
+
         abort_if($inquiry->status !== 'confirmed', 404);
 
         return view('pages.invoice', compact('inquiry'));
@@ -21,6 +26,8 @@ class InvoiceController extends Controller
     /** Download invoice as PDF */
     public function download(Inquiry $inquiry)
     {
+        $this->authorizeBookingAccess($inquiry);
+
         abort_if($inquiry->status !== 'confirmed', 404);
 
         $nights = null;
@@ -33,6 +40,13 @@ class InvoiceController extends Controller
             } elseif ($inquiry->booking_type === 'overnight' && $inquiry->cottage) {
                 $subtotal = $inquiry->cottage->rate_overnight * $nights;
             }
+        }
+
+        // If the cottage was soft-deleted (nullOnDelete) the rate is
+        // unavailable; fall back to the recorded total so the invoice never
+        // renders a ₱0.00 subtotal for a real booking.
+        if ($subtotal === null) {
+            $subtotal = $inquiry->total_amount;
         }
 
         $pdf = Pdf::loadView('pages.invoice', [

@@ -17,7 +17,8 @@ class SiteSettingSeeder extends Seeder
             ['key' => 'site_name', 'value' => 'Helena Beach Resort', 'type' => 'text'],
             ['key' => 'site_description', 'value' => 'Experience paradise in Infanta, Quezon. Beachfront cottages, fresh seafood, and unforgettable memories.', 'type' => 'textarea'],
             ['key' => 'contact_email', 'value' => 'ict.realyncipriano@gmail.com', 'type' => 'text'],
-            ['key' => 'contact_phone', 'value' => 'N/A', 'type' => 'text'],
+            // TODO(client): replace this placeholder with the resort's real phone number.
+            ['key' => 'contact_phone', 'value' => '0999 000 0000', 'type' => 'text'],
             ['key' => 'address', 'value' => 'Purok Buyan, Brgy. Dinahican, Infanta, Quezon', 'type' => 'textarea'],
             ['key' => 'operating_hours', 'value' => 'Monday - Sunday: 8:00 AM - 6:00 PM', 'type' => 'text'],
             // Hero section content

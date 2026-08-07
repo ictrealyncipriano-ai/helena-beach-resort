@@ -12,21 +12,21 @@
             @if ($paginator->onFirstPage())
                 <span class="px-3 py-1.5 text-sm text-gray-300 rounded-lg border border-gray-100 cursor-not-allowed dark:border-slate-700 dark:text-slate-600">&laquo; Prev</span>
             @else
-                <a href="{{ $paginator->previousPageUrl() }}" class="px-3 py-1.5 text-sm text-gray-600 rounded-lg border border-gray-200 hover:bg-gray-50 hover:text-teal-600 transition-colors dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700/40 dark:hover:text-teal-300">&laquo; Prev</a>
+                <a href="{{ $paginator->previousPageUrl() }}" class="px-3 py-1.5 text-sm text-gray-600 rounded-lg border border-gray-200 hover:bg-gray-50 hover:text-teal-700 transition-colors dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700/40 dark:hover:text-teal-300">&laquo; Prev</a>
             @endif
 
             {{-- Pages --}}
             @foreach ($paginator->getUrlRange(max(1, $paginator->currentPage() - 2), min($paginator->lastPage(), $paginator->currentPage() + 2)) as $page => $url)
                 @if ($page == $paginator->currentPage())
-                    <span class="px-3 py-1.5 text-sm font-medium text-white bg-teal-600 rounded-lg">{{ $page }}</span>
+                    <span aria-current="page" class="px-3 py-1.5 text-sm font-medium text-white bg-teal-700 rounded-lg">{{ $page }}</span>
                 @else
-                    <a href="{{ $url }}" class="px-3 py-1.5 text-sm text-gray-600 rounded-lg border border-gray-200 hover:bg-gray-50 hover:text-teal-600 transition-colors dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700/40 dark:hover:text-teal-300">{{ $page }}</a>
+                    <a href="{{ $url }}" class="px-3 py-1.5 text-sm text-gray-600 rounded-lg border border-gray-200 hover:bg-gray-50 hover:text-teal-700 transition-colors dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700/40 dark:hover:text-teal-300">{{ $page }}</a>
                 @endif
             @endforeach
 
             {{-- Next --}}
             @if ($paginator->hasMorePages())
-                <a href="{{ $paginator->nextPageUrl() }}" class="px-3 py-1.5 text-sm text-gray-600 rounded-lg border border-gray-200 hover:bg-gray-50 hover:text-teal-600 transition-colors dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700/40 dark:hover:text-teal-300">Next &raquo;</a>
+                <a href="{{ $paginator->nextPageUrl() }}" class="px-3 py-1.5 text-sm text-gray-600 rounded-lg border border-gray-200 hover:bg-gray-50 hover:text-teal-700 transition-colors dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700/40 dark:hover:text-teal-300">Next &raquo;</a>
             @else
                 <span class="px-3 py-1.5 text-sm text-gray-300 rounded-lg border border-gray-100 cursor-not-allowed dark:border-slate-700 dark:text-slate-600">Next &raquo;</span>
             @endif

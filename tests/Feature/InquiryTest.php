@@ -103,9 +103,26 @@ class InquiryTest extends TestCase
             'source' => 'website',
         ]);
 
-        $this->get(route('booking.confirmation', $inquiry))
+        // The confirmation page is ownership-gated: only a session that holds
+        // the inquiry's token (i.e. the guest who just submitted it) may view it.
+        $this->withSession(['booking_access_tokens' => [$inquiry->id => $inquiry->token]])
+            ->get(route('booking.confirmation', $inquiry))
             ->assertStatus(200)
             ->assertSee('HB-000001');
+    }
+
+    public function test_confirmation_page_rejects_session_without_matching_token(): void
+    {
+        $inquiry = Inquiry::create([
+            'name' => 'Test User',
+            'email' => 'test@example.com',
+            'message' => 'Test message',
+            'reference_code' => 'HB-000002',
+            'source' => 'website',
+        ]);
+
+        $this->get(route('booking.confirmation', $inquiry))
+            ->assertStatus(404);
     }
 
     public function test_dated_inquiry_creates_date_blocks(): void

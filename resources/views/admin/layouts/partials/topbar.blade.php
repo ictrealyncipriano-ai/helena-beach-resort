@@ -1,6 +1,6 @@
 <header class="flex h-16 shrink-0 items-center gap-4 border-b border-gray-200 bg-white px-4 sm:px-6 dark:border-slate-700 dark:bg-slate-900">
     {{-- Mobile hamburger --}}
-    <button type="button" class="lg:hidden -ml-1 p-2 text-gray-500 hover:text-teal-600 hover:bg-gray-100 rounded-lg transition-colors dark:text-slate-400 dark:hover:text-teal-300 dark:hover:bg-slate-800" @@click="sidebarOpen = !sidebarOpen" aria-label="Toggle sidebar">
+    <button type="button" class="lg:hidden -ml-1 p-2 text-gray-500 hover:text-teal-700 hover:bg-gray-100 rounded-lg transition-colors dark:text-slate-400 dark:hover:text-teal-300 dark:hover:bg-slate-800" @@click="sidebarOpen = !sidebarOpen" aria-label="Toggle sidebar" :aria-expanded="sidebarOpen" aria-controls="admin-sidebar">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"/></svg>
     </button>
 
@@ -13,13 +13,13 @@
     <div class="flex items-center gap-3">
         <x-theme-toggle />
         {{-- User dropdown --}}
-        <div x-data="{ open: false }" @click.outside="open = false">
-            <button type="button" @click="open = !open" class="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-gray-50 transition-colors dark:hover:bg-slate-700/50">
-                <div class="w-7 h-7 rounded-full bg-teal-600 flex items-center justify-center text-white text-xs font-bold shrink-0">
+        <div x-data="{ open: false }" @click.outside="open = false" @keydown.escape.window="open = false">
+            <button type="button" @click="open = !open" :aria-expanded="open" aria-haspopup="menu" class="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-gray-50 transition-colors dark:hover:bg-slate-700/50">
+                <div class="w-7 h-7 rounded-full bg-teal-700 flex items-center justify-center text-white text-xs font-bold shrink-0">
                     {{ substr(Auth::user()->name ?? 'A', 0, 1) }}
                 </div>
                 <span class="text-sm font-medium text-gray-700 hidden md:block dark:text-slate-200">{{ Auth::user()->name ?? 'Admin' }}</span>
-                <svg class="w-4 h-4 text-gray-400 dark:text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.5 8.25l-7.5 7.5-7.5-7.5"/></svg>
+                <svg class="w-4 h-4 text-gray-500 dark:text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.5 8.25l-7.5 7.5-7.5-7.5"/></svg>
             </button>
 
             {{-- Dropdown --}}

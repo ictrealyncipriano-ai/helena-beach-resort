@@ -1,7 +1,8 @@
 User-agent: *
 Allow: /
 Disallow: /admin
-Disallow: /storage
 
-# Update this URL for production
-Sitemap: https://helenabeachresort.com/sitemap.xml
+# NOTE: Keep the Sitemap line in sync with config('app.url') (the canonical
+# production domain). A dynamic /robots.txt route also serves this file from
+# config('app.url') so it can never drift — see routes/web.php.
+Sitemap: https://helena-beach-resort.onrender.com/sitemap.xml

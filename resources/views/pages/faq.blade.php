@@ -3,6 +3,28 @@
 @section('title', 'Frequently Asked Questions')
 @section('description', 'Find answers to common questions about Helena Beach Resort — reservations, rates, amenities, policies, and more.')
 
+@push('head')
+@if($faqs->isNotEmpty())
+@php
+    $faqSchema = [
+        '@context' => 'https://schema.org',
+        '@type' => 'FAQPage',
+        'mainEntity' => $faqs->map(fn ($faq) => [
+            '@type' => 'Question',
+            'name' => $faq->question,
+            'acceptedAnswer' => [
+                '@type' => 'Answer',
+                'text' => $faq->answer,
+            ],
+        ])->values(),
+    ];
+@endphp
+<script type="application/ld+json">
+@json($faqSchema)
+</script>
+@endif
+@endpush
+
 @section('content')
 <x-hero title="Frequently Asked Questions"
          subtitle="Everything you need to know about your stay at Helena Beach Resort.">
@@ -20,9 +42,9 @@
                 <div class="w-16 h-16 bg-teal-100 dark:bg-teal-900/40 rounded-2xl flex items-center justify-center mx-auto mb-6 text-teal-500 dark:text-teal-400">
                     <x-icons name="question" class="w-8 h-8" />
                 </div>
-                <h3 class="text-xl font-semibold text-gray-800 dark:text-slate-100 mb-2">No FAQs Available</h3>
+                <h2 class="text-xl font-semibold text-gray-800 dark:text-slate-100 mb-2">No FAQs Available</h2>
                 <p class="text-gray-500 dark:text-slate-400 max-w-md mx-auto">We haven't added any frequently asked questions yet. Check back later or reach out to us directly!</p>
-                <a href="{{ route('contact') }}" class="inline-flex items-center gap-2 mt-6 px-6 py-3 bg-teal-600 text-white rounded-xl font-medium hover:bg-teal-700 transition-colors shadow-sm">
+                <a href="{{ route('contact') }}" class="inline-flex items-center gap-2 mt-6 px-6 py-3 bg-teal-700 text-white rounded-xl font-medium hover:bg-teal-700 transition-colors shadow-sm">
                     <x-icons name="email" class="w-5 h-5" />
                     Contact Us
                 </a>
@@ -36,6 +58,8 @@
                     >
                         <button
                             type="button"
+                            :id="'faq-button-' + {{ $loop->index }}"
+                            :aria-controls="'faq-panel-' + {{ $loop->index }}"
                             class="w-full flex items-center justify-between gap-4 px-6 sm:px-8 py-5 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 dark:focus-visible:ring-offset-slate-800 focus-visible:ring-offset-2 rounded-2xl"
                             @click="open = open === {{ $loop->index }} ? null : {{ $loop->index }}"
                             :aria-expanded="open === {{ $loop->index }}"
@@ -44,7 +68,7 @@
                             <span class="flex items-start gap-4">
                                 <span
                                     class="shrink-0 mt-0.5"
-                                    :class="open === {{ $loop->index }} ? 'text-teal-600' : 'text-teal-400 group-hover:text-teal-500'"
+                                    :class="open === {{ $loop->index }} ? 'text-teal-700' : 'text-teal-400 group-hover:text-teal-500'"
                                 >
                                     <x-icons name="question" class="w-5 h-5" />
                                 </span>
@@ -57,10 +81,13 @@
                             </span>
                             <x-icons name="chevron-down"
                                 class="w-5 h-5 shrink-0 transition-all duration-300 ease-out"
-                                ::class="open === {{ $loop->index }} ? 'rotate-180 text-teal-600' : 'text-gray-400 group-hover:text-gray-600'"
+                                ::class="open === {{ $loop->index }} ? 'rotate-180 text-teal-700' : 'text-gray-500 group-hover:text-gray-600'"
                             />
                         </button>
                         <div
+                            :id="'faq-panel-' + {{ $loop->index }}"
+                            role="region"
+                            :aria-labelledby="'faq-button-' + {{ $loop->index }}"
                             class="px-6 sm:px-8 pb-6 text-gray-600 dark:text-slate-300 leading-relaxed"
                             x-show="open === {{ $loop->index }}"
                             x-transition:enter="transition ease-out duration-200"
@@ -88,25 +115,38 @@
     <div class="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
         <div class="bg-white dark:bg-slate-800 rounded-3xl border border-gray-200/60 dark:border-slate-700 shadow-sm p-10 sm:p-14 reveal">
             <div class="w-14 h-14 bg-teal-100 dark:bg-teal-900/30 rounded-2xl flex items-center justify-center mx-auto mb-6">
-                <x-icons name="email" class="w-7 h-7 text-teal-600 dark:text-teal-300" />
+                <x-icons name="email" class="w-7 h-7 text-teal-700 dark:text-teal-300" />
             </div>
             <h2 class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-3 font-heading">Still have questions?</h2>
             <p class="text-gray-500 dark:text-slate-400 text-lg mb-8 max-w-md mx-auto">Can't find the answer you're looking for? We're happy to help.</p>
             <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                @php
+                    $contactPhone = trim((string) \App\Models\SiteSetting::getValue('contact_phone', ''));
+                @endphp
                 <a
                     href="{{ route('contact') }}"
-                    class="inline-flex items-center justify-center gap-2 px-8 py-3.5 bg-teal-600 text-white rounded-xl font-semibold hover:bg-teal-700 transition-all shadow-sm hover:shadow-md active:scale-95"
+                    class="inline-flex items-center justify-center gap-2 px-8 py-3.5 bg-teal-700 text-white rounded-xl font-semibold hover:bg-teal-700 transition-all shadow-sm hover:shadow-md active:scale-95"
                 >
                     <x-icons name="email" class="w-5 h-5" />
                     Send us a message
                 </a>
+                @if($contactPhone && $contactPhone !== 'N/A')
                 <a
-                    href="tel:{{ config('app.contact_phone', '#') }}"
+                    href="tel:{{ $contactPhone }}"
                     class="inline-flex items-center justify-center gap-2 px-8 py-3.5 bg-white dark:bg-slate-800 text-gray-700 dark:text-slate-200 rounded-xl font-semibold border border-gray-200 dark:border-slate-600 hover:border-gray-300 dark:hover:border-slate-500 hover:bg-gray-50 dark:hover:bg-slate-700 transition-all shadow-sm active:scale-95"
                 >
                     <x-icons name="phone" class="w-5 h-5" />
-                    Call us
+                    Call us — {{ $contactPhone }}
                 </a>
+                @else
+                <a
+                    href="{{ route('contact') }}"
+                    class="inline-flex items-center justify-center gap-2 px-8 py-3.5 bg-white dark:bg-slate-800 text-gray-700 dark:text-slate-200 rounded-xl font-semibold border border-gray-200 dark:border-slate-600 hover:border-gray-300 dark:hover:border-slate-500 hover:bg-gray-50 dark:hover:bg-slate-700 transition-all shadow-sm active:scale-95"
+                >
+                    <x-icons name="phone" class="w-5 h-5" />
+                    Contact us for our number
+                </a>
+                @endif
             </div>
         </div>
     </div>

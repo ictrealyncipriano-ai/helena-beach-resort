@@ -12,7 +12,8 @@ class CottageController extends Controller
     /** List all available cottages */
     public function index()
     {
-        $cottages = Cottage::where('is_available', true)
+        $cottages = Cottage::with('primaryPhoto')
+            ->where('is_available', true)
             ->orderBy('sort_order')
             ->get();
 
@@ -22,9 +23,12 @@ class CottageController extends Controller
     /** Show a single cottage with its future blocked dates */
     public function show(Cottage $cottage)
     {
+        // Format to 'Y-m-d' so the JSON-encoded calendar data matches the
+        // `YYYY-MM-DD` date strings built in the JS calendar component.
         $blockedDates = $cottage->dateBlocks()
             ->future()
             ->pluck('date')
+            ->map(fn ($date) => $date->format('Y-m-d'))
             ->values();
 
         return view('pages.cottages.show', compact('cottage', 'blockedDates'));
