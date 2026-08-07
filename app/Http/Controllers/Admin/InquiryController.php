@@ -109,10 +109,21 @@ class InquiryController extends Controller
         ]);
 
         if (empty($inquiry->guest_id) && $inquiry->email) {
-            $guest = Guest::updateOrCreate(
+            // Include soft-deleted rows in the lookup: SoftDeletes hides
+            // trashed guests from updateOrCreate, whose INSERT would then
+            // collide with the unique guests.email index (HTTP 500). Reuse and
+            // restore the trashed profile instead. Admin-entered name/phone
+            // are trusted here, so they are refreshed on the record.
+            $guest = Guest::withTrashed()->firstOrCreate(
                 ['email' => $inquiry->email],
                 ['name' => $inquiry->name, 'phone' => $inquiry->phone]
             );
+
+            if ($guest->trashed()) {
+                $guest->restore();
+            }
+
+            $guest->update(['name' => $inquiry->name, 'phone' => $inquiry->phone]);
             $inquiry->guest()->associate($guest)->save();
         }
 
@@ -266,10 +277,16 @@ class InquiryController extends Controller
             return back()->with('error', 'Only pending inquiries can be cancelled.');
         }
 
+        $wasConfirmed = $inquiry->status === 'confirmed';
+
         $inquiry->update(['status' => 'cancelled']);
         $inquiry->releaseBlocks();
 
-        if ($inquiry->guest && $inquiry->guest->total_stays > 0) {
+        // total_stays is only incremented by markConfirmed(), and this path
+        // only accepts pending inquiries (guarded above), so a pending cancel
+        // must never decrement the counter — doing so silently subtracts a
+        // stay belonging to a different confirmed booking on the same guest.
+        if ($wasConfirmed && $inquiry->guest && $inquiry->guest->total_stays > 0) {
             $inquiry->guest->decrement('total_stays');
         }
 

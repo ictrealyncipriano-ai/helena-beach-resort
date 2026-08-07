@@ -2,6 +2,9 @@
 
 namespace App\Providers;
 
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -27,5 +30,42 @@ class AppServiceProvider extends ServiceProvider
             'dompdf.options.font_cache' => config('app.dompdf.font_cache'),
             'dompdf.options.temp_dir' => config('app.dompdf.temp_dir'),
         ]);
+
+        foreach (['app.dompdf.font_dir', 'app.dompdf.font_cache'] as $key) {
+            $dir = (string) config($key);
+
+            if (! is_dir($dir)) {
+                @mkdir($dir, 0755, true);
+            }
+        }
+
+        $this->configureRateLimiters();
+    }
+
+    /**
+     * Resolve the real client IP for rate limiting. Cloudflare (in front of
+     * Vercel) injects CF-Connecting-IP and discards any client-supplied copy,
+     * so it cannot be spoofed by an end user. Falling back to Request::ip()
+     * keeps local/dev behaviour intact.
+     */
+    private function clientKey(Request $request): string
+    {
+        return (string) ($request->header('CF-Connecting-IP') ?: $request->ip());
+    }
+
+    /**
+     * Register the named rate limiters used by the throttled routes. Keyed on
+     * the real client IP (see clientKey()) rather than the raw X-Forwarded-For
+     * value so TRUSTED_PROXIES can stay broad for scheme detection without
+     * letting spoofed headers bypass every throttle.
+     */
+    private function configureRateLimiters(): void
+    {
+        RateLimiter::for('booking', fn (Request $request) => Limit::perMinute(3)->by($this->clientKey($request)));
+        RateLimiter::for('contact', fn (Request $request) => Limit::perMinute(3)->by($this->clientKey($request)));
+        RateLimiter::for('lookup', fn (Request $request) => Limit::perMinute(5)->by($this->clientKey($request)));
+        RateLimiter::for('cancel', fn (Request $request) => Limit::perMinute(3)->by($this->clientKey($request)));
+        RateLimiter::for('payment', fn (Request $request) => Limit::perMinute(5)->by($this->clientKey($request)));
+        RateLimiter::for('admin-login', fn (Request $request) => Limit::perMinute(5)->by($this->clientKey($request)));
     }
 }

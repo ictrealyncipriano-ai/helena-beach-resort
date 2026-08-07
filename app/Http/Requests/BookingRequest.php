@@ -19,7 +19,7 @@ class BookingRequest extends FormRequest
             'email' => ['required', 'email', 'max:255'],
             'phone' => ['nullable', 'string', 'max:20'],
             'booking_type' => ['required', 'string', 'in:day_tour,overnight'],
-            'cottage_id' => ['required', 'exists:cottages,id'],
+            'cottage_id' => ['required', 'exists:cottages,id,is_available,1'],
             'check_in' => ['required', 'date', 'after_or_equal:today', new CottageAvailability(
                 $this->input('cottage_id'),
                 $this->input('email'),

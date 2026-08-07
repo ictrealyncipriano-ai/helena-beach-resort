@@ -135,9 +135,9 @@ return [
     */
 
     'dompdf' => [
-        'font_dir' => env('DOMPDF_FONT_DIR', storage_path('fonts')),
-        'font_cache' => env('DOMPDF_FONT_CACHE', storage_path('fonts')),
-        'temp_dir' => env('DOMPDF_TEMP_DIR', sys_get_temp_dir()),
+        'font_dir' => env('DOMPDF_FONT_DIR', sys_get_temp_dir().'/dompdf/fonts'),
+        'font_cache' => env('DOMPDF_FONT_CACHE', sys_get_temp_dir().'/dompdf/fonts'),
+        'temp_dir' => env('DOMPDF_TEMP_DIR', sys_get_temp_dir().'/dompdf'),
     ],
 
 ];

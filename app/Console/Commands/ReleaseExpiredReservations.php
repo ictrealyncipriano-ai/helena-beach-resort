@@ -87,15 +87,21 @@ class ReleaseExpiredReservations extends Command
     }
 
     /**
-     * Email guests whose pending requests are between 24h and 36h old (i.e.
-     * ~12h before the default 48h hold window ends). Only inquiries that have
-     * never been warned are picked up, and each is marked via expiry_warned_at
-     * so repeated cron runs never spam the same guest twice.
+     * Email guests whose pending requests are within ~24h of their hold window
+     * ending (i.e. created between $hours and $hours-24 hours ago). Only
+     * inquiries that have never been warned are picked up, and each is marked
+     * via expiry_warned_at so repeated cron runs never spam the same guest.
+     *
+     * The window is anchored on time-remaining-to-expiry rather than a fixed
+     * age band: any pending inquiry with a null expiry_warned_at whose hold
+     * expires inside the next 24h is warned. Vercel Hobby cron only fires once
+     * per day, so a 24h-wide window guarantees every booking is caught at least
+     * one run before it expires regardless of when it was created.
      */
     private function warnExpiringSoon(int $hours): int
     {
-        $olderBound = now()->subHours(max($hours - 12, 1)); // e.g. 36h ago
-        $newerBound = now()->subHours(max($hours - 24, 0)); // e.g. 24h ago
+        $olderBound = now()->subHours($hours); // expires right now
+        $newerBound = now()->subHours(max($hours - 24, 1)); // expires in ~24h
 
         $count = 0;
 

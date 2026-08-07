@@ -233,8 +233,12 @@ class PaymentController extends Controller
 
         try {
             // The payment write and the receipt dispatch are transactional:
-            // the receipt is only queued (never sent inline) after the write
-            // has committed, so a rolled-back record can never email a guest.
+            // the receipt is only sent after the write has committed, so a
+            // rolled-back record can never email a guest. The send itself is
+            // wrapped in its own try/catch so a transient mail failure can
+            // never turn a committed payment into an HTTP 500 (which would make
+            // PayMongo retry, hit the isPaid() branch, and permanently drop
+            // the receipt).
             DB::transaction(function () use ($inquiry, $method, $attributes, $event) {
                 $inquiry->update([
                     'paid_at' => now(),
@@ -247,7 +251,16 @@ class PaymentController extends Controller
                         ?? $inquiry->paymongo_session_id,
                 ]);
 
-                DB::afterCommit(fn () => Mail::to($inquiry->email)->send(new PaymentReceived($inquiry)));
+                DB::afterCommit(function () use ($inquiry) {
+                    try {
+                        Mail::to($inquiry->email)->send(new PaymentReceived($inquiry));
+                    } catch (\Throwable $e) {
+                        Log::error('PayMongo webhook: payment recorded but receipt email failed', [
+                            'inquiry_id' => $inquiry->id,
+                            'error' => $e->getMessage(),
+                        ]);
+                    }
+                });
             });
         } catch (\Throwable $e) {
             Log::error('PayMongo webhook: failed to record payment', [

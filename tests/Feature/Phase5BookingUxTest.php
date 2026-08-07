@@ -368,8 +368,9 @@ class Phase5BookingUxTest extends TestCase
             'cottage_id' => $cottage->id,
             'source' => 'website',
         ]);
-        // Created ~30h ago: inside the warn window (24h–36h for a 48h hold).
-        $inquiry->created_at = now()->subHours(30)->toDateTimeString();
+        // Created ~40h ago: the hold expires in ~8h (inside the warn window,
+        // which fires when <12h remain on a 48h hold).
+        $inquiry->created_at = now()->subHours(40)->toDateTimeString();
         $inquiry->save();
 
         $this->artisan('reservations:release-expired --hours=48')->assertExitCode(0);

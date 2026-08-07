@@ -71,7 +71,7 @@ Route::get('/gallery', [GalleryController::class, 'index'])->name('gallery.index
 */
 Route::get('/book', [BookingController::class, 'create'])->name('book');
 Route::post('/book', [BookingController::class, 'store'])
-    ->middleware('throttle:3,1')
+    ->middleware('throttle:booking')
     ->name('book.store');
 
 /*
@@ -81,7 +81,7 @@ Route::post('/book', [BookingController::class, 'store'])
 */
 Route::get('/contact', [InquiryController::class, 'create'])->name('contact');
 Route::post('/contact', [InquiryController::class, 'store'])
-    ->middleware('throttle:3,1')
+    ->middleware('throttle:contact')
     ->name('contact.store');
 Route::get('/booking/confirmation/{inquiry}', [InquiryController::class, 'show'])->name('booking.confirmation');
 
@@ -92,12 +92,12 @@ Route::get('/booking/confirmation/{inquiry}', [InquiryController::class, 'show']
 */
 Route::get('/booking/lookup', [BookingPortalController::class, 'lookupForm'])->name('booking.portal.lookup');
 Route::post('/booking/lookup', [BookingPortalController::class, 'lookup'])
-    ->middleware('throttle:5,1')
+    ->middleware('throttle:lookup')
     ->name('booking.portal.lookup.post');
 Route::get('/booking/{inquiry}', [BookingPortalController::class, 'show'])->name('booking.portal.show');
 Route::get('/booking/{inquiry}/status', [BookingPortalController::class, 'status'])->name('booking.portal.status');
 Route::post('/booking/{inquiry}/cancel', [BookingPortalController::class, 'cancel'])
-    ->middleware('throttle:3,1')
+    ->middleware('throttle:cancel')
     ->name('booking.portal.cancel');
 
 /*
@@ -116,7 +116,7 @@ Route::get('/booking/{inquiry}/invoice/pdf', [InvoiceController::class, 'downloa
 // POST only: creating a checkout session is a side-effecting action and must
 // not be triggered by a plain GET. Ownership is enforced in the controller.
 Route::post('/booking/{inquiry}/pay', [PaymentController::class, 'pay'])
-    ->middleware('throttle:5,1')
+    ->middleware('throttle:payment')
     ->name('payment.pay');
 Route::post('/paymongo/webhook', [PaymentController::class, 'webhook'])
     ->withoutMiddleware(VerifyCsrfToken::class)

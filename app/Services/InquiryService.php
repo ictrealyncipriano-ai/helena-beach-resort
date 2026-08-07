@@ -63,11 +63,22 @@ class InquiryService
                     // date in the range is already taken.
                     $inquiry->reserveBlocks();
 
-                    // Create or update guest record linked to this inquiry
-                    $guest = Guest::updateOrCreate(
+                    // Find the guest by email including soft-deleted rows
+                    // (SoftDeletes hides trashed rows from a plain lookup, so
+                    // updateOrCreate would try an INSERT that collides with the
+                    // guests.email unique index and 500). Reuse + restore the
+                    // trashed profile instead of failing. Never overwrite
+                    // name/phone on an existing profile — the request is
+                    // unauthenticated, so its fields are not trusted.
+                    $guest = Guest::withTrashed()->firstOrCreate(
                         ['email' => $data['email']],
                         ['name' => $data['name'], 'phone' => $data['phone'] ?? null]
                     );
+
+                    if ($guest->trashed()) {
+                        $guest->restore();
+                    }
+
                     $inquiry->guest()->associate($guest)->save();
 
                     return $inquiry;

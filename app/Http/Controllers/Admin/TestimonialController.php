@@ -63,6 +63,7 @@ class TestimonialController extends Controller
             'cottage_id' => 'nullable|exists:cottages,id',
             'is_active' => 'boolean',
             'sort_order' => 'nullable|integer|min:0',
+            'guest_avatar' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120',
         ]);
 
         $data['is_active'] = $request->boolean('is_active');
@@ -92,6 +93,7 @@ class TestimonialController extends Controller
             'cottage_id' => 'nullable|exists:cottages,id',
             'is_active' => 'boolean',
             'sort_order' => 'nullable|integer|min:0',
+            'guest_avatar' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120',
         ]);
 
         $data['is_active'] = $request->boolean('is_active');
