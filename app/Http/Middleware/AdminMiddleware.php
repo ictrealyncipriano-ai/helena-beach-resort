@@ -34,6 +34,14 @@ class AdminMiddleware
         'site-settings' => ['super_admin'],
     ];
 
+    // Routes inside the admin group that any authenticated staff may reach and
+    // that are not gated by a resource in $access (the /admin -> dashboard
+    // redirect and logout). Everything else must be explicitly mapped.
+    protected array $openResources = [
+        'home',
+        'logout',
+    ];
+
     public function handle(Request $request, Closure $next, string ...$guards): Response
     {
         $user = Auth::user();
@@ -47,8 +55,14 @@ class AdminMiddleware
         $resource = $parts[1] ?? '';
         $action = $parts[2] ?? '';
 
-        if (!isset($this->access[$resource])) {
+        if (in_array($resource, $this->openResources, true)) {
             return $next($request);
+        }
+
+        // Fail closed: an admin route that is not explicitly granted is denied
+        // rather than silently opened to every staff account.
+        if (!isset($this->access[$resource])) {
+            abort(403, 'You do not have permission to access this resource.');
         }
 
         if (!in_array($user->role, $this->access[$resource])) {

@@ -50,7 +50,18 @@ class AppServiceProvider extends ServiceProvider
      */
     private function clientKey(Request $request): string
     {
-        return (string) ($request->header('CF-Connecting-IP') ?: $request->ip());
+        // Only trust Cloudflare's CF-Connecting-IP header in production, and
+        // only when it is actually a valid IP. Anywhere else (and for any
+        // malformed/spoofed value) fall back to the request's own IP so a
+        // client-supplied header can never bypass a throttle.
+        if (app()->environment('production')) {
+            $cfIp = $request->header('CF-Connecting-IP');
+            if (is_string($cfIp) && filter_var($cfIp, FILTER_VALIDATE_IP) !== false) {
+                return $cfIp;
+            }
+        }
+
+        return (string) $request->ip();
     }
 
     /**
@@ -67,5 +78,9 @@ class AppServiceProvider extends ServiceProvider
         RateLimiter::for('cancel', fn (Request $request) => Limit::perMinute(3)->by($this->clientKey($request)));
         RateLimiter::for('payment', fn (Request $request) => Limit::perMinute(5)->by($this->clientKey($request)));
         RateLimiter::for('admin-login', fn (Request $request) => Limit::perMinute(5)->by($this->clientKey($request)));
+        // Signature-gated but not user-facing: a generous per-IP cap bounds
+        // invalid-signature spam and PayMongo retry bursts without rejecting
+        // legitimate webhook delivery.
+        RateLimiter::for('webhook', fn (Request $request) => Limit::perMinute(60)->by($this->clientKey($request)));
     }
 }

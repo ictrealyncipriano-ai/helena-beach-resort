@@ -10,6 +10,8 @@
         'contact' => 'Contact',
     ];
     $current = Route::currentRouteName();
+    $fbUrl = App\Models\SiteSetting::getValue('facebook_url', '#');
+    $fbHref = \Illuminate\Support\Str::startsWith((string) $fbUrl, ['http://', 'https://']) ? $fbUrl : '#';
 @endphp
 
 <nav class="fixed top-0 left-0 right-0 z-50 transition-all duration-300"
@@ -38,7 +40,7 @@
                         My Booking
                     </a>
                     <x-theme-toggle />
-                    <a href="{{ App\Models\SiteSetting::getValue('facebook_url', '#') }}" target="_blank" rel="noopener noreferrer"
+                    <a href="{{ $fbHref }}" target="_blank" rel="noopener noreferrer"
                        class="text-gray-500 hover:text-teal-700 dark:text-slate-400 dark:hover:text-teal-300 transition-colors" aria-label="Facebook">
                         <x-icons name="facebook" class="w-5 h-5" />
                     </a>
@@ -119,7 +121,7 @@
                @click="mobileMenu = false">
                 My Booking
             </a>
-            <a href="{{ App\Models\SiteSetting::getValue('facebook_url', '#') }}" target="_blank" rel="noopener noreferrer"
+            <a href="{{ $fbHref }}" target="_blank" rel="noopener noreferrer"
                class="block px-4 py-2.5 text-sm font-medium text-gray-600 hover:text-teal-700 rounded-lg hover:bg-gray-50 dark:text-slate-300 dark:hover:text-teal-300 dark:hover:bg-slate-700/50"
                @click="mobileMenu = false">
                 Facebook

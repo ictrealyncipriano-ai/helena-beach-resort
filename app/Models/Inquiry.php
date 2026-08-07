@@ -21,6 +21,10 @@ class Inquiry extends Model
         'expiry_warned_at',
     ];
 
+    protected $hidden = [
+        'token', 'paymongo_session_id', 'paymongo_payment_id',
+    ];
+
     /**
      * Boot events: auto-generates a non-enumerable booking token and a
      * collision-resistant reference code (HB-XXXXXX) on creation.
@@ -34,19 +38,47 @@ class Inquiry extends Model
             if (empty($inquiry->token)) {
                 $inquiry->token = bin2hex(random_bytes(20));
             }
+
             if (empty($inquiry->reference_code)) {
                 $inquiry->reference_code = static::generateReferenceCode();
             }
+
+            $inquiry->assertDataIntegrity();
+        });
+
+        static::updating(function (Inquiry $inquiry) {
+            $inquiry->assertDataIntegrity();
         });
     }
 
     /**
-     * Human-readable, collision-resistant reference code (6 hex chars).
+     * Cross-driver backstop for the DB-level CHECK constraints that are only
+     * emitted on PostgreSQL. Guards the status/booking-type enums and the
+     * check-out-after-check-in ordering on every driver so an invalid value
+     * can never be persisted outside of Postgres either.
+     */
+    protected function assertDataIntegrity(): void
+    {
+        if ($this->status !== null && ! in_array($this->status, ['pending', 'confirmed', 'cancelled', 'expired'], true)) {
+            throw new \InvalidArgumentException('Invalid inquiry status: '.$this->status);
+        }
+
+        if ($this->booking_type !== null && ! in_array($this->booking_type, ['day_tour', 'overnight'], true)) {
+            throw new \InvalidArgumentException('Invalid booking type: '.$this->booking_type);
+        }
+
+        if ($this->check_in !== null && $this->check_out !== null && $this->check_out->lt($this->check_in)) {
+            throw new \InvalidArgumentException('Check-out must be on or after check-in.');
+        }
+    }
+
+    /**
+     * Human-readable, collision-resistant reference code (10 hex chars).
      * Unique-violation retries are handled by the callers (see InquiryService).
      */
     public static function generateReferenceCode(): string
     {
-        return 'HB-'.strtoupper(substr(bin2hex(random_bytes(4)), 0, 6));
+        return 'HB-'.strtoupper(substr(bin2hex(random_bytes(5)), 0, 10));
     }
 
     protected function casts(): array

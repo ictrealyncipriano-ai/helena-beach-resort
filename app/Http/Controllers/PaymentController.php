@@ -4,8 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Concerns\GuardsBookingAccess;
+use App\Mail\InquiryNotification;
 use App\Mail\PaymentReceived;
 use App\Models\Inquiry;
+use App\Models\SiteSetting;
 use App\Services\PayMongoService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -208,6 +210,37 @@ class PaymentController extends Controller
             return response()->json(['ok' => true, 'already_paid' => true, 'received' => $received]);
         }
 
+        // A payment can land after the booking was cancelled or expired (e.g.
+        // the guest left the checkout open). Never record it against a
+        // non-confirmed booking — the guest is handled manually, so we only
+        // alert the owner and ignore the payment without auto-refunding.
+        if ($inquiry->status !== 'confirmed') {
+            Log::warning('PayMongo webhook: payment ignored, inquiry not confirmed', [
+                'inquiry_id' => $inquiry->id,
+                'reference_number' => $inquiry->reference_code,
+                'status' => $inquiry->status,
+            ]);
+
+            $ownerEmail = SiteSetting::getValue('contact_email');
+            if ($ownerEmail) {
+                try {
+                    Mail::to($ownerEmail)->send(new InquiryNotification($inquiry));
+                } catch (\Throwable $e) {
+                    Log::error('PayMongo webhook: admin alert email failed', [
+                        'inquiry_id' => $inquiry->id,
+                        'error' => $e->getMessage(),
+                    ]);
+                }
+            }
+
+            return response()->json([
+                'ok' => true,
+                'ignored' => true,
+                'reason' => 'inquiry_not_confirmed',
+                'received' => $received,
+            ]);
+        }
+
         $payment = $attributes['payments'][0]['attributes'] ?? [];
         $method = $payment['source']['type'] ?? null;
 
@@ -215,7 +248,7 @@ class PaymentController extends Controller
         // payable total before recording anything. A missing, mismatched, or
         // non-PHP amount means the payment must not be trusted as settled —
         // we log a warning and do NOT mark the booking paid.
-        $expectedCentavos = (int) round((float) $inquiry->total_amount * 100);
+        $expectedCentavos = $payMongo->toCentavos($inquiry->total_amount);
         $paidCentavos = isset($payment['amount']) ? (int) $payment['amount'] : null;
         $currency = $payment['currency'] ?? $attributes['currency'] ?? 'PHP';
 

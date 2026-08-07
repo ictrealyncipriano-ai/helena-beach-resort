@@ -62,6 +62,8 @@ class BookingPortalController extends Controller
     {
         $this->authorizeBookingAccess($inquiry);
 
+        $inquiry->load('cottage');
+
         $canCancel = $this->canCancel($inquiry);
 
         return view('pages.booking-detail', [

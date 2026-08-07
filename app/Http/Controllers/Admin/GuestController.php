@@ -20,7 +20,10 @@ class GuestController extends Controller
             ->withCount(['inquiries as failed_count' => fn ($q) => $q->whereNotNull('payment_failed_at')])
             ->withCount(['inquiries as refunded_count' => fn ($q) => $q->whereNotNull('refunded_at')])
             ->withSum(['inquiries as paid_amount' => fn ($q) => $q->whereNotNull('paid_at')], 'paid_amount')
-            ->with('inquiries');
+            // Hydrate only the most recent inquiries per guest for the history
+            // modal (the exact counts come from the withCount/withSum above),
+            // so a long booking history cannot balloon the index page memory.
+            ->with(['inquiries' => fn ($q) => $q->latest()->limit(10)]);
 
         if ($search = $request->get('search')) {
             $query->where(function ($q) use ($search) {

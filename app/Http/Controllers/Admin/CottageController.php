@@ -81,6 +81,14 @@ class CottageController extends Controller
             // extension so a malicious filename can never reach the disk.
             'photos' => 'nullable|array',
             'photos.*' => 'image|mimes:jpeg,png,jpg,webp|max:5120',
+            // Nested arrays are validated and whitelisted below so a crafted
+            // payload can never mass-assign inquiry_id onto a date block.
+            'amenities' => 'nullable|array',
+            'amenities.*.name' => 'nullable|string|max:255',
+            'amenities.*.icon' => 'nullable|string|max:255',
+            'date_blocks' => 'nullable|array',
+            'date_blocks.*.date' => 'nullable|date_format:Y-m-d',
+            'date_blocks.*.reason' => 'nullable|string|max:255',
         ]);
 
         $data['is_available'] = $request->boolean('is_available');
@@ -91,7 +99,10 @@ class CottageController extends Controller
         if ($request->has('amenities')) {
             foreach ($request->input('amenities', []) as $amenity) {
                 if (!empty($amenity['name'])) {
-                    $cottage->amenities()->create($amenity);
+                    $cottage->amenities()->create([
+                        'name' => $amenity['name'],
+                        'icon' => $amenity['icon'] ?? null,
+                    ]);
                 }
             }
         }
@@ -99,7 +110,10 @@ class CottageController extends Controller
         if ($request->has('date_blocks')) {
             foreach ($request->input('date_blocks', []) as $block) {
                 if (!empty($block['date'])) {
-                    $cottage->dateBlocks()->create($block);
+                    $cottage->dateBlocks()->create([
+                        'date' => $block['date'],
+                        'reason' => $block['reason'] ?? null,
+                    ]);
                 }
             }
         }
@@ -141,6 +155,14 @@ class CottageController extends Controller
             'photos' => 'nullable|array',
             'photos.*' => 'image|mimes:jpeg,png,jpg,webp|max:5120',
             'delete_photos' => 'nullable|string|regex:/^[0-9,]*$/',
+            // Nested arrays are validated and whitelisted below so a crafted
+            // payload can never mass-assign inquiry_id onto a date block.
+            'amenities' => 'nullable|array',
+            'amenities.*.name' => 'nullable|string|max:255',
+            'amenities.*.icon' => 'nullable|string|max:255',
+            'date_blocks' => 'nullable|array',
+            'date_blocks.*.date' => 'nullable|date_format:Y-m-d',
+            'date_blocks.*.reason' => 'nullable|string|max:255',
         ]);
 
         $data['is_available'] = $request->boolean('is_available');
@@ -151,7 +173,10 @@ class CottageController extends Controller
         if ($request->has('amenities')) {
             foreach ($request->input('amenities', []) as $amenity) {
                 if (!empty($amenity['name'])) {
-                    $cottage->amenities()->create($amenity);
+                    $cottage->amenities()->create([
+                        'name' => $amenity['name'],
+                        'icon' => $amenity['icon'] ?? null,
+                    ]);
                 }
             }
         }
@@ -214,6 +239,17 @@ class CottageController extends Controller
 
     public function destroy(Cottage $cottage)
     {
+        // Never delete a cottage that still holds dates for a live booking:
+        // the cascade would silently destroy the date blocks (and the hold)
+        // of pending/confirmed inquiries. Those must be cancelled first.
+        $activeBlocks = $cottage->dateBlocks()
+            ->whereHas('inquiry', fn ($q) => $q->whereIn('status', ['pending', 'confirmed']))
+            ->exists();
+
+        if ($activeBlocks) {
+            return back()->with('error', 'This cottage has active bookings. Cancel or complete them before deleting the cottage.');
+        }
+
         foreach ($cottage->photos as $photo) {
             Storage::disk('cloudflare')->delete($photo->photo_path);
         }

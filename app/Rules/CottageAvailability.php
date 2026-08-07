@@ -46,9 +46,13 @@ class CottageAvailability implements ValidationRule
                     fn ($q) => $q->whereNull('check_out')
                 )
                 ->where('created_at', '>=', now()->subMinutes(10))
-                ->exists();
+                ->first();
 
-            if ($ownDuplicate) {
+            // Only skip when this session actually created the pending
+            // booking; otherwise a spoofed email must not let the requester
+            // hold (or absorb) another person's dates.
+            $created = session('booking_created_inquiries', []);
+            if ($ownDuplicate && is_array($created) && in_array($ownDuplicate->id, $created, true)) {
                 return;
             }
         }

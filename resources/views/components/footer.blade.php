@@ -11,7 +11,11 @@
                     Experience the perfect getaway at Helena Beach Resort. Nestled along the pristine shores of Infanta, Quezon, we offer a peaceful retreat surrounded by nature.
                 </p>
                 <div class="flex items-center gap-3 mt-5">
-                    <a href="{{ App\Models\SiteSetting::getValue('facebook_url', '#') }}" target="_blank" rel="noopener noreferrer"
+                    @php
+                        $fbUrl = App\Models\SiteSetting::getValue('facebook_url', '#');
+                        $fbHref = \Illuminate\Support\Str::startsWith((string) $fbUrl, ['http://', 'https://']) ? $fbUrl : '#';
+                    @endphp
+                    <a href="{{ $fbHref }}" target="_blank" rel="noopener noreferrer"
                        class="w-9 h-9 rounded-full bg-teal-800/50 flex items-center justify-center text-teal-300 hover:bg-teal-700 hover:text-white transition-all">
                         <x-icons name="facebook" class="w-4 h-4" />
                     </a>

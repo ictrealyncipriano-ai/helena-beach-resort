@@ -121,6 +121,10 @@ class InquiryController extends Controller
 
             if ($guest->trashed()) {
                 $guest->restore();
+                // A trashed profile carries another person's history; reset
+                // the transient stay/notes fields so the 'new' guest does
+                // not inherit it.
+                $guest->update(['total_stays' => 0, 'last_stay_at' => null, 'notes' => null]);
             }
 
             $guest->update(['name' => $inquiry->name, 'phone' => $inquiry->phone]);

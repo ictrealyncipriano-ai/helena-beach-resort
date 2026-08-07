@@ -4,9 +4,11 @@ namespace App\Console\Commands;
 
 use App\Mail\BookingExpired;
 use App\Mail\BookingExpiringSoon;
+use App\Http\Controllers\Admin\DashboardController;
 use App\Models\CottageDateBlock;
 use App\Models\Inquiry;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 
@@ -81,6 +83,12 @@ class ReleaseExpiredReservations extends Command
         $this->info("Done: {$count} expired reservation(s) released.");
         if ($warned > 0) {
             $this->info("Warned {$warned} reservation(s) expiring soon.");
+        }
+
+        // Expired statuses change the dashboard's pending counts, so drop the
+        // cached stats block after any expiries were processed.
+        if ($count > 0) {
+            Cache::forget(DashboardController::cacheKey());
         }
 
         return self::SUCCESS;

@@ -23,6 +23,15 @@ class User extends Authenticatable
         'role',
     ];
 
+    protected static function booted(): void
+    {
+        static::saving(function (User $user) {
+            if ($user->role !== null && ! in_array($user->role, [self::ROLE_SUPER_ADMIN, self::ROLE_ADMIN, self::ROLE_STAFF], true)) {
+                throw new \InvalidArgumentException('Invalid user role: '.$user->role);
+            }
+        });
+    }
+
     protected $hidden = [
         'password',
         'remember_token',

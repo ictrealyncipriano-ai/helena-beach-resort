@@ -3,11 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Concerns\GuardsBookingAccess;
+use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Requests\BookingRequest;
 use App\Models\Cottage;
 use App\Models\CottageDateBlock;
 use App\Models\Inquiry;
 use App\Services\InquiryService;
+use Illuminate\Support\Facades\Cache;
 
 /**
  * Handles the booking flow: show booking form and store new bookings.
@@ -67,6 +69,15 @@ class BookingController extends Controller
         $data = $request->validated();
         $data['source'] = 'booking';
 
+        // Session marker of inquiry ids this session created, so the
+        // idempotency guard below only reuses a booking this requester
+        // actually made. A spoofed email must never absorb another person's
+        // pending booking.
+        $created = session('booking_created_inquiries', []);
+        if (! is_array($created)) {
+            $created = [];
+        }
+
         // Server-side idempotency guard: a guest double-clicking (or a flaky
         // network retry) must not create a second pending request for the
         // same cottage + dates. Reuse the earlier one instead.
@@ -89,7 +100,7 @@ class BookingController extends Controller
             ->latest('id')
             ->first();
 
-        if ($duplicate) {
+        if ($duplicate && in_array($duplicate->id, $created, true)) {
             // Re-grant access so the guest can land on the confirmation page
             // even if their previous session token has since expired.
             $this->grantBookingAccess($duplicate);
@@ -98,6 +109,13 @@ class BookingController extends Controller
         }
 
         $inquiry = $inquiryService->store($data);
+
+        // A new pending booking changes the dashboard's pending count, so drop
+        // the cached stats block like the other write paths do.
+        Cache::forget(DashboardController::cacheKey());
+
+        $created[] = $inquiry->id;
+        session(['booking_created_inquiries' => $created]);
 
         // The guest just submitted this booking — allow them to see the
         // confirmation page in the same session.

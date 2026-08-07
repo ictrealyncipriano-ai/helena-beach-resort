@@ -20,6 +20,8 @@ class InvoiceController extends Controller
 
         abort_if($inquiry->status !== 'confirmed', 404);
 
+        $inquiry->load('cottage');
+
         return view('pages.invoice', compact('inquiry'));
     }
 
@@ -29,6 +31,8 @@ class InvoiceController extends Controller
         $this->authorizeBookingAccess($inquiry);
 
         abort_if($inquiry->status !== 'confirmed', 404);
+
+        $inquiry->load('cottage');
 
         $nights = null;
         $subtotal = null;

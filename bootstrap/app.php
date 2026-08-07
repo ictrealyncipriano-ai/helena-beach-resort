@@ -38,6 +38,7 @@ return Application::configure(basePath: dirname(__DIR__))
         // Must run AFTER TrustProxies (which sits earlier in the global stack)
         // so getScheme() reflects X-Forwarded-Proto behind Vercel/Cloudflare.
         $middleware->append(\App\Http\Middleware\CanonicalHost::class);
+        $middleware->append(\App\Http\Middleware\SecurityHeaders::class);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

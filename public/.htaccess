@@ -66,6 +66,14 @@
         Header set Cache-Control "public, max-age=31536000, immutable"
     </FilesMatch>
 
+    # SVGs can execute inline script when navigated directly. Sandboxing the
+    # response keeps that inert while <img> embedding (which is script-free
+    # anyway) is unaffected; nosniff blocks MIME-sniffing into script.
+    <FilesMatch "\.svg$">
+        Header set Content-Security-Policy "sandbox"
+        Header set X-Content-Type-Options "nosniff"
+    </FilesMatch>
+
     # HTML served through the front controller must never be cached hard.
     <FilesMatch "^$|index\.php$">
         Header set Cache-Control "no-cache, private, must-revalidate"

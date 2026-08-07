@@ -74,9 +74,32 @@ class HtmlSanitizer
                         continue;
                     }
 
-                    if (in_array($name, ['href', 'src'], true)
-                        && preg_match('#^\s*(javascript|vbscript|data):#i', (string) $attribute->nodeValue)) {
-                        $node->removeAttribute($attribute->nodeName);
+                    if (in_array($name, ['href', 'src'], true)) {
+                        // DOMDocument decodes HTML entities, so a scheme like
+                        // `jav&#x09;ascript:` becomes a literal tab inside the
+                        // scheme that browsers strip. Remove all ASCII control
+                        // whitespace first, then enforce a strict URL-scheme
+                        // allow-list: only http/https/mailto/tel, a scheme-
+                        // relative URL (//…), or a relative path (no colon)
+                        // survive; anything else drops the attribute.
+                        $value = str_replace(["\x09", "\x0A", "\x0D"], '', (string) $attribute->nodeValue);
+                        $value = trim($value);
+
+                        $safe = false;
+                        if ($value === '') {
+                            $safe = false;
+                        } elseif (str_starts_with($value, '//')) {
+                            $safe = true;
+                        } elseif (preg_match('#^[a-z][a-z0-9+.\-]*:#i', $value, $m)) {
+                            $safe = in_array(strtolower($m[0]), ['http:', 'https:', 'mailto:', 'tel:'], true);
+                        } else {
+                            // No scheme → relative path.
+                            $safe = true;
+                        }
+
+                        if (! $safe) {
+                            $node->removeAttribute($attribute->nodeName);
+                        }
                     }
                 }
             }

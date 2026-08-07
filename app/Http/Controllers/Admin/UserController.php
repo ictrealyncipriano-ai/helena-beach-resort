@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rules\Password;
 
 class UserController extends Controller
 {
@@ -35,7 +36,7 @@ class UserController extends Controller
         $data = $request->validate([
             'name' => 'required|max:255',
             'email' => 'required|email|max:255|unique:users',
-            'password' => 'required|min:8|max:255',
+            'password' => ['required', Password::min(8)->letters()->numbers()],
             'role' => 'required|in:super_admin,admin,staff',
         ]);
 
@@ -63,7 +64,7 @@ class UserController extends Controller
         $data = $request->validate([
             'name' => 'required|max:255',
             'email' => 'required|email|max:255|unique:users,email,' . $user->id,
-            'password' => 'nullable|min:8|max:255',
+            'password' => ['nullable', Password::min(8)->letters()->numbers()],
             'role' => 'required|in:super_admin,admin,staff',
         ]);
 

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\SiteSetting;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class SiteSettingController extends Controller
 {
@@ -33,7 +34,13 @@ class SiteSettingController extends Controller
     {
         $data = $request->validate([
             'key' => 'required|max:255|unique:site_settings,key',
-            'value' => 'nullable',
+            'value' => [
+                'nullable',
+                Rule::when(
+                    fn ($input) => str_ends_with((string) ($input['key'] ?? ''), '_url') && filled($input['value'] ?? null),
+                    ['url', 'regex:/^https?:\/\//i']
+                ),
+            ],
             'type' => 'required|in:text,textarea,image',
         ]);
 
@@ -52,7 +59,13 @@ class SiteSettingController extends Controller
     {
         $data = $request->validate([
             'key' => 'required|max:255|unique:site_settings,key,' . $siteSetting->id,
-            'value' => 'nullable',
+            'value' => [
+                'nullable',
+                Rule::when(
+                    fn ($input) => str_ends_with((string) ($input['key'] ?? ''), '_url') && filled($input['value'] ?? null),
+                    ['url', 'regex:/^https?:\/\//i']
+                ),
+            ],
             'type' => 'required|in:text,textarea,image',
         ]);
 

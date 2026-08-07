@@ -120,6 +120,7 @@ Route::post('/booking/{inquiry}/pay', [PaymentController::class, 'pay'])
     ->name('payment.pay');
 Route::post('/paymongo/webhook', [PaymentController::class, 'webhook'])
     ->withoutMiddleware(VerifyCsrfToken::class)
+    ->middleware('throttle:webhook')
     ->name('payment.webhook');
 
 /*
