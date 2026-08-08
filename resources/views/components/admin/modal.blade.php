@@ -19,7 +19,7 @@ $sizes = [
         window.dispatchEvent(new CustomEvent('helena:clear-validation'));
     },
 }"
-     x-on:open-modal-{{ $name }}.window="isOpen = true; title = $event.detail?.title || '{{ $title }}'; data = $event.detail?.data || {}"
+     x-on:open-modal-{{ $name }}.window="isOpen = true; title = $event.detail?.title || '{{ $title }}'; data = $event.detail?.data || {}; window.dispatchEvent(new CustomEvent('helena:clear-validation'))"
      x-on:close-modal-{{ $name }}.window="close()"
      x-show="isOpen"
      x-trap.noscroll="isOpen"

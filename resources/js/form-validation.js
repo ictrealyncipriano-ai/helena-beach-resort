@@ -1,6 +1,7 @@
 const ERROR_CLASS = 'js-validation-error';
 const ERROR_COLOR = '#dc2626';
 const SUCCESS_COLOR = '#16a34a';
+const styled = new Set();
 
 function setup() {
     document.querySelectorAll('form').forEach((form) => {
@@ -13,6 +14,20 @@ function setup() {
     document.addEventListener('submit', handleSubmit, true);
 
     window.addEventListener('helena:clear-validation', clearAllErrors);
+
+    // Alpine's x-show hides elements by setting style.display = 'none'. When any
+    // element becomes hidden, wipe validation state inside it so errors never
+    // survive a close/reopen cycle regardless of how the container was closed.
+    const observer = new MutationObserver((mutations) => {
+        for (const mutation of mutations) {
+            if (mutation.type !== 'attributes' || mutation.attributeName !== 'style') continue;
+            const el = mutation.target;
+            if (el instanceof HTMLElement && el.style.display === 'none') {
+                clearSubtreeErrors(el);
+            }
+        }
+    });
+    observer.observe(document.body, { subtree: true, attributes: true, attributeFilter: ['style'] });
 }
 
 function handleSubmit(event) {
@@ -49,6 +64,7 @@ function onFieldChange(event) {
     if (!el.willValidate) return;
 
     if (el.checkValidity()) {
+        styled.add(el);
         el.style.borderColor = SUCCESS_COLOR;
     } else {
         showError(el);
@@ -71,6 +87,7 @@ function showError(el) {
     }
 
     el.setAttribute('aria-invalid', 'true');
+    styled.add(el);
     el.style.borderColor = ERROR_COLOR;
 }
 
@@ -104,19 +121,25 @@ function clearError(el) {
         el.removeAttribute('aria-describedby');
     }
 
+    clearFieldStyle(el);
+}
+
+function clearFieldStyle(el) {
     el.setAttribute('aria-invalid', 'false');
-    if (el.style.borderColor === ERROR_COLOR || el.style.borderColor === SUCCESS_COLOR) {
+    if (styled.delete(el)) {
         el.style.borderColor = '';
     }
 }
 
 function clearAllErrors() {
     document.querySelectorAll(`.${ERROR_CLASS}`).forEach((p) => p.remove());
-    document.querySelectorAll('input, select, textarea').forEach((el) => {
-        if (el.style.borderColor === ERROR_COLOR || el.style.borderColor === SUCCESS_COLOR) {
-            el.style.borderColor = '';
-            el.setAttribute('aria-invalid', 'false');
-        }
+    Array.from(styled).forEach(clearFieldStyle);
+}
+
+function clearSubtreeErrors(container) {
+    container.querySelectorAll(`.${ERROR_CLASS}`).forEach((p) => p.remove());
+    Array.from(styled).forEach((el) => {
+        if (container.contains(el)) clearFieldStyle(el);
     });
 }
 
