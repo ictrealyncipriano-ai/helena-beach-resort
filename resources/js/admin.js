@@ -2,6 +2,7 @@ import Alpine from 'alpinejs';
 import focus from '@alpinejs/focus';
 import flatpickr from 'flatpickr';
 import 'flatpickr/dist/flatpickr.min.css';
+import './form-validation';
 
 window.Alpine = Alpine;
 window.flatpickr = flatpickr;
