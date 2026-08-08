@@ -12,7 +12,7 @@ function setup() {
 
     document.addEventListener('submit', handleSubmit, true);
 
-    document.addEventListener('helena:clear-validation', clearAllErrors);
+    window.addEventListener('helena:clear-validation', clearAllErrors);
 }
 
 function handleSubmit(event) {
