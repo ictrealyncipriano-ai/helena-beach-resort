@@ -48,8 +48,18 @@ class PaymentController extends Controller
                 ->with('error', 'This booking has no payable amount set yet. Please contact the resort.');
         }
 
+        $dueNow = $inquiry->amountDueNow();
+        if ((float) $dueNow < 1) {
+            return redirect()->route('booking.portal.show', $inquiry)
+                ->with('error', 'This booking has no outstanding balance.');
+        }
+
+        // Remember what this checkout session is expected to collect so the
+        // webhook can verify the paid amount against it (deposit vs balance).
+        $inquiry->update(['payment_pending_amount' => $dueNow]);
+
         try {
-            $session = $payMongo->createCheckoutSession($inquiry);
+            $session = $payMongo->createCheckoutSession($inquiry, $dueNow);
         } catch (\RuntimeException $e) {
             return redirect()->route('booking.portal.show', $inquiry)
                 ->with('error', $e->getMessage());
@@ -203,11 +213,25 @@ class PaymentController extends Controller
             return response()->json(['error' => 'Inquiry not found', 'received' => $received], 404);
         }
 
-        // Idempotency: ignore repeats of the same payment.
+        // Idempotency: ignore repeats of the same payment. A booking is fully
+        // settled once paid_at is set; a partial (deposit) payment is matched
+        // by its PayMongo payment id so a re-delivered webhook can never
+        // credit the same money twice.
+        $incomingPaymentId = $attributes['payments'][0]['id'] ?? null;
+
         if ($inquiry->isPaid()) {
             Log::channel('stderr')->info('PAYMONGO branch already_paid', ['inquiry_id' => $inquiry->id]);
 
             return response()->json(['ok' => true, 'already_paid' => true, 'received' => $received]);
+        }
+
+        if ($incomingPaymentId !== null && $inquiry->paymongo_payment_id === $incomingPaymentId) {
+            Log::channel('stderr')->info('PAYMONGO branch duplicate_payment', [
+                'inquiry_id' => $inquiry->id,
+                'payment_id' => $incomingPaymentId,
+            ]);
+
+            return response()->json(['ok' => true, 'duplicate_payment' => true, 'received' => $received]);
         }
 
         // A payment can land after the booking was cancelled or expired (e.g.
@@ -244,11 +268,12 @@ class PaymentController extends Controller
         $payment = $attributes['payments'][0]['attributes'] ?? [];
         $method = $payment['source']['type'] ?? null;
 
-        // Verify the paid amount/currency actually matches the booking's
-        // payable total before recording anything. A missing, mismatched, or
-        // non-PHP amount means the payment must not be trusted as settled —
-        // we log a warning and do NOT mark the booking paid.
-        $expectedCentavos = $payMongo->toCentavos($inquiry->total_amount);
+        // Verify the paid amount/currency actually matches what this checkout
+        // session was created to collect (the pending amount set at pay()
+        // time — deposit or balance — falling back to the full total). A
+        // missing, mismatched, or non-PHP amount means the payment must not be
+        // trusted as settled — we log a warning and do NOT record anything.
+        $expectedCentavos = $payMongo->toCentavos($inquiry->payment_pending_amount ?? $inquiry->total_amount);
         $paidCentavos = isset($payment['amount']) ? (int) $payment['amount'] : null;
         $currency = $payment['currency'] ?? $attributes['currency'] ?? 'PHP';
 
@@ -272,10 +297,26 @@ class PaymentController extends Controller
             // never turn a committed payment into an HTTP 500 (which would make
             // PayMongo retry, hit the isPaid() branch, and permanently drop
             // the receipt).
-            DB::transaction(function () use ($inquiry, $method, $attributes, $event) {
+            DB::transaction(function () use ($inquiry, $method, $attributes, $event, $expectedCentavos) {
+                $paidPesos = number_format($expectedCentavos / 100, 2, '.', '');
+                $newAmountPaid = number_format(
+                    (float) ($inquiry->amount_paid ?? 0) + (float) $paidPesos,
+                    2, '.', ''
+                );
+
+                $fullyPaid = (float) $newAmountPaid >= (float) $inquiry->total_amount;
+                $depositCovered = $inquiry->hasDeposit()
+                    && (float) $newAmountPaid >= (float) $inquiry->deposit_amount;
+
                 $inquiry->update([
-                    'paid_at' => now(),
-                    'paid_amount' => $inquiry->total_amount,
+                    'amount_paid' => $newAmountPaid,
+                    'payment_pending_amount' => null,
+                    'deposit_paid_at' => $depositCovered && ! $inquiry->isDepositPaid()
+                        ? now()
+                        : $inquiry->deposit_paid_at,
+                    'paid_at' => $fullyPaid ? now() : $inquiry->paid_at,
+                    'fully_paid_at' => $fullyPaid ? now() : null,
+                    'paid_amount' => $fullyPaid ? $inquiry->total_amount : $inquiry->paid_amount,
                     'payment_method' => $method,
                     'paymongo_payment_id' => $attributes['payments'][0]['id']
                         ?? $inquiry->paymongo_payment_id,

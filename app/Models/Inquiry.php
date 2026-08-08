@@ -15,10 +15,15 @@ class Inquiry extends Model
     protected $fillable = [
         'reference_code', 'name', 'email', 'phone', 'check_in', 'check_out',
         'pax', 'cottage_id', 'guest_id', 'message', 'status', 'source',
-        'booking_type', 'total_amount', 'paid_at', 'paid_amount',
-        'payment_method', 'paymongo_session_id', 'payment_failed_at',
-        'paymongo_payment_id', 'refunded_at', 'refund_amount',
-        'expiry_warned_at',
+        'booking_type', 'total_amount', 'promo_code_id', 'discount_amount',
+        'paid_at', 'paid_amount', 'payment_method', 'paymongo_session_id',
+        'payment_failed_at', 'paymongo_payment_id', 'refunded_at',
+        'refund_amount', 'expiry_warned_at',
+        'deposit_amount', 'amount_paid', 'deposit_paid_at',
+        'fully_paid_at', 'payment_pending_amount',
+        'payment_proof_path', 'payment_proof_status',
+        'payment_proof_submitted_at', 'payment_proof_reviewed_at',
+        'payment_proof_review_note',
     ];
 
     protected $hidden = [
@@ -87,23 +92,93 @@ class Inquiry extends Model
             'check_in' => 'date',
             'check_out' => 'date',
             'total_amount' => 'decimal:2',
+            'discount_amount' => 'decimal:2',
+            'deposit_amount' => 'decimal:2',
+            'amount_paid' => 'decimal:2',
+            'deposit_paid_at' => 'datetime',
+            'fully_paid_at' => 'datetime',
+            'payment_pending_amount' => 'decimal:2',
             'paid_at' => 'datetime',
             'paid_amount' => 'decimal:2',
             'payment_failed_at' => 'datetime',
             'refunded_at' => 'datetime',
             'refund_amount' => 'decimal:2',
             'expiry_warned_at' => 'datetime',
+            'payment_proof_submitted_at' => 'datetime',
+            'payment_proof_reviewed_at' => 'datetime',
         ];
     }
 
     public function isPaid(): bool
     {
-        return $this->paid_at !== null;
+        return $this->paid_at !== null || $this->fully_paid_at !== null;
+    }
+
+    /**
+     * Whether a deposit is configured for this booking.
+     */
+    public function hasDeposit(): bool
+    {
+        return $this->deposit_amount !== null && (float) $this->deposit_amount > 0;
+    }
+
+    /**
+     * Whether the configured deposit has been settled (in full).
+     */
+    public function isDepositPaid(): bool
+    {
+        return $this->deposit_paid_at !== null
+            || (float) ($this->amount_paid ?? 0) >= (float) $this->deposit_amount;
+    }
+
+    /**
+     * The amount still owed after everything received so far.
+     */
+    public function balanceDue(): string
+    {
+        $total = (float) $this->total_amount;
+        $paid = (float) ($this->amount_paid ?? 0);
+
+        return number_format(max($total - $paid, 0), 2, '.', '');
+    }
+
+    /**
+     * Amount the guest should be asked to pay right now: the outstanding
+     * deposit when a deposit is set and unpaid, otherwise the remaining
+     * balance.
+     */
+    public function amountDueNow(): string
+    {
+        if ($this->hasDeposit() && ! $this->isDepositPaid()) {
+            $deposit = (float) $this->deposit_amount;
+            $paid = (float) ($this->amount_paid ?? 0);
+
+            return number_format(max($deposit - $paid, 0), 2, '.', '');
+        }
+
+        return $this->balanceDue();
     }
 
     public function hasFailedPayment(): bool
     {
         return $this->payment_failed_at !== null;
+    }
+
+    /**
+     * Whether a proof of a manual payment has been submitted and is awaiting
+     * (or under) admin review.
+     */
+    public function hasPendingPaymentProof(): bool
+    {
+        return $this->payment_proof_status === 'pending';
+    }
+
+    /**
+     * Whether the most recently submitted payment proof was approved.
+     */
+    public function hasApprovedPaymentProof(): bool
+    {
+        return $this->payment_proof_status === 'approved';
     }
 
     public function isRefunded(): bool
@@ -135,9 +210,19 @@ class Inquiry extends Model
         return $this->belongsTo(Guest::class);
     }
 
+    public function promoCode(): BelongsTo
+    {
+        return $this->belongsTo(PromoCode::class);
+    }
+
     public function dateBlocks(): HasMany
     {
         return $this->hasMany(CottageDateBlock::class);
+    }
+
+    public function testimonials(): HasMany
+    {
+        return $this->hasMany(Testimonial::class);
     }
 
     public function scopePending($q)
@@ -319,10 +404,10 @@ class Inquiry extends Model
         if ($this->id) {
             $query->where(function ($q) {
                 $q->where('inquiry_id', $this->id)
-                  ->orWhereIn('reason', [
-                      $this->reasonLabel('Pending'),
-                      $this->reasonLabel('Booked'),
-                  ]);
+                    ->orWhereIn('reason', [
+                        $this->reasonLabel('Pending'),
+                        $this->reasonLabel('Booked'),
+                    ]);
             });
         } else {
             $query->whereIn('reason', [

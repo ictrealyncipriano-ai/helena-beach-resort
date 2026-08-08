@@ -31,4 +31,34 @@ class Guest extends Model
     {
         return $this->hasMany(Inquiry::class);
     }
+
+    /**
+     * Find a guest by email, or create one. Emails are normalized (trimmed +
+     * lowercased) before both the lookup and the insert, and the lookup is
+     * case-insensitive so profiles stored under an older, non-normalized
+     * casing are still matched instead of duplicated.
+     */
+    public static function findByEmailOrCreate(string $email, array $attributes = []): self
+    {
+        $email = self::normalizeEmail($email);
+
+        $guest = static::withTrashed()
+            ->whereRaw('LOWER(TRIM(email)) = ?', [$email])
+            ->first();
+
+        return $guest ?? static::create([...$attributes, 'email' => $email]);
+    }
+
+    public static function normalizeEmail(?string $email): ?string
+    {
+        if ($email === null) {
+            return null;
+        }
+
+        $email = trim($email);
+
+        return function_exists('mb_strtolower')
+            ? mb_strtolower($email)
+            : strtolower($email);
+    }
 }

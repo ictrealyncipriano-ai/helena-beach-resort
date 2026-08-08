@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Faq;
+use App\Support\PublicCache;
 use Illuminate\Http\Request;
 
 class FaqController extends Controller
@@ -15,7 +16,7 @@ class FaqController extends Controller
         if ($search = $request->get('search')) {
             $query->where(function ($q) use ($search) {
                 $q->where('question', 'like', "%{$search}%")
-                  ->orWhere('answer', 'like', "%{$search}%");
+                    ->orWhere('answer', 'like', "%{$search}%");
             });
         }
 
@@ -83,6 +84,7 @@ class FaqController extends Controller
     public function destroy(Faq $faq)
     {
         $faq->delete();
+
         return redirect()->route('admin.faqs.index')
             ->with('success', 'FAQ deleted successfully.');
     }
@@ -90,6 +92,8 @@ class FaqController extends Controller
     public function activateAll()
     {
         Faq::query()->update(['is_active' => true]);
+        PublicCache::flush();
+
         return redirect()->route('admin.faqs.index')
             ->with('success', 'All FAQs activated successfully.');
     }

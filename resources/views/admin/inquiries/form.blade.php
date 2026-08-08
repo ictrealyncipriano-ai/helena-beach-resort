@@ -81,6 +81,10 @@
                     <input type="number" step="0.01" name="total_amount" value="{{ old('total_amount', $inquiry->total_amount) }}" min="0" class="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-600 focus:border-teal-400 dark:bg-slate-800 dark:border-slate-600 dark:text-white dark:placeholder-slate-400 dark:focus:border-teal-500 dark:focus:ring-teal-500/20">
                 </div>
                 <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1 dark:text-slate-200">Deposit (₱)</label>
+                    <input type="number" step="0.01" name="deposit_amount" value="{{ old('deposit_amount', $inquiry->deposit_amount) }}" min="0" class="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-600 focus:border-teal-400 dark:bg-slate-800 dark:border-slate-600 dark:text-white dark:placeholder-slate-400 dark:focus:border-teal-500 dark:focus:ring-teal-500/20">
+                </div>
+                <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1 dark:text-slate-200">Status <span class="text-red-500">*</span></label>
                     <select name="status" required class="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-600 focus:border-teal-400 bg-white dark:bg-slate-800 dark:border-slate-600 dark:text-white dark:focus:border-teal-500 dark:focus:ring-teal-500/20">
                         <option value="pending" {{ old('status', $inquiry->status) === 'pending' ? 'selected' : '' }}>Pending</option>

@@ -89,14 +89,22 @@
                         <x-icons name="check" class="w-3 h-3" />
                         Paid
                     </span>
+                    @elseif($inquiry->isDepositPaid())
+                    <span class="ml-2 inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold rounded-full bg-teal-50 text-teal-700 ring-1 ring-teal-200">
+                        <x-icons name="check" class="w-3 h-3" />
+                        Deposit Paid
+                    </span>
                     @endif
                 </div>
                 @if($inquiry->total_amount)
                 <div class="text-right">
                     <p class="text-sm text-gray-500 dark:text-slate-400 mb-1">Total</p>
                     <p class="text-2xl font-bold text-teal-700 dark:text-teal-300">₱{{ number_format($inquiry->total_amount) }}</p>
+                    @if(! $inquiry->isPaid() && $inquiry->hasDeposit())
+                    <p class="text-xs text-gray-500 dark:text-slate-400 mt-1">Deposit due: ₱{{ number_format($inquiry->amountDueNow()) }} · Balance: ₱{{ number_format($inquiry->balanceDue()) }}</p>
+                    @endif
                     @if($inquiry->isPaid() && $inquiry->payment_method)
-                    <p class="text-xs text-gray-500 dark:text-slate-400 mt-1">via {{ $inquiry->paymentMethodLabel() }} · {{ $inquiry->paid_at->format('M d, Y') }}</p>
+                    <p class="text-xs text-gray-500 dark:text-slate-400 mt-1">via {{ $inquiry->paymentMethodLabel() }} · {{ $inquiry->paid_at?->format('M d, Y') }}</p>
                     @endif
                 </div>
                 @endif
@@ -185,13 +193,16 @@
         </div>
 
         <div class="flex flex-col sm:flex-row gap-3 mt-6 reveal">
-            @if($inquiry->status === 'confirmed' && ! $inquiry->isPaid() && $inquiry->total_amount)
-            <form method="POST" action="{{ route('payment.pay', $inquiry) }}" class="flex-1" id="pay-now-form">
+            @if($inquiry->status === 'confirmed' && ! $inquiry->isPaid() && $inquiry->total_amount)            <form method="POST" action="{{ route('payment.pay', $inquiry) }}" class="flex-1" id="pay-now-form">
                 @csrf
                 <button type="submit"
                     class="w-full text-center px-6 py-3 bg-teal-700 text-white font-medium rounded-xl hover:bg-teal-700 transition-all inline-flex items-center justify-center gap-2">
                     <x-icons name="qr-code" class="w-4 h-4" />
-                    Pay Now — ₱{{ number_format($inquiry->total_amount) }}
+                    @if($inquiry->hasDeposit() && ! $inquiry->isDepositPaid())
+                        Pay Deposit — ₱{{ number_format($inquiry->amountDueNow()) }}
+                    @else
+                        Pay Balance — ₱{{ number_format($inquiry->balanceDue()) }}
+                    @endif
                 </button>
             </form>
             @endif
@@ -234,6 +245,92 @@
                 </div>
             </div>
         </div>
+
+        @if($canReview)
+        <div class="mt-8 bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm p-8 reveal" x-data="{ rating: 5 }">
+            <div class="flex items-center gap-2 mb-1">
+                <x-icons name="star" class="w-5 h-5 text-amber-400" />
+                <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Share Your Experience</h2>
+            </div>
+            <p class="text-sm text-gray-500 dark:text-slate-400 mb-6">Thanks for staying with us! Your review helps other guests — it will be published after a quick review by the resort.</p>
+
+            @if($inquiry->testimonials()->exists())
+            <div class="flex items-start gap-2 p-4 bg-teal-50 dark:bg-teal-900/30 border border-teal-200 dark:border-teal-800 rounded-xl text-sm text-teal-700 dark:text-teal-300">
+                <x-icons name="check" class="w-4 h-4 shrink-0 mt-0.5" />
+                <p>You've already submitted a review for this booking. Thank you!</p>
+            </div>
+            @else
+            <form method="POST" action="{{ route('booking.portal.review', $inquiry) }}" class="space-y-5">
+                @csrf
+                <div>
+                    <span class="block text-sm font-medium text-gray-700 mb-2 dark:text-slate-300">Your Rating</span>
+                    <div class="flex items-center gap-1" role="radiogroup" aria-label="Rating">
+                        @foreach(range(1, 5) as $star)
+                        <button type="button" @click="rating = {{ $star }}" :aria-checked="rating === {{ $star }}" :class="{ 'text-amber-400': rating >= {{ $star }}, 'text-gray-300': rating < {{ $star }} }" class="focus:outline-none focus:ring-2 focus:ring-teal-600 rounded-lg p-0.5 transition-colors" aria-label="{{ $star }} star{{ $star > 1 ? 's' : '' }}">
+                            <x-icons name="star" class="w-8 h-8" />
+                        </button>
+                        @endforeach
+                    </div>
+                    <input type="hidden" name="rating" :value="rating">
+                </div>
+                <div>
+                    <label for="review-content" class="block text-sm font-medium text-gray-700 mb-1 dark:text-slate-300">Your Review</label>
+                    <textarea name="content" id="review-content" rows="4" required maxlength="2000" placeholder="What did you enjoy about your stay?"
+                        @error('content') aria-invalid="true" aria-describedby="review-content-error" @enderror
+                        class="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-600 focus:border-teal-500 transition-all dark:bg-slate-800 dark:border-slate-600 dark:text-white dark:placeholder-slate-400 dark:focus:border-teal-500 dark:focus:ring-teal-500/40 @error('content') border-red-300 dark:border-red-500 @enderror"></textarea>
+                    @error('content') <p id="review-content-error" class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
+                </div>
+                <button type="submit"
+                    class="px-6 py-3 bg-teal-700 text-white font-medium rounded-xl hover:bg-teal-700 transition-all inline-flex items-center gap-2">
+                    <x-icons name="star" class="w-4 h-4" />
+                    Submit Review
+                </button>
+            </form>
+            @endif
+        </div>
+        @endif
+
+        @if($canSubmitPaymentProof || $inquiry->hasPendingPaymentProof() || $inquiry->hasApprovedPaymentProof())
+        <div class="mt-8 bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm p-8 reveal">
+            <div class="flex items-center gap-2 mb-1">
+                <x-icons name="photo" class="w-5 h-5 text-teal-700 dark:text-teal-300" />
+                <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Pay by Bank Transfer or GCash</h2>
+            </div>
+            <p class="text-sm text-gray-500 dark:text-slate-400 mb-6">Prefer to pay manually? Upload a photo of your payment receipt and the resort will confirm it.</p>
+
+            @if($inquiry->hasPendingPaymentProof())
+            <div class="flex items-start gap-2 p-4 bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800 rounded-xl text-sm text-amber-700 dark:text-amber-300">
+                <x-icons name="clock" class="w-4 h-4 shrink-0 mt-0.5" />
+                <div>
+                    <p class="font-semibold">Your payment proof is being reviewed.</p>
+                    <p class="text-xs mt-0.5 opacity-90">Submitted {{ $inquiry->payment_proof_submitted_at?->format('M d, Y \a\t h:i A') }}. The resort will confirm your payment shortly.</p>
+                </div>
+            </div>
+            @elseif($inquiry->hasApprovedPaymentProof())
+            <div class="flex items-start gap-2 p-4 bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-800 rounded-xl text-sm text-emerald-700 dark:text-emerald-300">
+                <x-icons name="check" class="w-4 h-4 shrink-0 mt-0.5" />
+                <p>Your payment proof was approved. Thank you!</p>
+            </div>
+            @else
+            <form method="POST" action="{{ route('booking.portal.proof', $inquiry) }}" enctype="multipart/form-data" class="space-y-5">
+                @csrf
+                <div>
+                    <label for="payment-proof" class="block text-sm font-medium text-gray-700 mb-1 dark:text-slate-300">Payment Receipt</label>
+                    <input type="file" name="payment_proof" id="payment-proof" accept="image/jpeg,image/png,image/webp" required
+                        @error('payment_proof') aria-invalid="true" aria-describedby="payment-proof-error" @enderror
+                        class="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-600 focus:border-teal-500 transition-all dark:bg-slate-800 dark:border-slate-600 dark:text-white dark:placeholder-slate-400 dark:focus:border-teal-500 dark:focus:ring-teal-500/40 @error('payment_proof') border-red-300 dark:border-red-500 @enderror">
+                    @error('payment_proof') <p id="payment-proof-error" class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
+                    <p class="mt-1 text-xs text-gray-500 dark:text-slate-400">Accepted formats: JPG, PNG, WebP. Max 5MB.</p>
+                </div>
+                <button type="submit"
+                    class="px-6 py-3 bg-teal-700 text-white font-medium rounded-xl hover:bg-teal-700 transition-all inline-flex items-center gap-2">
+                    <x-icons name="photo" class="w-4 h-4" />
+                    Upload Payment Proof
+                </button>
+            </form>
+            @endif
+        </div>
+        @endif
 
         @if($canCancel)
         <div x-cloak x-show="showCancelModal"

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\PublicCache;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -12,6 +13,12 @@ class CottagePhoto extends Model
     protected function casts(): array
     {
         return ['is_primary' => 'boolean'];
+    }
+
+    protected static function booted(): void
+    {
+        static::saved(fn () => PublicCache::flush());
+        static::deleted(fn () => PublicCache::flush());
     }
 
     public function cottage(): BelongsTo

@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Cottage;
+use App\Support\PublicCache;
+use Illuminate\Support\Facades\Cache;
 
 /**
  * Public-facing cottage listing and detail pages.
@@ -12,10 +14,12 @@ class CottageController extends Controller
     /** List all available cottages */
     public function index()
     {
-        $cottages = Cottage::with('primaryPhoto')
-            ->where('is_available', true)
-            ->orderBy('sort_order')
-            ->get();
+        $cottages = Cache::remember(PublicCache::COTTAGES_INDEX, PublicCache::CONTENT_TTL, function () {
+            return Cottage::with('primaryPhoto')
+                ->where('is_available', true)
+                ->orderBy('sort_order')
+                ->get();
+        });
 
         return view('pages.cottages.index', compact('cottages'));
     }

@@ -38,6 +38,7 @@ foreach ($inquiries as $inquiry) {
         'check_out' => $inquiry->check_out?->format('Y-m-d'),
         'pax' => $inquiry->pax,
         'total_amount' => $inquiry->total_amount,
+        'deposit_amount' => $inquiry->deposit_amount,
         'cottage_id' => $inquiry->cottage_id,
         'status' => $inquiry->status,
         'message' => $inquiry->message,
@@ -59,7 +60,7 @@ foreach ($inquiries as $inquiry) {
     ];
 }
 
-$showEditModal = $errors->hasAny(['name', 'email', 'phone', 'guest_id', 'booking_type', 'check_in', 'check_out', 'pax', 'total_amount', 'cottage_id', 'status', 'message']);
+$showEditModal = $errors->hasAny(['name', 'email', 'phone', 'guest_id', 'booking_type', 'check_in', 'check_out', 'pax', 'total_amount', 'deposit_amount', 'cottage_id', 'status', 'message']);
 $editingId = old('_editing', 0);
 $editingData = null;
 if ($editingId) {
@@ -292,13 +293,39 @@ window.inquiryModal = function() {
         formAction: '',
         formMethod: 'PUT',
 
+        isPeakDate(r, dateStr) {
+            if (!r.peak_start || !r.peak_end || !dateStr) return false;
+            const md = dateStr.slice(5);
+            const start = r.peak_start;
+            const end = r.peak_end;
+            if (start <= end) return md >= start && md <= end;
+            return md >= start || md <= end;
+        },
+
+        rateFor(r, type, dateStr) {
+            if (this.isPeakDate(r, dateStr)) {
+                const peak = type === 'day_tour' ? r.peak_day_tour : r.peak_overnight;
+                if (peak && peak > 0) return peak;
+            }
+            return type === 'day_tour' ? r.day_tour : r.overnight;
+        },
+
+        addDays(dateStr, days) {
+            const d = new Date(dateStr + 'T00:00:00');
+            d.setDate(d.getDate() + days);
+            const y = d.getFullYear();
+            const m = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            return `${y}-${m}-${day}`;
+        },
+
         get suggestedTotal() {
             if (!this.form.cottage_id || !this.cottageRates[this.form.cottage_id]) {
                 return null;
             }
             const r = this.cottageRates[this.form.cottage_id];
             if (this.form.booking_type === 'day_tour') {
-                return Number(r.day_tour);
+                return Number(this.rateFor(r, 'day_tour', this.form.check_in));
             }
             if (this.form.booking_type === 'overnight') {
                 if (!this.form.check_in || !this.form.check_out) {
@@ -307,7 +334,12 @@ window.inquiryModal = function() {
                 const a = new Date(this.form.check_in + 'T00:00:00');
                 const b = new Date(this.form.check_out + 'T00:00:00');
                 const nights = Math.max(1, Math.round((b - a) / (1000 * 60 * 60 * 24)));
-                return Number(r.overnight) * nights;
+                let total = 0;
+                for (let i = 0; i < nights; i++) {
+                    const d = this.addDays(this.form.check_in, i);
+                    total += Number(this.rateFor(r, 'overnight', d));
+                }
+                return total;
             }
             return null;
         },
@@ -347,6 +379,7 @@ window.inquiryModal = function() {
                 check_out: '',
                 pax: '',
                 total_amount: '',
+                deposit_amount: '',
                 cottage_id: '',
                 status: 'pending',
                 message: '',
@@ -373,6 +406,7 @@ window.inquiryModal = function() {
                 check_out: inquiry.check_out || '',
                 pax: inquiry.pax || '',
                 total_amount: inquiry.total_amount ?? '',
+                deposit_amount: inquiry.deposit_amount ?? '',
                 cottage_id: inquiry.cottage_id || '',
                 status: inquiry.status,
                 message: inquiry.message || '',
@@ -422,6 +456,7 @@ window.inquiryModal = function() {
             const oldCheckOut = @js(old('check_out', ''));
             const oldPax = @js(old('pax', ''));
             const oldTotal = @js(old('total_amount', ''));
+            const oldDeposit = @js(old('deposit_amount', ''));
             const oldCottageId = @js(old('cottage_id', ''));
             const oldStatus = @js(old('status', ''));
             const oldMessage = @js(old('message', ''));
@@ -442,6 +477,7 @@ window.inquiryModal = function() {
                     if (oldCheckOut) this.form.check_out = oldCheckOut;
                     if (oldPax) this.form.pax = oldPax;
                     if (oldTotal !== null && oldTotal !== '') this.form.total_amount = oldTotal;
+                    if (oldDeposit !== null && oldDeposit !== '') this.form.deposit_amount = oldDeposit;
                     if (oldCottageId) this.form.cottage_id = oldCottageId;
                     if (oldStatus) this.form.status = oldStatus;
                     this.form.message = oldMessage;

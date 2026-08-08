@@ -1,0 +1,98 @@
+<?php
+
+namespace App\Http\Controllers\Admin;
+
+use App\Http\Controllers\Controller;
+use App\Models\PromoCode;
+use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
+use Illuminate\Validation\Rule;
+
+class PromoCodeController extends Controller
+{
+    public function index(Request $request)
+    {
+        $query = PromoCode::query();
+
+        if ($search = $request->get('search')) {
+            $query->where('code', 'like', '%'.strtoupper($search).'%');
+        }
+
+        if ($request->filled('is_active')) {
+            $query->where('is_active', $request->boolean('is_active'));
+        }
+
+        $promoCodes = $query->orderByDesc('id')->paginate(15);
+
+        return view('admin.promo-codes.index', compact('promoCodes'));
+    }
+
+    public function create()
+    {
+        return view('admin.promo-codes.form', ['promo' => new PromoCode]);
+    }
+
+    public function store(Request $request)
+    {
+        $data = $this->validated($request);
+
+        PromoCode::create($data);
+
+        return redirect()->route('admin.promo-codes.index')
+            ->with('success', 'Promo code created successfully.');
+    }
+
+    public function edit(PromoCode $promo)
+    {
+        return view('admin.promo-codes.form', compact('promo'));
+    }
+
+    public function update(Request $request, PromoCode $promo)
+    {
+        $data = $this->validated($request, $promo);
+
+        $promo->update($data);
+
+        return redirect()->route('admin.promo-codes.index')
+            ->with('success', 'Promo code updated successfully.');
+    }
+
+    public function destroy(PromoCode $promo)
+    {
+        $promo->delete();
+
+        return redirect()->route('admin.promo-codes.index')
+            ->with('success', 'Promo code deleted successfully.');
+    }
+
+    private function validated(Request $request, ?PromoCode $promo = null): array
+    {
+        $data = $request->validate([
+            'code' => [
+                'required', 'string', 'max:50',
+                Rule::unique('promo_codes', 'code')->ignore($promo?->id),
+            ],
+            'type' => ['required', 'in:fixed,percent'],
+            'value' => ['required', 'numeric', 'min:0.01', 'max:9999999.99'],
+            'min_amount' => ['nullable', 'numeric', 'min:0'],
+            'valid_from' => ['nullable', 'date'],
+            'valid_until' => ['nullable', 'date', 'after:valid_from'],
+            'usage_limit' => ['nullable', 'integer', 'min:1'],
+            'is_active' => ['boolean'],
+        ]);
+
+        $data['is_active'] = $request->boolean('is_active');
+        $data['value'] = number_format((float) $data['value'], 2, '.', '');
+        $data['min_amount'] = isset($data['min_amount']) && $data['min_amount'] !== null && $data['min_amount'] !== ''
+            ? number_format((float) $data['min_amount'], 2, '.', '')
+            : null;
+
+        foreach (['valid_from', 'valid_until'] as $field) {
+            $data[$field] = isset($data[$field]) && $data[$field] !== null && $data[$field] !== ''
+                ? Carbon::parse($data[$field])->timezone(config('app.timezone'))->format('Y-m-d H:i:s')
+                : null;
+        }
+
+        return $data;
+    }
+}

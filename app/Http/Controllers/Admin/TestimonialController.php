@@ -28,6 +28,10 @@ class TestimonialController extends Controller
             $query->where('rating', $request->rating);
         }
 
+        if ($request->filled('source')) {
+            $query->where('source', $request->source);
+        }
+
         $testimonials = $query->orderBy('sort_order')->paginate(15);
 
         $testimonialsData = $testimonials->map(function ($testimonial) {
@@ -40,6 +44,7 @@ class TestimonialController extends Controller
                 'guest_avatar' => $testimonial->guest_avatar ? Storage::url($testimonial->guest_avatar) : null,
                 'is_active' => (bool) $testimonial->is_active,
                 'sort_order' => $testimonial->sort_order,
+                'source' => $testimonial->source,
             ];
         })->values();
 

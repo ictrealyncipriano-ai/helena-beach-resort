@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\PublicCache;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Storage;
 
@@ -24,6 +25,9 @@ class Gallery extends Model
                 static::compressImage($gallery->photo_path);
             }
         });
+
+        static::saved(fn () => PublicCache::flush());
+        static::deleted(fn () => PublicCache::flush());
     }
 
     /**
@@ -40,7 +44,7 @@ class Gallery extends Model
             return;
         }
 
-        if (!$disk->exists($path)) {
+        if (! $disk->exists($path)) {
             return;
         }
 
@@ -48,8 +52,9 @@ class Gallery extends Model
         file_put_contents($tmpPath, $disk->get($path));
 
         $info = @getimagesize($tmpPath);
-        if (!$info) {
+        if (! $info) {
             @unlink($tmpPath);
+
             return;
         }
 

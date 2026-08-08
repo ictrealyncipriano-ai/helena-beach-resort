@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\PublicCache;
 use Illuminate\Database\Eloquent\Model;
 
 class Service extends Model
@@ -23,5 +24,11 @@ class Service extends Model
     public function scopeCategory($q, string $category)
     {
         return $q->where('category', $category);
+    }
+
+    protected static function booted(): void
+    {
+        static::saved(fn () => PublicCache::flush());
+        static::deleted(fn () => PublicCache::flush());
     }
 }

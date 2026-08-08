@@ -87,6 +87,14 @@
                 </template>
             </div>
             <div>
+                <label for="deposit-amount-field" class="block text-sm font-medium text-gray-700 mb-1 dark:text-slate-200">Deposit (₱)</label>
+                <input type="number" step="0.01" name="deposit_amount" id="deposit-amount-field" x-model="form.deposit_amount" min="0"
+                    @error('deposit_amount') aria-invalid="true" aria-describedby="deposit-amount-field-error" @enderror
+                    class="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-600 focus:border-teal-500 transition-all @error('deposit_amount') border-red-300 @enderror dark:bg-slate-800 dark:border-slate-600 dark:text-white dark:placeholder-slate-400 dark:focus:border-teal-500 dark:focus:ring-teal-500/40">
+                @error('deposit_amount') <p id="deposit-amount-field-error" class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
+                <p class="mt-1 text-xs text-gray-500 dark:text-slate-400">Guest pays this first online, then the balance.</p>
+            </div>
+            <div>
                 <label for="status-field" class="block text-sm font-medium text-gray-700 mb-1 dark:text-slate-200">Status <span class="text-red-600">*</span></label>
                 <select name="status" id="status-field" x-model="form.status" required
                     @error('status') aria-invalid="true" aria-describedby="status-field-error" @enderror

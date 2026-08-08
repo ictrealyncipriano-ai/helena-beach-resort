@@ -10,8 +10,16 @@
         'contact' => 'Contact',
     ];
     $current = Route::currentRouteName();
-    $fbUrl = App\Models\SiteSetting::getValue('facebook_url', '#');
-    $fbHref = \Illuminate\Support\Str::startsWith((string) $fbUrl, ['http://', 'https://']) ? $fbUrl : '#';
+    $socialLinks = [
+        'facebook' => 'facebook_url',
+        'instagram' => 'instagram_url',
+        'tiktok' => 'tiktok_url',
+    ];
+    $socialHrefs = [];
+    foreach ($socialLinks as $icon => $settingKey) {
+        $url = (string) App\Models\SiteSetting::getValue($settingKey, '');
+        $socialHrefs[$icon] = \Illuminate\Support\Str::startsWith($url, ['http://', 'https://']) ? $url : '';
+    }
 @endphp
 
 <nav class="fixed top-0 left-0 right-0 z-50 transition-all duration-300"
@@ -40,10 +48,14 @@
                         My Booking
                     </a>
                     <x-theme-toggle />
-                    <a href="{{ $fbHref }}" target="_blank" rel="noopener noreferrer"
-                       class="text-gray-500 hover:text-teal-700 dark:text-slate-400 dark:hover:text-teal-300 transition-colors" aria-label="Facebook">
-                        <x-icons name="facebook" class="w-5 h-5" />
-                    </a>
+                    @foreach($socialHrefs as $icon => $href)
+                        @if($href)
+                        <a href="{{ $href }}" target="_blank" rel="noopener noreferrer"
+                           class="text-gray-500 hover:text-teal-700 dark:text-slate-400 dark:hover:text-teal-300 transition-colors" aria-label="{{ ucfirst($icon) }}">
+                            <x-icons name="{{ $icon }}" class="w-5 h-5" />
+                        </a>
+                        @endif
+                    @endforeach
                     <a href="{{ route('book') }}"
                        class="inline-flex items-center px-4 py-2 bg-teal-700 text-white text-sm font-medium rounded-full hover:bg-teal-700 transition-all hover:shadow-lg hover:shadow-teal-600/20 active:scale-95">
                         Book Now
@@ -121,11 +133,17 @@
                @click="mobileMenu = false">
                 My Booking
             </a>
-            <a href="{{ $fbHref }}" target="_blank" rel="noopener noreferrer"
-               class="block px-4 py-2.5 text-sm font-medium text-gray-600 hover:text-teal-700 rounded-lg hover:bg-gray-50 dark:text-slate-300 dark:hover:text-teal-300 dark:hover:bg-slate-700/50"
-               @click="mobileMenu = false">
-                Facebook
-            </a>
+            <div class="flex items-center gap-5 px-4 py-3">
+                @foreach($socialHrefs as $icon => $href)
+                    @if($href)
+                    <a href="{{ $href }}" target="_blank" rel="noopener noreferrer"
+                       class="text-gray-500 hover:text-teal-700 dark:text-slate-300 dark:hover:text-teal-300 transition-colors" aria-label="{{ ucfirst($icon) }}"
+                       @click="mobileMenu = false">
+                        <x-icons name="{{ $icon }}" class="w-5 h-5" />
+                    </a>
+                    @endif
+                @endforeach
+            </div>
             <div class="pt-3">
                 <a href="{{ route('book') }}"
                    class="block text-center px-4 py-3 bg-teal-700 text-white text-sm font-medium rounded-full hover:bg-teal-700 transition-colors"

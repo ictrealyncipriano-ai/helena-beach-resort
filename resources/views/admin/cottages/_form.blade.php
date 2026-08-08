@@ -54,6 +54,30 @@
                 </label>
             </div>
         </div>
+
+        {{-- Peak season pricing --}}
+        <div class="border-t border-gray-100 mt-4 pt-4 dark:border-slate-700">
+            <h3 class="text-sm font-semibold text-gray-900 mb-1 dark:text-white">Peak Season Pricing</h3>
+            <p class="text-xs text-gray-500 mb-3 dark:text-slate-400">Optional annual window where peak rates apply.</p>
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                <div>
+                    <label for="peak-start-field" class="block text-sm font-medium text-gray-700 mb-1 dark:text-slate-300">Peak Start</label>
+                    <input type="date" name="peak_start" id="peak-start-field" x-model="form.peak_start" class="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-600 focus:border-teal-500 transition-all dark:bg-slate-800 dark:border-slate-600 dark:text-white dark:placeholder-slate-400 dark:focus:border-teal-500 dark:focus:ring-teal-500/40">
+                </div>
+                <div>
+                    <label for="peak-end-field" class="block text-sm font-medium text-gray-700 mb-1 dark:text-slate-300">Peak End</label>
+                    <input type="date" name="peak_end" id="peak-end-field" x-model="form.peak_end" class="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-600 focus:border-teal-500 transition-all dark:bg-slate-800 dark:border-slate-600 dark:text-white dark:placeholder-slate-400 dark:focus:border-teal-500 dark:focus:ring-teal-500/40">
+                </div>
+                <div>
+                    <label for="peak-daytour-field" class="block text-sm font-medium text-gray-700 mb-1 dark:text-slate-300">Peak Day Tour (₱)</label>
+                    <input type="number" step="0.01" name="peak_rate_daytour" id="peak-daytour-field" x-model="form.peak_rate_daytour" min="0" class="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-600 focus:border-teal-500 transition-all dark:bg-slate-800 dark:border-slate-600 dark:text-white dark:placeholder-slate-400 dark:focus:border-teal-500 dark:focus:ring-teal-500/40">
+                </div>
+                <div>
+                    <label for="peak-overnight-field" class="block text-sm font-medium text-gray-700 mb-1 dark:text-slate-300">Peak Overnight (₱)</label>
+                    <input type="number" step="0.01" name="peak_rate_overnight" id="peak-overnight-field" x-model="form.peak_rate_overnight" min="0" class="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-600 focus:border-teal-500 transition-all dark:bg-slate-800 dark:border-slate-600 dark:text-white dark:placeholder-slate-400 dark:focus:border-teal-500 dark:focus:ring-teal-500/40">
+                </div>
+            </div>
+        </div>
     </div>
 
     {{-- Amenities --}}

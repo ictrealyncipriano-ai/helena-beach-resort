@@ -99,6 +99,11 @@
                 <div>
                     <span class="text-xs text-gray-500 uppercase tracking-wider font-medium dark:text-slate-400">Total Amount</span>
                     <p class="mt-1 text-sm font-semibold text-gray-900 dark:text-white">₱ {{ number_format($inquiry->total_amount, 2) }}</p>
+                    @if($inquiry->discount_amount)
+                        <p class="mt-0.5 text-xs text-amber-600 dark:text-amber-400">
+                            {{ $inquiry->promoCode?->code ?? 'Promo' }} &minus;₱ {{ number_format($inquiry->discount_amount, 2) }}
+                        </p>
+                    @endif
                 </div>
                 <div>
                     <span class="text-xs text-gray-500 uppercase tracking-wider font-medium">Payment</span>
@@ -107,6 +112,8 @@
                             @include('admin.components.badge', ['type' => 'danger', 'slot' => 'Refunded'])
                         @elseif($inquiry->isPaid())
                             @include('admin.components.badge', ['type' => 'success', 'slot' => 'Paid'])
+                        @elseif($inquiry->isDepositPaid())
+                            @include('admin.components.badge', ['type' => 'warning', 'slot' => 'Deposit Paid'])
                         @elseif($inquiry->hasFailedPayment())
                             @include('admin.components.badge', ['type' => 'danger', 'slot' => 'Payment Failed'])
                         @else
@@ -117,6 +124,8 @@
                         <p class="mt-1 text-xs text-red-500 dark:text-red-400">Refunded ₱{{ number_format($inquiry->refund_amount ?? $inquiry->paid_amount, 2) }} on {{ $inquiry->refunded_at?->format('M d, Y') }}</p>
                     @elseif($inquiry->isPaid())
                         <p class="mt-1 text-xs text-gray-500 dark:text-slate-400">₱{{ number_format($inquiry->paid_amount, 2) }} · {{ $inquiry->paymentMethodLabel() }} · {{ $inquiry->paid_at?->format('M d, Y') }}</p>
+                    @elseif($inquiry->hasDeposit())
+                        <p class="mt-1 text-xs text-gray-500 dark:text-slate-400">Deposit ₱{{ number_format($inquiry->deposit_amount, 2) }} · collected ₱{{ number_format($inquiry->amount_paid ?? 0, 2) }} · balance ₱{{ number_format($inquiry->balanceDue(), 2) }}</p>
                     @elseif($inquiry->hasFailedPayment())
                         <p class="mt-1 text-xs text-red-500 dark:text-red-400">Last attempt failed {{ $inquiry->payment_failed_at?->format('M d, Y \a\t h:i A') }}</p>
                     @endif
@@ -137,6 +146,49 @@
         </div>
         <div class="p-5">
             <p class="text-sm text-gray-700 whitespace-pre-wrap dark:text-slate-200">{{ $inquiry->message }}</p>
+        </div>
+    </div>
+    @endif
+
+    {{-- Payment Proof --}}
+    @if($inquiry->payment_proof_path && $inquiry->payment_proof_status !== 'none')
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 dark:bg-slate-800 dark:border-slate-700">
+        <div class="px-5 py-4 border-b border-gray-100 flex items-center justify-between dark:border-slate-700">
+            <h2 class="text-sm font-semibold text-gray-900 dark:text-white">Payment Proof</h2>
+            @include('admin.components.badge', [
+                'type' => $inquiry->hasPendingPaymentProof() ? 'warning' : ($inquiry->hasApprovedPaymentProof() ? 'success' : 'danger'),
+                'slot' => ucfirst($inquiry->payment_proof_status),
+            ])
+        </div>
+        <div class="p-5">
+            <img src="{{ Storage::disk('cloudflare')->url($inquiry->payment_proof_path) }}"
+                alt="Payment proof for {{ $inquiry->reference_code }}"
+                class="max-w-md w-full rounded-xl border border-gray-200 dark:border-slate-700">
+            <p class="mt-3 text-xs text-gray-500 dark:text-slate-400">
+                Submitted {{ $inquiry->payment_proof_submitted_at?->format('M d, Y \a\t h:i A') }}
+                @if($inquiry->payment_proof_reviewed_at)
+                    · Reviewed {{ $inquiry->payment_proof_reviewed_at->format('M d, Y \a\t h:i A') }}
+                @endif
+            </p>
+            @if($inquiry->payment_proof_review_note)
+                <p class="mt-2 text-sm text-gray-700 dark:text-slate-200">
+                    <span class="font-medium">Note:</span> {{ $inquiry->payment_proof_review_note }}
+                </p>
+            @endif
+            @if($inquiry->hasPendingPaymentProof())
+            <div class="mt-4 flex flex-wrap items-center gap-3">
+                <form method="POST" action="{{ route('admin.inquiries.payment-proof.approve', $inquiry) }}" class="inline-flex items-center gap-2">
+                    @csrf
+                    <input type="text" name="note" placeholder="Optional note" class="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-600 focus:border-teal-400 dark:bg-slate-800 dark:border-slate-600 dark:text-white dark:placeholder-slate-400">
+                    <button type="submit" class="px-4 py-2 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors">Approve &amp; Mark Paid</button>
+                </form>
+                <form method="POST" action="{{ route('admin.inquiries.payment-proof.reject', $inquiry) }}" class="inline-flex items-center gap-2">
+                    @csrf
+                    <input type="text" name="note" placeholder="Rejection reason (optional)" class="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-600 focus:border-teal-400 dark:bg-slate-800 dark:border-slate-600 dark:text-white dark:placeholder-slate-400">
+                    <button type="submit" class="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors">Reject</button>
+                </form>
+            </div>
+            @endif
         </div>
     </div>
     @endif

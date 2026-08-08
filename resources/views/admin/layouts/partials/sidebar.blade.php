@@ -12,6 +12,11 @@
         'Bookings' => [
             ['label' => 'Inquiries', 'route' => 'admin.inquiries.index', 'icon' => 'chat-bubble-left'],
             ['label' => 'Guests', 'route' => 'admin.guests.index', 'icon' => 'user'],
+            ['label' => 'Availability', 'route' => 'admin.availability', 'icon' => 'calendar'],
+            ['label' => 'Reports', 'route' => 'admin.exports.index', 'icon' => 'document'],
+        ],
+        'Offers' => [
+            ['label' => 'Promo Codes', 'route' => 'admin.promo-codes.index', 'icon' => 'tag'],
         ],
         'Settings' => [
             ['label' => 'Users', 'route' => 'admin.users.index', 'icon' => 'users'],

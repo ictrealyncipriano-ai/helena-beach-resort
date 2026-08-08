@@ -53,6 +53,10 @@ class BookingController extends Controller
             $c->id => [
                 'day_tour' => (float) $c->rate_daytour,
                 'overnight' => (float) $c->rate_overnight,
+                'peak_day_tour' => $c->peak_rate_daytour !== null ? (float) $c->peak_rate_daytour : null,
+                'peak_overnight' => $c->peak_rate_overnight !== null ? (float) $c->peak_rate_overnight : null,
+                'peak_start' => $c->peak_start?->format('m-d'),
+                'peak_end' => $c->peak_end?->format('m-d'),
                 'name' => $c->name,
                 'capacity' => $c->capacity,
             ],

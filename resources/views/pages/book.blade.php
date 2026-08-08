@@ -138,6 +138,18 @@
                             class="w-full px-4 py-2.5 border border-gray-300 dark:bg-slate-800 dark:border-slate-600 dark:text-white dark:placeholder-slate-400 rounded-lg focus:ring-2 focus:ring-teal-700 focus:border-teal-700 dark:focus:border-teal-700 dark:ring-teal-700/20 outline-none transition-colors text-sm">{{ old('message') }}</textarea>
                     </div>
 
+                    {{-- Promo code --}}
+                    <div>
+                        <label for="promo_code" class="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">Promo Code</label>
+                        <input type="text" id="promo_code" name="promo_code" maxlength="50" placeholder="e.g. SUMMER10"
+                            value="{{ old('promo_code') }}"
+                            aria-invalid="{{ $errors->has('promo_code') ? 'true' : 'false' }}"
+                            @error('promo_code') aria-describedby="promo-code-error" @enderror
+                            x-model="promoCode"
+                            class="w-full px-4 py-2.5 border border-gray-300 dark:bg-slate-800 dark:border-slate-600 dark:text-white dark:placeholder-slate-400 rounded-lg focus:ring-2 focus:ring-teal-700 focus:border-teal-700 dark:focus:border-teal-700 dark:ring-teal-700/20 outline-none transition-colors text-sm uppercase @error('promo_code') border-red-400 @enderror">
+                        @error('promo_code') <p id="promo-code-error" class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                    </div>
+
                     <button type="submit" :disabled="submitting"
                         :class="submitting ? 'opacity-60 cursor-not-allowed' : 'hover:bg-teal-700 transition-colors'"
                         class="w-full sm:w-auto px-8 py-3 bg-teal-700 text-white font-medium rounded-full inline-flex items-center justify-center gap-2">
@@ -194,6 +206,14 @@
                                     <span class="text-sm font-medium text-gray-900 dark:text-white" x-text="rateLabel"></span>
                                 </div>
 
+                                <div x-show="promoCode" class="flex items-center justify-between pb-3 border-b border-teal-100">
+                                    <span class="text-sm text-gray-600 dark:text-slate-300">Promo</span>
+                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 text-xs font-medium dark:bg-amber-900/40 dark:text-amber-300">
+                                        <span x-text="promoCode.toUpperCase()"></span>
+                                        <span>applied at confirmation</span>
+                                    </span>
+                                </div>
+
                                 <div class="flex items-center justify-between pt-1">
                                     <span class="text-base font-semibold text-gray-900 dark:text-white">Total</span>
                                     <span class="text-xl font-bold text-teal-700 dark:text-teal-300" x-text="totalDisplay"></span>
@@ -220,6 +240,7 @@ function bookingForm() {
         checkIn: '{{ old('check_in') }}',
         checkOut: '{{ old('check_out') }}',
         pax: @js((int) old('pax', 1)),
+        promoCode: '{{ old('promo_code') }}',
         fpIn: null,
         fpOut: null,
         submitting: false,
@@ -232,8 +253,25 @@ function bookingForm() {
             if (!this.cottageId || !rateData[this.cottageId]) return '—';
             const r = rateData[this.cottageId];
             return this.bookingType === 'day_tour'
-                ? '₱' + Number(r.day_tour).toLocaleString() + ' / day'
-                : '₱' + Number(r.overnight).toLocaleString() + ' / night';
+                ? '₱' + Number(this.rateFor(r, 'day_tour', this.checkIn)).toLocaleString() + ' / day'
+                : '₱' + Number(this.rateFor(r, 'overnight', this.checkIn)).toLocaleString() + ' / night';
+        },
+
+        isPeakDate(r, dateStr) {
+            if (!r.peak_start || !r.peak_end || !dateStr) return false;
+            const md = dateStr.slice(5);
+            const start = r.peak_start;
+            const end = r.peak_end;
+            if (start <= end) return md >= start && md <= end;
+            return md >= start || md <= end;
+        },
+
+        rateFor(r, type, dateStr) {
+            if (this.isPeakDate(r, dateStr)) {
+                const peak = type === 'day_tour' ? r.peak_day_tour : r.peak_overnight;
+                if (peak && peak > 0) return peak;
+            }
+            return type === 'day_tour' ? r.day_tour : r.overnight;
         },
 
         get nights() {
@@ -246,13 +284,22 @@ function bookingForm() {
             if (!this.cottageId || !rateData[this.cottageId]) return '—';
             const r = rateData[this.cottageId];
             if (this.bookingType === 'day_tour') {
-                return '₱' + Number(r.day_tour).toLocaleString();
+                return '₱' + Number(this.rateFor(r, 'day_tour', this.checkIn)).toLocaleString();
             }
             // Overnight always shows at least the 1-night minimum so the
             // summary never shows a bare "—" (same-day stays are rejected
             // server-side anyway).
             const nights = Math.max(this.nights, 1);
-            return '₱' + (Number(r.overnight) * nights).toLocaleString();
+            let total = 0;
+            if (this.checkIn) {
+                for (let i = 0; i < nights; i++) {
+                    const d = this.addDays(this.checkIn, i);
+                    total += Number(this.rateFor(r, 'overnight', d));
+                }
+            } else {
+                total = Number(this.rateFor(r, 'overnight', null)) * nights;
+            }
+            return '₱' + total.toLocaleString();
         },
 
         get blockedDates() {

@@ -46,8 +46,13 @@ if ($editingId) {
                     <option value="1" {{ request('is_active') === '1' ? 'selected' : '' }}>Active</option>
                     <option value="0" {{ request('is_active') === '0' ? 'selected' : '' }}>Inactive</option>
                 </select>
+                <select name="source" class="px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-600 focus:border-teal-400 bg-white dark:bg-slate-800 dark:border-slate-600 dark:text-white dark:focus:border-teal-500 dark:focus:ring-teal-500/20">
+                    <option value="">All Sources</option>
+                    <option value="guest" {{ request('source') === 'guest' ? 'selected' : '' }}>Guest</option>
+                    <option value="admin" {{ request('source') === 'admin' ? 'selected' : '' }}>Admin</option>
+                </select>
                 <button type="submit" class="px-3 py-2 text-sm font-medium text-white bg-teal-700 rounded-lg hover:bg-teal-700 transition-colors">Filter</button>
-                @if(request()->anyFilled(['search', 'rating', 'is_active']))
+                @if(request()->anyFilled(['search', 'rating', 'is_active', 'source']))
                     <a href="{{ route('admin.testimonials.index') }}" class="px-3 py-2 text-sm font-medium text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700">Clear</a>
                 @endif
             </form>
@@ -74,6 +79,7 @@ if ($editingId) {
                             <th class="text-left px-5 py-3 font-medium">Content</th>
                             <th class="text-left px-5 py-3 font-medium hidden sm:table-cell">Cottage</th>
                             <th class="text-center px-5 py-3 font-medium">Active</th>
+                            <th class="text-center px-5 py-3 font-medium">Source</th>
                             <th class="text-center px-5 py-3 font-medium hidden md:table-cell">Sort</th>
                             <th class="text-right px-5 py-3 font-medium">Actions</th>
                         </tr>
@@ -92,6 +98,13 @@ if ($editingId) {
                                     <svg class="w-5 h-5 text-emerald-500 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                                 @else
                                     <svg class="w-5 h-5 text-gray-300 mx-auto dark:text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 9.75l4.5 4.5m0-4.5l-4.5 4.5M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                @endif
+                            </td>
+                            <td class="px-5 py-3 text-center">
+                                @if($testimonial->source === 'guest')
+                                    @include('admin.components.badge', ['type' => 'warning', 'slot' => 'Guest'])
+                                @else
+                                    @include('admin.components.badge', ['type' => 'gray', 'slot' => 'Admin'])
                                 @endif
                             </td>
                             <td class="px-5 py-3 text-center text-gray-500 hidden md:table-cell dark:text-slate-400">{{ $testimonial->sort_order }}</td>

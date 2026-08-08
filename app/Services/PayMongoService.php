@@ -18,14 +18,17 @@ class PayMongoService
 {
     /**
      * Create a hosted checkout session for the given (confirmed) inquiry.
+     * When an amount is provided it is charged instead of the full total
+     * (e.g. a deposit or the remaining balance).
      *
      * @throws \RuntimeException when PayMongo returns an error.
      */
-    public function createCheckoutSession(Inquiry $inquiry): array
+    public function createCheckoutSession(Inquiry $inquiry, ?string $amount = null): array
     {
-        $amount = $this->toCentavos($inquiry->total_amount);
+        $amount = $amount ?? $inquiry->total_amount;
+        $centavos = $this->toCentavos($amount);
 
-        if ($amount < 100 || $amount > 99999999999) {
+        if ($centavos < 100 || $centavos > 99999999999) {
             throw new \RuntimeException('This booking has an invalid payable amount and cannot be paid.');
         }
 
@@ -38,7 +41,7 @@ class PayMongoService
                         'line_items' => [
                             [
                                 'name' => $this->lineItemName($inquiry),
-                                'amount' => $amount,
+                                'amount' => $centavos,
                                 'currency' => 'PHP',
                                 'quantity' => 1,
                             ],

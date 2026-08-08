@@ -1,7 +1,7 @@
 @extends('admin.layouts.app')
 
 @php
-$showEditModal = $errors->hasAny(['name', 'slug', 'description', 'capacity', 'rate_daytour', 'rate_overnight', 'sort_order', 'is_available']);
+$showEditModal = $errors->hasAny(['name', 'slug', 'description', 'capacity', 'rate_daytour', 'rate_overnight', 'peak_start', 'peak_end', 'peak_rate_daytour', 'peak_rate_overnight', 'sort_order', 'is_available']);
 $editingId = old('_editing', 0);
 $editingData = null;
 if ($editingId) {
@@ -171,6 +171,10 @@ function cottageModal() {
             capacity: '',
             rate_daytour: '',
             rate_overnight: '',
+            peak_start: '',
+            peak_end: '',
+            peak_rate_daytour: '',
+            peak_rate_overnight: '',
             sort_order: 0,
             is_available: true,
         },
@@ -224,6 +228,10 @@ function cottageModal() {
                 capacity: '',
                 rate_daytour: '',
                 rate_overnight: '',
+                peak_start: '',
+                peak_end: '',
+                peak_rate_daytour: '',
+                peak_rate_overnight: '',
                 sort_order: 0,
                 is_available: true,
             };
@@ -250,6 +258,10 @@ function cottageModal() {
                 capacity: cottage.capacity ?? '',
                 rate_daytour: cottage.rate_daytour ?? '',
                 rate_overnight: cottage.rate_overnight ?? '',
+                peak_start: cottage.peak_start || '',
+                peak_end: cottage.peak_end || '',
+                peak_rate_daytour: cottage.peak_rate_daytour ?? '',
+                peak_rate_overnight: cottage.peak_rate_overnight ?? '',
                 sort_order: cottage.sort_order ?? 0,
                 is_available: cottage.is_available !== false,
             };
@@ -280,6 +292,10 @@ function cottageModal() {
                 const oldCapacity = @js(old('capacity', ''));
                 const oldDayTour = @js(old('rate_daytour', ''));
                 const oldOvernight = @js(old('rate_overnight', ''));
+                const oldPeakStart = @js(old('peak_start', ''));
+                const oldPeakEnd = @js(old('peak_end', ''));
+                const oldPeakDayTour = @js(old('peak_rate_daytour', ''));
+                const oldPeakOvernight = @js(old('peak_rate_overnight', ''));
                 const oldSort = @js(old('sort_order', ''));
                 const oldAvailable = @js(old('is_available'));
                 const oldAmenities = @js(old('amenities', []));
@@ -292,6 +308,10 @@ function cottageModal() {
                     if (oldCapacity !== null && oldCapacity !== '') this.form.capacity = oldCapacity;
                     if (oldDayTour !== null && oldDayTour !== '') this.form.rate_daytour = oldDayTour;
                     if (oldOvernight !== null && oldOvernight !== '') this.form.rate_overnight = oldOvernight;
+                    if (oldPeakStart) this.form.peak_start = oldPeakStart;
+                    if (oldPeakEnd) this.form.peak_end = oldPeakEnd;
+                    if (oldPeakDayTour !== null && oldPeakDayTour !== '') this.form.peak_rate_daytour = oldPeakDayTour;
+                    if (oldPeakOvernight !== null && oldPeakOvernight !== '') this.form.peak_rate_overnight = oldPeakOvernight;
                     if (oldSort !== null && oldSort !== '') this.form.sort_order = oldSort;
                     if (oldAvailable !== null) this.form.is_available = true;
                     if (oldAmenities && oldAmenities.length) this.amenities = oldAmenities;

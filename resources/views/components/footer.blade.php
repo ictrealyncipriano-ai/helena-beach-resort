@@ -12,13 +12,24 @@
                 </p>
                 <div class="flex items-center gap-3 mt-5">
                     @php
-                        $fbUrl = App\Models\SiteSetting::getValue('facebook_url', '#');
-                        $fbHref = \Illuminate\Support\Str::startsWith((string) $fbUrl, ['http://', 'https://']) ? $fbUrl : '#';
+                        $socialLinks = [
+                            'facebook' => 'facebook_url',
+                            'instagram' => 'instagram_url',
+                            'tiktok' => 'tiktok_url',
+                        ];
                     @endphp
-                    <a href="{{ $fbHref }}" target="_blank" rel="noopener noreferrer"
-                       class="w-9 h-9 rounded-full bg-teal-800/50 flex items-center justify-center text-teal-300 hover:bg-teal-700 hover:text-white transition-all">
-                        <x-icons name="facebook" class="w-4 h-4" />
-                    </a>
+                    @foreach($socialLinks as $icon => $settingKey)
+                        @php
+                            $url = (string) App\Models\SiteSetting::getValue($settingKey, '');
+                            $href = \Illuminate\Support\Str::startsWith($url, ['http://', 'https://']) ? $url : '';
+                        @endphp
+                        @if($href)
+                        <a href="{{ $href }}" target="_blank" rel="noopener noreferrer" aria-label="{{ ucfirst($icon) }}"
+                           class="w-9 h-9 rounded-full bg-teal-800/50 flex items-center justify-center text-teal-300 hover:bg-teal-700 hover:text-white transition-all">
+                            <x-icons name="{{ $icon }}" class="w-4 h-4" />
+                        </a>
+                        @endif
+                    @endforeach
                 </div>
             </div>
 
@@ -70,6 +81,11 @@
 
         <div class="border-t border-teal-800/60 mt-12 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-teal-300/60">
             <p>&copy; {{ date('Y') }} Helena Beach Resort. All rights reserved.</p>
+            <ul class="flex flex-wrap items-center justify-center gap-x-5 gap-y-2">
+                <li><a href="{{ route('privacy') }}" class="hover:text-white transition-colors">Privacy Policy</a></li>
+                <li><a href="{{ route('terms') }}" class="hover:text-white transition-colors">Terms &amp; Conditions</a></li>
+                <li><a href="{{ route('booking-policy') }}" class="hover:text-white transition-colors">Booking Policy</a></li>
+            </ul>
             <p class="text-teal-300/40 text-xs">Made with <x-icons name="heart" class="w-3 h-3 inline text-teal-400" /> in Infanta, Quezon</p>
         </div>
     </div>

@@ -39,6 +39,10 @@ class CottageController extends Controller
                 'capacity' => $cottage->capacity,
                 'rate_daytour' => $cottage->rate_daytour,
                 'rate_overnight' => $cottage->rate_overnight,
+                'peak_start' => $cottage->peak_start?->format('Y-m-d'),
+                'peak_end' => $cottage->peak_end?->format('Y-m-d'),
+                'peak_rate_daytour' => $cottage->peak_rate_daytour,
+                'peak_rate_overnight' => $cottage->peak_rate_overnight,
                 'sort_order' => $cottage->sort_order,
                 'is_available' => (bool) $cottage->is_available,
                 'amenities' => $cottage->amenities->map(fn ($a) => [
@@ -74,6 +78,10 @@ class CottageController extends Controller
             'capacity' => 'nullable|integer|min:0',
             'rate_daytour' => 'nullable|numeric|min:0',
             'rate_overnight' => 'nullable|numeric|min:0',
+            'peak_start' => 'nullable|date',
+            'peak_end' => 'nullable|date',
+            'peak_rate_daytour' => 'nullable|numeric|min:0',
+            'peak_rate_overnight' => 'nullable|numeric|min:0',
             'is_available' => 'boolean',
             'sort_order' => 'nullable|integer|min:0',
             // Uploads are validated as real images (magic-bytes checked) and
@@ -92,7 +100,7 @@ class CottageController extends Controller
         ]);
 
         $data['is_available'] = $request->boolean('is_available');
-        $data['slug'] = $data['slug'] ?: Str::slug($data['name']);
+        $data['slug'] = ! empty($data['slug']) ? $data['slug'] : Str::slug($data['name']);
 
         $cottage = Cottage::create($data);
 
@@ -148,6 +156,10 @@ class CottageController extends Controller
             'capacity' => 'nullable|integer|min:0',
             'rate_daytour' => 'nullable|numeric|min:0',
             'rate_overnight' => 'nullable|numeric|min:0',
+            'peak_start' => 'nullable|date',
+            'peak_end' => 'nullable|date',
+            'peak_rate_daytour' => 'nullable|numeric|min:0',
+            'peak_rate_overnight' => 'nullable|numeric|min:0',
             'is_available' => 'boolean',
             'sort_order' => 'nullable|integer|min:0',
             // Same upload rules as store(); delete_photos is a comma-separated

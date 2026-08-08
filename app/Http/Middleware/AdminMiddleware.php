@@ -18,6 +18,9 @@ class AdminMiddleware
         'gallery' => ['super_admin', 'admin'],
         'inquiries' => ['super_admin', 'admin', 'staff'],
         'guests' => ['super_admin', 'admin'],
+        'promo-codes' => ['super_admin', 'admin'],
+        'exports' => ['super_admin', 'admin'],
+        'availability' => ['super_admin', 'admin', 'staff'],
         'users' => ['super_admin', 'admin'],
         'site-settings' => ['super_admin', 'admin'],
     ];
@@ -30,6 +33,7 @@ class AdminMiddleware
         'gallery' => ['super_admin', 'admin'],
         'inquiries' => ['super_admin', 'admin'],
         'guests' => ['super_admin', 'admin'],
+        'promo-codes' => ['super_admin', 'admin'],
         'users' => ['super_admin', 'admin'],
         'site-settings' => ['super_admin'],
     ];
@@ -45,7 +49,7 @@ class AdminMiddleware
     public function handle(Request $request, Closure $next, string ...$guards): Response
     {
         $user = Auth::user();
-        if (!$user || !in_array($user->role, ['super_admin', 'admin', 'staff'])) {
+        if (! $user || ! in_array($user->role, ['super_admin', 'admin', 'staff'])) {
             abort(403, 'Unauthorized access.');
         }
 
@@ -61,22 +65,22 @@ class AdminMiddleware
 
         // Fail closed: an admin route that is not explicitly granted is denied
         // rather than silently opened to every staff account.
-        if (!isset($this->access[$resource])) {
+        if (! isset($this->access[$resource])) {
             abort(403, 'You do not have permission to access this resource.');
         }
 
-        if (!in_array($user->role, $this->access[$resource])) {
+        if (! in_array($user->role, $this->access[$resource])) {
             abort(403, 'You do not have permission to access this resource.');
         }
 
         $writeActions = ['create', 'store', 'edit', 'update', 'destroy', 'confirm', 'cancel', 'activate-all', 'mark-paid', 'refund'];
         if (in_array($action, $writeActions) && isset($this->writeAccess[$resource])) {
-            if (!in_array($user->role, $this->writeAccess[$resource])) {
+            if (! in_array($user->role, $this->writeAccess[$resource])) {
                 abort(403, 'You do not have permission to perform this action.');
             }
         }
 
-        if ($user->role === 'staff' && !in_array($resource, ['dashboard', 'inquiries'])) {
+        if ($user->role === 'staff' && ! in_array($resource, ['dashboard', 'inquiries'])) {
             abort(403, 'Staff can only access the dashboard and inquiries.');
         }
 

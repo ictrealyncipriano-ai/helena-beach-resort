@@ -73,6 +73,30 @@
                     </label>
                 </div>
             </div>
+
+            {{-- Peak season pricing --}}
+            <div class="border-t border-gray-100 mt-5 pt-5 dark:border-slate-700">
+                <h3 class="text-sm font-semibold text-gray-900 mb-1 dark:text-white">Peak Season Pricing</h3>
+                <p class="text-xs text-gray-500 mb-4 dark:text-slate-400">Optional annual window (e.g. Dec 20 – Jan 5) where the peak rates below apply automatically. Leave empty to keep flat rates.</p>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1 dark:text-slate-300">Peak Start</label>
+                        <input type="date" name="peak_start" value="{{ old('peak_start', $cottage->peak_start?->format('Y-m-d')) }}" class="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-600 focus:border-teal-400 dark:bg-slate-800 dark:border-slate-600 dark:text-white dark:placeholder-slate-400 dark:focus:border-teal-500 dark:focus:ring-teal-500/20">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1 dark:text-slate-300">Peak End</label>
+                        <input type="date" name="peak_end" value="{{ old('peak_end', $cottage->peak_end?->format('Y-m-d')) }}" class="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-600 focus:border-teal-400 dark:bg-slate-800 dark:border-slate-600 dark:text-white dark:placeholder-slate-400 dark:focus:border-teal-500 dark:focus:ring-teal-500/20">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1 dark:text-slate-300">Peak Day Tour (₱)</label>
+                        <input type="number" step="0.01" name="peak_rate_daytour" value="{{ old('peak_rate_daytour', $cottage->peak_rate_daytour) }}" min="0" class="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-600 focus:border-teal-400 dark:bg-slate-800 dark:border-slate-600 dark:text-white dark:placeholder-slate-400 dark:focus:border-teal-500 dark:focus:ring-teal-500/20">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1 dark:text-slate-300">Peak Overnight (₱)</label>
+                        <input type="number" step="0.01" name="peak_rate_overnight" value="{{ old('peak_rate_overnight', $cottage->peak_rate_overnight) }}" min="0" class="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-600 focus:border-teal-400 dark:bg-slate-800 dark:border-slate-600 dark:text-white dark:placeholder-slate-400 dark:focus:border-teal-500 dark:focus:ring-teal-500/20">
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 

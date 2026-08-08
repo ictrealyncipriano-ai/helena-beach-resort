@@ -32,6 +32,7 @@ class InquiryRequest extends FormRequest
             }],
             'pax' => 'nullable|integer|min:1',
             'total_amount' => 'nullable|numeric|min:0',
+            'deposit_amount' => 'nullable|numeric|min:0',
             'cottage_id' => 'nullable|exists:cottages,id',
             'status' => 'required|in:pending,confirmed,cancelled,expired',
             'message' => 'nullable',

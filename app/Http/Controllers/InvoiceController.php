@@ -40,9 +40,16 @@ class InvoiceController extends Controller
         if ($inquiry->check_in && $inquiry->check_out) {
             $nights = max((int) $inquiry->check_in->diffInDays($inquiry->check_out), 1);
             if ($inquiry->booking_type === 'day_tour') {
-                $subtotal = $inquiry->cottage?->rate_daytour;
+                $subtotal = $inquiry->cottage?->rateFor($inquiry->check_in, 'day_tour');
             } elseif ($inquiry->booking_type === 'overnight' && $inquiry->cottage) {
-                $subtotal = $inquiry->cottage->rate_overnight * $nights;
+                $total = '0.00';
+                for ($i = 0; $i < $nights; $i++) {
+                    $total = number_format(
+                        (float) $total + (float) $inquiry->cottage->rateFor($inquiry->check_in->copy()->addDays($i), 'overnight'),
+                        2, '.', ''
+                    );
+                }
+                $subtotal = $total;
             }
         }
 

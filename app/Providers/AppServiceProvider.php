@@ -76,6 +76,7 @@ class AppServiceProvider extends ServiceProvider
         RateLimiter::for('contact', fn (Request $request) => Limit::perMinute(3)->by($this->clientKey($request)));
         RateLimiter::for('lookup', fn (Request $request) => Limit::perMinute(5)->by($this->clientKey($request)));
         RateLimiter::for('cancel', fn (Request $request) => Limit::perMinute(3)->by($this->clientKey($request)));
+        RateLimiter::for('review', fn (Request $request) => Limit::perMinute(3)->by($this->clientKey($request)));
         RateLimiter::for('payment', fn (Request $request) => Limit::perMinute(5)->by($this->clientKey($request)));
         RateLimiter::for('admin-login', fn (Request $request) => Limit::perMinute(5)->by($this->clientKey($request)));
         // Signature-gated but not user-facing: a generous per-IP cap bounds

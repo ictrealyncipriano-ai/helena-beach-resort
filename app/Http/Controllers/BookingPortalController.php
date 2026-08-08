@@ -8,6 +8,7 @@ use App\Mail\BookingCancelled;
 use App\Mail\RefundReceived;
 use App\Models\Inquiry;
 use App\Models\SiteSetting;
+use App\Models\Testimonial;
 use App\Services\PayMongoService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -70,6 +71,8 @@ class BookingPortalController extends Controller
             'inquiry' => $inquiry,
             'canCancel' => $canCancel,
             'cancelBlockReason' => $canCancel ? null : $this->cannotCancelReason($inquiry),
+            'canReview' => $this->canReview($inquiry),
+            'canSubmitPaymentProof' => $this->canSubmitPaymentProof($inquiry),
         ]);
     }
 
@@ -86,6 +89,102 @@ class BookingPortalController extends Controller
             'paid' => $inquiry->isPaid(),
             'status' => $inquiry->status,
         ]);
+    }
+
+    /**
+     * Whether the guest may leave a review for this booking: the stay must be
+     * confirmed and already completed (check-out in the past; day tours count
+     * as complete once their check-in day has passed), and the guest must not
+     * have reviewed it already.
+     */
+    private function canReview(Inquiry $inquiry): bool
+    {
+        if ($inquiry->status !== 'confirmed') {
+            return false;
+        }
+
+        $endDate = $inquiry->booking_type === 'day_tour' ? $inquiry->check_in : $inquiry->check_out;
+        if (! $endDate || $endDate->isFuture()) {
+            return false;
+        }
+
+        return ! Testimonial::where('inquiry_id', $inquiry->id)->exists();
+    }
+
+    /**
+     * Submit a guest review from the booking portal. Reviews are created
+     * inactive so the resort can moderate them before they go public.
+     */
+    public function review(Request $request, Inquiry $inquiry)
+    {
+        $this->authorizeBookingAccess($inquiry);
+
+        if (! $this->canReview($inquiry)) {
+            return back()->with('error', 'This booking is not eligible for a review yet.');
+        }
+
+        $data = $request->validate([
+            'rating' => 'required|integer|min:1|max:5',
+            'content' => 'required|string|max:2000',
+        ]);
+
+        Testimonial::create([
+            'guest_name' => $inquiry->name,
+            'guest_email' => $inquiry->email,
+            'content' => $data['content'],
+            'rating' => (int) $data['rating'],
+            'cottage_id' => $inquiry->cottage_id,
+            'inquiry_id' => $inquiry->id,
+            'source' => 'guest',
+            'is_active' => false,
+        ]);
+
+        return redirect()->route('booking.portal.show', $inquiry)
+            ->with('success', 'Thank you! Your review has been submitted and is pending approval.');
+    }
+
+    /**
+     * Whether the guest can submit a proof of a manual payment for this
+     * booking: it must be confirmed, not already paid, and must not have a
+     * proof pending or approved.
+     */
+    private function canSubmitPaymentProof(Inquiry $inquiry): bool
+    {
+        if ($inquiry->status !== 'confirmed' || $inquiry->isPaid()) {
+            return false;
+        }
+
+        return ! in_array($inquiry->payment_proof_status, ['pending', 'approved'], true);
+    }
+
+    /**
+     * Upload a proof of a manual payment (bank transfer, GCash, etc.) from
+     * the booking portal. The image is stored privately and flagged for admin
+     * review; it is not shown publicly and never linked from an unauthenticated
+     * URL.
+     */
+    public function uploadPaymentProof(Request $request, Inquiry $inquiry)
+    {
+        $this->authorizeBookingAccess($inquiry);
+
+        if (! $this->canSubmitPaymentProof($inquiry)) {
+            return back()->with('error', 'This booking is not eligible to submit a payment proof right now.');
+        }
+
+        $data = $request->validate([
+            'payment_proof' => 'required|image|mimes:jpeg,png,jpg,webp|max:5120',
+        ]);
+
+        $inquiry->update([
+            'payment_proof_path' => $request->file('payment_proof')->store('payment-proofs', 'cloudflare'),
+            'payment_proof_status' => 'pending',
+            'payment_proof_submitted_at' => now(),
+            'payment_proof_reviewed_at' => null,
+            'payment_proof_review_note' => null,
+        ]);
+
+        return redirect()->route('booking.portal.show', $inquiry)
+            ->with('success', 'Thank you! Your payment proof has been uploaded and is pending review by the resort.');
     }
 
     /** Cancel a booking (guest-facing), sends notification to guest and owner */

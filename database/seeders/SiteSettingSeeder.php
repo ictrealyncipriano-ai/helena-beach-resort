@@ -40,6 +40,12 @@ class SiteSettingSeeder extends Seeder
             ['key' => 'section_reviews_heading', 'value' => 'What Our Guests Say', 'type' => 'text'],
             ['key' => 'section_reviews_subtitle', 'value' => 'Read what our visitors have to say about their stay at Helena Beach Resort.', 'type' => 'textarea'],
             ['key' => 'facebook_url', 'value' => '#', 'type' => 'text'],
+            ['key' => 'instagram_url', 'value' => 'https://www.instagram.com/helena_sa_infanta', 'type' => 'text'],
+            ['key' => 'tiktok_url', 'value' => '#', 'type' => 'text'],
+            // Legal / policy pages
+            ['key' => 'legal_privacy', 'value' => 'Privacy policy content.', 'type' => 'textarea'],
+            ['key' => 'legal_terms', 'value' => 'Terms and conditions content.', 'type' => 'textarea'],
+            ['key' => 'legal_booking_policy', 'value' => 'Booking policy content.', 'type' => 'textarea'],
         ];
 
         foreach ($settings as $setting) {

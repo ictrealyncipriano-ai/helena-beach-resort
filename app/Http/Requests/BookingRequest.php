@@ -30,6 +30,7 @@ class BookingRequest extends FormRequest
             'check_out' => ['nullable', 'required_if:booking_type,overnight', 'date', 'after:check_in'],
             'pax' => ['required', 'integer', 'min:1', 'max:50'],
             'message' => ['nullable', 'string', 'max:1000'],
+            'promo_code' => ['nullable', 'string', 'max:50'],
         ];
     }
 

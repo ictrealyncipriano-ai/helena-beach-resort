@@ -29,10 +29,10 @@ Route::get('/health', [PageController::class, 'health'])->name('health');
 Route::get('/robots.txt', function () {
     $base = rtrim(config('app.url'), '/');
     $content = "User-agent: *\n"
-        . "Allow: /\n"
-        . "Disallow: /admin\n"
-        . "\n"
-        . "Sitemap: {$base}/sitemap.xml\n";
+        ."Allow: /\n"
+        ."Disallow: /admin\n"
+        ."\n"
+        ."Sitemap: {$base}/sitemap.xml\n";
 
     return response($content, 200)->header('Content-Type', 'text/plain');
 });
@@ -47,6 +47,9 @@ Route::get('/about', [PageController::class, 'about'])->name('about');
 Route::get('/faq', [PageController::class, 'faq'])->name('faq');
 Route::get('/services', [PageController::class, 'services'])->name('services');
 Route::get('/reviews', [PageController::class, 'reviews'])->name('reviews');
+Route::get('/privacy', [PageController::class, 'privacy'])->name('privacy');
+Route::get('/terms', [PageController::class, 'terms'])->name('terms');
+Route::get('/booking-policy', [PageController::class, 'bookingPolicy'])->name('booking-policy');
 Route::get('/sitemap.xml', [PageController::class, 'sitemap'])->name('sitemap');
 
 /*
@@ -99,6 +102,12 @@ Route::get('/booking/{inquiry}/status', [BookingPortalController::class, 'status
 Route::post('/booking/{inquiry}/cancel', [BookingPortalController::class, 'cancel'])
     ->middleware('throttle:cancel')
     ->name('booking.portal.cancel');
+Route::post('/booking/{inquiry}/review', [BookingPortalController::class, 'review'])
+    ->middleware('throttle:review')
+    ->name('booking.portal.review');
+Route::post('/booking/{inquiry}/payment-proof', [BookingPortalController::class, 'uploadPaymentProof'])
+    ->middleware('throttle:review')
+    ->name('booking.portal.proof');
 
 /*
 |--------------------------------------------------------------------------

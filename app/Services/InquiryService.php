@@ -8,6 +8,7 @@ use App\Mail\InquiryNotification;
 use App\Models\Cottage;
 use App\Models\Guest;
 use App\Models\Inquiry;
+use App\Models\PromoCode;
 use App\Models\SiteSetting;
 use Carbon\Carbon;
 use Illuminate\Database\UniqueConstraintViolationException;
@@ -35,14 +36,34 @@ class InquiryService
     public function store(array $data): Inquiry
     {
         // Calculate total amount based on booking type and cottage rates
-        $totalAmount = $this->calculateTotal($data);
+        $subtotal = $this->calculateTotal($data);
         $data['source'] = $data['source'] ?? 'website';
+
+        $promo = null;
+        $promoGiven = ! empty($data['promo_code']);
+        if ($promoGiven) {
+            $promo = PromoCode::findUsable($data['promo_code'], $subtotal);
+            if (! $promo) {
+                throw ValidationException::withMessages([
+                    'promo_code' => 'The promo code is invalid, expired, or inapplicable.',
+                ]);
+            }
+        }
 
         $lastException = null;
 
         for ($attempt = 1; $attempt <= 3; $attempt++) {
             try {
-                $inquiry = DB::transaction(function () use ($data, $totalAmount) {
+                $inquiry = DB::transaction(function () use ($data, $subtotal, $promo) {
+                    $totalAmount = $subtotal;
+                    $discount = null;
+
+                    if ($promo) {
+                        $discount = $promo->discountFor($totalAmount);
+                        $totalAmount = max(0, (float) $subtotal - (float) $discount);
+                        $promo->consume();
+                    }
+
                     $inquiry = Inquiry::create([
                         'name' => $data['name'],
                         'email' => $data['email'],
@@ -53,7 +74,11 @@ class InquiryService
                         'cottage_id' => $data['cottage_id'] ?? null,
                         'message' => $data['message'] ?? null,
                         'booking_type' => $data['booking_type'] ?? null,
-                        'total_amount' => $totalAmount,
+                        'total_amount' => $totalAmount === null
+                            ? null
+                            : number_format($totalAmount, 2, '.', ''),
+                        'discount_amount' => $discount,
+                        'promo_code_id' => $promo?->id,
                         'source' => $data['source'],
                         'reference_code' => Inquiry::generateReferenceCode(),
                     ]);
@@ -67,11 +92,13 @@ class InquiryService
                     // (SoftDeletes hides trashed rows from a plain lookup, so
                     // updateOrCreate would try an INSERT that collides with the
                     // guests.email unique index and 500). Reuse + restore the
-                    // trashed profile instead of failing. Never overwrite
-                    // name/phone on an existing profile — the request is
-                    // unauthenticated, so its fields are not trusted.
-                    $guest = Guest::withTrashed()->firstOrCreate(
-                        ['email' => $data['email']],
+                    // trashed profile instead of failing. Emails are matched
+                    // case-insensitively and normalized, so an email typed with
+                    // different casing never creates a duplicate profile.
+                    // Never overwrite name/phone on an existing profile — the
+                    // request is unauthenticated, so its fields are not trusted.
+                    $guest = Guest::findByEmailOrCreate(
+                        $data['email'],
                         ['name' => $data['name'], 'phone' => $data['phone'] ?? null]
                     );
 
@@ -97,6 +124,7 @@ class InquiryService
                 // Almost certainly a reference-code collision on this attempt;
                 // the transaction already rolled back, so retry with a fresh code.
                 $lastException = $e;
+
                 continue;
             }
 
@@ -159,12 +187,27 @@ class InquiryService
         }
 
         if ($data['booking_type'] === 'day_tour') {
-            return $cottage->rate_daytour;
+            if (empty($data['check_in'])) {
+                return null;
+            }
+
+            return $cottage->rateFor(Carbon::parse($data['check_in']), 'day_tour');
         }
 
         if ($data['booking_type'] === 'overnight' && ! empty($data['check_in']) && ! empty($data['check_out'])) {
-            $nights = Carbon::parse($data['check_in'])->diffInDays(Carbon::parse($data['check_out']));
-            return $cottage->rate_overnight * max($nights, 1);
+            $checkIn = Carbon::parse($data['check_in']);
+            $checkOut = Carbon::parse($data['check_out']);
+            $nights = max($checkIn->diffInDays($checkOut), 1);
+
+            $total = '0.00';
+            for ($i = 0; $i < $nights; $i++) {
+                $total = number_format(
+                    (float) $total + (float) $cottage->rateFor($checkIn->copy()->addDays($i), 'overnight'),
+                    2, '.', ''
+                );
+            }
+
+            return $total;
         }
 
         return null;

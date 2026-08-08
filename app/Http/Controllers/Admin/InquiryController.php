@@ -12,8 +12,8 @@ use App\Models\Cottage;
 use App\Models\Guest;
 use App\Models\Inquiry;
 use App\Models\SiteSetting;
-use App\Services\PayMongoService;
 use App\Services\InquiryService;
+use App\Services\PayMongoService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -63,15 +63,19 @@ class InquiryController extends Controller
         $inquiries = $query->latest()->paginate(15);
         $cottages = Cottage::pluck('name', 'id');
         $guests = Guest::pluck('name', 'id');
-        $cottageRates = Cottage::select('id', 'name', 'rate_daytour', 'rate_overnight')
+        $cottageRates = Cottage::select('id', 'name', 'rate_daytour', 'rate_overnight', 'peak_start', 'peak_end', 'peak_rate_daytour', 'peak_rate_overnight')
             ->get()
             ->mapWithKeys(fn ($c) => [
-            $c->id => [
-                'name' => $c->name,
-                'day_tour' => (float) $c->rate_daytour,
-                'overnight' => (float) $c->rate_overnight,
-            ],
-        ]);
+                $c->id => [
+                    'name' => $c->name,
+                    'day_tour' => (float) $c->rate_daytour,
+                    'overnight' => (float) $c->rate_overnight,
+                    'peak_day_tour' => $c->peak_rate_daytour !== null ? (float) $c->peak_rate_daytour : null,
+                    'peak_overnight' => $c->peak_rate_overnight !== null ? (float) $c->peak_rate_overnight : null,
+                    'peak_start' => $c->peak_start?->format('m-d'),
+                    'peak_end' => $c->peak_end?->format('m-d'),
+                ],
+            ]);
 
         return view('admin.inquiries.index', compact('inquiries', 'cottages', 'guests', 'cottageRates'));
     }
@@ -103,6 +107,7 @@ class InquiryController extends Controller
             'message' => $data['message'] ?? null,
             'booking_type' => $data['booking_type'] ?? null,
             'total_amount' => $totalAmount,
+            'deposit_amount' => $data['deposit_amount'] ?? null,
             'status' => $data['status'],
             'source' => 'walk-in',
             'reference_code' => Inquiry::generateReferenceCode(),
@@ -112,10 +117,13 @@ class InquiryController extends Controller
             // Include soft-deleted rows in the lookup: SoftDeletes hides
             // trashed guests from updateOrCreate, whose INSERT would then
             // collide with the unique guests.email index (HTTP 500). Reuse and
-            // restore the trashed profile instead. Admin-entered name/phone
-            // are trusted here, so they are refreshed on the record.
-            $guest = Guest::withTrashed()->firstOrCreate(
-                ['email' => $inquiry->email],
+            // restore the trashed profile instead. Emails are matched
+            // case-insensitively and normalized, so an email typed with
+            // different casing never creates a duplicate profile.
+            // Admin-entered name/phone are trusted here, so they are refreshed
+            // on the record.
+            $guest = Guest::findByEmailOrCreate(
+                $inquiry->email,
                 ['name' => $inquiry->name, 'phone' => $inquiry->phone]
             );
 
@@ -331,6 +339,8 @@ class InquiryController extends Controller
         $inquiry->update([
             'paid_at' => now(),
             'paid_amount' => $inquiry->total_amount,
+            'amount_paid' => $inquiry->total_amount,
+            'fully_paid_at' => now(),
             'payment_method' => 'manual',
         ]);
 
@@ -338,6 +348,66 @@ class InquiryController extends Controller
 
         return redirect()->route('admin.inquiries.show', $inquiry)
             ->with('success', "Booking {$inquiry->reference_code} marked as paid.");
+    }
+
+    /**
+     * Approve a guest-submitted payment proof. Marks the booking as paid
+     * (manual method) and records the proof as approved.
+     */
+    public function approvePaymentProof(Request $request, Inquiry $inquiry)
+    {
+        if (! $inquiry->hasPendingPaymentProof()) {
+            return back()->with('error', 'This booking has no payment proof awaiting review.');
+        }
+
+        $note = $request->validate([
+            'note' => 'nullable|string|max:500',
+        ]);
+
+        $inquiry->update([
+            'payment_proof_status' => 'approved',
+            'payment_proof_reviewed_at' => now(),
+            'payment_proof_review_note' => $note['note'] ?? null,
+        ]);
+
+        if (! $inquiry->isPaid()) {
+            $inquiry->update([
+                'paid_at' => now(),
+                'paid_amount' => $inquiry->total_amount,
+                'amount_paid' => $inquiry->total_amount,
+                'fully_paid_at' => now(),
+                'payment_method' => 'manual',
+            ]);
+        }
+
+        $this->forgetDashboardCache();
+
+        return redirect()->route('admin.inquiries.show', $inquiry)
+            ->with('success', "Payment proof for {$inquiry->reference_code} approved and booking marked as paid.");
+    }
+
+    /**
+     * Reject a guest-submitted payment proof. The booking stays unpaid and
+     * the guest can upload a new proof.
+     */
+    public function rejectPaymentProof(Request $request, Inquiry $inquiry)
+    {
+        if (! $inquiry->hasPendingPaymentProof()) {
+            return back()->with('error', 'This booking has no payment proof awaiting review.');
+        }
+
+        $note = $request->validate([
+            'note' => 'nullable|string|max:500',
+        ]);
+
+        $inquiry->update([
+            'payment_proof_status' => 'rejected',
+            'payment_proof_reviewed_at' => now(),
+            'payment_proof_review_note' => $note['note'] ?? null,
+        ]);
+
+        return redirect()->route('admin.inquiries.show', $inquiry)
+            ->with('success', "Payment proof for {$inquiry->reference_code} was rejected. The guest can upload a new one.");
     }
 
     /**
