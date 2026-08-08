@@ -42,6 +42,8 @@ class SiteSettingSeeder extends Seeder
             ['key' => 'facebook_url', 'value' => '#', 'type' => 'text'],
             ['key' => 'instagram_url', 'value' => 'https://www.instagram.com/helena_sa_infanta', 'type' => 'text'],
             ['key' => 'tiktok_url', 'value' => '#', 'type' => 'text'],
+            ['key' => 'map_lat', 'value' => '14.702052118071348', 'type' => 'text'],
+            ['key' => 'map_lng', 'value' => '121.72756162841773', 'type' => 'text'],
             // Legal / policy pages
             ['key' => 'legal_privacy', 'value' => 'Privacy policy content.', 'type' => 'textarea'],
             ['key' => 'legal_terms', 'value' => 'Terms and conditions content.', 'type' => 'textarea'],

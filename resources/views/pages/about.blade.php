@@ -31,8 +31,12 @@
                 <div class="w-12 h-1 bg-teal-500 rounded-full mx-auto"></div>
             </div>
             <div class="aspect-video rounded-2xl overflow-hidden shadow-lg border border-gray-100 dark:border-slate-700">
+                @php
+                    $mapLat = App\Models\SiteSetting::getValue('map_lat', '14.702052118071348');
+                    $mapLng = App\Models\SiteSetting::getValue('map_lng', '121.72756162841773');
+                @endphp
                 <iframe
-                    src="https://maps.google.com/maps?q=Purok+Buyan+Brgy+Dinahican+Infanta+Quezon&output=embed"
+                    src="https://maps.google.com/maps?q={{ $mapLat }},{{ $mapLng }}&z=16&output=embed"
                     width="100%"
                     height="100%"
                     style="border:0; min-height: 400px;"
