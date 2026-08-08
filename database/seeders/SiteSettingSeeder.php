@@ -44,6 +44,7 @@ class SiteSettingSeeder extends Seeder
             ['key' => 'tiktok_url', 'value' => '#', 'type' => 'text'],
             ['key' => 'map_lat', 'value' => '14.702052118071348', 'type' => 'text'],
             ['key' => 'map_lng', 'value' => '121.72756162841773', 'type' => 'text'],
+            ['key' => 'map_embed_url', 'value' => 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3859.188516002515!2d121.72497447574254!3d14.701928774586516!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x33982fd7700a733b%3A0x160b9c22db388372!2sHelena%20beach%20resort!5e0!3m2!1sen!2ssg!4v1786175999279!5m2!1sen!2ssg', 'type' => 'text'],
             // Legal / policy pages
             ['key' => 'legal_privacy', 'value' => 'Privacy policy content.', 'type' => 'textarea'],
             ['key' => 'legal_terms', 'value' => 'Terms and conditions content.', 'type' => 'textarea'],
