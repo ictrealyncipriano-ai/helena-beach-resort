@@ -23,6 +23,7 @@ class CottagesAvailabilityWidgetTest extends TestCase
             ->assertSee('Check Availability')
             ->assertSee('widget-cottage', false)
             ->assertSee('availabilityWidget', false)
+            ->assertSee('Checking availability')
             ->assertSee(json_encode(route('availability.check')), false);
     }
 

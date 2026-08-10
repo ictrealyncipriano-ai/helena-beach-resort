@@ -67,6 +67,12 @@
                             <template x-if="result && result.available">
                                 <span class="text-sm font-bold text-teal-800 dark:text-teal-300" x-text="result.rate.label"></span>
                             </template>
+                            <template x-if="busy">
+                                <span class="inline-flex items-center gap-1.5 text-sm font-medium text-gray-500 dark:text-slate-400">
+                                    <x-icons name="spinner" class="w-4 h-4 animate-spin" />
+                                    Checking availability…
+                                </span>
+                            </template>
                         </div>
                         <template x-if="result && !result.available">
                             <div class="mt-3 px-4 py-2.5 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-xl text-sm text-red-700 dark:text-red-300">
