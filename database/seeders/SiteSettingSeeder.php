@@ -39,6 +39,9 @@ class SiteSettingSeeder extends Seeder
             ['key' => 'section_cta_btn_text', 'value' => 'Contact Us', 'type' => 'text'],
             ['key' => 'section_reviews_heading', 'value' => 'What Our Guests Say', 'type' => 'text'],
             ['key' => 'section_reviews_subtitle', 'value' => 'Read what our visitors have to say about their stay at Helena Beach Resort.', 'type' => 'textarea'],
+            // Analytics / cookie consent
+            ['key' => 'analytics_ga4_id', 'value' => '', 'type' => 'text'],
+            ['key' => 'analytics_consent_enabled', 'value' => '1', 'type' => 'text'],
             ['key' => 'facebook_url', 'value' => '#', 'type' => 'text'],
             ['key' => 'instagram_url', 'value' => 'https://www.instagram.com/helena_sa_infanta', 'type' => 'text'],
             ['key' => 'tiktok_url', 'value' => '#', 'type' => 'text'],

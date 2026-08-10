@@ -43,6 +43,60 @@
     <noscript>
         <style>.reveal { opacity: 1 !important; transform: none !important; }</style>
     </noscript>
+    @php
+        $ga4Id = trim((string) \App\Models\SiteSetting::getValue('analytics_ga4_id', ''));
+        $consentRequired = \App\Models\SiteSetting::getValue('analytics_consent_enabled', '1') === '1';
+    @endphp
+    @if($ga4Id)
+    <script>
+    // Google Analytics 4 with consent mode v2. The gtag.js script is NOT
+    // fetched until the visitor has granted consent (or consent is disabled
+    // in site settings); consent state is stored in the helena_consent cookie.
+    (function () {
+        window.helenaGa4Id = @json($ga4Id);
+        window.helenaConsentRequired = {{ $consentRequired ? 'true' : 'false' }};
+
+        window.loadHelenaGtm = function () {
+            if (window.helenaGtmLoaded) return;
+            var id = window.helenaGa4Id;
+            if (!id) return;
+            window.helenaGtmLoaded = true;
+
+            var s = document.createElement('script');
+            s.async = true;
+            s.src = 'https://www.googletagmanager.com/gtag/js?id=' + id;
+            s.onload = function () {
+                window.gtag('consent', 'update', {
+                    'ad_storage': 'granted',
+                    'analytics_storage': 'granted',
+                    'ad_user_data': 'granted',
+                    'ad_personalization': 'granted'
+                });
+                window.gtag('config', id, { 'send_page_view': true });
+            };
+            document.head.appendChild(s);
+        };
+
+        window.dataLayer = window.dataLayer || [];
+        window.gtag = function () { window.dataLayer.push(arguments); };
+
+        var match = document.cookie.match(/(?:^|; )helena_consent=([^;]*)/);
+        var granted = !window.helenaConsentRequired ||
+            (match && decodeURIComponent(match[1]) === 'granted');
+
+        window.gtag('consent', 'default', {
+            'ad_storage': granted ? 'granted' : 'denied',
+            'analytics_storage': granted ? 'granted' : 'denied',
+            'ad_user_data': granted ? 'granted' : 'denied',
+            'ad_personalization': granted ? 'granted' : 'denied'
+        });
+
+        if (granted) {
+            window.loadHelenaGtm();
+        }
+    })();
+    </script>
+    @endif
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @stack('styles')
     @stack('head')
@@ -57,6 +111,8 @@
     </main>
 
     <x-footer />
+
+    <x-cookie-banner />
 
     {{-- Scroll reveal observer --}}
     <script>
