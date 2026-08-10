@@ -10,6 +10,13 @@ class SiteSetting extends Model
     protected $fillable = ['key', 'value', 'type'];
 
     /**
+     * Cache key for the full ordered settings list used by the admin index
+     * (id/key/value/type). Invalidated together with 'settings.all' whenever a
+     * setting is saved or deleted.
+     */
+    public const ADMIN_CACHE_KEY = 'settings.admin.all';
+
+    /**
      * Request-scoped memo of all settings (key => value).
      *
      * With CACHE_STORE=database every Cache::remember() call is a cache-table
@@ -47,12 +54,25 @@ class SiteSetting extends Model
     }
 
     /**
-     * Drop the request memo and the shared cache entry so the next getValue()
-     * re-reads the settings from the database.
+     * Drop the request memo and the shared cache entries so the next getValue()
+     * / cachedAll() re-reads the settings from the database.
      */
     public static function forgetCache(): void
     {
         static::$memo = null;
         Cache::forget('settings.all');
+        Cache::forget(self::ADMIN_CACHE_KEY);
+    }
+
+    /**
+     * The full settings list ordered by key, cached across requests. Used by
+     * the admin index (which filters and paginates in memory), so searching
+     * and paging over a small settings table stays off the database.
+     */
+    public static function cachedAll(): \Illuminate\Support\Collection
+    {
+        return Cache::rememberForever(self::ADMIN_CACHE_KEY, fn () =>
+            static::query()->orderBy('key')->get(['id', 'key', 'value', 'type'])
+        );
     }
 }

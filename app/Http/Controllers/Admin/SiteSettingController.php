@@ -6,22 +6,33 @@ use App\Http\Controllers\Controller;
 use App\Models\SiteSetting;
 use App\Services\ActivityLogger;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Pagination\Paginator;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
 class SiteSettingController extends Controller
 {
     public function index(Request $request)
     {
-        $settings = SiteSetting::query();
+        $settings = SiteSetting::cachedAll();
 
         if ($search = trim((string) $request->get('search'))) {
-            $settings->where(function ($q) use ($search) {
-                $q->where('key', 'like', "%{$search}%")
-                    ->orWhere('value', 'like', "%{$search}%");
-            });
+            $settings = $settings->filter(function ($setting) use ($search) {
+                return Str::contains(Str::lower((string) $setting->key), Str::lower($search))
+                    || Str::contains(Str::lower((string) $setting->value), Str::lower($search));
+            })->values();
         }
 
-        $settings = $settings->orderBy('key')->paginate(20)->withQueryString();
+        $perPage = 20;
+        $page = Paginator::resolveCurrentPage('page');
+        $total = $settings->count();
+        $items = $settings->forPage($page, $perPage)->values();
+
+        $settings = new LengthAwarePaginator($items, $total, $perPage, $page, [
+            'path' => $request->url(),
+            'query' => $request->query(),
+        ]);
 
         $settingsData = $settings->map(function ($setting) {
             return [

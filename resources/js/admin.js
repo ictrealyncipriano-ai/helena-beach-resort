@@ -75,6 +75,28 @@ function themeToggle() {
     };
 }
 
+function liveSearchState() {
+    return {
+        search: '',
+        init() {
+            this.search = this.$el.getAttribute('value') || '';
+        },
+        goSearch() {
+            const url = new URL(window.location.href);
+            const q = this.search.trim();
+            if (q) {
+                url.searchParams.set('search', q);
+            } else {
+                url.searchParams.delete('search');
+            }
+            url.searchParams.delete('page');
+            if (url.href !== window.location.href) {
+                window.location.href = url.toString();
+            }
+        }
+    };
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     flatpickr('.datepicker', {
         dateFormat: 'Y-m-d',
@@ -91,5 +113,6 @@ document.addEventListener('DOMContentLoaded', function() {
 // Expose to global scope so Alpine can resolve x-data="themeToggle()"
 // (module-scoped functions are tree-shaken out of the production bundle).
 window.themeToggle = themeToggle;
+window.liveSearchState = liveSearchState;
 
 Alpine.start();
