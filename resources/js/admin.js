@@ -78,6 +78,7 @@ function themeToggle() {
 function liveSearchState() {
     return {
         search: '',
+        loading: false,
         init() {
             const form = this.$root;
             const input = form.querySelector('input[name="search"]');
@@ -109,6 +110,7 @@ function liveSearchState() {
             }
             region.classList.add('opacity-60', 'pointer-events-none');
             region.setAttribute('aria-busy', 'true');
+            this.loading = true;
 
             fetch(url, {
                 headers: { 'X-LiveSearch': '1' },
@@ -134,6 +136,7 @@ function liveSearchState() {
                 .finally(() => {
                     region.classList.remove('opacity-60', 'pointer-events-none');
                     region.removeAttribute('aria-busy');
+                    this.loading = false;
                 });
         },
         goSearch() {
