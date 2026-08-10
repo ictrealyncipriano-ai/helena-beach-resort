@@ -10,6 +10,7 @@ use App\Http\Controllers\InquiryController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\PageController;
 use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\PostController;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Support\Facades\Route;
 
@@ -67,6 +68,14 @@ Route::get('/cottages/{cottage:slug}', [CottageController::class, 'show'])->name
 |--------------------------------------------------------------------------
 */
 Route::get('/gallery', [GalleryController::class, 'index'])->name('gallery.index');
+
+/*
+|--------------------------------------------------------------------------
+| News / Announcements
+|--------------------------------------------------------------------------
+*/
+Route::get('/news', [PostController::class, 'index'])->name('news.index');
+Route::get('/news/{post:slug}', [PostController::class, 'show'])->name('news.show');
 
 /*
 |--------------------------------------------------------------------------

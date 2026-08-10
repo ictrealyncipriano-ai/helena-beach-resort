@@ -12,6 +12,7 @@ class AdminMiddleware
     protected array $access = [
         'dashboard' => ['super_admin', 'admin', 'staff'],
         'cottages' => ['super_admin', 'admin'],
+        'posts' => ['super_admin', 'admin'],
         'testimonials' => ['super_admin', 'admin'],
         'services' => ['super_admin', 'admin'],
         'faqs' => ['super_admin', 'admin'],
@@ -27,6 +28,7 @@ class AdminMiddleware
 
     protected array $writeAccess = [
         'cottages' => ['super_admin', 'admin'],
+        'posts' => ['super_admin', 'admin'],
         'testimonials' => ['super_admin', 'admin'],
         'services' => ['super_admin', 'admin'],
         'faqs' => ['super_admin', 'admin'],

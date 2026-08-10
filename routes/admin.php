@@ -10,6 +10,7 @@ use App\Http\Controllers\Admin\FaqController;
 use App\Http\Controllers\Admin\GalleryController;
 use App\Http\Controllers\Admin\GuestController;
 use App\Http\Controllers\Admin\InquiryController;
+use App\Http\Controllers\Admin\PostController;
 use App\Http\Controllers\Admin\PromoCodeController;
 use App\Http\Controllers\Admin\ServiceController;
 use App\Http\Controllers\Admin\SiteSettingController;
@@ -43,6 +44,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
         });
 
         Route::resource('cottages', CottageController::class);
+        Route::resource('posts', PostController::class);
         Route::resource('testimonials', TestimonialController::class);
         Route::resource('services', ServiceController::class);
         Route::resource('faqs', FaqController::class);

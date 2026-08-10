@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Cottage;
 use App\Models\Faq;
 use App\Models\Gallery;
+use App\Models\Post;
 use App\Models\Service;
 use App\Models\SiteSetting;
 use App\Models\Testimonial;
@@ -23,7 +24,7 @@ class PageController extends Controller
 {
     public function home()
     {
-        [$cottages, $gallery, $testimonials, $avgRating] = Cache::remember(PublicCache::HOME, PublicCache::HOME_TTL, function () {
+        [$cottages, $gallery, $testimonials, $avgRating, $posts] = Cache::remember(PublicCache::HOME, PublicCache::HOME_TTL, function () {
             $cottages = Cottage::with('primaryPhoto')
                 ->where('is_available', true)
                 ->orderBy('sort_order')
@@ -38,10 +39,12 @@ class PageController extends Controller
             $testimonials = Testimonial::active()->with('cottage')->take(3)->get();
             $avgRating = Testimonial::where('is_active', true)->avg('rating');
 
-            return [$cottages, $gallery, $testimonials, $avgRating];
+            $posts = Post::active()->take(3)->get();
+
+            return [$cottages, $gallery, $testimonials, $avgRating, $posts];
         });
 
-        return view('pages.home', compact('cottages', 'gallery', 'testimonials', 'avgRating'));
+        return view('pages.home', compact('cottages', 'gallery', 'testimonials', 'avgRating', 'posts'));
     }
 
     /** Static about page */
@@ -126,6 +129,7 @@ class PageController extends Controller
     {
         $xml = Cache::remember(PublicCache::SITEMAP, 3600, function () {
             $cottages = Cottage::where('is_available', true)->get();
+            $posts = Post::active()->get();
             $galleryLastmod = Gallery::where('is_active', true)->max('updated_at');
 
             $pages = [
@@ -135,6 +139,7 @@ class PageController extends Controller
                 ['loc' => route('book'), 'priority' => '0.8', 'changefreq' => 'weekly'],
                 ['loc' => route('services'), 'priority' => '0.6', 'changefreq' => 'weekly'],
                 ['loc' => route('reviews'), 'priority' => '0.6', 'changefreq' => 'weekly'],
+                ['loc' => route('news.index'), 'priority' => '0.6', 'changefreq' => 'weekly'],
                 ['loc' => route('cottages.index'), 'priority' => '0.9', 'changefreq' => 'daily'],
                 ['loc' => route('gallery.index'), 'priority' => '0.7', 'changefreq' => 'weekly', 'lastmod' => $galleryLastmod],
                 ['loc' => route('contact'), 'priority' => '0.6', 'changefreq' => 'monthly'],
@@ -149,6 +154,15 @@ class PageController extends Controller
                     'priority' => '0.8',
                     'changefreq' => 'weekly',
                     'lastmod' => $cottage->updated_at,
+                ];
+            }
+
+            foreach ($posts as $post) {
+                $pages[] = [
+                    'loc' => route('news.show', $post),
+                    'priority' => '0.6',
+                    'changefreq' => 'monthly',
+                    'lastmod' => $post->updated_at,
                 ];
             }
 

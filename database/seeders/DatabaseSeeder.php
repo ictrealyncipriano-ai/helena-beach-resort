@@ -53,6 +53,7 @@ class DatabaseSeeder extends Seeder
             FaqSeeder::class,
             TestimonialSeeder::class,
             ServiceSeeder::class,
+            PostSeeder::class,
         ]);
     }
 

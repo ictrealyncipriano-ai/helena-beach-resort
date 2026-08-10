@@ -291,6 +291,48 @@ function testimonialCarousel() {
 @endpush
 @endif
 
+@if($posts->isNotEmpty())
+{{-- Latest News --}}
+<section class="py-20 sm:py-24 bg-gray-50 dark:bg-slate-800/50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-12 reveal">
+            <h2 class="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white font-heading mb-4">News &amp; Updates</h2>
+            <div class="w-16 h-1 bg-amber-400 rounded-full mx-auto mb-4"></div>
+            <p class="text-gray-500 dark:text-slate-400 max-w-xl mx-auto">Announcements, tips, and promos from the resort.</p>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            @foreach($posts as $i => $post)
+            <a href="{{ route('news.show', $post) }}"
+               class="group bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm overflow-hidden hover:shadow-lg hover:border-teal-100 dark:hover:border-teal-800 transition-all duration-300 reveal {{ $i > 0 ? 'reveal-delay-' . min($i + 1, 4) : '' }}">
+                <div class="aspect-[16/9] bg-gray-100 dark:bg-slate-700 overflow-hidden">
+                    @if($post->cover_image)
+                        <img src="{{ Storage::url($post->cover_image) }}" alt="{{ $post->title }}" loading="lazy" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105">
+                    @else
+                        <div class="w-full h-full flex items-center justify-center text-teal-600 dark:text-teal-400">
+                            <x-icons name="sparkles" class="w-8 h-8" />
+                        </div>
+                    @endif
+                </div>
+                <div class="p-6">
+                    <p class="text-xs font-medium text-teal-700 dark:text-teal-300 uppercase tracking-wider mb-2">{{ $post->published_at->format('F j, Y') }}</p>
+                    <h3 class="text-base font-semibold text-gray-900 dark:text-white group-hover:text-teal-700 dark:group-hover:text-teal-300 transition-colors mb-2">{{ $post->title }}</h3>
+                    @if($post->excerpt)
+                        <p class="text-sm text-gray-600 dark:text-slate-300 leading-relaxed line-clamp-3">{{ $post->excerpt }}</p>
+                    @endif
+                </div>
+            </a>
+            @endforeach
+        </div>
+        <div class="text-center mt-12 reveal">
+            <a href="{{ route('news.index') }}" class="inline-flex items-center px-6 py-3 border-2 border-teal-600 dark:border-teal-400 text-teal-700 dark:text-teal-300 font-medium rounded-full hover:bg-teal-50 dark:hover:bg-teal-900/30 transition-colors group">
+                <span>Read All News</span>
+                <x-icons name="arrow-right" class="ml-2 w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+            </a>
+        </div>
+    </div>
+</section>
+@endif
+
 {{-- CTA --}}
 <section class="py-24 bg-gradient-to-br from-teal-600 via-teal-700 to-cyan-800 relative overflow-hidden">
     <div class="absolute inset-0 pointer-events-none" aria-hidden="true">

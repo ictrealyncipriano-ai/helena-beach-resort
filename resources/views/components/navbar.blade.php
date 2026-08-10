@@ -7,6 +7,7 @@
         'services' => 'Services',
         'faq' => 'FAQ',
         'reviews' => 'Reviews',
+        'news.index' => 'News',
         'contact' => 'Contact',
     ];
     $current = Route::currentRouteName();

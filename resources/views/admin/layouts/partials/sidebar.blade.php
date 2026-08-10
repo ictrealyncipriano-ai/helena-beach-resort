@@ -4,6 +4,7 @@
         'Content' => [
             ['label' => 'Dashboard', 'route' => 'admin.dashboard', 'icon' => 'home'],
             ['label' => 'Cottages', 'route' => 'admin.cottages.index', 'icon' => 'home-modern'],
+            ['label' => 'News & Posts', 'route' => 'admin.posts.index', 'icon' => 'document-text'],
             ['label' => 'Testimonials', 'route' => 'admin.testimonials.index', 'icon' => 'star'],
             ['label' => 'Services', 'route' => 'admin.services.index', 'icon' => 'sparkles'],
             ['label' => 'FAQs', 'route' => 'admin.faqs.index', 'icon' => 'question-mark-circle'],

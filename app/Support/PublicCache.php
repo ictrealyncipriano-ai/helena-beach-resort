@@ -29,6 +29,8 @@ class PublicCache
 
     public const GALLERY_CATEGORIES = 'pages.gallery.categories';
 
+    public const POSTS_ALL = 'pages.posts.all';
+
     public const SITEMAP = 'sitemap';
 
     /**
@@ -57,6 +59,7 @@ class PublicCache
         Cache::forget(self::REVIEWS_ALL);
         Cache::forget(self::GALLERY_ALL);
         Cache::forget(self::GALLERY_CATEGORIES);
+        Cache::forget(self::POSTS_ALL);
         Cache::forget(self::SITEMAP);
     }
 }
