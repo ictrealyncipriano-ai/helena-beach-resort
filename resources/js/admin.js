@@ -79,7 +79,8 @@ function liveSearchState() {
     return {
         search: '',
         init() {
-            const input = this.$el.querySelector('input[name="search"]');
+            const form = this.$root;
+            const input = form.querySelector('input[name="search"]');
             this.search = (input && input.value) || '';
 
             document.addEventListener('click', (e) => {
@@ -93,7 +94,7 @@ function liveSearchState() {
             window.addEventListener('popstate', () => this.apply(window.location.href));
         },
         currentUrl() {
-            const params = new URLSearchParams(new FormData(this.$el));
+            const params = new URLSearchParams(new FormData(this.$root));
             params.forEach((value, key) => {
                 if (value === '') params.delete(key);
             });
