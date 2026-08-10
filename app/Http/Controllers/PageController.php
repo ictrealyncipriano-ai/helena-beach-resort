@@ -23,7 +23,7 @@ class PageController extends Controller
 {
     public function home()
     {
-        [$cottages, $gallery, $testimonials, $avgRating, $widgetCottages] = Cache::remember(PublicCache::HOME, PublicCache::HOME_TTL, function () {
+        [$cottages, $gallery, $testimonials, $avgRating] = Cache::remember(PublicCache::HOME, PublicCache::HOME_TTL, function () {
             $cottages = Cottage::with('primaryPhoto')
                 ->where('is_available', true)
                 ->orderBy('sort_order')
@@ -38,17 +38,10 @@ class PageController extends Controller
             $testimonials = Testimonial::active()->with('cottage')->take(3)->get();
             $avgRating = Testimonial::where('is_active', true)->avg('rating');
 
-            // All cottages for the hero availability widget (the featured
-            // list above caps itself at 6). Scalar fields only — availability
-            // itself is fetched live by the widget endpoint.
-            $widgetCottages = Cottage::where('is_available', true)
-                ->orderBy('sort_order')
-                ->get(['id', 'name', 'capacity', 'rate_daytour', 'rate_overnight']);
-
-            return [$cottages, $gallery, $testimonials, $avgRating, $widgetCottages];
+            return [$cottages, $gallery, $testimonials, $avgRating];
         });
 
-        return view('pages.home', compact('cottages', 'gallery', 'testimonials', 'avgRating', 'widgetCottages'));
+        return view('pages.home', compact('cottages', 'gallery', 'testimonials', 'avgRating'));
     }
 
     /** Static about page */
