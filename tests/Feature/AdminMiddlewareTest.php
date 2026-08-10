@@ -51,6 +51,24 @@ class AdminMiddlewareTest extends TestCase
         return $inquiry->refresh();
     }
 
+    public function test_admin_can_view_activity_logs(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+
+        $this->actingAs($admin)
+            ->get(route('admin.activity-logs.index'))
+            ->assertStatus(200);
+    }
+
+    public function test_staff_is_forbidden_from_activity_logs(): void
+    {
+        $staff = User::factory()->create(['role' => 'staff']);
+
+        $this->actingAs($staff)
+            ->get(route('admin.activity-logs.index'))
+            ->assertStatus(403);
+    }
+
     public function test_staff_is_forbidden_from_mark_paid(): void
     {
         $inquiry = $this->confirmedBooking('staff-mark-paid@example.com');

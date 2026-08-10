@@ -21,6 +21,7 @@ class AdminMiddleware
         'guests' => ['super_admin', 'admin'],
         'promo-codes' => ['super_admin', 'admin'],
         'exports' => ['super_admin', 'admin'],
+        'activity-logs' => ['super_admin', 'admin'],
         'availability' => ['super_admin', 'admin', 'staff'],
         'users' => ['super_admin', 'admin'],
         'site-settings' => ['super_admin', 'admin'],
