@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Services\ActivityLogger;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules\Password;
@@ -17,7 +18,7 @@ class UserController extends Controller
         if ($search = $request->get('search')) {
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('email', 'like', "%{$search}%");
+                    ->orWhere('email', 'like', "%{$search}%");
             });
         }
 
@@ -31,7 +32,7 @@ class UserController extends Controller
         return view('admin.users.form', ['user' => new User]);
     }
 
-    public function store(Request $request)
+    public function store(Request $request, ActivityLogger $logger)
     {
         $data = $request->validate([
             'name' => 'required|max:255',
@@ -48,7 +49,12 @@ class UserController extends Controller
         }
 
         $data['password'] = Hash::make($data['password']);
-        User::create($data);
+        $user = User::create($data);
+
+        $logger->record('user.created', $user, "User {$user->name} created.", [
+            'email' => $user->email,
+            'role' => $user->role,
+        ]);
 
         return redirect()->route('admin.users.index')
             ->with('success', 'User created successfully.');
@@ -59,11 +65,11 @@ class UserController extends Controller
         return view('admin.users.form', compact('user'));
     }
 
-    public function update(Request $request, User $user)
+    public function update(Request $request, User $user, ActivityLogger $logger)
     {
         $data = $request->validate([
             'name' => 'required|max:255',
-            'email' => 'required|email|max:255|unique:users,email,' . $user->id,
+            'email' => 'required|email|max:255|unique:users,email,'.$user->id,
             'password' => ['nullable', Password::min(8)->letters()->numbers()],
             'role' => 'required|in:super_admin,admin,staff',
         ]);
@@ -97,11 +103,16 @@ class UserController extends Controller
 
         $user->update($data);
 
+        $logger->record('user.updated', $user, "User {$user->name} updated.", [
+            'email' => $user->email,
+            'role' => $user->role,
+        ]);
+
         return redirect()->route('admin.users.index')
             ->with('success', 'User updated successfully.');
     }
 
-    public function destroy(User $user)
+    public function destroy(User $user, ActivityLogger $logger)
     {
         if ($user->id === auth()->id()) {
             return back()->with('error', 'You cannot delete your own account.');
@@ -113,6 +124,11 @@ class UserController extends Controller
         }
 
         $user->delete();
+
+        $logger->record('user.deleted', $user, "User {$user->name} deleted.", [
+            'email' => $user->email,
+            'role' => $user->role,
+        ]);
 
         return redirect()->route('admin.users.index')
             ->with('success', 'User deleted successfully.');

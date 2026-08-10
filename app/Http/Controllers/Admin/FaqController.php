@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Faq;
+use App\Services\ActivityLogger;
 use App\Support\PublicCache;
 use Illuminate\Http\Request;
 
@@ -44,7 +45,7 @@ class FaqController extends Controller
         return view('admin.faqs.form', ['faq' => new Faq]);
     }
 
-    public function store(Request $request)
+    public function store(Request $request, ActivityLogger $logger)
     {
         $data = $request->validate([
             'question' => 'required|max:255',
@@ -54,7 +55,9 @@ class FaqController extends Controller
         ]);
 
         $data['is_active'] = $request->boolean('is_active');
-        Faq::create($data);
+        $faq = Faq::create($data);
+
+        $logger->record('faq.created', $faq, "FAQ created: {$faq->question}");
 
         return redirect()->route('admin.faqs.index')
             ->with('success', 'FAQ created successfully.');
@@ -65,7 +68,7 @@ class FaqController extends Controller
         return view('admin.faqs.form', compact('faq'));
     }
 
-    public function update(Request $request, Faq $faq)
+    public function update(Request $request, Faq $faq, ActivityLogger $logger)
     {
         $data = $request->validate([
             'question' => 'required|max:255',
@@ -77,22 +80,28 @@ class FaqController extends Controller
         $data['is_active'] = $request->boolean('is_active');
         $faq->update($data);
 
+        $logger->record('faq.updated', $faq, "FAQ updated: {$faq->question}");
+
         return redirect()->route('admin.faqs.index')
             ->with('success', 'FAQ updated successfully.');
     }
 
-    public function destroy(Faq $faq)
+    public function destroy(Faq $faq, ActivityLogger $logger)
     {
         $faq->delete();
+
+        $logger->record('faq.deleted', $faq, "FAQ deleted: {$faq->question}");
 
         return redirect()->route('admin.faqs.index')
             ->with('success', 'FAQ deleted successfully.');
     }
 
-    public function activateAll()
+    public function activateAll(ActivityLogger $logger)
     {
         Faq::query()->update(['is_active' => true]);
         PublicCache::flush();
+
+        $logger->record('faq.activated', null, 'All FAQs activated.');
 
         return redirect()->route('admin.faqs.index')
             ->with('success', 'All FAQs activated successfully.');

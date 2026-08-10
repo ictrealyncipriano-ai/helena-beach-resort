@@ -20,6 +20,7 @@
         ],
         'Settings' => [
             ['label' => 'Users', 'route' => 'admin.users.index', 'icon' => 'users'],
+            ['label' => 'Activity Logs', 'route' => 'admin.activity-logs.index', 'icon' => 'shield-check'],
             ['label' => 'Site Settings', 'route' => 'admin.site-settings.index', 'icon' => 'cog'],
         ],
     ];

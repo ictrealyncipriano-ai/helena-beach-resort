@@ -4,9 +4,8 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Cottage;
-use App\Models\CottageAmenity;
-use App\Models\CottageDateBlock;
 use App\Models\CottagePhoto;
+use App\Services\ActivityLogger;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -20,7 +19,7 @@ class CottageController extends Controller
         if ($search = $request->get('search')) {
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('slug', 'like', "%{$search}%");
+                    ->orWhere('slug', 'like', "%{$search}%");
             });
         }
 
@@ -69,7 +68,7 @@ class CottageController extends Controller
         return view('admin.cottages.form', ['cottage' => new Cottage]);
     }
 
-    public function store(Request $request)
+    public function store(Request $request, ActivityLogger $logger)
     {
         $data = $request->validate([
             'name' => 'required|max:255',
@@ -106,7 +105,7 @@ class CottageController extends Controller
 
         if ($request->has('amenities')) {
             foreach ($request->input('amenities', []) as $amenity) {
-                if (!empty($amenity['name'])) {
+                if (! empty($amenity['name'])) {
                     $cottage->amenities()->create([
                         'name' => $amenity['name'],
                         'icon' => $amenity['icon'] ?? null,
@@ -117,7 +116,7 @@ class CottageController extends Controller
 
         if ($request->has('date_blocks')) {
             foreach ($request->input('date_blocks', []) as $block) {
-                if (!empty($block['date'])) {
+                if (! empty($block['date'])) {
                     $cottage->dateBlocks()->create([
                         'date' => $block['date'],
                         'reason' => $block['reason'] ?? null,
@@ -137,6 +136,11 @@ class CottageController extends Controller
             }
         }
 
+        $logger->record('cottage.created', $cottage, "Cottage {$cottage->name} created.", [
+            'capacity' => $cottage->capacity,
+            'rate_overnight' => $cottage->rate_overnight,
+        ]);
+
         return redirect()->route('admin.cottages.index')
             ->with('success', 'Cottage created successfully.');
     }
@@ -144,14 +148,15 @@ class CottageController extends Controller
     public function edit(Cottage $cottage)
     {
         $cottage->load(['amenities', 'photos', 'dateBlocks']);
+
         return view('admin.cottages.form', compact('cottage'));
     }
 
-    public function update(Request $request, Cottage $cottage)
+    public function update(Request $request, Cottage $cottage, ActivityLogger $logger)
     {
         $data = $request->validate([
             'name' => 'required|max:255',
-            'slug' => 'nullable|max:255|unique:cottages,slug,' . $cottage->id,
+            'slug' => 'nullable|max:255|unique:cottages,slug,'.$cottage->id,
             'description' => 'nullable',
             'capacity' => 'nullable|integer|min:0',
             'rate_daytour' => 'nullable|numeric|min:0',
@@ -184,7 +189,7 @@ class CottageController extends Controller
         $cottage->amenities()->delete();
         if ($request->has('amenities')) {
             foreach ($request->input('amenities', []) as $amenity) {
-                if (!empty($amenity['name'])) {
+                if (! empty($amenity['name'])) {
                     $cottage->amenities()->create([
                         'name' => $amenity['name'],
                         'icon' => $amenity['icon'] ?? null,
@@ -245,11 +250,16 @@ class CottageController extends Controller
             }
         }
 
+        $logger->record('cottage.updated', $cottage, "Cottage {$cottage->name} updated.", [
+            'capacity' => $cottage->capacity,
+            'rate_overnight' => $cottage->rate_overnight,
+        ]);
+
         return redirect()->route('admin.cottages.index')
             ->with('success', 'Cottage updated successfully.');
     }
 
-    public function destroy(Cottage $cottage)
+    public function destroy(Cottage $cottage, ActivityLogger $logger)
     {
         // Never delete a cottage that still holds dates for a live booking:
         // the cascade would silently destroy the date blocks (and the hold)
@@ -266,6 +276,8 @@ class CottageController extends Controller
             Storage::disk('cloudflare')->delete($photo->photo_path);
         }
         $cottage->delete();
+
+        $logger->record('cottage.deleted', $cottage, "Cottage {$cottage->name} deleted.");
 
         return redirect()->route('admin.cottages.index')
             ->with('success', 'Cottage deleted successfully.');

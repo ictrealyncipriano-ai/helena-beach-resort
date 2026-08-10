@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Cottage;
 use App\Models\Testimonial;
+use App\Services\ActivityLogger;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -16,7 +18,7 @@ class TestimonialController extends Controller
         if ($search = $request->get('search')) {
             $query->where(function ($q) use ($search) {
                 $q->where('guest_name', 'like', "%{$search}%")
-                  ->orWhere('content', 'like', "%{$search}%");
+                    ->orWhere('content', 'like', "%{$search}%");
             });
         }
 
@@ -48,18 +50,19 @@ class TestimonialController extends Controller
             ];
         })->values();
 
-        $cottages = \App\Models\Cottage::pluck('name', 'id');
+        $cottages = Cottage::pluck('name', 'id');
 
         return view('admin.testimonials.index', compact('testimonials', 'testimonialsData', 'cottages'));
     }
 
     public function create()
     {
-        $cottages = \App\Models\Cottage::pluck('name', 'id');
+        $cottages = Cottage::pluck('name', 'id');
+
         return view('admin.testimonials.form', ['testimonial' => new Testimonial, 'cottages' => $cottages]);
     }
 
-    public function store(Request $request)
+    public function store(Request $request, ActivityLogger $logger)
     {
         $data = $request->validate([
             'guest_name' => 'required|max:255',
@@ -77,7 +80,11 @@ class TestimonialController extends Controller
             $data['guest_avatar'] = $request->file('guest_avatar')->store('testimonials', 'cloudflare');
         }
 
-        Testimonial::create($data);
+        $testimonial = Testimonial::create($data);
+
+        $logger->record('testimonial.created', $testimonial, "Testimonial from {$testimonial->guest_name} created.", [
+            'rating' => $testimonial->rating,
+        ]);
 
         return redirect()->route('admin.testimonials.index')
             ->with('success', 'Testimonial created successfully.');
@@ -85,11 +92,12 @@ class TestimonialController extends Controller
 
     public function edit(Testimonial $testimonial)
     {
-        $cottages = \App\Models\Cottage::pluck('name', 'id');
+        $cottages = Cottage::pluck('name', 'id');
+
         return view('admin.testimonials.form', compact('testimonial', 'cottages'));
     }
 
-    public function update(Request $request, Testimonial $testimonial)
+    public function update(Request $request, Testimonial $testimonial, ActivityLogger $logger)
     {
         $data = $request->validate([
             'guest_name' => 'required|max:255',
@@ -112,16 +120,24 @@ class TestimonialController extends Controller
 
         $testimonial->update($data);
 
+        $logger->record('testimonial.updated', $testimonial, "Testimonial from {$testimonial->guest_name} updated.", [
+            'rating' => $testimonial->rating,
+        ]);
+
         return redirect()->route('admin.testimonials.index')
             ->with('success', 'Testimonial updated successfully.');
     }
 
-    public function destroy(Testimonial $testimonial)
+    public function destroy(Testimonial $testimonial, ActivityLogger $logger)
     {
         if ($testimonial->guest_avatar) {
             Storage::disk('cloudflare')->delete($testimonial->guest_avatar);
         }
         $testimonial->delete();
+
+        $logger->record('testimonial.deleted', $testimonial, "Testimonial from {$testimonial->guest_name} deleted.", [
+            'rating' => $testimonial->rating,
+        ]);
 
         return redirect()->route('admin.testimonials.index')
             ->with('success', 'Testimonial deleted successfully.');

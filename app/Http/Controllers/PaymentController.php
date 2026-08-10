@@ -8,6 +8,7 @@ use App\Mail\InquiryNotification;
 use App\Mail\PaymentReceived;
 use App\Models\Inquiry;
 use App\Models\SiteSetting;
+use App\Services\ActivityLogger;
 use App\Services\PayMongoService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -24,6 +25,8 @@ use Illuminate\Support\Facades\Mail;
 class PaymentController extends Controller
 {
     use GuardsBookingAccess;
+
+    public function __construct(private ActivityLogger $logger) {}
 
     /**
      * Create a hosted checkout session for a confirmed, unpaid booking and
@@ -348,6 +351,11 @@ class PaymentController extends Controller
         // A payment landing changes the dashboard's paid-this-month and
         // revenue aggregates, so invalidate the cached stats block.
         Cache::forget(DashboardController::cacheKey());
+
+        $this->logger->record('payment.received', $inquiry, "Payment received for {$inquiry->reference_code}.", [
+            'amount_paid' => $inquiry->amount_paid,
+            'method' => $inquiry->payment_method,
+        ]);
 
         Log::channel('stderr')->info('PAYMONGO branch recorded', [
             'inquiry_id' => $inquiry->id,

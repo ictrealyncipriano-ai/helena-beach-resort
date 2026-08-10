@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Cottage;
 use App\Models\Guest;
+use App\Services\ActivityLogger;
 use Illuminate\Http\Request;
 
 class GuestController extends Controller
@@ -28,8 +29,8 @@ class GuestController extends Controller
         if ($search = $request->get('search')) {
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('email', 'like', "%{$search}%")
-                  ->orWhere('phone', 'like', "%{$search}%");
+                    ->orWhere('email', 'like', "%{$search}%")
+                    ->orWhere('phone', 'like', "%{$search}%");
             });
         }
 
@@ -71,7 +72,7 @@ class GuestController extends Controller
                         : ($i->isPaid() ? 'Paid'
                         : ($i->hasFailedPayment() ? 'Payment Failed' : 'Unpaid')),
                     'payment_method' => $i->paymentMethodLabel(),
-                    'total_amount' => $i->total_amount !== null ? '₱ ' . number_format($i->total_amount, 2) : '—',
+                    'total_amount' => $i->total_amount !== null ? '₱ '.number_format($i->total_amount, 2) : '—',
                 ])->values(),
             ];
         })->values();
@@ -103,24 +104,33 @@ class GuestController extends Controller
         return view('admin.guests.form', compact('guest'));
     }
 
-    public function update(Request $request, Guest $guest)
+    public function update(Request $request, Guest $guest, ActivityLogger $logger)
     {
         $data = $request->validate([
             'name' => 'required|max:255',
-            'email' => 'required|email|max:255|unique:guests,email,' . $guest->id,
+            'email' => 'required|email|max:255|unique:guests,email,'.$guest->id,
             'phone' => 'nullable|max:20',
             'notes' => 'nullable',
         ]);
 
         $guest->update($data);
 
+        $logger->record('guest.updated', $guest, "Guest {$guest->name} updated.", [
+            'email' => $guest->email,
+        ]);
+
         return redirect()->route('admin.guests.index')
             ->with('success', 'Guest updated successfully.');
     }
 
-    public function destroy(Guest $guest)
+    public function destroy(Guest $guest, ActivityLogger $logger)
     {
         $guest->delete();
+
+        $logger->record('guest.deleted', $guest, "Guest {$guest->name} deleted.", [
+            'email' => $guest->email,
+        ]);
+
         return redirect()->route('admin.guests.index')
             ->with('success', 'Guest deleted successfully.');
     }

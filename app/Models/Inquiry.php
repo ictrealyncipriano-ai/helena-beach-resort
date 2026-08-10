@@ -123,10 +123,15 @@ class Inquiry extends Model
     }
 
     /**
-     * Whether the configured deposit has been settled (in full).
+     * Whether the configured deposit has been settled (in full). A booking
+     * without a configured deposit is never "deposit paid".
      */
     public function isDepositPaid(): bool
     {
+        if (! $this->hasDeposit()) {
+            return false;
+        }
+
         return $this->deposit_paid_at !== null
             || (float) ($this->amount_paid ?? 0) >= (float) $this->deposit_amount;
     }

@@ -2,17 +2,24 @@
 
 namespace App\Http\Controllers;
 
+use App\Exceptions\BookingConflictException;
 use App\Http\Controllers\Concerns\GuardsBookingAccess;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Mail\BookingCancelled;
+use App\Mail\BookingModified;
 use App\Mail\RefundReceived;
+use App\Models\Cottage;
+use App\Models\CottageDateBlock;
 use App\Models\Inquiry;
 use App\Models\SiteSetting;
 use App\Models\Testimonial;
+use App\Services\ActivityLogger;
+use App\Services\InquiryService;
 use App\Services\PayMongoService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 
@@ -27,6 +34,10 @@ use Illuminate\Support\Facades\Mail;
 class BookingPortalController extends Controller
 {
     use GuardsBookingAccess;
+
+    public function __construct(private ActivityLogger $logger)
+    {
+    }
 
     /** Show email/reference lookup form */
     public function lookupForm()
@@ -71,6 +82,8 @@ class BookingPortalController extends Controller
             'inquiry' => $inquiry,
             'canCancel' => $canCancel,
             'cancelBlockReason' => $canCancel ? null : $this->cannotCancelReason($inquiry),
+            'canModify' => $this->canModify($inquiry),
+            'modifyBlockReason' => $this->canModify($inquiry) ? null : $this->cannotModifyReason($inquiry),
             'canReview' => $this->canReview($inquiry),
             'canSubmitPaymentProof' => $this->canSubmitPaymentProof($inquiry),
         ]);
@@ -139,6 +152,10 @@ class BookingPortalController extends Controller
             'is_active' => false,
         ]);
 
+        $this->logger->record('guest.reviewed', $inquiry, "Guest submitted a review for {$inquiry->reference_code}.", [
+            'rating' => (int) $data['rating'],
+        ]);
+
         return redirect()->route('booking.portal.show', $inquiry)
             ->with('success', 'Thank you! Your review has been submitted and is pending approval.');
     }
@@ -183,8 +200,257 @@ class BookingPortalController extends Controller
             'payment_proof_review_note' => null,
         ]);
 
+        $this->logger->record('guest.payment_proof', $inquiry, "Guest uploaded a payment proof for {$inquiry->reference_code}.");
+
         return redirect()->route('booking.portal.show', $inquiry)
             ->with('success', 'Thank you! Your payment proof has been uploaded and is pending review by the resort.');
+    }
+
+    /**
+     * Show the modify form, pre-filled with the current schedule. Dates held
+     * by this very booking are excluded from the disabled list so the guest
+     * can keep their current dates (or shift a pending request).
+     */
+    public function modifyForm(Inquiry $inquiry)
+    {
+        $this->authorizeBookingAccess($inquiry);
+        $inquiry->load('cottage');
+
+        if (! $this->canModify($inquiry)) {
+            $reason = $this->cannotModifyReason($inquiry);
+
+            return redirect()->route('booking.portal.show', $inquiry)
+                ->with('error', $reason ?? 'This booking cannot be modified right now.');
+        }
+
+        $cottages = Cottage::where('is_available', true)
+            ->orderBy('sort_order')
+            ->get();
+
+        // Any future block not held by this booking is disabled in the
+        // pickers. Matching on inquiry_id OR the legacy reference-code reason
+        // keeps pre-inquiry_id blocks excluded too.
+        $blockedByCottage = CottageDateBlock::whereIn('cottage_id', $cottages->pluck('id'))
+            ->where('date', '>=', today())
+            ->select('cottage_id', 'date', 'reason', 'inquiry_id')
+            ->get()
+            ->filter(function (CottageDateBlock $block) use ($inquiry) {
+                return $block->inquiry_id !== $inquiry->id
+                    && ! str_contains((string) $block->reason, $inquiry->reference_code);
+            })
+            ->groupBy('cottage_id')
+            ->map(fn ($blocks) => $blocks->pluck('date')
+                ->map(fn ($date) => $date->format('Y-m-d'))
+                ->values());
+
+        $rates = $cottages->mapWithKeys(fn ($c) => [
+            $c->id => [
+                'day_tour' => (float) $c->rate_daytour,
+                'overnight' => (float) $c->rate_overnight,
+                'peak_day_tour' => $c->peak_rate_daytour !== null ? (float) $c->peak_rate_daytour : null,
+                'peak_overnight' => $c->peak_rate_overnight !== null ? (float) $c->peak_rate_overnight : null,
+                'peak_start' => $c->peak_start?->format('m-d'),
+                'peak_end' => $c->peak_end?->format('m-d'),
+                'name' => $c->name,
+                'capacity' => $c->capacity,
+            ],
+        ]);
+
+        return view('pages.booking-modify', compact('inquiry', 'cottages', 'blockedByCottage', 'rates'));
+    }
+
+    /**
+     * Apply a guest-initiated schedule change. The old blocks are released
+     * and the new ones held inside one transaction, so a conflict on the new
+     * dates leaves the original booking (and its hold) untouched.
+     */
+    public function modify(Request $request, Inquiry $inquiry, InquiryService $inquiryService)
+    {
+        $this->authorizeBookingAccess($inquiry);
+
+        if (! $this->canModify($inquiry)) {
+            $reason = $this->cannotModifyReason($inquiry);
+
+            return back()->with('error', $reason ?? 'This booking cannot be modified right now.');
+        }
+
+        $validated = $request->validate([
+            'booking_type' => ['required', 'string', 'in:day_tour,overnight'],
+            'cottage_id' => ['required', 'exists:cottages,id,is_available,1'],
+            'check_in' => ['required', 'date', 'after_or_equal:today'],
+            'check_out' => ['nullable', 'required_if:booking_type,overnight', 'date', 'after:check_in'],
+            'pax' => ['required', 'integer', 'min:1', 'max:50'],
+        ]);
+
+        $inquiry->load('cottage');
+        $original = [
+            'cottage_id' => $inquiry->cottage_id,
+            'check_in' => $inquiry->check_in?->format('Y-m-d'),
+            'check_out' => $inquiry->check_out?->format('Y-m-d'),
+        ];
+        $previous = $this->snapshotForEmail($inquiry);
+        $wasConfirmed = $inquiry->status === 'confirmed';
+
+        try {
+            $inquiry = DB::transaction(function () use ($inquiry, $validated, $original, $wasConfirmed, $inquiryService) {
+                $inquiry->fill([
+                    'booking_type' => $validated['booking_type'],
+                    'cottage_id' => (int) $validated['cottage_id'],
+                    'check_in' => $validated['check_in'],
+                    'check_out' => $validated['check_out'] ?? null,
+                    'pax' => (int) $validated['pax'],
+                ]);
+
+                // Recompute the total for the new schedule, keeping any promo
+                // discount already applied so it is never silently re-awarded.
+                $newTotal = $inquiryService->calculateTotal([
+                    'booking_type' => $inquiry->booking_type,
+                    'cottage_id' => $inquiry->cottage_id,
+                    'check_in' => $inquiry->check_in?->format('Y-m-d'),
+                    'check_out' => $inquiry->check_out?->format('Y-m-d'),
+                ]);
+
+                if ($newTotal !== null) {
+                    $discount = (float) ($inquiry->discount_amount ?? 0);
+                    $inquiry->total_amount = number_format(max(0, (float) $newTotal - $discount), 2, '.', '');
+                }
+
+                $inquiry->save();
+
+                $inquiry->releaseBlocks($original);
+
+                if ($wasConfirmed) {
+                    $inquiry->bookBlocks();
+                } else {
+                    $inquiry->reserveBlocks();
+                }
+
+                return $inquiry;
+            });
+        } catch (BookingConflictException $e) {
+            return back()->with('error', 'Those dates are no longer available. Your original booking was not changed.')
+                ->withInput();
+        }
+
+        // A schedule change shifts the dashboard's pending/confirmed counts and
+        // revenue, so drop the cached aggregates like every other write path.
+        Cache::forget(DashboardController::cacheKey());
+
+        $this->logger->record('guest.modified', $inquiry, "Guest modified booking {$inquiry->reference_code}.", [
+            'previous' => $previous,
+        ]);
+
+        $this->sendModifiedNotifications($inquiry, $previous);
+
+        return redirect()->route('booking.portal.show', $inquiry)
+            ->with('success', 'Your booking has been updated. A confirmation email is on its way.');
+    }
+
+    /**
+     * Whether the guest may modify this booking: same temporal eligibility as
+     * cancellation (pending/confirmed, check-in at least 24h out) and no funds
+     * recorded yet. Once any money has been collected the guest must contact
+     * the resort, because a reschedule there can change the amount owed.
+     */
+    private function canModify(Inquiry $inquiry): bool
+    {
+        if (! in_array($inquiry->status, ['pending', 'confirmed'], true)) {
+            return false;
+        }
+
+        if (! $inquiry->check_in || $inquiry->check_in->isPast()) {
+            return false;
+        }
+
+        if (now()->diffInHours($inquiry->check_in) < 24) {
+            return false;
+        }
+
+        if ($this->hasPayments($inquiry)) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Explain why modification is unavailable, mirroring the cancel-flow
+     * messaging so the portal always shows a clear reason.
+     */
+    private function cannotModifyReason(Inquiry $inquiry): ?string
+    {
+        if (! in_array($inquiry->status, ['pending', 'confirmed'], true)) {
+            return null;
+        }
+
+        if ($this->hasPayments($inquiry)) {
+            return 'To change the dates or cottage of a paid booking, please contact the resort.';
+        }
+
+        if (! $inquiry->check_in || $inquiry->check_in->isPast()) {
+            return 'This booking can no longer be modified.';
+        }
+
+        if (now()->diffInHours($inquiry->check_in) < 24) {
+            return 'Modification is no longer available. This booking can be changed until 24 hours before check-in (cutoff: '
+                .$inquiry->check_in->format('M d, Y').').';
+        }
+
+        return null;
+    }
+
+    /**
+     * Whether any funds have been recorded against this booking (deposit,
+     * partial, or full settlement). Used to gate self-modification.
+     */
+    private function hasPayments(Inquiry $inquiry): bool
+    {
+        return $inquiry->isPaid()
+            || $inquiry->isDepositPaid()
+            || (float) ($inquiry->amount_paid ?? 0) > 0;
+    }
+
+    /**
+     * Human-readable description of the schedule before a change, used both
+     * for the activity log and the "before" column of the modification email.
+     *
+     * @return array{cottage: string, booking_type: string, check_in: ?string, check_out: ?string, pax: ?int}
+     */
+    private function snapshotForEmail(Inquiry $inquiry): array
+    {
+        return [
+            'cottage' => $inquiry->cottage?->name ?? 'Not specified',
+            'booking_type' => $inquiry->booking_type === 'day_tour'
+                ? 'Day Tour'
+                : ($inquiry->booking_type === 'overnight' ? 'Overnight' : 'Inquiry'),
+            'check_in' => $inquiry->check_in?->format('M d, Y'),
+            'check_out' => $inquiry->check_out?->format('M d, Y'),
+            'pax' => $inquiry->pax,
+        ];
+    }
+
+    /**
+     * Notify the guest (and the resort owner) of the schedule change. Runs
+     * outside the transaction like the other portal emails, so a failed mail
+     * can never roll back a successful modification.
+     *
+     * @param  array<string, mixed>|null  $previous
+     */
+    private function sendModifiedNotifications(Inquiry $inquiry, ?array $previous): void
+    {
+        try {
+            Mail::to($inquiry->email)->send(new BookingModified($inquiry, $previous));
+
+            $ownerEmail = SiteSetting::getValue('contact_email');
+            if ($ownerEmail) {
+                Mail::to($ownerEmail)->send(new BookingModified($inquiry, $previous));
+            }
+        } catch (\Exception $e) {
+            Log::warning('Failed to send booking modification notification', [
+                'inquiry_id' => $inquiry->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
 
     /** Cancel a booking (guest-facing), sends notification to guest and owner */
@@ -256,6 +522,11 @@ class BookingPortalController extends Controller
         // Guest cancellations change the same dashboard aggregates as admin
         // ones (pending/confirmed counts, revenue), so drop the cached stats.
         Cache::forget(DashboardController::cacheKey());
+
+        $this->logger->record('guest.cancelled', $inquiry, "Guest cancelled booking {$inquiry->reference_code}.", [
+            'refunded' => $refunded,
+            'refund_failed' => $refundFailed,
+        ]);
 
         try {
             Mail::to($inquiry->email)->send(new BookingCancelled($inquiry));

@@ -221,6 +221,19 @@
             @endif
 
             <div>
+                @if($canModify)
+                <a href="{{ route('booking.portal.modify', $inquiry) }}"
+                    class="w-full px-6 py-3 bg-white dark:bg-slate-800 text-teal-700 dark:text-teal-300 font-medium rounded-xl border border-teal-200 dark:border-slate-600 hover:bg-teal-50 dark:hover:bg-teal-900/30 transition-all inline-flex items-center justify-center gap-2">
+                    <x-icons name="calendar" class="w-4 h-4" />
+                    Modify Booking
+                </a>
+                @elseif($modifyBlockReason)
+                <div class="w-full px-6 py-3 bg-gray-50 dark:bg-slate-800/50 text-gray-500 dark:text-slate-400 rounded-xl border border-gray-200 dark:border-slate-700 text-sm flex items-center gap-2">
+                    <x-icons name="info" class="w-4 h-4 shrink-0 text-gray-500 dark:text-slate-400" />
+                    {{ $modifyBlockReason }}
+                </div>
+                @endif
+
                 @if($canCancel)
                 <button type="button" @click="showCancelModal = true"
                     class="w-full px-6 py-3 bg-white dark:bg-slate-800 text-red-600 dark:text-red-400 font-medium rounded-xl border border-red-200 dark:border-slate-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all inline-flex items-center justify-center gap-2">

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AvailabilityController;
 use App\Http\Controllers\BookingController;
 use App\Http\Controllers\BookingPortalController;
 use App\Http\Controllers\CottageController;
@@ -69,6 +70,17 @@ Route::get('/gallery', [GalleryController::class, 'index'])->name('gallery.index
 
 /*
 |--------------------------------------------------------------------------
+| Availability (homepage widget, public read-only)
+|--------------------------------------------------------------------------
+*/
+// GET only: the lookup never mutates state, so a plain GET is safe here.
+// Throttled so a scraper cannot mine every cottage's full block calendar.
+Route::get('/availability/check', [AvailabilityController::class, 'check'])
+    ->middleware('throttle:availability')
+    ->name('availability.check');
+
+/*
+|--------------------------------------------------------------------------
 | Booking Flow
 |--------------------------------------------------------------------------
 */
@@ -98,6 +110,10 @@ Route::post('/booking/lookup', [BookingPortalController::class, 'lookup'])
     ->middleware('throttle:lookup')
     ->name('booking.portal.lookup.post');
 Route::get('/booking/{inquiry}', [BookingPortalController::class, 'show'])->name('booking.portal.show');
+Route::get('/booking/{inquiry}/modify', [BookingPortalController::class, 'modifyForm'])->name('booking.portal.modify');
+Route::put('/booking/{inquiry}/modify', [BookingPortalController::class, 'modify'])
+    ->middleware('throttle:modify')
+    ->name('booking.portal.modify.update');
 Route::get('/booking/{inquiry}/status', [BookingPortalController::class, 'status'])->name('booking.portal.status');
 Route::post('/booking/{inquiry}/cancel', [BookingPortalController::class, 'cancel'])
     ->middleware('throttle:cancel')

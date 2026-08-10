@@ -12,6 +12,7 @@ use App\Models\Cottage;
 use App\Models\Guest;
 use App\Models\Inquiry;
 use App\Models\SiteSetting;
+use App\Services\ActivityLogger;
 use App\Services\InquiryService;
 use App\Services\PayMongoService;
 use Illuminate\Http\Request;
@@ -22,6 +23,10 @@ use Illuminate\Support\Facades\Mail;
 
 class InquiryController extends Controller
 {
+    public function __construct(private ActivityLogger $logger)
+    {
+    }
+
     /**
      * Drop the cached admin dashboard aggregates so the next dashboard view
      * reflects the mutation. Called by every action that changes the counts,
@@ -158,6 +163,8 @@ class InquiryController extends Controller
 
         $this->forgetDashboardCache();
 
+        $this->logger->record('inquiry.created', $inquiry, "Walk-in inquiry {$inquiry->reference_code} created.");
+
         return redirect()->route('admin.inquiries.index')
             ->with('success', "Walk-in inquiry {$inquiry->reference_code} created successfully.");
     }
@@ -225,6 +232,14 @@ class InquiryController extends Controller
 
         $this->forgetDashboardCache();
 
+        $this->logger->record('inquiry.updated', $inquiry, "Inquiry {$inquiry->reference_code} updated.", [
+            'previous' => [
+                'cottage_id' => $original['cottage_id'],
+                'check_in' => $original['check_in'],
+                'check_out' => $original['check_out'],
+            ],
+        ]);
+
         return redirect()->route('admin.inquiries.index')
             ->with('success', 'Inquiry updated successfully.');
     }
@@ -234,6 +249,7 @@ class InquiryController extends Controller
         $inquiry->releaseBlocks();
         $inquiry->delete();
         $this->forgetDashboardCache();
+        $this->logger->record('inquiry.deleted', $inquiry, "Inquiry {$inquiry->reference_code} deleted.");
 
         return redirect()->route('admin.inquiries.index')
             ->with('success', 'Inquiry deleted successfully.');
@@ -256,6 +272,8 @@ class InquiryController extends Controller
         }
 
         $this->forgetDashboardCache();
+
+        $this->logger->record('inquiry.confirmed', $inquiry, "Booking {$inquiry->reference_code} confirmed.");
 
         return redirect()->route('admin.inquiries.index')
             ->with('success', "Booking {$inquiry->reference_code} confirmed successfully.");
@@ -304,6 +322,8 @@ class InquiryController extends Controller
 
         $this->forgetDashboardCache();
 
+        $this->logger->record('inquiry.cancelled', $inquiry, "Booking {$inquiry->reference_code} cancelled.");
+
         try {
             Mail::to($inquiry->email)->send(new BookingCancelled($inquiry));
 
@@ -346,6 +366,8 @@ class InquiryController extends Controller
 
         $this->forgetDashboardCache();
 
+        $this->logger->record('inquiry.marked_paid', $inquiry, "Booking {$inquiry->reference_code} marked as paid.");
+
         return redirect()->route('admin.inquiries.show', $inquiry)
             ->with('success', "Booking {$inquiry->reference_code} marked as paid.");
     }
@@ -382,6 +404,8 @@ class InquiryController extends Controller
 
         $this->forgetDashboardCache();
 
+        $this->logger->record('payment_proof.approved', $inquiry, "Payment proof for {$inquiry->reference_code} approved.");
+
         return redirect()->route('admin.inquiries.show', $inquiry)
             ->with('success', "Payment proof for {$inquiry->reference_code} approved and booking marked as paid.");
     }
@@ -405,6 +429,8 @@ class InquiryController extends Controller
             'payment_proof_reviewed_at' => now(),
             'payment_proof_review_note' => $note['note'] ?? null,
         ]);
+
+        $this->logger->record('payment_proof.rejected', $inquiry, "Payment proof for {$inquiry->reference_code} rejected.");
 
         return redirect()->route('admin.inquiries.show', $inquiry)
             ->with('success', "Payment proof for {$inquiry->reference_code} was rejected. The guest can upload a new one.");
@@ -461,6 +487,8 @@ class InquiryController extends Controller
         }
 
         $this->forgetDashboardCache();
+
+        $this->logger->record('inquiry.refunded', $inquiry, "Payment for {$inquiry->reference_code} refunded and booking cancelled.");
 
         try {
             Mail::to($inquiry->email)->send(new RefundReceived($inquiry));

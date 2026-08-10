@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\ActivityLogController;
 use App\Http\Controllers\Admin\Auth\LoginController;
 use App\Http\Controllers\Admin\AvailabilityController;
 use App\Http\Controllers\Admin\CottageController;
@@ -30,6 +31,9 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('/', fn () => redirect()->route('admin.dashboard'))->name('home');
 
         Route::get('/availability', [AvailabilityController::class, 'index'])->name('availability');
+
+        Route::get('/activity-logs', [ActivityLogController::class, 'index'])->name('activity-logs.index');
+        Route::get('/activity-logs/{activityLog}', [ActivityLogController::class, 'show'])->name('activity-logs.show');
 
         Route::prefix('exports')->name('exports.')->controller(ExportController::class)->group(function () {
             Route::get('/', 'index')->name('index');

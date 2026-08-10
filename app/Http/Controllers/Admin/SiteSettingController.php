@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\SiteSetting;
+use App\Services\ActivityLogger;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
@@ -30,7 +31,7 @@ class SiteSettingController extends Controller
         return view('admin.site-settings.form', ['setting' => new SiteSetting]);
     }
 
-    public function store(Request $request)
+    public function store(Request $request, ActivityLogger $logger)
     {
         $data = $request->validate([
             'key' => 'required|max:255|unique:site_settings,key',
@@ -44,7 +45,11 @@ class SiteSettingController extends Controller
             'type' => 'required|in:text,textarea,image',
         ]);
 
-        SiteSetting::create($data);
+        $setting = SiteSetting::create($data);
+
+        $logger->record('setting.created', $setting, "Site setting {$setting->key} created.", [
+            'type' => $setting->type,
+        ]);
 
         return redirect()->route('admin.site-settings.index')
             ->with('success', 'Setting created successfully.');
@@ -55,10 +60,10 @@ class SiteSettingController extends Controller
         return view('admin.site-settings.form', ['setting' => $siteSetting]);
     }
 
-    public function update(Request $request, SiteSetting $siteSetting)
+    public function update(Request $request, SiteSetting $siteSetting, ActivityLogger $logger)
     {
         $data = $request->validate([
-            'key' => 'required|max:255|unique:site_settings,key,' . $siteSetting->id,
+            'key' => 'required|max:255|unique:site_settings,key,'.$siteSetting->id,
             'value' => [
                 'nullable',
                 Rule::when(
@@ -71,13 +76,20 @@ class SiteSettingController extends Controller
 
         $siteSetting->update($data);
 
+        $logger->record('setting.updated', $siteSetting, "Site setting {$siteSetting->key} updated.", [
+            'type' => $siteSetting->type,
+        ]);
+
         return redirect()->route('admin.site-settings.index')
             ->with('success', 'Setting updated successfully.');
     }
 
-    public function destroy(SiteSetting $siteSetting)
+    public function destroy(SiteSetting $siteSetting, ActivityLogger $logger)
     {
         $siteSetting->delete();
+
+        $logger->record('setting.deleted', $siteSetting, "Site setting {$siteSetting->key} deleted.");
+
         return redirect()->route('admin.site-settings.index')
             ->with('success', 'Setting deleted successfully.');
     }

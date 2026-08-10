@@ -23,6 +23,8 @@ use Illuminate\Validation\ValidationException;
  */
 class InquiryService
 {
+    public function __construct(private ActivityLogger $logger) {}
+
     /**
      * Store a new inquiry with automatic total calculation and owner notification.
      *
@@ -130,6 +132,11 @@ class InquiryService
 
             // Emails go out only after the transaction committed.
             $this->sendNotifications($inquiry);
+
+            $this->logger->record('inquiry.submitted', $inquiry, "New {$inquiry->source} inquiry {$inquiry->reference_code} submitted.", [
+                'booking_type' => $inquiry->booking_type,
+                'total_amount' => $inquiry->total_amount,
+            ]);
 
             return $inquiry;
         }

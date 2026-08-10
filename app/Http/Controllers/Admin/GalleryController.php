@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Gallery;
+use App\Services\ActivityLogger;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -44,7 +45,7 @@ class GalleryController extends Controller
         return view('admin.gallery.form', ['gallery' => new Gallery]);
     }
 
-    public function store(Request $request)
+    public function store(Request $request, ActivityLogger $logger)
     {
         $data = $request->validate([
             'title' => 'nullable|max:255',
@@ -57,7 +58,11 @@ class GalleryController extends Controller
         $data['is_active'] = $request->boolean('is_active');
         $data['photo_path'] = $request->file('photo_path')->store('gallery', 'cloudflare');
 
-        Gallery::create($data);
+        $gallery = Gallery::create($data);
+
+        $logger->record('gallery.created', $gallery, "Gallery image {$gallery->title} added.", [
+            'category' => $gallery->category,
+        ]);
 
         return redirect()->route('admin.gallery.index')
             ->with('success', 'Gallery image added successfully.');
@@ -68,7 +73,7 @@ class GalleryController extends Controller
         return view('admin.gallery.form', compact('gallery'));
     }
 
-    public function update(Request $request, Gallery $gallery)
+    public function update(Request $request, Gallery $gallery, ActivityLogger $logger)
     {
         $data = $request->validate([
             'title' => 'nullable|max:255',
@@ -89,16 +94,24 @@ class GalleryController extends Controller
 
         $gallery->update($data);
 
+        $logger->record('gallery.updated', $gallery, "Gallery image {$gallery->title} updated.", [
+            'category' => $gallery->category,
+        ]);
+
         return redirect()->route('admin.gallery.index')
             ->with('success', 'Gallery image updated successfully.');
     }
 
-    public function destroy(Gallery $gallery)
+    public function destroy(Gallery $gallery, ActivityLogger $logger)
     {
         if ($gallery->photo_path) {
             Storage::disk('cloudflare')->delete($gallery->photo_path);
         }
         $gallery->delete();
+
+        $logger->record('gallery.deleted', $gallery, "Gallery image {$gallery->title} deleted.", [
+            'category' => $gallery->category,
+        ]);
 
         return redirect()->route('admin.gallery.index')
             ->with('success', 'Gallery image deleted successfully.');
