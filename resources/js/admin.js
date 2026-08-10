@@ -78,7 +78,6 @@ function themeToggle() {
 function liveSearchState() {
     return {
         search: '',
-        loading: false,
         init() {
             const form = this.$root;
             const input = form.querySelector('input[name="search"]');
@@ -110,7 +109,10 @@ function liveSearchState() {
             }
             region.classList.add('opacity-60', 'pointer-events-none');
             region.setAttribute('aria-busy', 'true');
-            this.loading = true;
+
+            const bar = document.getElementById('admin-live-loading');
+            if (bar) bar.classList.remove('hidden');
+            const started = performance.now();
 
             fetch(url, {
                 headers: { 'X-LiveSearch': '1' },
@@ -134,9 +136,12 @@ function liveSearchState() {
                     }
                 })
                 .finally(() => {
-                    region.classList.remove('opacity-60', 'pointer-events-none');
-                    region.removeAttribute('aria-busy');
-                    this.loading = false;
+                    const elapsed = performance.now() - started;
+                    setTimeout(() => {
+                        region.classList.remove('opacity-60', 'pointer-events-none');
+                        region.removeAttribute('aria-busy');
+                        if (bar) bar.classList.add('hidden');
+                    }, Math.max(0, 250 - elapsed));
                 });
         },
         goSearch() {
