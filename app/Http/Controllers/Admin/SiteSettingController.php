@@ -12,7 +12,16 @@ class SiteSettingController extends Controller
 {
     public function index(Request $request)
     {
-        $settings = SiteSetting::orderBy('key')->paginate(20);
+        $settings = SiteSetting::query();
+
+        if ($search = trim((string) $request->get('search'))) {
+            $settings->where(function ($q) use ($search) {
+                $q->where('key', 'like', "%{$search}%")
+                    ->orWhere('value', 'like', "%{$search}%");
+            });
+        }
+
+        $settings = $settings->orderBy('key')->paginate(20)->withQueryString();
 
         $settingsData = $settings->map(function ($setting) {
             return [
