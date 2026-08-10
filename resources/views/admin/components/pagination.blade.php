@@ -1,4 +1,4 @@
-@props(['paginator'])
+@props(['paginator', 'live' => false])
 
 @if ($paginator->hasPages())
     <div class="flex items-center justify-between border-t border-gray-100 pt-4 dark:border-slate-700">
@@ -7,7 +7,7 @@
             to <span class="font-medium text-gray-700 dark:text-slate-200">{{ $paginator->lastItem() }}</span>
             of <span class="font-medium text-gray-700 dark:text-slate-200">{{ $paginator->total() }}</span> results
         </div>
-        <nav class="flex items-center gap-1">
+        <nav class="flex items-center gap-1" @if($live) data-live-pagination @endif>
             {{-- Previous --}}
             @if ($paginator->onFirstPage())
                 <span class="px-3 py-1.5 text-sm text-gray-300 rounded-lg border border-gray-100 cursor-not-allowed dark:border-slate-700 dark:text-slate-600">&laquo; Prev</span>

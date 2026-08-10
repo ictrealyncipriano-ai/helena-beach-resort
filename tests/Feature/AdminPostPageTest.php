@@ -108,6 +108,22 @@ class AdminPostPageTest extends TestCase
             ->assertStatus(403);
     }
 
+    public function test_live_search_returns_table_fragment_only(): void
+    {
+        Post::create(['title' => 'Summer Promo', 'published_at' => now()]);
+        Post::create(['title' => 'Winter Offer', 'published_at' => now()]);
+
+        $response = $this->actingAs($this->admin())
+            ->withHeader('X-LiveSearch', '1')
+            ->get(route('admin.posts.index', ['search' => 'Summer']));
+
+        $response->assertOk()
+            ->assertSee('Summer Promo')
+            ->assertDontSee('Winter Offer')
+            ->assertSee('data-total="1"', false)
+            ->assertDontSee('<html', false);
+    }
+
     public function test_unauthenticated_user_cannot_access_posts(): void
     {
         $this->get(route('admin.posts.index'))->assertRedirect(route('admin.login'));

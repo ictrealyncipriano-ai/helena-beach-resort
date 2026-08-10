@@ -75,4 +75,18 @@ class AdminSiteSettingPageTest extends TestCase
             ->assertDontSee('site_name')
             ->assertSee('No settings');
     }
+
+    public function test_live_search_returns_table_fragment_only(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+
+        $this->actingAs($admin)
+            ->withHeader('X-LiveSearch', '1')
+            ->get(route('admin.site-settings.index', ['search' => 'analytics_ga4_id']))
+            ->assertOk()
+            ->assertSee('analytics_ga4_id')
+            ->assertDontSee('site_name')
+            ->assertSee('data-total="1"', false)
+            ->assertDontSee('<html', false);
+    }
 }

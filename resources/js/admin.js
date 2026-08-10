@@ -79,20 +79,66 @@ function liveSearchState() {
     return {
         search: '',
         init() {
-            this.search = this.$el.getAttribute('value') || '';
+            const input = this.$el.querySelector('input[name="search"]');
+            this.search = (input && input.value) || '';
+
+            document.addEventListener('click', (e) => {
+                const link = e.target.closest('[data-live-pagination] a[href]');
+                if (!link) return;
+                e.preventDefault();
+                history.pushState({}, '', link.href);
+                this.apply(link.href);
+            });
+
+            window.addEventListener('popstate', () => this.apply(window.location.href));
+        },
+        currentUrl() {
+            const params = new URLSearchParams(new FormData(this.$el));
+            params.forEach((value, key) => {
+                if (value === '') params.delete(key);
+            });
+            params.delete('page');
+            return window.location.pathname + '?' + params.toString();
+        },
+        apply(url) {
+            const region = document.getElementById('admin-table-region');
+            if (!region) {
+                window.location.href = url;
+                return;
+            }
+            region.classList.add('opacity-60', 'pointer-events-none');
+            region.setAttribute('aria-busy', 'true');
+
+            fetch(url, {
+                headers: { 'X-LiveSearch': '1' },
+                credentials: 'same-origin',
+            })
+                .then((response) => {
+                    if (!response.ok) {
+                        window.location.href = url;
+                        return null;
+                    }
+                    return response.text();
+                })
+                .then((html) => {
+                    if (html === null) return;
+                    region.innerHTML = html;
+                    const total = region.querySelector('[data-total]');
+                    if (total) {
+                        document.querySelectorAll('[data-live-count]').forEach((el) => {
+                            el.textContent = total.dataset.total;
+                        });
+                    }
+                })
+                .finally(() => {
+                    region.classList.remove('opacity-60', 'pointer-events-none');
+                    region.removeAttribute('aria-busy');
+                });
         },
         goSearch() {
-            const url = new URL(window.location.href);
-            const q = this.search.trim();
-            if (q) {
-                url.searchParams.set('search', q);
-            } else {
-                url.searchParams.delete('search');
-            }
-            url.searchParams.delete('page');
-            if (url.href !== window.location.href) {
-                window.location.href = url.toString();
-            }
+            const url = this.currentUrl();
+            history.pushState({}, '', url);
+            this.apply(url);
         }
     };
 }

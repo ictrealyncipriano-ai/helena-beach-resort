@@ -22,7 +22,11 @@ class PostController extends Controller
             $query->where('is_active', $request->boolean('is_active'));
         }
 
-        $posts = $query->orderByDesc('published_at')->paginate(15);
+        $posts = $query->orderByDesc('published_at')->paginate(15)->withQueryString();
+
+        if ($request->header('X-LiveSearch') === '1') {
+            return view('admin.posts._table', compact('posts'));
+        }
 
         return view('admin.posts.index', compact('posts'));
     }

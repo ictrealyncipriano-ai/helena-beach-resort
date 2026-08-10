@@ -34,6 +34,10 @@ class SiteSettingController extends Controller
             'query' => $request->query(),
         ]);
 
+        if ($request->header('X-LiveSearch') === '1') {
+            return view('admin.site-settings._table', compact('settings'));
+        }
+
         $settingsData = $settings->map(function ($setting) {
             return [
                 'id' => $setting->id,

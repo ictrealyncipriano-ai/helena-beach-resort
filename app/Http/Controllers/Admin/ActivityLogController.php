@@ -41,6 +41,10 @@ class ActivityLogController extends Controller
 
         $logs = $query->latest('id')->paginate(25)->withQueryString();
 
+        if ($request->header('X-LiveSearch') === '1') {
+            return view('admin.activity-logs._table', compact('logs'));
+        }
+
         $actions = ActivityLog::query()
             ->select('action')
             ->distinct()

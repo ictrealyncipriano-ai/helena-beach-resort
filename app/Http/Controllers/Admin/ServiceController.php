@@ -28,7 +28,11 @@ class ServiceController extends Controller
             $query->where('is_active', $request->boolean('is_active'));
         }
 
-        $services = $query->orderBy('sort_order')->paginate(15);
+        $services = $query->orderBy('sort_order')->paginate(15)->withQueryString();
+
+        if ($request->header('X-LiveSearch') === '1') {
+            return view('admin.services._table', compact('services'));
+        }
 
         $servicesData = $services->map(function ($service) {
             return [
