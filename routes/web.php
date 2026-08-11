@@ -56,6 +56,20 @@ Route::get('/__diag', function () {
                 return [$t => ['exists' => $exists, 'rows' => $count]];
             })->all();
 
+        $home = null;
+        try {
+            $cottages = App\Models\Cottage::with('primaryPhoto')->where('is_available', true)->orderBy('sort_order')->take(6)->get();
+            $gallery = App\Models\Gallery::where('is_active', true)->orderBy('sort_order')->take(8)->get();
+            $testimonials = App\Models\Testimonial::active()->with('cottage')->take(3)->get();
+            $avgRating = App\Models\Testimonial::where('is_active', true)->avg('rating');
+            $posts = App\Models\Post::active()->take(3)->get();
+            $html = view('pages.home', compact('cottages', 'gallery', 'testimonials', 'avgRating', 'posts'))->render();
+            $home = ['ok' => true, 'bytes' => strlen($html)];
+        } catch (\Throwable $e) {
+            $home = ['ok' => false, 'error' => get_class($e).': '.$e->getMessage(), 'file' => $e->getFile().':'.$e->getLine(), 'trace' => array_slice(array_map(fn ($t) => ($t['file'] ?? '?').':'.($t['line'] ?? '?'), $e->getTrace()), 0, 6)];
+        }
+        $out['home_probe'] = $home;
+
         return response()->json($out);
     } catch (\Throwable $e) {
         return response()->json([
