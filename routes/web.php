@@ -78,6 +78,27 @@ Route::get('/__diag', function () {
     }
 });
 
+Route::get('/__migrate', function () {
+    if (! hash_equals((string) config('cron.secret'), (string) request()->bearerToken())) {
+        return response()->json(['error' => 'Unauthorized'], 401);
+    }
+
+    try {
+        \Illuminate\Support\Facades\Artisan::call('migrate', ['--force' => true]);
+
+        return response()->json([
+            'ok' => true,
+            'output' => \Illuminate\Support\Facades\Artisan::output(),
+        ]);
+    } catch (\Throwable $e) {
+        return response()->json([
+            'ok' => false,
+            'error' => get_class($e).': '.$e->getMessage(),
+            'output' => \Illuminate\Support\Facades\Artisan::output(),
+        ], 500);
+    }
+});
+
 /*
 |--------------------------------------------------------------------------
 | robots.txt (served dynamically so the Sitemap host can never drift from
