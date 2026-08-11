@@ -90,19 +90,18 @@
                             :id="'faq-panel-' + {{ $loop->index }}"
                             role="region"
                             :aria-labelledby="'faq-button-' + {{ $loop->index }}"
-                            class="px-6 sm:px-8 pb-6 text-gray-600 dark:text-slate-300 leading-relaxed"
-                            x-show="open === {{ $loop->index }}"
-                            x-transition:enter="transition ease-out duration-200"
-                            x-transition:enter-start="opacity-0 -translate-y-2"
-                            x-transition:enter-end="opacity-100 translate-y-0"
-                            x-transition:leave="transition ease-in duration-150"
-                            x-transition:leave-start="opacity-100 translate-y-0"
-                            x-transition:leave-end="opacity-0 -translate-y-2"
+                            :aria-hidden="open === {{ $loop->index }} ? 'false' : 'true'"
+                            class="grid transition-[grid-template-rows] duration-300 ease-in-out"
+                            :class="open === {{ $loop->index }} ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'"
                         >
-                            <div class="pl-9 border-l-2 border-teal-200 dark:border-teal-800">
-                                <p class="text-[15px] sm:text-base leading-relaxed">
-                                    {{ $faq->answer }}
-                                </p>
+                            <div class="overflow-hidden min-h-0">
+                                <div class="px-6 sm:px-8 pb-6 text-gray-600 dark:text-slate-300 leading-relaxed">
+                                    <div class="pl-9 border-l-2 border-teal-200 dark:border-teal-800">
+                                        <p class="text-[15px] sm:text-base leading-relaxed">
+                                            {{ $faq->answer }}
+                                        </p>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
