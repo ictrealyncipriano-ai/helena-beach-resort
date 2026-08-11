@@ -68,21 +68,23 @@
                             <span class="flex items-start gap-4">
                                 <span
                                     class="shrink-0 mt-0.5"
-                                    :class="open === {{ $loop->index }} ? 'text-teal-700' : 'text-teal-400 group-hover:text-teal-500'"
+                                    :class="open === {{ $loop->index }} ? 'text-teal-700 dark:text-teal-300' : 'text-teal-400 group-hover:text-teal-500'"
                                 >
                                     <x-icons name="question" class="w-5 h-5" />
                                 </span>
                                 <span
                                     class="text-base sm:text-lg font-semibold leading-snug transition-colors duration-200"
-                                    :class="open === {{ $loop->index }} ? 'text-teal-900' : 'text-gray-800 group-hover:text-gray-900'"
+                                    :class="open === {{ $loop->index }} ? 'text-teal-900 dark:text-teal-300' : 'text-gray-800 group-hover:text-gray-900 dark:text-slate-100 dark:group-hover:text-white'"
                                 >
                                     {{ $faq->question }}
                                 </span>
                             </span>
-                            <x-icons name="chevron-down"
-                                class="w-5 h-5 shrink-0 transition-all duration-300 ease-out"
-                                ::class="open === {{ $loop->index }} ? 'rotate-180 text-teal-700' : 'text-gray-500 group-hover:text-gray-600'"
-                            />
+                            <span
+                                class="shrink-0 transition-all duration-300 ease-out"
+                                :class="open === {{ $loop->index }} ? 'rotate-180 text-teal-700 dark:text-teal-300' : 'text-gray-500 group-hover:text-gray-600 dark:text-slate-400 dark:group-hover:text-slate-300'"
+                            >
+                                <x-icons name="chevron-down" class="w-5 h-5" />
+                            </span>
                         </button>
                         <div
                             :id="'faq-panel-' + {{ $loop->index }}"
