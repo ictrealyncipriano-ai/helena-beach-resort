@@ -50,7 +50,7 @@
                 </a>
             </div>
         @else
-            <div class="space-y-4 reveal" x-data="{ open: null }">
+            <div class="space-y-4 reveal" x-data="{ open: 0 }">
                 @foreach($faqs as $faq)
                     <div
                         class="group bg-white dark:bg-slate-800 rounded-2xl border border-gray-200/80 dark:border-slate-700 shadow-sm transition-all duration-200"
