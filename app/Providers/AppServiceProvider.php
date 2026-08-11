@@ -2,7 +2,9 @@
 
 namespace App\Providers;
 
+use App\Database\PostgresConnection;
 use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Database\Connection;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
@@ -22,6 +24,15 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Postgres boolean bindings are turned into integers by the base
+        // Laravel Connection, which Postgres rejects ("boolean = integer").
+        // Route the pgsql driver through App\Database\PostgresConnection so
+        // boolean comparisons compile to `true`/`false` literals and bool
+        // write-bindings become `'true'`/`'false'` strings.
+        Connection::resolverFor('pgsql', function ($connection, $database, $prefix, $config) {
+            return new PostgresConnection($connection, $database, $prefix, $config);
+        });
+
         // Vercel's function filesystem is read-only except /tmp. Route dompdf's
         // writeable paths there so invoice PDF generation keeps working. The
         // values come from config (not env) so they survive `config:cache`.
