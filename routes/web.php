@@ -23,6 +23,36 @@ Route::get('/health', [PageController::class, 'health'])->name('health');
 
 /*
 |--------------------------------------------------------------------------
+| TEMP DIAGNOSTIC (remove before merge)
+|--------------------------------------------------------------------------
+*/
+Route::get('/__diag', function () {
+    try {
+        if (! hash_equals((string) config('cron.secret'), (string) request()->bearerToken())) {
+            return response()->json(['error' => 'Unauthorized'], 401);
+        }
+
+        $driver = config('database.default');
+        $out = ['driver' => $driver];
+
+        $out['has_posts_table'] = Illuminate\Support\Facades\Schema::hasTable('posts');
+
+        $out['posts_migration_record'] = Illuminate\Support\Facades\DB::table('migrations')
+            ->where('migration', 'like', '%create_posts%')->pluck('migration')->all();
+        $out['migrations_count'] = Illuminate\Support\Facades\DB::table('migrations')->count();
+
+        $out['posts_active_count'] = App\Models\Post::active()->count();
+
+        return response()->json($out);
+    } catch (\Throwable $e) {
+        return response()->json([
+            'error' => get_class($e).': '.$e->getMessage(),
+        ], 500);
+    }
+});
+
+/*
+|--------------------------------------------------------------------------
 | robots.txt (served dynamically so the Sitemap host can never drift from
 | config('app.url')). A static public/robots.txt also exists as a fallback
 | for hosts that serve static files before reaching Laravel.
