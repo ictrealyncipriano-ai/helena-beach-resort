@@ -43,6 +43,19 @@ Route::get('/__diag', function () {
 
         $out['posts_active_count'] = App\Models\Post::active()->count();
 
+        $tables = collect(Illuminate\Support\Facades\DB::select($driver === 'sqlite'
+            ? 'SELECT name FROM sqlite_master WHERE type = \'table\''
+            : 'SELECT table_name FROM information_schema.tables WHERE table_schema = current_schema()'
+        ))->pluck($driver === 'sqlite' ? 'name' : 'table_name')->sort()->values()->all();
+        $out['tables'] = $tables;
+
+        $out['table_checks'] = collect(['cottages', 'cottage_photos', 'galleries', 'testimonials', 'faqs', 'services', 'site_settings', 'reservations', 'posts', 'users', 'cache'])
+            ->mapWithKeys(function ($t) {
+                $exists = Illuminate\Support\Facades\Schema::hasTable($t);
+                $count = $exists ? Illuminate\Support\Facades\DB::table($t)->count() : null;
+                return [$t => ['exists' => $exists, 'rows' => $count]];
+            })->all();
+
         return response()->json($out);
     } catch (\Throwable $e) {
         return response()->json([
