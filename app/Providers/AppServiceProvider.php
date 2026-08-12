@@ -85,6 +85,9 @@ class AppServiceProvider extends ServiceProvider
         // one request).
         RateLimiter::for('availability', fn (Request $request) => Limit::perMinute(60)->by($this->clientKey($request)));
         RateLimiter::for('admin-login', fn (Request $request) => Limit::perMinute(5)->by($this->clientKey($request)));
+        // Password reset email + submission endpoints. Bounded so a scraper
+        // cannot flood an inbox or brute-force reset tokens from one IP.
+        RateLimiter::for('password-reset', fn (Request $request) => Limit::perMinute(3)->by($this->clientKey($request)));
         // Signature-gated but not user-facing: a generous per-IP cap bounds
         // invalid-signature spam and PayMongo retry bursts without rejecting
         // legitimate webhook delivery.
