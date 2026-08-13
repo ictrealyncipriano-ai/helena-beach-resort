@@ -1,5 +1,5 @@
     {{-- Stats --}}
-    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-6">
         <div class="relative bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-5 overflow-hidden dark:bg-slate-800 dark:border-slate-700">
             <div class="absolute inset-x-0 top-0 h-0.5 gradient-accent-teal"></div>
             <div class="flex items-center gap-3">
