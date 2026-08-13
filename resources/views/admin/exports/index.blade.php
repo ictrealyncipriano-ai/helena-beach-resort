@@ -31,7 +31,10 @@
                     @endforeach
                 </select>
             </div>
-            <button type="submit" class="px-4 py-2 bg-teal-700 hover:bg-teal-800 text-white text-sm font-medium rounded-lg transition-colors">Download CSV</button>
+            <div class="flex gap-2">
+                <button type="submit" formaction="{{ route('admin.exports.inquiries.view') }}" class="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white text-sm font-medium rounded-lg transition-colors">View Report</button>
+                <button type="submit" formaction="{{ route('admin.exports.inquiries') }}" class="px-4 py-2 bg-teal-700 hover:bg-teal-800 text-white text-sm font-medium rounded-lg transition-colors">Download CSV</button>
+            </div>
         </form>
     </div>
 
@@ -51,7 +54,10 @@
                 <label for="revenue-to" class="block text-xs font-medium text-gray-600 dark:text-slate-300 mb-1">To</label>
                 <input type="date" id="revenue-to" name="to" value="{{ request('to') }}" class="px-3 py-2 border border-gray-300 dark:bg-slate-800 dark:border-slate-600 dark:text-white rounded-lg text-sm">
             </div>
-            <button type="submit" class="px-4 py-2 bg-emerald-700 hover:bg-emerald-800 text-white text-sm font-medium rounded-lg transition-colors">Download CSV</button>
+            <div class="flex gap-2">
+                <button type="submit" formaction="{{ route('admin.exports.revenue.view') }}" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium rounded-lg transition-colors">View Report</button>
+                <button type="submit" formaction="{{ route('admin.exports.revenue') }}" class="px-4 py-2 bg-emerald-700 hover:bg-emerald-800 text-white text-sm font-medium rounded-lg transition-colors">Download CSV</button>
+            </div>
         </form>
     </div>
 
@@ -62,7 +68,10 @@
             Guests
         </h2>
         <p class="text-xs text-gray-500 dark:text-slate-400 mb-4">All guest profiles with lifetime booking and payment stats.</p>
-        <a href="{{ route('admin.exports.guests') }}" class="inline-flex px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white text-sm font-medium rounded-lg transition-colors">Download CSV</a>
+        <div class="flex gap-2">
+            <a href="{{ route('admin.exports.guests.view') }}" class="inline-flex px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white text-sm font-medium rounded-lg transition-colors">View Report</a>
+            <a href="{{ route('admin.exports.guests') }}" class="inline-flex px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white text-sm font-medium rounded-lg transition-colors">Download CSV</a>
+        </div>
     </div>
 </div>
 @endsection

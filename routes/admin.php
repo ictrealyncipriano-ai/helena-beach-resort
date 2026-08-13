@@ -52,6 +52,9 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::get('/inquiries.csv', 'inquiries')->name('inquiries');
             Route::get('/revenue.csv', 'revenue')->name('revenue');
             Route::get('/guests.csv', 'guests')->name('guests');
+            Route::get('/inquiries/view', 'inquiriesView')->name('inquiries.view');
+            Route::get('/revenue/view', 'revenueView')->name('revenue.view');
+            Route::get('/guests/view', 'guestsView')->name('guests.view');
         });
 
         Route::resource('cottages', CottageController::class);

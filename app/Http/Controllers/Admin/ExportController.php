@@ -22,21 +22,11 @@ class ExportController extends Controller
 
     public function inquiries(Request $request): StreamedResponse
     {
-        $query = Inquiry::query()->latest('created_at');
-
-        if ($request->filled('from')) {
-            $query->whereDate('created_at', '>=', $request->from);
-        }
-
-        if ($request->filled('to')) {
-            $query->whereDate('created_at', '<=', $request->to);
-        }
-
-        if ($request->filled('status')) {
-            $query->where('status', $request->status);
-        }
-
-        $rows = $query->get(['id', 'reference_code', 'name', 'email', 'phone', 'booking_type', 'status', 'source', 'check_in', 'check_out', 'pax', 'total_amount', 'paid_at', 'paid_amount', 'payment_method', 'refunded_at', 'created_at']);
+        $rows = $this->inquiriesQuery($request)->get([
+            'id', 'reference_code', 'name', 'email', 'phone', 'booking_type',
+            'status', 'source', 'check_in', 'check_out', 'pax', 'total_amount',
+            'paid_at', 'paid_amount', 'payment_method', 'refunded_at', 'created_at',
+        ]);
 
         $headers = ['Reference', 'Name', 'Email', 'Phone', 'Type', 'Status', 'Source', 'Check In', 'Check Out', 'Pax', 'Total (PHP)', 'Paid (PHP)', 'Payment Method', 'Paid At', 'Refunded At', 'Created At'];
 
@@ -53,6 +43,117 @@ class ExportController extends Controller
     }
 
     public function revenue(Request $request): StreamedResponse
+    {
+        $rows = $this->revenueQuery($request)->get();
+
+        return $this->download('revenue.csv', ['Period', 'Cottage', 'Bookings', 'Revenue (PHP)'], $rows->map(fn ($r) => [
+            $r->period, $r->cottage_name, $r->bookings, $r->total,
+        ]));
+    }
+
+    public function guests(Request $request): StreamedResponse
+    {
+        $rows = $this->guestsData();
+
+        return $this->download('guests.csv', ['id', 'Name', 'Email', 'Phone', 'Notes', 'Stays', 'Last Stay', 'Inquiries', 'Paid', 'Refunded', 'Failed', 'Revenue (PHP)', 'Created At'], $rows->map(fn ($g) => [
+            $g->id, $g->name, $g->email, $g->phone, $g->notes,
+            $g->total_stays, $g->last_stay_at?->format('Y-m-d') ?? '',
+            $g->inquiries_count, $g->paid_count, $g->refunded_count, $g->failed_count,
+            $g->paid_amount ?? 0, $g->created_at?->toDateTimeString() ?? '',
+        ]));
+    }
+
+    /**
+     * Render the inquiries report as a PDF-style document in the browser.
+     */
+    public function inquiriesView(Request $request)
+    {
+        $rows = $this->inquiriesQuery($request)->with('cottage')->get();
+
+        $statusCounts = $rows->groupBy('status')->map->count();
+
+        $data = [
+            'rows' => $rows,
+            'totalCount' => $rows->count(),
+            'totalAmount' => $rows->sum('total_amount'),
+            'totalPaid' => $rows->sum('paid_amount'),
+            'statusCounts' => $statusCounts,
+            'from' => $request->from,
+            'to' => $request->to,
+            'status' => $request->status,
+            'title' => 'Inquiries Report',
+        ];
+
+        return view('admin.exports.report-inquiries', $data);
+    }
+
+    /**
+     * Render the revenue report as a PDF-style document in the browser.
+     */
+    public function revenueView(Request $request)
+    {
+        $rows = $this->revenueQuery($request)->get();
+
+        $grandTotal = $rows->sum('total');
+        $grandBookings = $rows->sum('bookings');
+
+        $data = [
+            'rows' => $rows,
+            'grandTotal' => $grandTotal,
+            'grandBookings' => $grandBookings,
+            'from' => $request->from,
+            'to' => $request->to,
+            'title' => 'Revenue Report',
+        ];
+
+        return view('admin.exports.report-revenue', $data);
+    }
+
+    /**
+     * Render the guests report as a PDF-style document in the browser.
+     */
+    public function guestsView(Request $request)
+    {
+        $rows = $this->guestsData();
+
+        $data = [
+            'rows' => $rows,
+            'totalCount' => $rows->count(),
+            'totalStays' => $rows->sum('total_stays'),
+            'totalRevenue' => $rows->sum('paid_amount'),
+            'title' => 'Guests Report',
+        ];
+
+        return view('admin.exports.report-guests', $data);
+    }
+
+    /**
+     * Inquiries report query, honoring the from/to/status filters shared by
+     * the CSV export and the in-browser report view.
+     */
+    private function inquiriesQuery(Request $request)
+    {
+        $query = Inquiry::query()->latest('created_at');
+
+        if ($request->filled('from')) {
+            $query->whereDate('created_at', '>=', $request->from);
+        }
+
+        if ($request->filled('to')) {
+            $query->whereDate('created_at', '<=', $request->to);
+        }
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        return $query;
+    }
+
+    /**
+     * Revenue report query: paid bookings grouped by month and cottage.
+     */
+    private function revenueQuery(Request $request)
     {
         $monthExpr = $this->monthExpression('paid_at');
 
@@ -72,29 +173,21 @@ class ExportController extends Controller
             $query->whereDate('paid_at', '<=', $request->to);
         }
 
-        $rows = $query->get();
-
-        return $this->download('revenue.csv', ['Period', 'Cottage', 'Bookings', 'Revenue (PHP)'], $rows->map(fn ($r) => [
-            $r->period, $r->cottage_name, $r->bookings, $r->total,
-        ]));
+        return $query;
     }
 
-    public function guests(Request $request): StreamedResponse
+    /**
+     * Guest lifetime stats shared by the CSV export and the in-browser report.
+     */
+    private function guestsData()
     {
-        $rows = Guest::withCount(['inquiries as inquiries_count' => fn ($q) => $q->whereNull('deleted_at')])
+        return Guest::withCount(['inquiries as inquiries_count' => fn ($q) => $q->whereNull('deleted_at')])
             ->withCount(['inquiries as paid_count' => fn ($q) => $q->whereNotNull('paid_at')])
             ->withCount(['inquiries as failed_count' => fn ($q) => $q->whereNotNull('payment_failed_at')])
             ->withCount(['inquiries as refunded_count' => fn ($q) => $q->whereNotNull('refunded_at')])
             ->withSum(['inquiries as paid_amount' => fn ($q) => $q->whereNotNull('paid_at')], 'paid_amount')
             ->orderBy('created_at')
             ->get();
-
-        return $this->download('guests.csv', ['id', 'Name', 'Email', 'Phone', 'Notes', 'Stays', 'Last Stay', 'Inquiries', 'Paid', 'Refunded', 'Failed', 'Revenue (PHP)', 'Created At'], $rows->map(fn ($g) => [
-            $g->id, $g->name, $g->email, $g->phone, $g->notes,
-            $g->total_stays, $g->last_stay_at?->format('Y-m-d') ?? '',
-            $g->inquiries_count, $g->paid_count, $g->refunded_count, $g->failed_count,
-            $g->paid_amount ?? 0, $g->created_at?->toDateTimeString() ?? '',
-        ]));
     }
 
     /**
