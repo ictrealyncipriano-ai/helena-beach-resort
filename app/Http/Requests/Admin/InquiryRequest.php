@@ -21,7 +21,7 @@ class InquiryRequest extends FormRequest
         return [
             'name' => 'required|max:255',
             'email' => 'required|email|max:255',
-            'phone' => 'nullable|max:255',
+            'phone' => 'nullable|max:20',
             'guest_id' => 'nullable|exists:guests,id',
             'booking_type' => 'nullable|in:day_tour,overnight',
             'check_in' => 'nullable|date',
@@ -30,12 +30,12 @@ class InquiryRequest extends FormRequest
                     $fail('Check-out must be on or after check-in.');
                 }
             }],
-            'pax' => 'nullable|integer|min:1',
+            'pax' => 'nullable|integer|min:1|max:50',
             'total_amount' => 'nullable|numeric|min:0',
             'deposit_amount' => 'nullable|numeric|min:0',
             'cottage_id' => 'nullable|exists:cottages,id',
             'status' => 'required|in:pending,confirmed,cancelled,expired',
-            'message' => 'nullable',
+            'message' => 'nullable|string',
         ];
     }
 }

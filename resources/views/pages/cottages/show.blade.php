@@ -87,7 +87,7 @@
                     <button type="button" class="relative block w-full aspect-[4/3] rounded-xl overflow-hidden bg-teal-50 dark:bg-teal-900/30 cursor-pointer group"
                          onclick="openPhotoLightbox(this, '{{ Storage::url($photo->photo_path) }}', '{{ $photoAlt }}')"
                          aria-haspopup="dialog">
-                        <img src="{{ Storage::url($photo->photo_path) }}" alt="{{ $photoAlt }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy">
+                        <img src="{{ Storage::url($photo->photo_path) }}" alt="{{ $photoAlt }}" width="600" height="450" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy">
                         <span class="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
                             <x-icons name="search" class="w-8 h-8 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
                         </span>
@@ -139,7 +139,7 @@
                                 <x-icons name="sun" class="w-4 h-4 inline -mt-0.5 mr-1 text-gray-500 dark:text-slate-400" />
                                 Day Tour
                             </span>
-                            <span class="text-xl font-bold text-teal-700 dark:text-teal-300">₱{{ number_format($cottage->rate_daytour) }}</span>
+                            <span class="text-xl font-bold text-teal-700 dark:text-teal-300">{{ formatPrice($cottage->rate_daytour) }}</span>
                         </div>
                         @endif
                         @if($cottage->rate_overnight)
@@ -148,7 +148,7 @@
                                 <x-icons name="moon" class="w-4 h-4 inline -mt-0.5 mr-1 text-gray-500 dark:text-slate-400" />
                                 Overnight
                             </span>
-                            <span class="text-xl font-bold text-teal-700 dark:text-teal-300">₱{{ number_format($cottage->rate_overnight) }}</span>
+                            <span class="text-xl font-bold text-teal-700 dark:text-teal-300">{{ formatPrice($cottage->rate_overnight) }}</span>
                         </div>
                         @endif
                         <div class="flex items-center justify-between pb-4 border-b border-gray-100 dark:border-slate-700">

@@ -5,11 +5,12 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Post;
 use App\Services\ActivityLogger;
+use App\Traits\ManagesCloudflareFiles;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 
 class PostController extends Controller
 {
+    use ManagesCloudflareFiles;
     public function index(Request $request)
     {
         $query = Post::query();
@@ -22,7 +23,7 @@ class PostController extends Controller
             $query->where('is_active', $request->boolean('is_active'));
         }
 
-        $posts = $query->orderByDesc('published_at')->paginate(15)->withQueryString();
+        $posts = $query->orderByDesc('published_at')->paginate(self::ADMIN_PER_PAGE)->withQueryString();
 
         if ($request->header('X-LiveSearch') === '1') {
             return view('admin.posts._table', compact('posts'));
@@ -62,9 +63,7 @@ class PostController extends Controller
         $data = $this->validated($request, $post);
 
         if ($request->hasFile('cover_image')) {
-            if ($post->cover_image) {
-                Storage::disk('cloudflare')->delete($post->cover_image);
-            }
+            $this->deleteFromCloudflare($post->cover_image);
             $data['cover_image'] = $request->file('cover_image')->store('posts', 'cloudflare');
         }
 
@@ -78,9 +77,7 @@ class PostController extends Controller
 
     public function destroy(Post $post, ActivityLogger $logger)
     {
-        if ($post->cover_image) {
-            Storage::disk('cloudflare')->delete($post->cover_image);
-        }
+        $this->deleteFromCloudflare($post->cover_image);
         $post->delete();
 
         $logger->record('post.deleted', $post, "Post {$post->title} deleted.");
@@ -100,7 +97,7 @@ class PostController extends Controller
             'slug' => 'nullable|max:255|unique:posts,slug'.($post ? ','.$post->id : ''),
             'excerpt' => 'nullable|max:1000',
             'body' => 'nullable',
-            'cover_image' => 'nullable|image|mimes:jpeg,png,jpg,webp',
+            'cover_image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120',
             'is_active' => 'boolean',
             'published_at' => 'nullable|date',
         ]);

@@ -15,6 +15,9 @@
     <title>@yield('title', config('app.name')) — {{ config('app.name') }}</title>
     <meta name="description" content="@yield('description', 'Helena Beach Resort — Experience paradise in Infanta, Quezon. Beachfront cottages, fresh seafood, and unforgettable memories.')">
     <link rel="canonical" href="@yield('canonical', \Illuminate\Support\Str::before(url()->current(), '?'))" />
+    @hasSection('robots')
+    <meta name="robots" content="@yield('robots')" />
+    @endif
 
     <meta property="og:title" content="@yield('og_title', config('app.name'))" />
     <meta property="og:description" content="@yield('og_description', 'Experience paradise in Infanta, Quezon. Beachfront cottages, fresh seafood, and unforgettable memories.')" />

@@ -12,11 +12,46 @@ class Inquiry extends Model
 {
     use SoftDeletes;
 
+    // Statuses
+    public const STATUS_PENDING = 'pending';
+    public const STATUS_CONFIRMED = 'confirmed';
+    public const STATUS_CANCELLED = 'cancelled';
+    public const STATUS_EXPIRED = 'expired';
+    public const STATUSES = [
+        self::STATUS_PENDING,
+        self::STATUS_CONFIRMED,
+        self::STATUS_CANCELLED,
+        self::STATUS_EXPIRED,
+    ];
+
+    // Booking types
+    public const TYPE_DAY_TOUR = 'day_tour';
+    public const TYPE_OVERNIGHT = 'overnight';
+    public const BOOKING_TYPES = [self::TYPE_DAY_TOUR, self::TYPE_OVERNIGHT];
+
+    // Payment proof statuses
+    public const PROOF_NONE = 'none';
+    public const PROOF_PENDING = 'pending';
+    public const PROOF_APPROVED = 'approved';
+    public const PROOF_REJECTED = 'rejected';
+
+    // Payment methods
+    public const METHOD_MANUAL = 'manual';
+    public const METHOD_QRPH = 'qrph';
+    public const METHOD_GCASH = 'gcash';
+    public const METHOD_PAYMAYA = 'paymaya';
+
+    // Sources
+    public const SOURCE_WALKIN = 'walk-in';
+    public const SOURCE_WEBSITE = 'website';
+    public const SOURCE_BOOKING = 'booking';
+    public const SOURCE_GUEST = 'guest';
+
     protected $fillable = [
         'reference_code', 'name', 'email', 'phone', 'check_in', 'check_out',
         'pax', 'cottage_id', 'guest_id', 'message', 'status', 'source',
         'booking_type', 'total_amount', 'promo_code_id', 'discount_amount',
-        'paid_at', 'paid_amount', 'payment_method', 'paymongo_session_id',
+        'payment_method', 'paymongo_session_id',
         'payment_failed_at', 'paymongo_payment_id', 'refunded_at',
         'refund_amount', 'expiry_warned_at',
         'deposit_amount', 'amount_paid', 'deposit_paid_at',
@@ -64,11 +99,11 @@ class Inquiry extends Model
      */
     protected function assertDataIntegrity(): void
     {
-        if ($this->status !== null && ! in_array($this->status, ['pending', 'confirmed', 'cancelled', 'expired'], true)) {
+        if ($this->status !== null && ! in_array($this->status, self::STATUSES, true)) {
             throw new \InvalidArgumentException('Invalid inquiry status: '.$this->status);
         }
 
-        if ($this->booking_type !== null && ! in_array($this->booking_type, ['day_tour', 'overnight'], true)) {
+        if ($this->booking_type !== null && ! in_array($this->booking_type, self::BOOKING_TYPES, true)) {
             throw new \InvalidArgumentException('Invalid booking type: '.$this->booking_type);
         }
 
@@ -98,8 +133,6 @@ class Inquiry extends Model
             'deposit_paid_at' => 'datetime',
             'fully_paid_at' => 'datetime',
             'payment_pending_amount' => 'decimal:2',
-            'paid_at' => 'datetime',
-            'paid_amount' => 'decimal:2',
             'payment_failed_at' => 'datetime',
             'refunded_at' => 'datetime',
             'refund_amount' => 'decimal:2',
@@ -111,7 +144,7 @@ class Inquiry extends Model
 
     public function isPaid(): bool
     {
-        return $this->paid_at !== null || $this->fully_paid_at !== null;
+        return $this->fully_paid_at !== null;
     }
 
     /**
@@ -144,7 +177,7 @@ class Inquiry extends Model
         $total = (float) $this->total_amount;
         $paid = (float) ($this->amount_paid ?? 0);
 
-        return number_format(max($total - $paid, 0), 2, '.', '');
+        return formatPrice(max($total - $paid, 0), 2, false);
     }
 
     /**
@@ -158,7 +191,7 @@ class Inquiry extends Model
             $deposit = (float) $this->deposit_amount;
             $paid = (float) ($this->amount_paid ?? 0);
 
-            return number_format(max($deposit - $paid, 0), 2, '.', '');
+            return formatPrice(max($deposit - $paid, 0), 2, false);
         }
 
         return $this->balanceDue();
@@ -175,7 +208,7 @@ class Inquiry extends Model
      */
     public function hasPendingPaymentProof(): bool
     {
-        return $this->payment_proof_status === 'pending';
+        return $this->payment_proof_status === self::PROOF_PENDING;
     }
 
     /**
@@ -183,7 +216,7 @@ class Inquiry extends Model
      */
     public function hasApprovedPaymentProof(): bool
     {
-        return $this->payment_proof_status === 'approved';
+        return $this->payment_proof_status === self::PROOF_APPROVED;
     }
 
     public function isRefunded(): bool
@@ -192,15 +225,86 @@ class Inquiry extends Model
     }
 
     /**
+     * Total money actually received so far (online payments + recorded
+     * manual settlements). This — never amount_paid/total_amount — is the
+     * basis for refunds and "how much did the guest give us" questions.
+     */
+    public function collectedAmount(): string
+    {
+        $collected = (float) ($this->amount_paid ?? 0);
+
+        return formatPrice($collected, 2, false);
+    }
+
+    /**
+     * Whether any money has been collected at all (deposit included).
+     */
+    public function hasPayments(): bool
+    {
+        return $this->collectedAmount() > 0;
+    }
+
+    /**
+     * Reverse the stay count that markConfirmed() recorded on the guest
+     * profile, guarding against a negative counter.
+     */
+    public function reverseStay(): void
+    {
+        if ($this->guest && $this->guest->total_stays > 0) {
+            $this->guest->decrement('total_stays');
+        }
+    }
+
+    /**
+     * The amount that should be handed back when cancelling/refunding:
+     * exactly what was collected (legacy rows included).
+     */
+    public function refundableAmount(): string
+    {
+        return $this->collectedAmount();
+    }
+
+    /**
+     * Record a manually-collected settlement (cash / bank transfer marked
+     * by an admin). Adds to amount_paid and derives deposit/full-payment
+     * timestamps from coverage — never assumes the booking was settled in
+     * full unless the running total actually covers total_amount.
+     *
+     * @return bool whether this payment completed the booking's full total
+     */
+    public function recordManualPayment(string $amount, string $method = self::METHOD_MANUAL): bool
+    {
+        $newAmountPaid = formatPrice(
+            (float) ($this->amount_paid ?? 0) + (float) $amount,
+            2, false
+        );
+
+        $fullyPaid = (float) $newAmountPaid >= (float) $this->total_amount;
+        $depositCovered = $this->hasDeposit()
+            && (float) $newAmountPaid >= (float) $this->deposit_amount;
+
+        $this->update([
+            'amount_paid' => $newAmountPaid,
+            'deposit_paid_at' => $depositCovered && ! $this->isDepositPaid()
+                ? now()
+                : $this->deposit_paid_at,
+            'fully_paid_at' => $fullyPaid ? now() : $this->fully_paid_at,
+            'payment_method' => $method,
+        ]);
+
+        return $fullyPaid;
+    }
+
+    /**
      * Human-friendly label for the stored payment method.
      */
     public function paymentMethodLabel(): string
     {
         return match ($this->payment_method) {
-            'qrph' => 'QR Ph',
-            'gcash' => 'GCash',
-            'paymaya' => 'Maya',
-            'manual' => 'Manual',
+            self::METHOD_QRPH => 'QR Ph',
+            self::METHOD_GCASH => 'GCash',
+            self::METHOD_PAYMAYA => 'Maya',
+            self::METHOD_MANUAL => 'Manual',
             default => $this->payment_method ? ucfirst($this->payment_method) : 'Online',
         };
     }
@@ -232,22 +336,22 @@ class Inquiry extends Model
 
     public function scopePending($q)
     {
-        $q->where('status', 'pending');
+        $q->where('status', self::STATUS_PENDING);
     }
 
     public function scopeConfirmed($q)
     {
-        $q->where('status', 'confirmed');
+        $q->where('status', self::STATUS_CONFIRMED);
     }
 
     public function scopeCancelled($q)
     {
-        $q->where('status', 'cancelled');
+        $q->where('status', self::STATUS_CANCELLED);
     }
 
     public function scopeExpired($q)
     {
-        $q->where('status', 'expired');
+        $q->where('status', self::STATUS_EXPIRED);
     }
 
     /**

@@ -2,6 +2,7 @@
 
 @section('title', 'My Booking')
 @section('description', 'View your booking details at Helena Beach Resort.')
+@section('robots', 'noindex, nofollow')
 
 @section('content')
 @section('og_title', 'My Booking — ' . $inquiry->reference_code)
@@ -19,7 +20,7 @@
 </x-hero>
 
 <section class="py-20 bg-white dark:bg-slate-800">
-    <div class="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8" x-data="{ showCancelModal: false }" @keydown.escape.window="showCancelModal = false">
+    <div class="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8" x-data="{ showCancelModal: false, _cancelPreviousFocus: null }" @keydown.escape.window="if (showCancelModal) { showCancelModal = false; if (_cancelPreviousFocus) { _cancelPreviousFocus.focus(); _cancelPreviousFocus = null; } }">
         @if(request('result') === 'success')
         <div class="mb-6 p-4 bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800 rounded-xl text-sm text-green-700 dark:text-green-300 flex items-start gap-2 reveal">
             <x-icons name="check" class="w-5 h-5 shrink-0 mt-0.5" />
@@ -99,12 +100,12 @@
                 @if($inquiry->total_amount)
                 <div class="text-right">
                     <p class="text-sm text-gray-500 dark:text-slate-400 mb-1">Total</p>
-                    <p class="text-2xl font-bold text-teal-700 dark:text-teal-300">₱{{ number_format($inquiry->total_amount) }}</p>
+                    <p class="text-2xl font-bold text-teal-700 dark:text-teal-300">{{ formatPrice($inquiry->total_amount) }}</p>
                     @if(! $inquiry->isPaid() && $inquiry->hasDeposit())
-                    <p class="text-xs text-gray-500 dark:text-slate-400 mt-1">Deposit due: ₱{{ number_format($inquiry->amountDueNow()) }} · Balance: ₱{{ number_format($inquiry->balanceDue()) }}</p>
+                    <p class="text-xs text-gray-500 dark:text-slate-400 mt-1">Deposit due: {{ formatPrice($inquiry->amountDueNow()) }} · Balance: {{ formatPrice($inquiry->balanceDue()) }}</p>
                     @endif
                     @if($inquiry->isPaid() && $inquiry->payment_method)
-                    <p class="text-xs text-gray-500 dark:text-slate-400 mt-1">via {{ $inquiry->paymentMethodLabel() }} · {{ $inquiry->paid_at?->format('M d, Y') }}</p>
+                    <p class="text-xs text-gray-500 dark:text-slate-400 mt-1">via {{ $inquiry->paymentMethodLabel() }} · {{ ($inquiry->fully_paid_at ?? $inquiry->deposit_paid_at)?->format('M d, Y') }}</p>
                     @endif
                 </div>
                 @endif
@@ -199,9 +200,9 @@
                     class="w-full text-center px-6 py-3 bg-teal-700 text-white font-medium rounded-xl hover:bg-teal-700 transition-all inline-flex items-center justify-center gap-2">
                     <x-icons name="qr-code" class="w-4 h-4" />
                     @if($inquiry->hasDeposit() && ! $inquiry->isDepositPaid())
-                        Pay Deposit — ₱{{ number_format($inquiry->amountDueNow()) }}
+                        Pay Deposit — {{ formatPrice($inquiry->amountDueNow()) }}
                     @else
-                        Pay Balance — ₱{{ number_format($inquiry->balanceDue()) }}
+                        Pay Balance — {{ formatPrice($inquiry->balanceDue()) }}
                     @endif
                 </button>
             </form>
@@ -235,7 +236,7 @@
                 @endif
 
                 @if($canCancel)
-                <button type="button" @click="showCancelModal = true"
+                <button type="button" @click="_cancelPreviousFocus = $el; showCancelModal = true"
                     class="w-full px-6 py-3 bg-white dark:bg-slate-800 text-red-600 dark:text-red-400 font-medium rounded-xl border border-red-200 dark:border-slate-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all inline-flex items-center justify-center gap-2">
                     <x-icons name="x" class="w-4 h-4" />
                     Cancel Booking
@@ -279,7 +280,7 @@
                     <span class="block text-sm font-medium text-gray-700 mb-2 dark:text-slate-300">Your Rating</span>
                     <div class="flex items-center gap-1" role="radiogroup" aria-label="Rating">
                         @foreach(range(1, 5) as $star)
-                        <button type="button" @click="rating = {{ $star }}" :aria-checked="rating === {{ $star }}" :class="{ 'text-amber-400': rating >= {{ $star }}, 'text-gray-300': rating < {{ $star }} }" class="focus:outline-none focus:ring-2 focus:ring-teal-600 rounded-lg p-0.5 transition-colors" aria-label="{{ $star }} star{{ $star > 1 ? 's' : '' }}">
+                        <button type="button" role="radio" @click="rating = {{ $star }}" :aria-checked="rating === {{ $star }}" :class="{ 'text-amber-400': rating >= {{ $star }}, 'text-gray-300': rating < {{ $star }} }" class="focus:outline-none focus:ring-2 focus:ring-teal-600 rounded-lg p-0.5 transition-colors" aria-label="{{ $star }} star{{ $star > 1 ? 's' : '' }}">
                             <x-icons name="star" class="w-8 h-8" />
                         </button>
                         @endforeach
@@ -374,7 +375,7 @@
                     <p class="text-sm text-gray-500 dark:text-slate-400 mb-6">This will cancel your booking and it cannot be undone.</p>
                 </div>
                 <div class="flex items-center justify-center gap-3">
-                    <button type="button" @click="showCancelModal = false"
+                    <button type="button" @click="showCancelModal = false; if (_cancelPreviousFocus) { _cancelPreviousFocus.focus(); _cancelPreviousFocus = null; }"
                         class="px-5 py-2.5 text-sm font-medium text-gray-700 dark:text-slate-200 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-600 rounded-xl hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors">
                         Keep Booking
                     </button>

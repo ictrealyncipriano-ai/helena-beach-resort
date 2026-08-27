@@ -63,7 +63,7 @@ if ($editingId) {
         </div>
 
         @if($testimonials->isEmpty())
-            @include('admin.components.empty-state', [
+            @include('components.admin.empty-state', [
                 'title' => 'No testimonials',
                 'message' => 'Guest reviews will appear here.',
                 'actionClick' => 'openCreate()',
@@ -92,7 +92,7 @@ if ($editingId) {
                                 <span class="text-amber-500 dark:text-amber-400">{{ str_repeat('★', $testimonial->rating) }}{{ str_repeat('☆', 5 - $testimonial->rating) }}</span>
                             </td>
                             <td class="px-5 py-3 text-gray-600 max-w-xs truncate dark:text-slate-300">{{ Str::limit($testimonial->content, 80) }}</td>
-                            <td class="px-5 py-3 hidden sm:table-cell">@include('admin.components.badge', ['type' => 'primary', 'slot' => $testimonial->cottage?->name ?? 'N/A'])</td>
+                            <td class="px-5 py-3 hidden sm:table-cell">@include('components.admin.badge', ['type' => 'primary', 'slot' => $testimonial->cottage?->name ?? 'N/A'])</td>
                             <td class="px-5 py-3 text-center">
                                 @if($testimonial->is_active)
                                     <svg class="w-5 h-5 text-emerald-500 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
@@ -102,9 +102,9 @@ if ($editingId) {
                             </td>
                             <td class="px-5 py-3 text-center">
                                 @if($testimonial->source === 'guest')
-                                    @include('admin.components.badge', ['type' => 'warning', 'slot' => 'Guest'])
+                                    @include('components.admin.badge', ['type' => 'warning', 'slot' => 'Guest'])
                                 @else
-                                    @include('admin.components.badge', ['type' => 'gray', 'slot' => 'Admin'])
+                                    @include('components.admin.badge', ['type' => 'gray', 'slot' => 'Admin'])
                                 @endif
                             </td>
                             <td class="px-5 py-3 text-center text-gray-500 hidden md:table-cell dark:text-slate-400">{{ $testimonial->sort_order }}</td>
@@ -126,7 +126,7 @@ if ($editingId) {
             </div>
 
             <div class="px-5 py-4 border-t border-gray-100 dark:border-slate-700">
-                @include('admin.components.pagination', ['paginator' => $testimonials])
+                @include('components.admin.pagination', ['paginator' => $testimonials])
             </div>
         @endif
     </div>
@@ -150,7 +150,7 @@ if ($editingId) {
     </x-admin.modal>
 </div>
 
-@include('admin.components.confirm-dialog', ['name' => 'delete', 'title' => 'Delete Testimonial?', 'message' => 'Are you sure? This cannot be undone.'])
+@include('components.admin.confirm-dialog', ['name' => 'delete', 'title' => 'Delete Testimonial?', 'message' => 'Are you sure? This cannot be undone.'])
 @endsection
 
 @push('scripts')

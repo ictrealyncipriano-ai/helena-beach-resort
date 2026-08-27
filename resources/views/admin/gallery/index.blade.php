@@ -59,7 +59,7 @@ if ($editingId) {
         </div>
 
         @if($galleries->isEmpty())
-            @include('admin.components.empty-state', ['icon' => 'photo', 'title' => 'No gallery images', 'message' => 'Add beautiful photos of your resort.'])
+            @include('components.admin.empty-state', ['icon' => 'photo', 'title' => 'No gallery images', 'message' => 'Add beautiful photos of your resort.'])
         @else
             <div class="overflow-x-auto">
                 <table class="w-full text-sm">
@@ -86,7 +86,7 @@ if ($editingId) {
                                 @endif
                             </td>
                             <td class="px-5 py-3 font-medium text-gray-900 dark:text-white">{{ $gallery->title ?? 'Untitled' }}</td>
-                            <td class="px-5 py-3">@include('admin.components.badge', ['type' => $gallery->category === 'Beach' ? 'info' : ($gallery->category === 'Food' ? 'warning' : ($gallery->category === 'Events' ? 'success' : 'gray')), 'slot' => $gallery->category ?? '—'])</td>
+                            <td class="px-5 py-3">@include('components.admin.badge', ['type' => $gallery->category === 'Beach' ? 'info' : ($gallery->category === 'Food' ? 'warning' : ($gallery->category === 'Events' ? 'success' : 'gray')), 'slot' => $gallery->category ?? '—'])</td>
                             <td class="px-5 py-3 text-center">
                                 @if($gallery->is_active)
                                     <svg class="w-5 h-5 text-emerald-500 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
@@ -112,7 +112,7 @@ if ($editingId) {
             </div>
 
             <div class="px-5 py-4 border-t border-gray-100 dark:border-slate-700">
-                @include('admin.components.pagination', ['paginator' => $galleries])
+                @include('components.admin.pagination', ['paginator' => $galleries])
             </div>
         @endif
     </div>
@@ -136,7 +136,7 @@ if ($editingId) {
     </x-admin.modal>
 </div>
 
-@include('admin.components.confirm-dialog', ['name' => 'delete', 'title' => 'Delete Image?', 'message' => 'Are you sure? This cannot be undone.'])
+@include('components.admin.confirm-dialog', ['name' => 'delete', 'title' => 'Delete Image?', 'message' => 'Are you sure? This cannot be undone.'])
 @endsection
 
 <script>

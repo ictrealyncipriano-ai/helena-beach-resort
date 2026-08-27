@@ -17,10 +17,10 @@ class GuestController extends Controller
         // no cottage relation) for the booking-history modal, and cottage
         // names come from a single lightweight pluck.
         $query = Guest::withCount('inquiries')
-            ->withCount(['inquiries as paid_count' => fn ($q) => $q->whereNotNull('paid_at')])
+            ->withCount(['inquiries as paid_count' => fn ($q) => $q->where('amount_paid', '>', 0)])
             ->withCount(['inquiries as failed_count' => fn ($q) => $q->whereNotNull('payment_failed_at')])
             ->withCount(['inquiries as refunded_count' => fn ($q) => $q->whereNotNull('refunded_at')])
-            ->withSum(['inquiries as paid_amount' => fn ($q) => $q->whereNotNull('paid_at')], 'paid_amount')
+            ->withSum(['inquiries as paid_amount' => fn ($q) => $q->where('amount_paid', '>', 0)], 'amount_paid')
             // Hydrate only the most recent inquiries per guest for the history
             // modal (the exact counts come from the withCount/withSum above),
             // so a long booking history cannot balloon the index page memory.
@@ -34,7 +34,7 @@ class GuestController extends Controller
             });
         }
 
-        $guests = $query->latest()->paginate(15);
+        $guests = $query->latest()->paginate(self::ADMIN_PER_PAGE)->withQueryString();
 
         $cottageNames = Cottage::pluck('name', 'id');
 
@@ -72,7 +72,7 @@ class GuestController extends Controller
                         : ($i->isPaid() ? 'Paid'
                         : ($i->hasFailedPayment() ? 'Payment Failed' : 'Unpaid')),
                     'payment_method' => $i->paymentMethodLabel(),
-                    'total_amount' => $i->total_amount !== null ? '₱ '.number_format($i->total_amount, 2) : '—',
+                    'total_amount' => $i->total_amount !== null ? formatPrice($i->total_amount) : '—',
                 ])->values(),
             ];
         })->values();
@@ -86,7 +86,7 @@ class GuestController extends Controller
 
         $inquiries = $guest->inquiries;
         $paidCount = $inquiries->filter(fn ($i) => $i->isPaid())->count();
-        $paidAmount = $inquiries->filter(fn ($i) => $i->isPaid())->sum('paid_amount');
+        $paidAmount = $inquiries->filter(fn ($i) => $i->isPaid())->sum('amount_paid');
         $failedCount = $inquiries->filter(fn ($i) => $i->hasFailedPayment())->count();
         $refundedCount = $inquiries->filter(fn ($i) => $i->isRefunded())->count();
 

@@ -8,12 +8,16 @@ use App\Http\Controllers\Admin\DashboardController;
 use App\Models\CottageDateBlock;
 use App\Models\Inquiry;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 
 class ReleaseExpiredReservations extends Command
 {
+    // Default hold window in hours. Artisan option defaults must be string
+    // literals, so the signature keeps 48 below and CronController references
+    // this constant when invoking the command.
+    public const DEFAULT_HOLD_HOURS = 48;
+
     protected $signature = 'reservations:release-expired {--hours=48 : Minimum age in hours before a pending reservation expires}';
 
     protected $description = 'Expire pending inquiries past the hold window, warn those expiring soon, and release their cottage date blocks';
@@ -69,7 +73,7 @@ class ReleaseExpiredReservations extends Command
                 // Bulk-mark every inquiry in this chunk as expired in one
                 // UPDATE instead of one per row.
                 Inquiry::whereIn('id', $inquiries->pluck('id'))
-                    ->update(['status' => 'expired']);
+                    ->update(['status' => Inquiry::STATUS_EXPIRED]);
 
                 foreach ($inquiries as $inquiry) {
                     $this->line("  EXPIRED {$inquiry->reference_code} ({$inquiry->name})");
@@ -88,7 +92,7 @@ class ReleaseExpiredReservations extends Command
         // Expired statuses change the dashboard's pending counts, so drop the
         // cached stats block after any expiries were processed.
         if ($count > 0) {
-            Cache::forget(DashboardController::cacheKey());
+            DashboardController::forgetCache();
         }
 
         return self::SUCCESS;

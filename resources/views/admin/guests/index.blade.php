@@ -43,7 +43,7 @@ if ($editingId) {
         </div>
 
         @if($guests->isEmpty())
-            @include('admin.components.empty-state', ['title' => 'No guests', 'message' => 'Guest profiles are automatically created from inquiries.'])
+            @include('components.admin.empty-state', ['title' => 'No guests', 'message' => 'Guest profiles are automatically created from inquiries.'])
         @else
             <div class="overflow-x-auto">
                 <table class="w-full text-sm">
@@ -64,7 +64,7 @@ if ($editingId) {
                             <td class="px-5 py-3 font-medium text-gray-900 dark:text-white">{{ $guest->name }}</td>
                             <td class="px-5 py-3 text-gray-500 dark:text-slate-400">{{ $guest->email }}</td>
                             <td class="px-5 py-3 text-gray-500 hidden sm:table-cell dark:text-slate-400">{{ $guest->phone ?? '—' }}</td>
-                            <td class="px-5 py-3 text-center">@include('admin.components.badge', ['type' => 'primary', 'slot' => $guest->inquiries_count])</td>
+                            <td class="px-5 py-3 text-center">@include('components.admin.badge', ['type' => 'primary', 'slot' => $guest->inquiries_count])</td>
                             <td class="px-5 py-3 text-gray-600 dark:text-slate-300">{{ $guest->last_stay_at?->format('M d, Y') ?? '—' }}</td>
                             <td class="px-5 py-3 text-gray-500 hidden md:table-cell dark:text-slate-400">{{ $guest->created_at->format('M d, Y') }}</td>
                             <td class="px-5 py-3 text-right">
@@ -87,7 +87,7 @@ if ($editingId) {
             </div>
 
             <div class="px-5 py-4 border-t border-gray-100 dark:border-slate-700">
-                @include('admin.components.pagination', ['paginator' => $guests])
+                @include('components.admin.pagination', ['paginator' => $guests])
             </div>
         @endif
     </div>
@@ -126,7 +126,7 @@ if ($editingId) {
     </x-admin.modal>
 </div>
 
-@include('admin.components.confirm-dialog', ['name' => 'delete', 'title' => 'Delete Guest?', 'message' => 'Are you sure? This cannot be undone.'])
+@include('components.admin.confirm-dialog', ['name' => 'delete', 'title' => 'Delete Guest?', 'message' => 'Are you sure? This cannot be undone.'])
 @endsection
 
 <script>

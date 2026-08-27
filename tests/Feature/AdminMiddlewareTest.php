@@ -42,8 +42,8 @@ class AdminMiddlewareTest extends TestCase
     {
         $inquiry = $this->confirmedBooking($email);
         $inquiry->update([
-            'paid_at' => now(),
-            'paid_amount' => $inquiry->total_amount,
+            'amount_paid' => $inquiry->total_amount,
+            'fully_paid_at' => now(),
             'payment_method' => 'qrph',
             'paymongo_payment_id' => 'pay_123',
         ]);
@@ -78,7 +78,7 @@ class AdminMiddlewareTest extends TestCase
             ->post(route('admin.inquiries.mark-paid', $inquiry))
             ->assertStatus(403);
 
-        $this->assertNull($inquiry->refresh()->paid_at);
+        $this->assertNull($inquiry->refresh()->fully_paid_at);
     }
 
     public function test_admin_can_mark_paid(): void
@@ -90,7 +90,7 @@ class AdminMiddlewareTest extends TestCase
             ->post(route('admin.inquiries.mark-paid', $inquiry))
             ->assertRedirect(route('admin.inquiries.show', $inquiry));
 
-        $this->assertNotNull($inquiry->refresh()->paid_at);
+        $this->assertGreaterThan(0, (float) $inquiry->refresh()->amount_paid);
     }
 
     public function test_staff_is_forbidden_from_refund(): void
@@ -122,5 +122,44 @@ class AdminMiddlewareTest extends TestCase
             ->assertRedirect(route('admin.inquiries.show', $inquiry));
 
         $this->assertNotNull($inquiry->refresh()->refunded_at);
+    }
+
+    public function test_staff_is_forbidden_from_payment_proof_review(): void
+    {
+        $inquiry = $this->confirmedBooking('staff-proof@example.com');
+        $inquiry->update([
+            'payment_proof_path' => 'payment-proofs/staff.jpg',
+            'payment_proof_status' => 'pending',
+            'payment_proof_submitted_at' => now(),
+        ]);
+        $staff = User::factory()->create(['role' => 'staff']);
+
+        // Approving a proof is a financial decision: staff inquiry access is
+        // read-only, so both review actions must be blocked.
+        $this->actingAs($staff)
+            ->post(route('admin.inquiries.payment-proof.approve', $inquiry))
+            ->assertStatus(403);
+
+        $this->actingAs($staff)
+            ->post(route('admin.inquiries.payment-proof.reject', $inquiry))
+            ->assertStatus(403);
+
+        $this->assertSame('pending', $inquiry->refresh()->payment_proof_status);
+    }
+
+    public function test_admin_role_can_approve_payment_proof(): void
+    {
+        $inquiry = $this->confirmedBooking('admin-proof@example.com');
+        $inquiry->update([
+            'payment_proof_path' => 'payment-proofs/admin.jpg',
+            'payment_proof_status' => 'pending',
+            'payment_proof_submitted_at' => now(),
+        ]);
+
+        $this->actingAs(User::factory()->create(['role' => 'admin']))
+            ->post(route('admin.inquiries.payment-proof.approve', $inquiry))
+            ->assertRedirect(route('admin.inquiries.show', $inquiry));
+
+        $this->assertSame('approved', $inquiry->refresh()->payment_proof_status);
     }
 }

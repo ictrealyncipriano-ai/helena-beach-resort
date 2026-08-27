@@ -13,14 +13,21 @@ $sizes = [
     isOpen: false,
     title: '{{ $title }}',
     data: {},
+    _previousFocus: null,
+    open() {
+        this._previousFocus = document.activeElement;
+        this.isOpen = true;
+    },
     close() {
         this.isOpen = false;
         this.data = {};
         window.dispatchEvent(new CustomEvent('helena:clear-validation'));
+        if (this._previousFocus) { this._previousFocus.focus(); this._previousFocus = null; }
     },
 }"
-     x-on:open-modal-{{ $name }}.window="isOpen = true; title = $event.detail?.title || '{{ $title }}'; data = $event.detail?.data || {}; window.dispatchEvent(new CustomEvent('helena:clear-validation'))"
+     x-on:open-modal-{{ $name }}.window="open(); title = $event.detail?.title || '{{ $title }}'; data = $event.detail?.data || {}; window.dispatchEvent(new CustomEvent('helena:clear-validation'))"
      x-on:close-modal-{{ $name }}.window="close()"
+     x-on:keydown.escape.window="isOpen && close()"
      x-show="isOpen"
      x-trap.noscroll="isOpen"
      class="relative z-50"

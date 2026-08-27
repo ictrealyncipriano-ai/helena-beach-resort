@@ -84,13 +84,25 @@ class AppServiceProvider extends ServiceProvider
         // generous cap for normal browsing (each cottage/date selection fires
         // one request).
         RateLimiter::for('availability', fn (Request $request) => Limit::perMinute(60)->by($this->clientKey($request)));
-        RateLimiter::for('admin-login', fn (Request $request) => Limit::perMinute(5)->by($this->clientKey($request)));
-        // Password reset email + submission endpoints. Bounded so a scraper
-        // cannot flood an inbox or brute-force reset tokens from one IP.
-        RateLimiter::for('password-reset', fn (Request $request) => Limit::perMinute(3)->by($this->clientKey($request)));
+        // 5 attempts per 15-minute window: 5 consecutive failures lock the
+        // IP out for up to 15 minutes (≈20 attempts/hour instead of 300).
+        RateLimiter::for('admin-login', fn (Request $request) => Limit::perMinutes(15, 5)->by($this->clientKey($request)));
+        // Password reset email + submission endpoints. 3 per 15-minute window
+        // so a scraper cannot flood an inbox or brute-force reset tokens.
+        RateLimiter::for('password-reset', fn (Request $request) => Limit::perMinutes(15, 3)->by($this->clientKey($request)));
         // Signature-gated but not user-facing: a generous per-IP cap bounds
         // invalid-signature spam and PayMongo retry bursts without rejecting
         // legitimate webhook delivery.
         RateLimiter::for('webhook', fn (Request $request) => Limit::perMinute(60)->by($this->clientKey($request)));
+        // Invoice PDF generation is CPU-heavy (DomPDF). 10/minute is generous
+        // for normal use but stops a compromised session from DoS-ing the
+        // server with repeated renders.
+        RateLimiter::for('invoice', fn (Request $request) => Limit::perMinute(10)->by($this->clientKey($request)));
+        // Admin CSV exports run full-table queries + streaming writes. 5/min
+        // bounds abuse while leaving ample room for normal reporting.
+        RateLimiter::for('admin-export', fn (Request $request) => Limit::perMinute(5)->by($this->clientKey($request)));
+        // Cron endpoints are bearer-token gated but also throttled as
+        // defense-in-depth so a leaked token cannot flood the scheduler.
+        RateLimiter::for('cron', fn (Request $request) => Limit::perMinute(10)->by($this->clientKey($request)));
     }
 }

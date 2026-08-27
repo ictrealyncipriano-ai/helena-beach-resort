@@ -47,7 +47,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('/activity-logs', [ActivityLogController::class, 'index'])->name('activity-logs.index');
         Route::get('/activity-logs/{activityLog}', [ActivityLogController::class, 'show'])->name('activity-logs.show');
 
-        Route::prefix('exports')->name('exports.')->controller(ExportController::class)->group(function () {
+        Route::prefix('exports')->name('exports.')->controller(ExportController::class)->middleware('throttle:admin-export')->group(function () {
             Route::get('/', 'index')->name('index');
             Route::get('/inquiries.csv', 'inquiries')->name('inquiries');
             Route::get('/revenue.csv', 'revenue')->name('revenue');

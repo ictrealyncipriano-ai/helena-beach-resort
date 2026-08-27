@@ -1,5 +1,5 @@
 @if($posts->isEmpty())
-    @include('admin.components.empty-state', [
+    @include('components.admin.empty-state', [
         'title' => 'No posts',
         'message' => 'Write an announcement or news post to share with guests.',
     ])
@@ -41,7 +41,7 @@
                                 default => 'danger',
                             };
                         @endphp
-                        @include('admin.components.badge', ['type' => $badgeType, 'slot' => ucfirst($status)])
+                        @include('components.admin.badge', ['type' => $badgeType, 'slot' => ucfirst($status)])
                     </td>
                     <td class="px-5 py-3 text-gray-600 hidden md:table-cell dark:text-slate-300">
                         {{ $post->published_at ? $post->published_at->format('M j, Y g:i A') : '—' }}
@@ -66,7 +66,7 @@
     </div>
 
     <div class="px-5 py-4 border-t border-gray-100 dark:border-slate-700">
-        @include('admin.components.pagination', ['paginator' => $posts, 'live' => true])
+        @include('components.admin.pagination', ['paginator' => $posts, 'live' => true])
     </div>
 @endif
 

@@ -36,7 +36,7 @@ class CottageAvailability implements ValidationRule
         if ($this->skipOwnDuplicate) {
             $ownDuplicate = Inquiry::query()
                 ->where('email', $this->email)
-                ->where('status', 'pending')
+                ->where('status', Inquiry::STATUS_PENDING)
                 ->where('booking_type', $this->bookingType)
                 ->where('cottage_id', $this->cottageId)
                 ->whereDate('check_in', $value)

@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\User;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -10,35 +11,35 @@ use Symfony\Component\HttpFoundation\Response;
 class AdminMiddleware
 {
     protected array $access = [
-        'dashboard' => ['super_admin', 'admin', 'staff'],
-        'cottages' => ['super_admin', 'admin'],
-        'posts' => ['super_admin', 'admin'],
-        'testimonials' => ['super_admin', 'admin'],
-        'services' => ['super_admin', 'admin'],
-        'faqs' => ['super_admin', 'admin'],
-        'gallery' => ['super_admin', 'admin'],
-        'inquiries' => ['super_admin', 'admin', 'staff'],
-        'guests' => ['super_admin', 'admin'],
-        'promo-codes' => ['super_admin', 'admin'],
-        'exports' => ['super_admin', 'admin'],
-        'activity-logs' => ['super_admin', 'admin'],
-        'availability' => ['super_admin', 'admin', 'staff'],
-        'users' => ['super_admin', 'admin'],
-        'site-settings' => ['super_admin', 'admin'],
+        'dashboard' => [User::ROLE_SUPER_ADMIN, User::ROLE_ADMIN, User::ROLE_STAFF],
+        'cottages' => [User::ROLE_SUPER_ADMIN, User::ROLE_ADMIN],
+        'posts' => [User::ROLE_SUPER_ADMIN, User::ROLE_ADMIN],
+        'testimonials' => [User::ROLE_SUPER_ADMIN, User::ROLE_ADMIN],
+        'services' => [User::ROLE_SUPER_ADMIN, User::ROLE_ADMIN],
+        'faqs' => [User::ROLE_SUPER_ADMIN, User::ROLE_ADMIN],
+        'gallery' => [User::ROLE_SUPER_ADMIN, User::ROLE_ADMIN],
+        'inquiries' => [User::ROLE_SUPER_ADMIN, User::ROLE_ADMIN, User::ROLE_STAFF],
+        'guests' => [User::ROLE_SUPER_ADMIN, User::ROLE_ADMIN],
+        'promo-codes' => [User::ROLE_SUPER_ADMIN, User::ROLE_ADMIN],
+        'exports' => [User::ROLE_SUPER_ADMIN, User::ROLE_ADMIN],
+        'activity-logs' => [User::ROLE_SUPER_ADMIN, User::ROLE_ADMIN],
+        'availability' => [User::ROLE_SUPER_ADMIN, User::ROLE_ADMIN, User::ROLE_STAFF],
+        'users' => [User::ROLE_SUPER_ADMIN, User::ROLE_ADMIN],
+        'site-settings' => [User::ROLE_SUPER_ADMIN, User::ROLE_ADMIN],
     ];
 
     protected array $writeAccess = [
-        'cottages' => ['super_admin', 'admin'],
-        'posts' => ['super_admin', 'admin'],
-        'testimonials' => ['super_admin', 'admin'],
-        'services' => ['super_admin', 'admin'],
-        'faqs' => ['super_admin', 'admin'],
-        'gallery' => ['super_admin', 'admin'],
-        'inquiries' => ['super_admin', 'admin'],
-        'guests' => ['super_admin', 'admin'],
-        'promo-codes' => ['super_admin', 'admin'],
-        'users' => ['super_admin', 'admin'],
-        'site-settings' => ['super_admin'],
+        'cottages' => [User::ROLE_SUPER_ADMIN, User::ROLE_ADMIN],
+        'posts' => [User::ROLE_SUPER_ADMIN, User::ROLE_ADMIN],
+        'testimonials' => [User::ROLE_SUPER_ADMIN, User::ROLE_ADMIN],
+        'services' => [User::ROLE_SUPER_ADMIN, User::ROLE_ADMIN],
+        'faqs' => [User::ROLE_SUPER_ADMIN, User::ROLE_ADMIN],
+        'gallery' => [User::ROLE_SUPER_ADMIN, User::ROLE_ADMIN],
+        'inquiries' => [User::ROLE_SUPER_ADMIN, User::ROLE_ADMIN],
+        'guests' => [User::ROLE_SUPER_ADMIN, User::ROLE_ADMIN],
+        'promo-codes' => [User::ROLE_SUPER_ADMIN, User::ROLE_ADMIN],
+        'users' => [User::ROLE_SUPER_ADMIN, User::ROLE_ADMIN],
+        'site-settings' => [User::ROLE_SUPER_ADMIN],
     ];
 
     // Routes inside the admin group that any authenticated staff may reach and
@@ -52,7 +53,7 @@ class AdminMiddleware
     public function handle(Request $request, Closure $next, string ...$guards): Response
     {
         $user = Auth::user();
-        if (! $user || ! in_array($user->role, ['super_admin', 'admin', 'staff'])) {
+        if (! $user || ! in_array($user->role, [User::ROLE_SUPER_ADMIN, User::ROLE_ADMIN, User::ROLE_STAFF])) {
             abort(403, 'Unauthorized access.');
         }
 
@@ -76,14 +77,18 @@ class AdminMiddleware
             abort(403, 'You do not have permission to access this resource.');
         }
 
-        $writeActions = ['create', 'store', 'edit', 'update', 'destroy', 'confirm', 'cancel', 'activate-all', 'mark-paid', 'refund'];
+        // 'payment-proof' covers inquiries.payment-proof.approve|reject — the
+        // route segment after "inquiries" is "payment-proof", so without this
+        // entry staff would be able to approve payment proofs even though the
+        // rest of their inquiry access is read-only.
+        $writeActions = ['create', 'store', 'edit', 'update', 'destroy', 'confirm', 'cancel', 'activate-all', 'mark-paid', 'refund', 'payment-proof'];
         if (in_array($action, $writeActions) && isset($this->writeAccess[$resource])) {
             if (! in_array($user->role, $this->writeAccess[$resource])) {
                 abort(403, 'You do not have permission to perform this action.');
             }
         }
 
-        if ($user->role === 'staff' && ! in_array($resource, ['dashboard', 'inquiries'])) {
+        if ($user->role === User::ROLE_STAFF && ! in_array($resource, ['dashboard', 'inquiries'])) {
             abort(403, 'Staff can only access the dashboard and inquiries.');
         }
 

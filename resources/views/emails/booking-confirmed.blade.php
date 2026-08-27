@@ -49,7 +49,7 @@
 <tr>
 <td colspan="2" style="padding: 6px 0; vertical-align: top;">
 <p style="margin: 0 0 2px; font-size: 11px; font-weight: 600; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em;">Total Amount</p>
-<p style="margin: 0; font-size: 18px; font-weight: 700; color: #0d9488;">₱{{ number_format($inquiry->total_amount) }}</p>
+<p style="margin: 0; font-size: 18px; font-weight: 700; color: #0d9488;">{{ formatPrice($inquiry->total_amount) }}</p>
 </td>
 </tr>
 @endif
@@ -69,7 +69,7 @@
 @if(! $inquiry->isPaid() && $inquiry->total_amount)
 <div style="background: #fffbeb; border-radius: 12px; padding: 16px 20px; margin-bottom: 24px; border: 1px solid #fde68a;">
 <p style="margin: 0 0 12px; font-size: 13px; color: #92400e; line-height: 1.6;">
-To secure your booking, please complete payment of <strong>₱{{ number_format($inquiry->total_amount) }}</strong> via QR Ph.
+To secure your booking, please complete payment of <strong>{{ formatPrice($inquiry->total_amount) }}</strong> via QR Ph.
 Use the "View My Booking" button above to open your booking and pay from there.
 </p>
 </div>

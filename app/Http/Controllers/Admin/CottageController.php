@@ -6,12 +6,14 @@ use App\Http\Controllers\Controller;
 use App\Models\Cottage;
 use App\Models\CottagePhoto;
 use App\Services\ActivityLogger;
+use App\Traits\ManagesCloudflareFiles;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class CottageController extends Controller
 {
+    use ManagesCloudflareFiles;
     public function index(Request $request)
     {
         $query = Cottage::withCount('inquiries')->with(['primaryPhoto', 'amenities', 'photos', 'dateBlocks']);
@@ -27,7 +29,7 @@ class CottageController extends Controller
             $query->where('is_available', $request->availability === 'available');
         }
 
-        $cottages = $query->orderBy('sort_order')->paginate(15);
+        $cottages = $query->orderBy('sort_order')->paginate(self::ADMIN_PER_PAGE)->withQueryString();
 
         $cottagesData = $cottages->map(function ($cottage) {
             return [
@@ -70,33 +72,9 @@ class CottageController extends Controller
 
     public function store(Request $request, ActivityLogger $logger)
     {
-        $data = $request->validate([
-            'name' => 'required|max:255',
-            'slug' => 'nullable|max:255|unique:cottages,slug',
-            'description' => 'nullable',
-            'capacity' => 'nullable|integer|min:0',
-            'rate_daytour' => 'nullable|numeric|min:0',
-            'rate_overnight' => 'nullable|numeric|min:0',
-            'peak_start' => 'nullable|date',
-            'peak_end' => 'nullable|date',
-            'peak_rate_daytour' => 'nullable|numeric|min:0',
-            'peak_rate_overnight' => 'nullable|numeric|min:0',
-            'is_available' => 'boolean',
-            'sort_order' => 'nullable|integer|min:0',
-            // Uploads are validated as real images (magic-bytes checked) and
-            // capped at 5 MB; stored files get a random name + content-derived
-            // extension so a malicious filename can never reach the disk.
-            'photos' => 'nullable|array',
-            'photos.*' => 'image|mimes:jpeg,png,jpg,webp|max:5120',
-            // Nested arrays are validated and whitelisted below so a crafted
-            // payload can never mass-assign inquiry_id onto a date block.
-            'amenities' => 'nullable|array',
-            'amenities.*.name' => 'nullable|string|max:255',
-            'amenities.*.icon' => 'nullable|string|max:255',
-            'date_blocks' => 'nullable|array',
-            'date_blocks.*.date' => 'nullable|date_format:Y-m-d',
-            'date_blocks.*.reason' => 'nullable|string|max:255',
-        ]);
+        $data = $this->validated($request);
+
+        $this->validatePeakPricing($request);
 
         $data['is_available'] = $request->boolean('is_available');
         $data['slug'] = ! empty($data['slug']) ? $data['slug'] : Str::slug($data['name']);
@@ -154,33 +132,9 @@ class CottageController extends Controller
 
     public function update(Request $request, Cottage $cottage, ActivityLogger $logger)
     {
-        $data = $request->validate([
-            'name' => 'required|max:255',
-            'slug' => 'nullable|max:255|unique:cottages,slug,'.$cottage->id,
-            'description' => 'nullable',
-            'capacity' => 'nullable|integer|min:0',
-            'rate_daytour' => 'nullable|numeric|min:0',
-            'rate_overnight' => 'nullable|numeric|min:0',
-            'peak_start' => 'nullable|date',
-            'peak_end' => 'nullable|date',
-            'peak_rate_daytour' => 'nullable|numeric|min:0',
-            'peak_rate_overnight' => 'nullable|numeric|min:0',
-            'is_available' => 'boolean',
-            'sort_order' => 'nullable|integer|min:0',
-            // Same upload rules as store(); delete_photos is a comma-separated
-            // string of integer ids (see admin cottage form).
-            'photos' => 'nullable|array',
-            'photos.*' => 'image|mimes:jpeg,png,jpg,webp|max:5120',
-            'delete_photos' => 'nullable|string|regex:/^[0-9,]*$/',
-            // Nested arrays are validated and whitelisted below so a crafted
-            // payload can never mass-assign inquiry_id onto a date block.
-            'amenities' => 'nullable|array',
-            'amenities.*.name' => 'nullable|string|max:255',
-            'amenities.*.icon' => 'nullable|string|max:255',
-            'date_blocks' => 'nullable|array',
-            'date_blocks.*.date' => 'nullable|date_format:Y-m-d',
-            'date_blocks.*.reason' => 'nullable|string|max:255',
-        ]);
+        $data = $this->validated($request, $cottage);
+
+        $this->validatePeakPricing($request);
 
         $data['is_available'] = $request->boolean('is_available');
         $data['slug'] = $data['slug'] ?: $cottage->slug;
@@ -244,7 +198,7 @@ class CottageController extends Controller
             if ($ids !== []) {
                 $photos = CottagePhoto::where('cottage_id', $cottage->id)->whereIn('id', $ids)->get();
                 foreach ($photos as $p) {
-                    Storage::disk('cloudflare')->delete($p->photo_path);
+                    $this->deleteFromCloudflare($p->photo_path);
                     $p->delete();
                 }
             }
@@ -257,6 +211,69 @@ class CottageController extends Controller
 
         return redirect()->route('admin.cottages.index')
             ->with('success', 'Cottage updated successfully.');
+    }
+
+    /**
+     * Validate peak pricing consistency: start/end must both be set or both
+     * null, and at least one peak rate must be positive when the window is set.
+     */
+    private function validatePeakPricing(Request $request): void
+    {
+        $start = $request->input('peak_start');
+        $end = $request->input('peak_end');
+        $rateDaytour = $request->input('peak_rate_daytour');
+        $rateOvernight = $request->input('peak_rate_overnight');
+
+        if ($start && ! $end) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'peak_end' => 'Peak end date is required when peak start is set.',
+            ]);
+        }
+
+        if (! $start && $end) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'peak_start' => 'Peak start date is required when peak end is set.',
+            ]);
+        }
+
+        if ($start && $end) {
+            if ((float) ($rateDaytour ?? 0) <= 0 && (float) ($rateOvernight ?? 0) <= 0) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'peak_rate_daytour' => 'At least one peak rate must be greater than 0 when peak window is set.',
+                ]);
+            }
+        }
+    }
+
+    private function validated(Request $request, ?Cottage $cottage = null): array
+    {
+        $data = $request->validate([
+            'name' => 'required|max:255',
+            'slug' => 'nullable|max:255|unique:cottages,slug'.($cottage ? ','.$cottage->id : ''),
+            'description' => 'nullable',
+            'capacity' => 'nullable|integer|min:0',
+            'rate_daytour' => 'nullable|numeric|min:0',
+            'rate_overnight' => 'nullable|numeric|min:0',
+            'peak_start' => 'nullable|date',
+            'peak_end' => 'nullable|date',
+            'peak_rate_daytour' => 'nullable|numeric|min:0',
+            'peak_rate_overnight' => 'nullable|numeric|min:0',
+            'is_available' => 'boolean',
+            'sort_order' => 'nullable|integer|min:0',
+            'photos' => 'nullable|array',
+            'photos.*' => 'image|mimes:jpeg,png,jpg,webp|max:5120',
+            'delete_photos' => $cottage ? 'nullable|string|regex:/^[0-9,]*$/' : 'prohibited',
+            'amenities' => 'nullable|array',
+            'amenities.*.name' => 'nullable|string|max:255',
+            'amenities.*.icon' => 'nullable|string|max:255',
+            'date_blocks' => 'nullable|array',
+            'date_blocks.*.date' => 'nullable|date_format:Y-m-d',
+            'date_blocks.*.reason' => 'nullable|string|max:255',
+        ]);
+
+        $data['is_available'] = $request->boolean('is_available');
+
+        return $data;
     }
 
     public function destroy(Cottage $cottage, ActivityLogger $logger)
@@ -273,7 +290,7 @@ class CottageController extends Controller
         }
 
         foreach ($cottage->photos as $photo) {
-            Storage::disk('cloudflare')->delete($photo->photo_path);
+            $this->deleteFromCloudflare($photo->photo_path);
         }
         $cottage->delete();
 

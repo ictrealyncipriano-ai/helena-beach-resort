@@ -22,11 +22,11 @@
 <tr>
 <td width="50%" style="padding: 6px 12px 6px 0; vertical-align: top;">
 <p style="margin: 0 0 2px; font-size: 11px; font-weight: 600; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em;">Amount Paid</p>
-<p style="margin: 0; font-size: 18px; font-weight: 700; color: #0d9488;">₱{{ number_format($inquiry->paid_amount ?? $inquiry->total_amount) }}</p>
+<p style="margin: 0; font-size: 18px; font-weight: 700; color: #0d9488;">{{ formatPrice($inquiry->amount_paid ?? $inquiry->total_amount) }}</p>
 </td>
 <td width="50%" style="padding: 6px 0 6px 12px; vertical-align: top;">
 <p style="margin: 0 0 2px; font-size: 11px; font-weight: 600; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em;">Paid On</p>
-<p style="margin: 0; font-size: 14px; color: #1e293b;">{{ $inquiry->paid_at?->format('M d, Y h:i A') ?? now()->format('M d, Y h:i A') }}</p>
+<p style="margin: 0; font-size: 14px; color: #1e293b;">{{ ($inquiry->fully_paid_at ?? $inquiry->deposit_paid_at)?->format('M d, Y h:i A') ?? now()->format('M d, Y h:i A') }}</p>
 </td>
 </tr>
 @if($inquiry->check_in)

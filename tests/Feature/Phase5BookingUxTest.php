@@ -98,8 +98,8 @@ class Phase5BookingUxTest extends TestCase
         $inquiry = Inquiry::where('email', 'statuspaid@example.com')->first();
         $inquiry->update([
             'status' => 'confirmed',
-            'paid_at' => now(),
-            'paid_amount' => $inquiry->total_amount,
+            'amount_paid' => $inquiry->total_amount,
+            'fully_paid_at' => now(),
         ]);
 
         $this->withSession($this->portalSession($inquiry))

@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\Cottage;
 use App\Models\Gallery;
 use App\Models\Inquiry;
+use App\Models\PromoCode;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
@@ -165,5 +166,93 @@ class Phase8CodeQualityTest extends TestCase
             ->assertSessionHas('error');
 
         $this->assertNull($inquiry->refresh()->paymongo_session_id);
+    }
+
+    /** 8.1.1 — AdminController class deleted */
+    public function test_admin_controller_class_removed(): void
+    {
+        $this->assertFileDoesNotExist(app_path('Http/Controllers/AdminController.php'));
+    }
+
+    /** 8.1.2 — PromoCode::isFixed() removed */
+    public function test_promo_code_is_fixed_method_removed(): void
+    {
+        $this->assertFalse(method_exists(PromoCode::class, 'isFixed'));
+    }
+
+    /** 8.2.1 — cannotCancelReason returns reason for cancelled status */
+    public function test_cancelled_booking_cannot_be_cancelled(): void
+    {
+        $inquiry = $this->confirmedBooking('cancel-test@example.com');
+        $inquiry->update(['status' => 'cancelled']);
+
+        $this->withSession($this->portalSession($inquiry))
+            ->get(route('booking.portal.show', $inquiry))
+            ->assertSee('no longer be cancelled');
+    }
+
+    /** 8.2.2 — cannotModifyReason returns reason for expired status */
+    public function test_expired_booking_cannot_be_modified(): void
+    {
+        $inquiry = $this->confirmedBooking('modify-test@example.com');
+        $inquiry->update(['status' => 'expired']);
+
+        $this->withSession($this->portalSession($inquiry))
+            ->get(route('booking.portal.show', $inquiry))
+            ->assertSee('no longer be modified');
+    }
+
+    /** 8.2.5 — Post cover_image upload max size enforced */
+    public function test_post_cover_image_max_size_enforced(): void
+    {
+        $this->actingAs($this->admin())
+            ->post(route('admin.posts.store'), [
+                'title' => 'Test Post',
+                'cover_image' => \Illuminate\Http\UploadedFile::fake()->create('big.png', 6000, 'image/png'),
+            ])
+            ->assertSessionHasErrors('cover_image');
+    }
+
+    /** 8.2.6 — Admin InquiryRequest phone max 20 */
+    public function test_admin_inquiry_phone_max_20(): void
+    {
+        $this->actingAs($this->admin())
+            ->post(route('admin.inquiries.store'), [
+                'name' => 'Guest',
+                'email' => 'phone-test@example.com',
+                'phone' => str_repeat('1', 21),
+                'status' => 'pending',
+            ])
+            ->assertSessionHasErrors('phone');
+    }
+
+    /** 8.2.7 — InquiryRequest pax max 50 */
+    public function test_inquiry_pax_max_50(): void
+    {
+        $this->post('/contact', [
+            'name' => 'Guest',
+            'email' => 'pax-test@example.com',
+            'message' => 'Test booking with too many pax',
+            'pax' => 51,
+        ])->assertSessionHasErrors('pax');
+    }
+
+    /** 8.2.9 — Pagination preserves query string */
+    public function test_admin_inquiries_pagination_preserves_query_string(): void
+    {
+        // Create 20 inquiries to ensure there are 2 pages
+        for ($i = 0; $i < 20; $i++) {
+            Inquiry::create([
+                'reference_code' => "HB-PAGE{$i}",
+                'name' => "Guest {$i}",
+                'email' => "page{$i}@example.com",
+                'source' => 'website',
+            ]);
+        }
+
+        $this->actingAs($this->admin())
+            ->get(route('admin.inquiries.index', ['search' => 'Guest']))
+            ->assertOk()
+            ->assertSee('page=2');
     }
 }

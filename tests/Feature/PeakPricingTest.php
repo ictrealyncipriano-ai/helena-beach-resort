@@ -133,4 +133,94 @@ class PeakPricingTest extends TestCase
         $this->assertSame('1500.00', (string) $cottage->peak_rate_daytour);
         $this->assertSame('3000.00', (string) $cottage->peak_rate_overnight);
     }
+
+    public function test_has_peak_pricing_true_when_configured(): void
+    {
+        $cottage = $this->peakCottage();
+        $this->assertTrue($cottage->hasPeakPricing());
+    }
+
+    public function test_has_peak_pricing_false_when_no_peak_rates(): void
+    {
+        $cottage = $this->peakCottage(['peak_rate_daytour' => null, 'peak_rate_overnight' => null]);
+        $this->assertFalse($cottage->hasPeakPricing());
+    }
+
+    public function test_has_peak_pricing_false_when_only_start_set(): void
+    {
+        $cottage = $this->peakCottage(['peak_end' => null, 'peak_rate_daytour' => 1500]);
+        $this->assertFalse($cottage->hasPeakPricing());
+    }
+
+    public function test_single_day_peak_window(): void
+    {
+        $cottage = $this->peakCottage([
+            'peak_start' => '2026-12-25',
+            'peak_end' => '2026-12-25',
+        ]);
+
+        $this->assertTrue($cottage->isPeakDate(\Carbon\Carbon::parse('2026-12-25')));
+        $this->assertFalse($cottage->isPeakDate(\Carbon\Carbon::parse('2026-12-24')));
+    }
+
+    public function test_admin_validation_rejects_start_without_end(): void
+    {
+        $admin = User::factory()->create(['role' => 'super_admin']);
+
+        $this->actingAs($admin)
+            ->post(route('admin.cottages.store'), [
+                'name' => 'Bad Cottage',
+                'rate_overnight' => 2000,
+                'peak_start' => '2026-12-20',
+                'peak_rate_overnight' => 3000,
+                'is_available' => 1,
+            ])
+            ->assertSessionHasErrors('peak_end');
+    }
+
+    public function test_admin_validation_rejects_end_without_start(): void
+    {
+        $admin = User::factory()->create(['role' => 'super_admin']);
+
+        $this->actingAs($admin)
+            ->post(route('admin.cottages.store'), [
+                'name' => 'Bad Cottage',
+                'rate_overnight' => 2000,
+                'peak_end' => '2027-01-05',
+                'peak_rate_overnight' => 3000,
+                'is_available' => 1,
+            ])
+            ->assertSessionHasErrors('peak_start');
+    }
+
+    public function test_admin_validation_rejects_zero_peak_rates(): void
+    {
+        $admin = User::factory()->create(['role' => 'super_admin']);
+
+        $this->actingAs($admin)
+            ->post(route('admin.cottages.store'), [
+                'name' => 'Bad Cottage',
+                'rate_overnight' => 2000,
+                'peak_start' => '2026-12-20',
+                'peak_end' => '2027-01-05',
+                'peak_rate_daytour' => 0,
+                'peak_rate_overnight' => 0,
+                'is_available' => 1,
+            ])
+            ->assertSessionHasErrors('peak_rate_daytour');
+    }
+
+    public function test_cottage_without_peak_config_uses_base_rates(): void
+    {
+        $cottage = Cottage::create([
+            'name' => 'Base Villa',
+            'rate_daytour' => 800,
+            'rate_overnight' => 1600,
+            'is_available' => true,
+        ]);
+
+        $this->assertSame('1600.00', $cottage->rateFor(\Carbon\Carbon::parse('2026-12-25')));
+        $this->assertSame('800.00', $cottage->rateFor(\Carbon\Carbon::parse('2026-12-25'), 'day_tour'));
+        $this->assertFalse($cottage->hasPeakPricing());
+    }
 }

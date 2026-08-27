@@ -78,7 +78,7 @@
             <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-6 mb-5">
                 <div>
                     <span class="text-xs text-gray-500 uppercase tracking-wider font-medium dark:text-slate-400">Type</span>
-                    <p class="mt-1">@include('admin.components.badge', ['type' => $inquiry->booking_type === 'day_tour' ? 'info' : ($inquiry->booking_type === 'overnight' ? 'warning' : 'gray'), 'slot' => $inquiry->booking_type ? ucfirst(str_replace('_', ' ', $inquiry->booking_type)) : 'Inquiry'])</p>
+                    <p class="mt-1">@include('components.admin.badge', ['type' => $inquiry->booking_type === 'day_tour' ? 'info' : ($inquiry->booking_type === 'overnight' ? 'warning' : 'gray'), 'slot' => $inquiry->booking_type ? ucfirst(str_replace('_', ' ', $inquiry->booking_type)) : 'Inquiry'])</p>
                 </div>
                 <div>
                     <span class="text-xs text-gray-500 uppercase tracking-wider font-medium dark:text-slate-400">Check In</span>
@@ -94,14 +94,14 @@
                 </div>
                 <div>
                     <span class="text-xs text-gray-500 uppercase tracking-wider font-medium dark:text-slate-400">Cottage</span>
-                    <p class="mt-1">@include('admin.components.badge', ['type' => 'primary', 'slot' => $inquiry->cottage?->name ?? 'N/A'])</p>
+                    <p class="mt-1">@include('components.admin.badge', ['type' => 'primary', 'slot' => $inquiry->cottage?->name ?? 'N/A'])</p>
                 </div>
                 <div>
                     <span class="text-xs text-gray-500 uppercase tracking-wider font-medium dark:text-slate-400">Total Amount</span>
-                    <p class="mt-1 text-sm font-semibold text-gray-900 dark:text-white">₱ {{ number_format($inquiry->total_amount, 2) }}</p>
+                    <p class="mt-1 text-sm font-semibold text-gray-900 dark:text-white">{{ formatPrice($inquiry->total_amount) }}</p>
                     @if($inquiry->discount_amount)
                         <p class="mt-0.5 text-xs text-amber-600 dark:text-amber-400">
-                            {{ $inquiry->promoCode?->code ?? 'Promo' }} &minus;₱ {{ number_format($inquiry->discount_amount, 2) }}
+                            {{ $inquiry->promoCode?->code ?? 'Promo' }} &minus;{{ formatPrice($inquiry->discount_amount) }}
                         </p>
                     @endif
                 </div>
@@ -109,23 +109,23 @@
                     <span class="text-xs text-gray-500 uppercase tracking-wider font-medium">Payment</span>
                     <p class="mt-1">
                         @if($inquiry->isRefunded())
-                            @include('admin.components.badge', ['type' => 'danger', 'slot' => 'Refunded'])
+                            @include('components.admin.badge', ['type' => 'danger', 'slot' => 'Refunded'])
                         @elseif($inquiry->isPaid())
-                            @include('admin.components.badge', ['type' => 'success', 'slot' => 'Paid'])
+                            @include('components.admin.badge', ['type' => 'success', 'slot' => 'Paid'])
                         @elseif($inquiry->isDepositPaid())
-                            @include('admin.components.badge', ['type' => 'warning', 'slot' => 'Deposit Paid'])
+                            @include('components.admin.badge', ['type' => 'warning', 'slot' => 'Deposit Paid'])
                         @elseif($inquiry->hasFailedPayment())
-                            @include('admin.components.badge', ['type' => 'danger', 'slot' => 'Payment Failed'])
+                            @include('components.admin.badge', ['type' => 'danger', 'slot' => 'Payment Failed'])
                         @else
-                            @include('admin.components.badge', ['type' => 'gray', 'slot' => 'Unpaid'])
+                            @include('components.admin.badge', ['type' => 'gray', 'slot' => 'Unpaid'])
                         @endif
                     </p>
                     @if($inquiry->isRefunded())
-                        <p class="mt-1 text-xs text-red-500 dark:text-red-400">Refunded ₱{{ number_format($inquiry->refund_amount ?? $inquiry->paid_amount, 2) }} on {{ $inquiry->refunded_at?->format('M d, Y') }}</p>
+                        <p class="mt-1 text-xs text-red-500 dark:text-red-400">Refunded {{ formatPrice($inquiry->refund_amount ?? $inquiry->refundableAmount()) }} on {{ $inquiry->refunded_at?->format('M d, Y') }}</p>
                     @elseif($inquiry->isPaid())
-                        <p class="mt-1 text-xs text-gray-500 dark:text-slate-400">₱{{ number_format($inquiry->paid_amount, 2) }} · {{ $inquiry->paymentMethodLabel() }} · {{ $inquiry->paid_at?->format('M d, Y') }}</p>
+                        <p class="mt-1 text-xs text-gray-500 dark:text-slate-400">{{ formatPrice($inquiry->amount_paid) }} · {{ $inquiry->paymentMethodLabel() }} · {{ ($inquiry->fully_paid_at ?? $inquiry->deposit_paid_at)?->format('M d, Y') }}</p>
                     @elseif($inquiry->hasDeposit())
-                        <p class="mt-1 text-xs text-gray-500 dark:text-slate-400">Deposit ₱{{ number_format($inquiry->deposit_amount, 2) }} · collected ₱{{ number_format($inquiry->amount_paid ?? 0, 2) }} · balance ₱{{ number_format($inquiry->balanceDue(), 2) }}</p>
+                        <p class="mt-1 text-xs text-gray-500 dark:text-slate-400">Deposit {{ formatPrice($inquiry->deposit_amount) }} · collected {{ formatPrice($inquiry->amount_paid ?? 0) }} · balance {{ formatPrice($inquiry->balanceDue()) }}</p>
                     @elseif($inquiry->hasFailedPayment())
                         <p class="mt-1 text-xs text-red-500 dark:text-red-400">Last attempt failed {{ $inquiry->payment_failed_at?->format('M d, Y \a\t h:i A') }}</p>
                     @endif
@@ -133,7 +133,7 @@
             </div>
             <div class="flex items-center gap-3">
                 <span class="text-xs text-gray-500 uppercase tracking-wider font-medium dark:text-slate-400">Status</span>
-                @include('admin.components.badge', ['type' => $inquiry->status === 'confirmed' ? 'success' : ($inquiry->status === 'cancelled' ? 'danger' : 'warning'), 'size' => 'md', 'slot' => ucfirst($inquiry->status)])
+                @include('components.admin.badge', ['type' => $inquiry->status === 'confirmed' ? 'success' : ($inquiry->status === 'cancelled' ? 'danger' : 'warning'), 'size' => 'md', 'slot' => ucfirst($inquiry->status)])
             </div>
         </div>
     </div>
@@ -155,7 +155,7 @@
     <div class="bg-white rounded-xl shadow-sm border border-gray-100 dark:bg-slate-800 dark:border-slate-700">
         <div class="px-5 py-4 border-b border-gray-100 flex items-center justify-between dark:border-slate-700">
             <h2 class="text-sm font-semibold text-gray-900 dark:text-white">Payment Proof</h2>
-            @include('admin.components.badge', [
+            @include('components.admin.badge', [
                 'type' => $inquiry->hasPendingPaymentProof() ? 'warning' : ($inquiry->hasApprovedPaymentProof() ? 'success' : 'danger'),
                 'slot' => ucfirst($inquiry->payment_proof_status),
             ])
@@ -179,8 +179,10 @@
             <div class="mt-4 flex flex-wrap items-center gap-3">
                 <form method="POST" action="{{ route('admin.inquiries.payment-proof.approve', $inquiry) }}" class="inline-flex items-center gap-2">
                     @csrf
-                    <input type="text" name="note" placeholder="Optional note" class="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-600 focus:border-teal-400 dark:bg-slate-800 dark:border-slate-600 dark:text-white dark:placeholder-slate-400">
-                    <button type="submit" class="px-4 py-2 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors">Approve &amp; Mark Paid</button>
+                    <label class="sr-only" for="proof-amount">Amount received</label>
+                    <input id="proof-amount" type="number" name="amount" step="0.01" min="0.01" max="{{ formatPrice(max((float) $inquiry->total_amount - $inquiry->collectedAmount(), 0), 2, false) }}" value="{{ $inquiry->amountDueNow() }}" title="Amount actually received (defaults to amount due)" class="px-3 py-2 w-32 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-600 focus:border-teal-400 dark:bg-slate-800 dark:border-slate-600 dark:text-white" aria-label="Amount received (defaults to amount due)">
+                    <input type="text" name="note" placeholder="Optional note" aria-label="Optional note" class="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-600 focus:border-teal-400 dark:bg-slate-800 dark:border-slate-600 dark:text-white dark:placeholder-slate-400">
+                    <button type="submit" class="px-4 py-2 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors">Approve &amp; Record Payment</button>
                 </form>
                 <form method="POST" action="{{ route('admin.inquiries.payment-proof.reject', $inquiry) }}" class="inline-flex items-center gap-2">
                     @csrf
@@ -202,11 +204,14 @@
         <div class="flex items-center gap-2">
             <a href="{{ route('admin.inquiries.edit', $inquiry) }}" class="px-4 py-2 text-sm font-medium text-white bg-teal-700 rounded-lg hover:bg-teal-700 transition-colors shadow-sm">Edit</a>
             @if($inquiry->status === 'confirmed' && ! $inquiry->isPaid())
-                <button type="button"
-                    @@click="$dispatch('open-confirm-mark-paid', { url: '{{ route('admin.inquiries.mark-paid', $inquiry) }}' })"
-                    class="px-4 py-2 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors shadow-sm">Mark as Paid</button>
+                <form method="POST" action="{{ route('admin.inquiries.mark-paid', $inquiry) }}" class="inline-flex items-center gap-2">
+                    @csrf
+                    <label class="sr-only" for="mark-paid-amount">Amount received</label>
+                    <input id="mark-paid-amount" type="number" name="amount" step="0.01" min="0.01" max="{{ formatPrice(max((float) $inquiry->total_amount - $inquiry->collectedAmount(), 0), 2, false) }}" value="{{ $inquiry->amountDueNow() }}" title="Amount actually received (defaults to amount due)" class="px-3 py-2 w-32 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-600 focus:border-teal-400 dark:bg-slate-800 dark:border-slate-600 dark:text-white" aria-label="Amount received (defaults to amount due)">
+                    <button type="submit" class="px-4 py-2 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors shadow-sm">Record Payment</button>
+                </form>
             @endif
-            @if($inquiry->isPaid() && ! $inquiry->isRefunded())
+            @if($inquiry->hasPayments() && ! $inquiry->isRefunded())
                 <button type="button"
                     @@click="$dispatch('open-confirm-refund', { url: '{{ route('admin.inquiries.refund', $inquiry) }}' })"
                     class="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors shadow-sm">Refund</button>
@@ -223,8 +228,7 @@
     </div>
 </div>
 
-@include('admin.components.confirm-dialog', ['name' => 'confirm', 'title' => 'Confirm Booking?', 'message' => 'Confirm this booking? This will create date blocks and send a confirmation email to the guest.', 'confirmText' => 'Confirm Booking', 'confirmClass' => 'bg-emerald-600 hover:bg-emerald-700 text-white'])
-@include('admin.components.confirm-dialog', ['name' => 'cancel', 'title' => 'Cancel Booking?', 'message' => 'Cancel this booking? This will remove date blocks and send a cancellation email to the guest.', 'confirmText' => 'Cancel Booking', 'confirmClass' => 'bg-red-600 hover:bg-red-700 text-white'])
-@include('admin.components.confirm-dialog', ['name' => 'mark-paid', 'title' => 'Mark as Paid?', 'message' => 'Mark this booking as paid (e.g. bank transfer or cash on site)?', 'confirmText' => 'Mark as Paid', 'confirmClass' => 'bg-emerald-600 hover:bg-emerald-700 text-white'])
-@include('admin.components.confirm-dialog', ['name' => 'refund', 'title' => 'Refund Payment?', 'message' => 'Refund the full paid amount via PayMongo and cancel this booking? The guest will be notified by email.', 'confirmText' => 'Refund & Cancel', 'confirmClass' => 'bg-red-600 hover:bg-red-700 text-white'])
+@include('components.admin.confirm-dialog', ['name' => 'confirm', 'title' => 'Confirm Booking?', 'message' => 'Confirm this booking? This will create date blocks and send a confirmation email to the guest.', 'confirmText' => 'Confirm Booking', 'confirmClass' => 'bg-emerald-600 hover:bg-emerald-700 text-white'])
+@include('components.admin.confirm-dialog', ['name' => 'cancel', 'title' => 'Cancel Booking?', 'message' => 'Cancel this booking? This will remove date blocks and send a cancellation email to the guest.', 'confirmText' => 'Cancel Booking', 'confirmClass' => 'bg-red-600 hover:bg-red-700 text-white'])
+@include('components.admin.confirm-dialog', ['name' => 'refund', 'title' => 'Refund Payment?', 'message' => 'Refund the collected amount (' . formatPrice($inquiry->refundableAmount()) . ') via PayMongo and cancel this booking? The guest will be notified by email.', 'confirmText' => 'Refund & Cancel', 'confirmClass' => 'bg-red-600 hover:bg-red-700 text-white'])
 @endsection

@@ -20,16 +20,14 @@ class InquiryController extends Controller
     /** Show contact/inquiry form with cottage list and blocked dates */
     public function create()
     {
-        $cottages = Cottage::where('is_available', true)
-            ->orderBy('sort_order')
-            ->get();
+        $cottages = Cottage::available()->get();
 
         // Fetch blocked dates for every cottage in a single query instead of
         // one dateBlocks() query per cottage (N+1). Dates are formatted to
         // 'Y-m-d' so the data-blocked attributes on the <option> elements
         // match the date-string parsing in the page's JS (d.split('-')).
         $blockedByCottage = CottageDateBlock::whereIn('cottage_id', $cottages->pluck('id'))
-            ->where('date', '>=', today())
+            ->future()
             ->select('cottage_id', 'date')
             ->get()
             ->groupBy('cottage_id')

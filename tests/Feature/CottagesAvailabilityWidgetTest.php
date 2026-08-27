@@ -29,8 +29,7 @@ class CottagesAvailabilityWidgetTest extends TestCase
 
     public function test_cottages_page_lists_every_available_cottage_in_the_widget(): void
     {
-        $expected = Cottage::where('is_available', true)
-            ->orderBy('sort_order')
+        $expected = Cottage::available()
             ->get('name');
 
         $response = $this->get(route('cottages.index'))->assertOk();

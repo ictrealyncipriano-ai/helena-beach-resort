@@ -8,7 +8,7 @@
         </div>
         <div class="stat">
             <div class="label">Total Revenue</div>
-            <div class="value">₱{{ number_format($grandTotal, 2) }}</div>
+            <div class="value">{{ formatPrice($grandTotal) }}</div>
         </div>
     </div>
 
@@ -30,7 +30,7 @@
                         <td>{{ $row->period }}</td>
                         <td>{{ $row->cottage_name }}</td>
                         <td class="r">{{ $row->bookings }}</td>
-                        <td class="r">₱{{ number_format($row->total, 2) }}</td>
+                        <td class="r">{{ formatPrice($row->total) }}</td>
                     </tr>
                 @endforeach
             </tbody>
@@ -38,7 +38,7 @@
                 <tr>
                     <td colspan="2">Grand Total</td>
                     <td class="r">{{ $grandBookings }}</td>
-                    <td class="r">₱{{ number_format($grandTotal, 2) }}</td>
+                    <td class="r">{{ formatPrice($grandTotal) }}</td>
                 </tr>
             </tfoot>
         </table>

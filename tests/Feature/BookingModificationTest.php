@@ -23,7 +23,7 @@ class BookingModificationTest extends TestCase
 
     private function cottages(): array
     {
-        return Cottage::where('is_available', true)->orderBy('sort_order')->get()->all();
+        return Cottage::available()->get()->all();
     }
 
     private function createBooking(string $email = 'modify@example.com'): Inquiry
@@ -85,13 +85,16 @@ class BookingModificationTest extends TestCase
             ->assertStatus(404);
     }
 
-    public function test_wrong_session_token_returns_404(): void
+    public function test_stale_session_token_redirects_to_lookup(): void
     {
         $inquiry = $this->createBooking();
 
+        // The session held access but the token no longer matches (rotated or
+        // expired): the guest is sent to re-authenticate, not shown a 404.
         $this->withSession(['booking_access_tokens' => [$inquiry->id => str_repeat('x', 40)]])
             ->get(route('booking.portal.modify', $inquiry))
-            ->assertStatus(404);
+            ->assertRedirect(route('booking.portal.lookup'))
+            ->assertSessionHas('error');
     }
 
     public function test_modify_changes_schedule_and_reholds_blocks(): void
@@ -265,8 +268,6 @@ class BookingModificationTest extends TestCase
     {
         $inquiry = $this->createBooking();
         $inquiry->update([
-            'paid_at' => now(),
-            'paid_amount' => $inquiry->total_amount,
             'amount_paid' => $inquiry->total_amount,
             'fully_paid_at' => now(),
             'payment_method' => 'qrph',
@@ -287,8 +288,6 @@ class BookingModificationTest extends TestCase
     {
         $inquiry = $this->createBooking();
         $inquiry->update([
-            'paid_at' => now(),
-            'paid_amount' => $inquiry->total_amount,
             'amount_paid' => $inquiry->total_amount,
             'fully_paid_at' => now(),
         ]);

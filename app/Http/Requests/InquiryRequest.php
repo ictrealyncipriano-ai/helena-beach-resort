@@ -26,7 +26,7 @@ class InquiryRequest extends FormRequest
                 $this->input('check_out'),
             )],
             'check_out' => ['nullable', 'date', 'after:check_in'],
-            'pax' => ['nullable', 'integer', 'min:1'],
+            'pax' => ['nullable', 'integer', 'min:1', 'max:50'],
             'message' => ['required', 'string'],
         ];
     }

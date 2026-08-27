@@ -2,6 +2,7 @@
 
 @section('title', 'Booking Confirmation')
 @section('description', 'Your booking inquiry has been received.')
+@section('robots', 'noindex, nofollow')
 
 @section('content')
 <section class="relative pt-32 pb-20 overflow-hidden bg-gradient-to-br from-teal-600 via-teal-700 to-cyan-800">
@@ -100,7 +101,7 @@
                     @if($inquiry->total_amount)
                     <div>
                         <p class="text-gray-500 dark:text-slate-400">Total</p>
-                        <p class="font-medium text-teal-700 dark:text-teal-300">₱{{ number_format($inquiry->total_amount) }}</p>
+                        <p class="font-medium text-teal-700 dark:text-teal-300">{{ formatPrice($inquiry->total_amount) }}</p>
                     </div>
                     @endif
                 </div>

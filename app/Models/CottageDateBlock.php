@@ -9,7 +9,7 @@ class CottageDateBlock extends Model
 {
     /**
      * Tracks dates when a cottage is booked/unavailable.
-     * Created when an inquiry status changes to 'confirmed'.
+     * Created when an inquiry is created or confirmed to prevent double bookings.
      */
     protected $fillable = [
         'cottage_id', 'date', 'reason', 'inquiry_id',

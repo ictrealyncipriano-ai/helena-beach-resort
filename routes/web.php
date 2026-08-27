@@ -140,7 +140,9 @@ Route::post('/booking/{inquiry}/payment-proof', [BookingPortalController::class,
 |--------------------------------------------------------------------------
 */
 Route::get('/booking/{inquiry}/invoice', [InvoiceController::class, 'show'])->name('invoice.show');
-Route::get('/booking/{inquiry}/invoice/pdf', [InvoiceController::class, 'download'])->name('invoice.download');
+Route::get('/booking/{inquiry}/invoice/pdf', [InvoiceController::class, 'download'])
+    ->middleware('throttle:invoice')
+    ->name('invoice.download');
 
 /*
 |--------------------------------------------------------------------------
@@ -166,9 +168,11 @@ Route::post('/paymongo/webhook', [PaymentController::class, 'webhook'])
 // is the only auth, so a GET that mutates state is safe here. POST is kept so the
 // endpoints can still be triggered manually with curl.
 Route::match(['get', 'post'], '/cron/reservations', [CronController::class, 'releaseExpiredReservations'])
-    ->withoutMiddleware(VerifyCsrfToken::class);
+    ->withoutMiddleware(VerifyCsrfToken::class)
+    ->middleware('throttle:cron');
 Route::match(['get', 'post'], '/cron/migrate', [CronController::class, 'migrate'])
-    ->withoutMiddleware(VerifyCsrfToken::class);
+    ->withoutMiddleware(VerifyCsrfToken::class)
+    ->middleware('throttle:cron');
 
 /*
 |--------------------------------------------------------------------------

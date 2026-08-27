@@ -25,7 +25,7 @@ class FaqController extends Controller
             $query->where('is_active', $request->boolean('is_active'));
         }
 
-        $faqs = $query->orderBy('sort_order')->paginate(15);
+        $faqs = $query->orderBy('sort_order')->paginate(self::ADMIN_PER_PAGE)->withQueryString();
 
         $faqsData = $faqs->map(function ($faq) {
             return [
@@ -47,14 +47,7 @@ class FaqController extends Controller
 
     public function store(Request $request, ActivityLogger $logger)
     {
-        $data = $request->validate([
-            'question' => 'required|max:255',
-            'answer' => 'required',
-            'sort_order' => 'nullable|integer|min:0',
-            'is_active' => 'boolean',
-        ]);
-
-        $data['is_active'] = $request->boolean('is_active');
+        $data = $this->validated($request);
         $faq = Faq::create($data);
 
         $logger->record('faq.created', $faq, "FAQ created: {$faq->question}");
@@ -70,14 +63,7 @@ class FaqController extends Controller
 
     public function update(Request $request, Faq $faq, ActivityLogger $logger)
     {
-        $data = $request->validate([
-            'question' => 'required|max:255',
-            'answer' => 'required',
-            'sort_order' => 'nullable|integer|min:0',
-            'is_active' => 'boolean',
-        ]);
-
-        $data['is_active'] = $request->boolean('is_active');
+        $data = $this->validated($request);
         $faq->update($data);
 
         $logger->record('faq.updated', $faq, "FAQ updated: {$faq->question}");
@@ -105,5 +91,19 @@ class FaqController extends Controller
 
         return redirect()->route('admin.faqs.index')
             ->with('success', 'All FAQs activated successfully.');
+    }
+
+    private function validated(Request $request): array
+    {
+        $data = $request->validate([
+            'question' => 'required|max:255',
+            'answer' => 'required',
+            'sort_order' => 'nullable|integer|min:0',
+            'is_active' => 'boolean',
+        ]);
+
+        $data['is_active'] = $request->boolean('is_active');
+
+        return $data;
     }
 }

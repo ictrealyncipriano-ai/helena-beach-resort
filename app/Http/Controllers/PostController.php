@@ -4,8 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\Post;
 use App\Support\PublicCache;
-use Illuminate\Pagination\LengthAwarePaginator;
-use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Cache;
 
 /**
@@ -32,23 +30,5 @@ class PostController extends Controller
         abort_unless($post->isPublished(), 404);
 
         return view('pages.news.show', compact('post'));
-    }
-
-    /**
-     * Turn a cached collection into a paginator without caching the paginator
-     * itself (paginator objects embed request state).
-     */
-    private function paginate($items, int $perPage)
-    {
-        $page = Paginator::resolveCurrentPage();
-        $slice = $items->forPage($page, $perPage)->values();
-
-        return new LengthAwarePaginator(
-            $slice,
-            $items->count(),
-            $perPage,
-            $page,
-            ['path' => Paginator::resolveCurrentPath()]
-        );
     }
 }

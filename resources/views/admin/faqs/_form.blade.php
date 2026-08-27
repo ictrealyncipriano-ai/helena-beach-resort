@@ -24,11 +24,7 @@
             @error('sort_order') <p id="sort-order-field-error" class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
         </div>
         <div class="flex items-end pb-2">
-            <label for="is-active-field" class="relative inline-flex items-center cursor-pointer">
-                <input type="checkbox" id="is-active-field" name="is_active" value="1" x-model="form.is_active" class="sr-only peer">
-                <div class="w-9 h-5 bg-gray-200 peer-checked:bg-teal-700 dark:bg-slate-600 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-teal-600 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all"></div>
-                <span class="ms-2 text-sm font-medium text-gray-700 dark:text-slate-300">Active</span>
-            </label>
+            <x-admin.toggle name="is_active" x-model="form.is_active" id="is-active-field" label="Active" />
         </div>
     </div>
 </div>

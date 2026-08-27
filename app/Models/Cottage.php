@@ -6,6 +6,7 @@ use App\Support\HtmlSanitizer;
 use App\Support\PublicCache;
 use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Casts\Attribute;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
@@ -54,6 +55,11 @@ class Cottage extends Model
         static::deleted(fn () => PublicCache::flush());
     }
 
+    public function scopeAvailable($query)
+    {
+        return $query->where('is_available', true)->orderBy('sort_order');
+    }
+
     public function photos(): HasMany
     {
         return $this->hasMany(CottagePhoto::class)->orderBy('sort_order');
@@ -86,7 +92,7 @@ class Cottage extends Model
      */
     public function isPeakDate(CarbonInterface $date): bool
     {
-        if (! $this->peak_start || ! $this->peak_end) {
+        if (! $this->hasPeakPricing()) {
             return false;
         }
 
@@ -103,20 +109,52 @@ class Cottage extends Model
     }
 
     /**
+     * Whether peak pricing is configured for this cottage.
+     */
+    public function hasPeakPricing(): bool
+    {
+        return $this->peak_start !== null
+            && $this->peak_end !== null
+            && ((float) ($this->peak_rate_daytour ?? 0) > 0 || (float) ($this->peak_rate_overnight ?? 0) > 0);
+    }
+
+    /**
      * Applicable rate for a date, applying the peak surcharge when the date
      * falls inside the peak window.
      */
-    public function rateFor(CarbonInterface $date, string $type = 'overnight'): string
+    public function rateFor(CarbonInterface $date, string $type = Inquiry::TYPE_OVERNIGHT): string
     {
         if ($this->isPeakDate($date)) {
-            $peak = $type === 'day_tour' ? $this->peak_rate_daytour : $this->peak_rate_overnight;
+            $peak = $type === Inquiry::TYPE_DAY_TOUR ? $this->peak_rate_daytour : $this->peak_rate_overnight;
             if ($peak !== null && (float) $peak > 0) {
-                return number_format((float) $peak, 2, '.', '');
+                return formatPrice($peak, 2, false);
             }
         }
 
-        $base = $type === 'day_tour' ? $this->rate_daytour : $this->rate_overnight;
+        $base = $type === Inquiry::TYPE_DAY_TOUR ? $this->rate_daytour : $this->rate_overnight;
 
-        return number_format((float) $base, 2, '.', '');
+        return formatPrice($base, 2, false);
+    }
+
+    /**
+     * Rate data payload for frontend JavaScript (peak-aware date pickers).
+     * Used by BookingController, BookingPortalController, and Admin\InquiryController.
+     */
+    public static function ratesMap(?Collection $cottages = null): \Illuminate\Support\Collection
+    {
+        $cottages ??= static::all();
+
+        return $cottages->mapWithKeys(fn ($c) => [
+            $c->id => [
+                'name' => $c->name,
+                'capacity' => $c->capacity,
+                Inquiry::TYPE_DAY_TOUR => (float) $c->rate_daytour,
+                Inquiry::TYPE_OVERNIGHT => (float) $c->rate_overnight,
+                'peak_'.Inquiry::TYPE_DAY_TOUR => $c->peak_rate_daytour !== null ? (float) $c->peak_rate_daytour : null,
+                'peak_'.Inquiry::TYPE_OVERNIGHT => $c->peak_rate_overnight !== null ? (float) $c->peak_rate_overnight : null,
+                'peak_start' => $c->peak_start?->format('m-d'),
+                'peak_end' => $c->peak_end?->format('m-d'),
+            ],
+        ]);
     }
 }

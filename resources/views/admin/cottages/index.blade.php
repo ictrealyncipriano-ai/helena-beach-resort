@@ -52,7 +52,7 @@ if ($editingId) {
         </div>
 
         @if($cottages->isEmpty())
-            @include('admin.components.empty-state', [
+            @include('components.admin.empty-state', [
                 'title' => 'No cottages yet',
                 'message' => 'Create your first cottage to start accepting bookings.',
                 'actionClick' => 'openCreate()',
@@ -89,8 +89,8 @@ if ($editingId) {
                                 </div>
                             </td>
                             <td class="px-5 py-3 text-center text-gray-600 dark:text-slate-300">{{ $cottage->capacity }}</td>
-                            <td class="px-5 py-3 text-right text-gray-600 dark:text-slate-300">₱ {{ number_format($cottage->rate_daytour, 2) }}</td>
-                            <td class="px-5 py-3 text-right text-gray-600 dark:text-slate-300">₱ {{ number_format($cottage->rate_overnight, 2) }}</td>
+                            <td class="px-5 py-3 text-right text-gray-600 dark:text-slate-300">{{ formatPrice($cottage->rate_daytour) }}</td>
+                            <td class="px-5 py-3 text-right text-gray-600 dark:text-slate-300">{{ formatPrice($cottage->rate_overnight) }}</td>
                             <td class="px-5 py-3 text-center">
                                 @if($cottage->is_available)
                                     <svg class="w-5 h-5 text-emerald-500 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
@@ -98,7 +98,7 @@ if ($editingId) {
                                     <svg class="w-5 h-5 text-red-400 mx-auto dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 9.75l4.5 4.5m0-4.5l-4.5 4.5M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                                 @endif
                             </td>
-                            <td class="px-5 py-3 text-center">@include('admin.components.badge', ['type' => 'primary', 'slot' => $cottage->inquiries_count])</td>
+                            <td class="px-5 py-3 text-center">@include('components.admin.badge', ['type' => 'primary', 'slot' => $cottage->inquiries_count])</td>
                             <td class="px-5 py-3 text-center text-gray-500 dark:text-slate-400">{{ $cottage->sort_order }}</td>
                             <td class="px-5 py-3 text-right">
                                 <div class="flex items-center justify-end gap-1">
@@ -118,7 +118,7 @@ if ($editingId) {
             </div>
 
             <div class="px-5 py-4 border-t border-gray-100 dark:border-slate-700">
-                @include('admin.components.pagination', ['paginator' => $cottages])
+                @include('components.admin.pagination', ['paginator' => $cottages])
             </div>
         @endif
     </div>
@@ -142,7 +142,7 @@ if ($editingId) {
     </x-admin.modal>
 </div>
 
-@include('admin.components.confirm-dialog', ['name' => 'delete', 'title' => 'Delete Cottage?', 'message' => 'Are you sure you want to delete this cottage? This action cannot be undone.'])
+@include('components.admin.confirm-dialog', ['name' => 'delete', 'title' => 'Delete Cottage?', 'message' => 'Are you sure you want to delete this cottage? This action cannot be undone.'])
 @endsection
 
 @push('scripts')

@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Cottage;
 use App\Models\CottageDateBlock;
+use App\Models\Inquiry;
+use App\Services\PricingService;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -21,9 +23,9 @@ class AvailabilityController extends Controller
     {
         $validated = $request->validate([
             'cottage_id' => ['required', 'integer', Rule::exists('cottages', 'id')->where('is_available', true)],
-            'booking_type' => ['required', 'string', 'in:day_tour,overnight'],
+            'booking_type' => ['required', 'string', 'in:' . implode(',', Inquiry::BOOKING_TYPES)],
             'check_in' => ['required', 'date', 'after_or_equal:today'],
-            'check_out' => ['nullable', 'required_if:booking_type,overnight', 'date', 'after:check_in'],
+            'check_out' => ['nullable', 'required_if:booking_type,' . Inquiry::TYPE_OVERNIGHT, 'date', 'after:check_in'],
         ]);
 
         $cottage = Cottage::find($validated['cottage_id']);
@@ -39,7 +41,7 @@ class AvailabilityController extends Controller
             ->sort()
             ->values();
 
-        $rate = $this->rateForRange($cottage, $validated['booking_type'], $checkIn, $checkOut);
+        $rate = $this->rateForRange($cottage, $validated['booking_type'], $checkIn, $checkOut, app(PricingService::class));
 
         return response()->json([
             'available' => $blocked->isEmpty(),
@@ -79,31 +81,22 @@ class AvailabilityController extends Controller
      *
      * @return array{label: string, amount: string}
      */
-    private function rateForRange(Cottage $cottage, string $bookingType, Carbon $checkIn, ?Carbon $checkOut): array
+    private function rateForRange(Cottage $cottage, string $bookingType, Carbon $checkIn, ?Carbon $checkOut, PricingService $pricing): array
     {
-        if ($bookingType === 'day_tour') {
-            $amount = $cottage->rateFor($checkIn, 'day_tour');
+        if ($bookingType === Inquiry::TYPE_DAY_TOUR) {
+            $amount = $cottage->rateFor($checkIn, Inquiry::TYPE_DAY_TOUR);
 
             return [
-                'label' => '₱'.number_format((float) $amount).' / day',
+                'label' => formatPrice($amount).' / day',
                 'amount' => $amount,
             ];
         }
 
-        $nights = $checkOut ? max($checkIn->diffInDays($checkOut), 1) : 1;
-        $total = '0.00';
-
-        for ($i = 0; $i < $nights; $i++) {
-            $total = number_format(
-                (float) $total + (float) $cottage->rateFor($checkIn->copy()->addDays($i), 'overnight'),
-                2, '.', ''
-            );
-        }
-
-        $nightly = $cottage->rateFor($checkIn, 'overnight');
+        $total = $pricing->nightlyTotal($cottage, $checkIn, $checkOut);
+        $nightly = $cottage->rateFor($checkIn, Inquiry::TYPE_OVERNIGHT);
 
         return [
-            'label' => '₱'.number_format((float) $total).' (₱'.number_format((float) $nightly).' / night)',
+            'label' => formatPrice($total).' ('.formatPrice($nightly).' / night)',
             'amount' => $total,
         ];
     }

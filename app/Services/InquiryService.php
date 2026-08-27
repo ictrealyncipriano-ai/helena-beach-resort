@@ -23,7 +23,12 @@ use Illuminate\Validation\ValidationException;
  */
 class InquiryService
 {
-    public function __construct(private ActivityLogger $logger) {}
+    private const MAX_REFERENCE_RETRIES = 3;
+
+    public function __construct(
+        private ActivityLogger $logger,
+        private PricingService $pricing,
+    ) {}
 
     /**
      * Store a new inquiry with automatic total calculation and owner notification.
@@ -39,7 +44,7 @@ class InquiryService
     {
         // Calculate total amount based on booking type and cottage rates
         $subtotal = $this->calculateTotal($data);
-        $data['source'] = $data['source'] ?? 'website';
+        $data['source'] = $data['source'] ?? Inquiry::SOURCE_WEBSITE;
 
         $promo = null;
         $promoGiven = ! empty($data['promo_code']);
@@ -54,15 +59,14 @@ class InquiryService
 
         $lastException = null;
 
-        for ($attempt = 1; $attempt <= 3; $attempt++) {
+        for ($attempt = 1; $attempt <= self::MAX_REFERENCE_RETRIES; $attempt++) {
             try {
                 $inquiry = DB::transaction(function () use ($data, $subtotal, $promo) {
-                    $totalAmount = $subtotal;
-                    $discount = null;
+                    $pricing = $this->pricing->applyDiscount($subtotal, $promo);
+                    $totalAmount = $pricing['total'];
+                    $discount = $pricing['discount'];
 
                     if ($promo) {
-                        $discount = $promo->discountFor($totalAmount);
-                        $totalAmount = max(0, (float) $subtotal - (float) $discount);
                         $promo->consume();
                     }
 
@@ -78,7 +82,7 @@ class InquiryService
                         'booking_type' => $data['booking_type'] ?? null,
                         'total_amount' => $totalAmount === null
                             ? null
-                            : number_format($totalAmount, 2, '.', ''),
+                            : formatPrice($totalAmount, 2, false),
                         'discount_amount' => $discount,
                         'promo_code_id' => $promo?->id,
                         'source' => $data['source'],
@@ -193,30 +197,9 @@ class InquiryService
             return null;
         }
 
-        if ($data['booking_type'] === 'day_tour') {
-            if (empty($data['check_in'])) {
-                return null;
-            }
+        $checkIn = ! empty($data['check_in']) ? Carbon::parse($data['check_in']) : null;
+        $checkOut = ! empty($data['check_out']) ? Carbon::parse($data['check_out']) : null;
 
-            return $cottage->rateFor(Carbon::parse($data['check_in']), 'day_tour');
-        }
-
-        if ($data['booking_type'] === 'overnight' && ! empty($data['check_in']) && ! empty($data['check_out'])) {
-            $checkIn = Carbon::parse($data['check_in']);
-            $checkOut = Carbon::parse($data['check_out']);
-            $nights = max($checkIn->diffInDays($checkOut), 1);
-
-            $total = '0.00';
-            for ($i = 0; $i < $nights; $i++) {
-                $total = number_format(
-                    (float) $total + (float) $cottage->rateFor($checkIn->copy()->addDays($i), 'overnight'),
-                    2, '.', ''
-                );
-            }
-
-            return $total;
-        }
-
-        return null;
+        return $this->pricing->calculateTotal($cottage, $checkIn, $checkOut, $data['booking_type']);
     }
 }

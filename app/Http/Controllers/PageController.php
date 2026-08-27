@@ -12,8 +12,6 @@ use App\Models\Testimonial;
 use App\Support\HtmlSanitizer;
 use App\Support\PublicCache;
 use Carbon\CarbonInterface;
-use Illuminate\Pagination\LengthAwarePaginator;
-use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Cache;
 
 /**
@@ -26,8 +24,7 @@ class PageController extends Controller
     {
         [$cottages, $gallery, $testimonials, $avgRating, $posts] = Cache::remember(PublicCache::HOME, PublicCache::HOME_TTL, function () {
             $cottages = Cottage::with('primaryPhoto')
-                ->where('is_available', true)
-                ->orderBy('sort_order')
+                ->available()
                 ->take(6)
                 ->get();
 
@@ -127,25 +124,25 @@ class PageController extends Controller
     /** Generate XML sitemap for SEO, cached for 1 hour */
     public function sitemap()
     {
-        $xml = Cache::remember(PublicCache::SITEMAP, 3600, function () {
+        $xml = Cache::remember(PublicCache::SITEMAP, PublicCache::SITEMAP_TTL, function () {
             $cottages = Cottage::where('is_available', true)->get();
             $posts = Post::active()->get();
             $galleryLastmod = Gallery::where('is_active', true)->max('updated_at');
 
             $pages = [
-                ['loc' => route('home'), 'priority' => '1.0', 'changefreq' => 'daily'],
-                ['loc' => route('about'), 'priority' => '0.7', 'changefreq' => 'monthly'],
-                ['loc' => route('faq'), 'priority' => '0.5', 'changefreq' => 'monthly'],
-                ['loc' => route('book'), 'priority' => '0.8', 'changefreq' => 'weekly'],
-                ['loc' => route('services'), 'priority' => '0.6', 'changefreq' => 'weekly'],
-                ['loc' => route('reviews'), 'priority' => '0.6', 'changefreq' => 'weekly'],
-                ['loc' => route('news.index'), 'priority' => '0.6', 'changefreq' => 'weekly'],
-                ['loc' => route('cottages.index'), 'priority' => '0.9', 'changefreq' => 'daily'],
-                ['loc' => route('gallery.index'), 'priority' => '0.7', 'changefreq' => 'weekly', 'lastmod' => $galleryLastmod],
-                ['loc' => route('contact'), 'priority' => '0.6', 'changefreq' => 'monthly'],
-                ['loc' => route('privacy'), 'priority' => '0.3', 'changefreq' => 'yearly'],
-                ['loc' => route('terms'), 'priority' => '0.3', 'changefreq' => 'yearly'],
-                ['loc' => route('booking-policy'), 'priority' => '0.3', 'changefreq' => 'yearly'],
+                ['loc' => route('home'), 'priority' => '1.0', 'changefreq' => 'daily', 'lastmod' => date('Y-m-d')],
+                ['loc' => route('about'), 'priority' => '0.7', 'changefreq' => 'monthly', 'lastmod' => date('Y-m-d')],
+                ['loc' => route('faq'), 'priority' => '0.5', 'changefreq' => 'monthly', 'lastmod' => date('Y-m-d')],
+                ['loc' => route('book'), 'priority' => '0.8', 'changefreq' => 'weekly', 'lastmod' => date('Y-m-d')],
+                ['loc' => route('services'), 'priority' => '0.6', 'changefreq' => 'weekly', 'lastmod' => date('Y-m-d')],
+                ['loc' => route('reviews'), 'priority' => '0.6', 'changefreq' => 'weekly', 'lastmod' => date('Y-m-d')],
+                ['loc' => route('news.index'), 'priority' => '0.6', 'changefreq' => 'weekly', 'lastmod' => date('Y-m-d')],
+                ['loc' => route('cottages.index'), 'priority' => '0.9', 'changefreq' => 'daily', 'lastmod' => date('Y-m-d')],
+                ['loc' => route('gallery.index'), 'priority' => '0.7', 'changefreq' => 'weekly', 'lastmod' => $galleryLastmod ? ($galleryLastmod instanceof CarbonInterface ? $galleryLastmod->toDateString() : date('Y-m-d', strtotime((string) $galleryLastmod))) : date('Y-m-d')],
+                ['loc' => route('contact'), 'priority' => '0.6', 'changefreq' => 'monthly', 'lastmod' => date('Y-m-d')],
+                ['loc' => route('privacy'), 'priority' => '0.3', 'changefreq' => 'yearly', 'lastmod' => date('Y-m-d')],
+                ['loc' => route('terms'), 'priority' => '0.3', 'changefreq' => 'yearly', 'lastmod' => date('Y-m-d')],
+                ['loc' => route('booking-policy'), 'priority' => '0.3', 'changefreq' => 'yearly', 'lastmod' => date('Y-m-d')],
             ];
 
             foreach ($cottages as $cottage) {
@@ -187,24 +184,5 @@ class PageController extends Controller
         });
 
         return response($xml, 200)->header('Content-Type', 'application/xml');
-    }
-
-    /**
-     * Turn a cached collection into a paginator without caching the paginator
-     * itself (paginator objects embed request state). Used by the reviews page
-     * so pagination stays cache-friendly.
-     */
-    private function paginate($items, int $perPage)
-    {
-        $page = Paginator::resolveCurrentPage();
-        $slice = $items->forPage($page, $perPage)->values();
-
-        return new LengthAwarePaginator(
-            $slice,
-            $items->count(),
-            $perPage,
-            $page,
-            ['path' => Paginator::resolveCurrentPath()]
-        );
     }
 }

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Controllers\Concerns\GuardsBookingAccess;
 use App\Models\Inquiry;
+use App\Services\PricingService;
 use Barryvdh\DomPDF\Facade\Pdf;
 
 /**
@@ -18,11 +19,12 @@ class InvoiceController extends Controller
     {
         $this->authorizeBookingAccess($inquiry);
 
-        abort_if($inquiry->status !== 'confirmed', 404);
+        abort_if($inquiry->status !== Inquiry::STATUS_CONFIRMED, 404);
 
-        $inquiry->load('cottage');
-
-        return view('pages.invoice', compact('inquiry'));
+        return view('pages.invoice', [
+            'inquiry' => $inquiry,
+            ...$this->buildLineItems($inquiry),
+        ]);
     }
 
     /** Download invoice as PDF */
@@ -30,42 +32,71 @@ class InvoiceController extends Controller
     {
         $this->authorizeBookingAccess($inquiry);
 
-        abort_if($inquiry->status !== 'confirmed', 404);
-
-        $inquiry->load('cottage');
-
-        $nights = null;
-        $subtotal = null;
-
-        if ($inquiry->check_in && $inquiry->check_out) {
-            $nights = max((int) $inquiry->check_in->diffInDays($inquiry->check_out), 1);
-            if ($inquiry->booking_type === 'day_tour') {
-                $subtotal = $inquiry->cottage?->rateFor($inquiry->check_in, 'day_tour');
-            } elseif ($inquiry->booking_type === 'overnight' && $inquiry->cottage) {
-                $total = '0.00';
-                for ($i = 0; $i < $nights; $i++) {
-                    $total = number_format(
-                        (float) $total + (float) $inquiry->cottage->rateFor($inquiry->check_in->copy()->addDays($i), 'overnight'),
-                        2, '.', ''
-                    );
-                }
-                $subtotal = $total;
-            }
-        }
-
-        // If the cottage was soft-deleted (nullOnDelete) the rate is
-        // unavailable; fall back to the recorded total so the invoice never
-        // renders a ₱0.00 subtotal for a real booking.
-        if ($subtotal === null) {
-            $subtotal = $inquiry->total_amount;
-        }
+        abort_if($inquiry->status !== Inquiry::STATUS_CONFIRMED, 404);
 
         $pdf = Pdf::loadView('pages.invoice', [
             'inquiry' => $inquiry,
-            'nights' => $nights,
-            'subtotal' => $subtotal,
+            ...$this->buildLineItems($inquiry),
         ]);
 
         return $pdf->download("invoice-{$inquiry->reference_code}.pdf");
+    }
+
+    /**
+     * Single source of truth for the invoice's line items. Computes the
+     * peak-aware per-night/day rate exactly like the booking flow priced it
+     * (Cottage::rateFor), so the invoice can never disagree with the charged
+     * total. Both the HTML view and the PDF consume this.
+     *
+     * @return array{items: array<int, array{desc:string, qty:int, rate:string|int|float|null, total:string}>, subtotal:string}
+     */
+    private function buildLineItems(Inquiry $inquiry): array
+    {
+        $inquiry->loadMissing('cottage');
+        $pricing = app(PricingService::class);
+
+        $items = [];
+
+        if ($inquiry->booking_type === Inquiry::TYPE_DAY_TOUR && $inquiry->cottage && $inquiry->check_in) {
+            $rate = $inquiry->cottage->rateFor($inquiry->check_in, Inquiry::TYPE_DAY_TOUR);
+            $line = formatPrice($rate, 2, false);
+
+            $items[] = [
+                'desc' => 'Day Tour — '.$inquiry->check_in->format('M d, Y'),
+                'qty' => 1,
+                'rate' => $rate,
+                'total' => $line,
+            ];
+        } elseif ($inquiry->booking_type === Inquiry::TYPE_OVERNIGHT && $inquiry->cottage && $inquiry->check_in && $inquiry->check_out) {
+            $breakdown = $pricing->nightlyBreakdown($inquiry->cottage, $inquiry->check_in, $inquiry->check_out);
+            foreach ($breakdown as $night) {
+                $line = formatPrice($night['rate'], 2, false);
+                $items[] = [
+                    'desc' => 'Overnight — '.$night['date'],
+                    'qty' => 1,
+                    'rate' => $night['rate'],
+                    'total' => $line,
+                ];
+            }
+        }
+
+        // If the cottage was soft-deleted (nullOnDelete) or the stay data is
+        // incomplete, the per-night rates are unavailable; fall back to the
+        // recorded total so the invoice never renders ₱0.00 for a real booking.
+        if ($items === []) {
+            return [
+                'items' => [[
+                    'desc' => $inquiry->booking_type === Inquiry::TYPE_DAY_TOUR ? 'Day Tour' : 'Accommodation',
+                    'qty' => 1,
+                    'rate' => $inquiry->total_amount,
+                    'total' => (string) $inquiry->total_amount,
+                ]],
+                'subtotal' => (string) $inquiry->total_amount,
+            ];
+        }
+
+        $subtotal = formatPrice(array_sum(array_map(fn ($item) => (float) $item['total'], $items)), 2, false);
+
+        return ['items' => $items, 'subtotal' => $subtotal];
     }
 }

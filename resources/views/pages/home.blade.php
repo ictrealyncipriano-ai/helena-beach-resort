@@ -45,7 +45,7 @@
     @php $heroBg = App\Models\SiteSetting::getValue('hero_background'); @endphp
     <div class="absolute inset-0 bg-gradient-to-br from-teal-600 via-teal-700 to-cyan-800">
         @if($heroBg)
-        <img src="{{ Storage::url($heroBg) }}" alt="" fetchpriority="high" class="absolute inset-0 w-full h-full object-cover opacity-25">
+        <img src="{{ Storage::url($heroBg) }}" alt="" fetchpriority="high" width="1920" height="1080" class="absolute inset-0 w-full h-full object-cover opacity-25">
         <div class="absolute inset-0 bg-gradient-to-br from-teal-600/80 via-teal-700/70 to-cyan-800/80"></div>
         @endif
     </div>
@@ -101,7 +101,7 @@
             <a href="{{ route('cottages.show', $cottage) }}" class="group bg-white dark:bg-slate-800 rounded-2xl overflow-hidden shadow-sm hover:shadow-xl border border-gray-100 dark:border-slate-700 transition-all duration-300 reveal {{ $i > 0 ? 'reveal-delay-' . min($i, 4) : '' }}">
                 <div class="aspect-[4/3] bg-teal-50 dark:bg-teal-900/30 overflow-hidden relative">
                     @if($cottage->primaryPhoto)
-                    <img src="{{ Storage::url($cottage->primaryPhoto->photo_path) }}" alt="{{ $cottage->name }}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" loading="lazy" decoding="async">
+                    <img src="{{ Storage::url($cottage->primaryPhoto->photo_path) }}" alt="{{ $cottage->name }}" width="400" height="300" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" loading="lazy" decoding="async">
                     @else
                     <div class="w-full h-full flex items-center justify-center text-teal-300">
                         <x-icons name="building" class="w-16 h-16" />
@@ -127,7 +127,7 @@
                         <div class="text-right">
                             @if($cottage->rate_daytour)
                             <div class="text-xs text-gray-500 dark:text-slate-400">Day Tour</div>
-                            <div class="text-sm font-semibold text-teal-700 dark:text-teal-300">₱{{ number_format($cottage->rate_daytour) }}</div>
+                            <div class="text-sm font-semibold text-teal-700 dark:text-teal-300">{{ formatPrice($cottage->rate_daytour) }}</div>
                             @endif
                         </div>
                     </div>
@@ -161,7 +161,7 @@
         <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
             @foreach($gallery->take(8) as $i => $item)
             <div class="aspect-square rounded-xl overflow-hidden bg-gray-100 dark:bg-slate-800 reveal {{ $i > 0 ? 'reveal-delay-' . min($i % 4 + 1, 4) : '' }}">
-                <img src="{{ Storage::url($item->photo_path) }}" alt="{{ $item->title ?: 'Helena Beach Resort — gallery photo' }}" class="w-full h-full object-cover hover:scale-110 transition-transform duration-700" loading="lazy" decoding="async">
+                <img src="{{ Storage::url($item->photo_path) }}" alt="{{ $item->title ?: 'Helena Beach Resort — gallery photo' }}" width="400" height="400" class="w-full h-full object-cover hover:scale-110 transition-transform duration-700" loading="lazy" decoding="async">
                 @if($item->title)
                 <div class="absolute inset-0 bg-black/0 hover:bg-black/30 transition-colors flex items-end p-3 opacity-0 hover:opacity-100">
                     <p class="text-white text-xs font-medium">{{ $item->title }}</p>
@@ -219,7 +219,7 @@
                             <p class="text-gray-600 dark:text-slate-300 text-sm leading-relaxed flex-1 italic">"{{ $testimonial->content }}"</p>
                             <div class="flex items-center gap-3 mt-5 pt-4 border-t border-gray-200 dark:border-slate-700">
                                 @if($testimonial->guest_avatar)
-                                <img src="{{ Storage::url($testimonial->guest_avatar) }}" alt="{{ $testimonial->guest_name }}" class="w-10 h-10 rounded-full object-cover ring-2 ring-white dark:ring-slate-700">
+                                <img src="{{ Storage::url($testimonial->guest_avatar) }}" alt="{{ $testimonial->guest_name }}" width="40" height="40" class="w-10 h-10 rounded-full object-cover ring-2 ring-white dark:ring-slate-700">
                                 @else
                                 <div class="w-10 h-10 rounded-full bg-teal-100 dark:bg-teal-900/40 flex items-center justify-center text-teal-700 dark:text-teal-300 font-semibold text-sm ring-2 ring-white dark:ring-slate-700">
                                     {{ substr($testimonial->guest_name, 0, 1) }}
@@ -306,7 +306,7 @@ function testimonialCarousel() {
                class="group bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm overflow-hidden hover:shadow-lg hover:border-teal-100 dark:hover:border-teal-800 transition-all duration-300 reveal {{ $i > 0 ? 'reveal-delay-' . min($i + 1, 4) : '' }}">
                 <div class="aspect-[16/9] bg-gray-100 dark:bg-slate-700 overflow-hidden">
                     @if($post->cover_image)
-                        <img src="{{ Storage::url($post->cover_image) }}" alt="{{ $post->title }}" loading="lazy" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105">
+                        <img src="{{ Storage::url($post->cover_image) }}" alt="{{ $post->title }}" loading="lazy" width="600" height="338" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105">
                     @else
                         <div class="w-full h-full flex items-center justify-center text-teal-600 dark:text-teal-400">
                             <x-icons name="sparkles" class="w-8 h-8" />

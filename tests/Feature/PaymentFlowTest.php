@@ -122,7 +122,7 @@ class PaymentFlowTest extends TestCase
     public function test_pay_when_already_paid_redirects_without_calling_api(): void
     {
         $inquiry = $this->confirmedBooking('paid@example.com');
-        $inquiry->update(['paid_at' => now(), 'paid_amount' => $inquiry->total_amount, 'payment_method' => 'gcash']);
+        $inquiry->update(['amount_paid' => $inquiry->total_amount, 'fully_paid_at' => now(), 'payment_method' => 'gcash']);
 
         Http::fake();
 
@@ -151,7 +151,6 @@ class PaymentFlowTest extends TestCase
                 'type' => 'checkout_session',
                 'attributes' => [
                     'reference_number' => $inquiry->reference_code,
-                    'paid_at' => 1785892089,
                     'payments' => [
                         [
                             'id' => 'pay_123',
@@ -175,11 +174,11 @@ class PaymentFlowTest extends TestCase
         $this->assertDatabaseHas('inquiries', [
             'id' => $inquiry->id,
             'payment_method' => 'qrph',
-            'paid_amount' => (float) $inquiry->total_amount,
+            'amount_paid' => (float) $inquiry->total_amount,
             'paymongo_session_id' => 'cs_abc',
         ]);
 
-        $this->assertNotNull($inquiry->refresh()->paid_at);
+        $this->assertGreaterThan(0, (float) $inquiry->refresh()->amount_paid);
     }
 
     public function test_webhook_marks_paid_for_resource_delivered_without_data_wrapper(): void
@@ -192,7 +191,6 @@ class PaymentFlowTest extends TestCase
             'type' => 'checkout_session',
             'attributes' => [
                 'reference_number' => $inquiry->reference_code,
-                'paid_at' => 1785892089,
                 'payments' => [
                     [
                         'id' => 'pay_nw',
@@ -211,11 +209,11 @@ class PaymentFlowTest extends TestCase
         $this->assertDatabaseHas('inquiries', [
             'id' => $inquiry->id,
             'payment_method' => 'qrph',
-            'paid_amount' => (float) $inquiry->total_amount,
+            'amount_paid' => (float) $inquiry->total_amount,
             'paymongo_payment_id' => 'pay_nw',
             'paymongo_session_id' => 'cs_nw',
         ]);
-        $this->assertNotNull($inquiry->refresh()->paid_at);
+        $this->assertGreaterThan(0, (float) $inquiry->refresh()->amount_paid);
     }
 
     public function test_webhook_marks_paid_for_event_envelope_payload(): void
@@ -234,7 +232,6 @@ class PaymentFlowTest extends TestCase
                         'type' => 'checkout_session',
                         'attributes' => [
                             'reference_number' => $inquiry->reference_code,
-                            'paid_at' => 1785892089,
                             'payments' => [
                                 [
                                     'id' => 'pay_456',
@@ -257,10 +254,10 @@ class PaymentFlowTest extends TestCase
         $this->assertDatabaseHas('inquiries', [
             'id' => $inquiry->id,
             'payment_method' => 'qrph',
-            'paid_amount' => (float) $inquiry->total_amount,
+            'amount_paid' => (float) $inquiry->total_amount,
             'paymongo_payment_id' => 'pay_456',
         ]);
-        $this->assertNotNull($inquiry->refresh()->paid_at);
+        $this->assertGreaterThan(0, (float) $inquiry->refresh()->amount_paid);
     }
 
     public function test_webhook_marks_paid_for_generic_event_envelope_payload(): void
@@ -279,7 +276,6 @@ class PaymentFlowTest extends TestCase
                         'type' => 'checkout_session',
                         'attributes' => [
                             'reference_number' => $inquiry->reference_code,
-                            'paid_at' => 1785892089,
                             'payments' => [
                                 [
                                     'id' => 'pay_gen',
@@ -302,16 +298,21 @@ class PaymentFlowTest extends TestCase
         $this->assertDatabaseHas('inquiries', [
             'id' => $inquiry->id,
             'payment_method' => 'qrph',
-            'paid_amount' => (float) $inquiry->total_amount,
+            'amount_paid' => (float) $inquiry->total_amount,
             'paymongo_payment_id' => 'pay_gen',
         ]);
-        $this->assertNotNull($inquiry->refresh()->paid_at);
+        $this->assertGreaterThan(0, (float) $inquiry->refresh()->amount_paid);
     }
 
     public function test_webhook_is_idempotent_for_repeat_payments(): void
     {
         $inquiry = $this->confirmedBooking('repeat@example.com');
-        $inquiry->update(['paid_at' => now(), 'paid_amount' => 500, 'payment_method' => 'gcash']);
+        $inquiry->update([
+            'amount_paid' => $inquiry->total_amount,
+            'fully_paid_at' => now(),
+            'payment_method' => 'gcash',
+            'paymongo_payment_id' => 'pay_1',
+        ]);
 
         $payload = json_encode([
             'data' => [
@@ -323,7 +324,6 @@ class PaymentFlowTest extends TestCase
                         'type' => 'checkout_session',
                         'attributes' => [
                             'reference_number' => $inquiry->reference_code,
-                            'paid_at' => 1785892089,
                             'payments' => [['id' => 'pay_1', 'attributes' => ['status' => 'paid', 'amount' => 50000, 'source' => ['type' => 'card']]]],
                         ],
                     ],
@@ -358,7 +358,7 @@ class PaymentFlowTest extends TestCase
             ['Paymongo-Signature' => $this->signatureFor($payload)]
         )->assertOk()->assertJson(['ignored' => true]);
 
-        $this->assertNull($inquiry->refresh()->paid_at);
+        $this->assertNull($inquiry->refresh()->fully_paid_at);
     }
 
     public function test_webhook_records_failed_payment(): void
@@ -392,7 +392,7 @@ class PaymentFlowTest extends TestCase
 
         $inquiry->refresh();
         $this->assertNotNull($inquiry->payment_failed_at);
-        $this->assertNull($inquiry->paid_at);
+        $this->assertNull($inquiry->fully_paid_at);
     }
 
     public function test_webhook_failed_payment_without_reference_is_ignored_safely(): void
@@ -423,9 +423,9 @@ class PaymentFlowTest extends TestCase
         $this->assertDatabaseHas('inquiries', [
             'id' => $inquiry->id,
             'payment_method' => 'manual',
-            'paid_amount' => $inquiry->total_amount,
+            'amount_paid' => $inquiry->total_amount,
         ]);
-        $this->assertNotNull($inquiry->refresh()->paid_at);
+        $this->assertGreaterThan(0, (float) $inquiry->refresh()->amount_paid);
     }
 
     public function test_admin_cannot_mark_pending_booking_as_paid(): void
@@ -446,7 +446,7 @@ class PaymentFlowTest extends TestCase
             ->post(route('admin.inquiries.mark-paid', $inquiry))
             ->assertSessionHas('error');
 
-        $this->assertNull($inquiry->refresh()->paid_at);
+        $this->assertNull($inquiry->refresh()->fully_paid_at);
     }
 
     public function test_webhook_stores_paymongo_payment_id(): void
@@ -463,7 +463,6 @@ class PaymentFlowTest extends TestCase
                         'type' => 'checkout_session',
                         'attributes' => [
                             'reference_number' => $inquiry->reference_code,
-                            'paid_at' => 1785892089,
                             'payments' => [
                                 [
                                     'id' => 'pay_123',
@@ -493,8 +492,7 @@ class PaymentFlowTest extends TestCase
     {
         $inquiry = $this->confirmedBooking('refundsvc@example.com');
         $inquiry->update([
-            'paid_at' => now(),
-            'paid_amount' => 250.00,
+            'amount_paid' => 250.00,
             'payment_method' => 'qrph',
             'paymongo_payment_id' => 'pay_123',
         ]);
@@ -523,8 +521,8 @@ class PaymentFlowTest extends TestCase
         Mail::fake();
         $inquiry = $this->confirmedBooking('adminrefund@example.com');
         $inquiry->update([
-            'paid_at' => now(),
-            'paid_amount' => $inquiry->total_amount,
+            'amount_paid' => $inquiry->total_amount,
+            'fully_paid_at' => now(),
             'payment_method' => 'qrph',
             'paymongo_payment_id' => 'pay_123',
         ]);
@@ -571,8 +569,8 @@ class PaymentFlowTest extends TestCase
     {
         $inquiry = $this->confirmedBooking('twice@example.com');
         $inquiry->update([
-            'paid_at' => now(),
-            'paid_amount' => $inquiry->total_amount,
+            'amount_paid' => $inquiry->total_amount,
+            'fully_paid_at' => now(),
             'payment_method' => 'qrph',
             'paymongo_payment_id' => 'pay_123',
             'refunded_at' => now(),
@@ -593,8 +591,8 @@ class PaymentFlowTest extends TestCase
         Mail::fake();
         $inquiry = $this->confirmedBooking('guestrefund@example.com');
         $inquiry->update([
-            'paid_at' => now(),
-            'paid_amount' => $inquiry->total_amount,
+            'amount_paid' => $inquiry->total_amount,
+            'fully_paid_at' => now(),
             'payment_method' => 'qrph',
             'paymongo_payment_id' => 'pay_123',
         ]);
@@ -620,8 +618,8 @@ class PaymentFlowTest extends TestCase
     {
         $inquiry = $this->confirmedBooking('refundfail@example.com');
         $inquiry->update([
-            'paid_at' => now(),
-            'paid_amount' => $inquiry->total_amount,
+            'amount_paid' => $inquiry->total_amount,
+            'fully_paid_at' => now(),
             'payment_method' => 'qrph',
             'paymongo_payment_id' => 'pay_123',
         ]);
@@ -663,7 +661,6 @@ class PaymentFlowTest extends TestCase
                 'type' => 'checkout_session',
                 'attributes' => [
                     'reference_number' => $inquiry->reference_code,
-                    'paid_at' => 1785892089,
                     'payments' => [
                         ['id' => 'pay_stale', 'attributes' => ['status' => 'paid', 'amount' => (int) round($inquiry->total_amount * 100), 'source' => ['type' => 'qrph']]],
                     ],
@@ -681,7 +678,7 @@ class PaymentFlowTest extends TestCase
             ['Paymongo-Signature' => "t={$stale},te={$signature},li="]
         )->assertStatus(401);
 
-        $this->assertNull($inquiry->refresh()->paid_at);
+        $this->assertNull($inquiry->refresh()->fully_paid_at);
     }
 
     public function test_webhook_does_not_mark_paid_on_amount_mismatch(): void
@@ -695,7 +692,6 @@ class PaymentFlowTest extends TestCase
                 'type' => 'checkout_session',
                 'attributes' => [
                     'reference_number' => $inquiry->reference_code,
-                    'paid_at' => 1785892089,
                     'payments' => [
                         ['id' => 'pay_mm', 'attributes' => ['status' => 'paid', 'amount' => 1, 'source' => ['type' => 'qrph']]],
                     ],
@@ -710,7 +706,7 @@ class PaymentFlowTest extends TestCase
         )->assertStatus(400)->assertJson(['error' => 'Payment amount mismatch']);
 
         $inquiry->refresh();
-        $this->assertNull($inquiry->paid_at);
+        $this->assertNull($inquiry->fully_paid_at);
         $this->assertNull($inquiry->paymongo_payment_id);
     }
 
@@ -724,7 +720,6 @@ class PaymentFlowTest extends TestCase
                 'type' => 'checkout_session',
                 'attributes' => [
                     'reference_number' => $inquiry->reference_code,
-                    'paid_at' => 1785892089,
                     'payments' => [
                         ['id' => 'pay_match', 'attributes' => ['status' => 'paid', 'amount' => (int) round($inquiry->total_amount * 100), 'source' => ['type' => 'qrph']]],
                     ],
@@ -738,15 +733,15 @@ class PaymentFlowTest extends TestCase
             ['Paymongo-Signature' => $this->signatureFor($payload)]
         )->assertOk()->assertJson(['ok' => true]);
 
-        $this->assertNotNull($inquiry->refresh()->paid_at);
+        $this->assertGreaterThan(0, (float) $inquiry->refresh()->amount_paid);
     }
 
     public function test_guest_cancel_issues_single_refund_for_duplicate_requests(): void
     {
         $inquiry = $this->confirmedBooking('idem@example.com');
         $inquiry->update([
-            'paid_at' => now(),
-            'paid_amount' => $inquiry->total_amount,
+            'amount_paid' => $inquiry->total_amount,
+            'fully_paid_at' => now(),
             'payment_method' => 'qrph',
             'paymongo_payment_id' => 'pay_123',
         ]);

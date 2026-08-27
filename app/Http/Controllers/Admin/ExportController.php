@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Guest;
 use App\Models\Inquiry;
+use App\Traits\QueriesByMonth;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -15,6 +16,7 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
  */
 class ExportController extends Controller
 {
+    use QueriesByMonth;
     public function index()
     {
         return view('admin.exports.index');
@@ -25,7 +27,7 @@ class ExportController extends Controller
         $rows = $this->inquiriesQuery($request)->get([
             'id', 'reference_code', 'name', 'email', 'phone', 'booking_type',
             'status', 'source', 'check_in', 'check_out', 'pax', 'total_amount',
-            'paid_at', 'paid_amount', 'payment_method', 'refunded_at', 'created_at',
+            'amount_paid', 'deposit_paid_at', 'fully_paid_at', 'payment_method', 'refunded_at', 'created_at',
         ]);
 
         $headers = ['Reference', 'Name', 'Email', 'Phone', 'Type', 'Status', 'Source', 'Check In', 'Check Out', 'Pax', 'Total (PHP)', 'Paid (PHP)', 'Payment Method', 'Paid At', 'Refunded At', 'Created At'];
@@ -35,9 +37,9 @@ class ExportController extends Controller
             $i->booking_type ? str_replace('_', ' ', ucfirst($i->booking_type)) : '',
             $i->status, $i->source,
             $i->check_in?->toDateString() ?? '', $i->check_out?->toDateString() ?? '',
-            $i->pax, $i->total_amount, $i->paid_amount,
+            $i->pax, $i->total_amount, $i->amount_paid,
             $i->paymentMethodLabel(),
-            $i->paid_at?->toDateTimeString() ?? '', $i->refunded_at?->toDateTimeString() ?? '',
+            ($i->fully_paid_at ?? $i->deposit_paid_at)?->toDateTimeString() ?? '', $i->refunded_at?->toDateTimeString() ?? '',
             $i->created_at?->toDateTimeString() ?? '',
         ]));
     }
@@ -76,7 +78,7 @@ class ExportController extends Controller
             'rows' => $rows,
             'totalCount' => $rows->count(),
             'totalAmount' => $rows->sum('total_amount'),
-            'totalPaid' => $rows->sum('paid_amount'),
+            'totalPaid' => $rows->sum('amount_paid'),
             'statusCounts' => $statusCounts,
             'from' => $request->from,
             'to' => $request->to,
@@ -120,7 +122,7 @@ class ExportController extends Controller
             'rows' => $rows,
             'totalCount' => $rows->count(),
             'totalStays' => $rows->sum('total_stays'),
-            'totalRevenue' => $rows->sum('paid_amount'),
+            'totalRevenue' => $rows->sum('amount_paid'),
             'title' => 'Guests Report',
         ];
 
@@ -155,22 +157,22 @@ class ExportController extends Controller
      */
     private function revenueQuery(Request $request)
     {
-        $monthExpr = $this->monthExpression('paid_at');
+        $monthExpr = $this->monthExpression('deposit_paid_at');
 
         $query = Inquiry::query()
-            ->select(DB::raw("{$monthExpr} as period"), 'cottages.name as cottage_name', DB::raw('sum(paid_amount) as total'), DB::raw('count(*) as bookings'))
+            ->select(DB::raw("{$monthExpr} as period"), 'cottages.name as cottage_name', DB::raw('sum(amount_paid) as total'), DB::raw('count(*) as bookings'))
             ->join('cottages', 'cottages.id', '=', 'inquiries.cottage_id')
-            ->whereNotNull('paid_at')
+            ->where('amount_paid', '>', 0)
             ->groupBy('period', 'cottages.name')
             ->orderBy('period')
             ->orderBy('cottages.name');
 
         if ($request->filled('from')) {
-            $query->whereDate('paid_at', '>=', $request->from);
+            $query->whereDate('deposit_paid_at', '>=', $request->from);
         }
 
         if ($request->filled('to')) {
-            $query->whereDate('paid_at', '<=', $request->to);
+            $query->whereDate('deposit_paid_at', '<=', $request->to);
         }
 
         return $query;
@@ -182,10 +184,10 @@ class ExportController extends Controller
     private function guestsData()
     {
         return Guest::withCount(['inquiries as inquiries_count' => fn ($q) => $q->whereNull('deleted_at')])
-            ->withCount(['inquiries as paid_count' => fn ($q) => $q->whereNotNull('paid_at')])
+            ->withCount(['inquiries as paid_count' => fn ($q) => $q->where('amount_paid', '>', 0)])
             ->withCount(['inquiries as failed_count' => fn ($q) => $q->whereNotNull('payment_failed_at')])
             ->withCount(['inquiries as refunded_count' => fn ($q) => $q->whereNotNull('refunded_at')])
-            ->withSum(['inquiries as paid_amount' => fn ($q) => $q->whereNotNull('paid_at')], 'paid_amount')
+            ->withSum(['inquiries as paid_amount' => fn ($q) => $q->where('amount_paid', '>', 0)], 'amount_paid')
             ->orderBy('created_at')
             ->get();
     }
@@ -224,14 +226,5 @@ class ExportController extends Controller
         return in_array(substr($value, 0, 1), ['=', '+', '-', '@'], true)
             ? "'".$value
             : $value;
-    }
-
-    private function monthExpression(string $column): string
-    {
-        return match (DB::getDriverName()) {
-            'pgsql' => "to_char({$column}, 'YYYY-MM')",
-            'sqlite' => "strftime('%Y-%m', {$column})",
-            default => "DATE_FORMAT({$column}, '%Y-%m')",
-        };
     }
 }

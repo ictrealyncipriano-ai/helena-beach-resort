@@ -7,6 +7,7 @@ use App\Http\Controllers\Concerns\GuardsBookingAccess;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Mail\BookingCancelled;
 use App\Mail\BookingModified;
+use App\Mail\ManualRefundRequired;
 use App\Mail\RefundReceived;
 use App\Models\Cottage;
 use App\Models\CottageDateBlock;
@@ -18,7 +19,6 @@ use App\Services\InquiryService;
 use App\Services\PayMongoService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
@@ -34,6 +34,8 @@ use Illuminate\Support\Facades\Mail;
 class BookingPortalController extends Controller
 {
     use GuardsBookingAccess;
+
+    private const CUTOFF_HOURS = 24;
 
     public function __construct(private ActivityLogger $logger)
     {
@@ -112,11 +114,11 @@ class BookingPortalController extends Controller
      */
     private function canReview(Inquiry $inquiry): bool
     {
-        if ($inquiry->status !== 'confirmed') {
+        if ($inquiry->status !== Inquiry::STATUS_CONFIRMED) {
             return false;
         }
 
-        $endDate = $inquiry->booking_type === 'day_tour' ? $inquiry->check_in : $inquiry->check_out;
+        $endDate = $inquiry->booking_type === Inquiry::TYPE_DAY_TOUR ? $inquiry->check_in : $inquiry->check_out;
         if (! $endDate || $endDate->isFuture()) {
             return false;
         }
@@ -148,7 +150,7 @@ class BookingPortalController extends Controller
             'rating' => (int) $data['rating'],
             'cottage_id' => $inquiry->cottage_id,
             'inquiry_id' => $inquiry->id,
-            'source' => 'guest',
+            'source' => Inquiry::SOURCE_GUEST,
             'is_active' => false,
         ]);
 
@@ -167,11 +169,11 @@ class BookingPortalController extends Controller
      */
     private function canSubmitPaymentProof(Inquiry $inquiry): bool
     {
-        if ($inquiry->status !== 'confirmed' || $inquiry->isPaid()) {
+        if ($inquiry->status !== Inquiry::STATUS_CONFIRMED || $inquiry->isPaid()) {
             return false;
         }
 
-        return ! in_array($inquiry->payment_proof_status, ['pending', 'approved'], true);
+        return ! in_array($inquiry->payment_proof_status, [Inquiry::PROOF_PENDING, Inquiry::PROOF_APPROVED], true);
     }
 
     /**
@@ -194,7 +196,7 @@ class BookingPortalController extends Controller
 
         $inquiry->update([
             'payment_proof_path' => $request->file('payment_proof')->store('payment-proofs', 'cloudflare'),
-            'payment_proof_status' => 'pending',
+            'payment_proof_status' => Inquiry::PROOF_PENDING,
             'payment_proof_submitted_at' => now(),
             'payment_proof_reviewed_at' => null,
             'payment_proof_review_note' => null,
@@ -223,15 +225,13 @@ class BookingPortalController extends Controller
                 ->with('error', $reason ?? 'This booking cannot be modified right now.');
         }
 
-        $cottages = Cottage::where('is_available', true)
-            ->orderBy('sort_order')
-            ->get();
+        $cottages = Cottage::available()->get();
 
         // Any future block not held by this booking is disabled in the
         // pickers. Matching on inquiry_id OR the legacy reference-code reason
         // keeps pre-inquiry_id blocks excluded too.
         $blockedByCottage = CottageDateBlock::whereIn('cottage_id', $cottages->pluck('id'))
-            ->where('date', '>=', today())
+            ->future()
             ->select('cottage_id', 'date', 'reason', 'inquiry_id')
             ->get()
             ->filter(function (CottageDateBlock $block) use ($inquiry) {
@@ -243,18 +243,7 @@ class BookingPortalController extends Controller
                 ->map(fn ($date) => $date->format('Y-m-d'))
                 ->values());
 
-        $rates = $cottages->mapWithKeys(fn ($c) => [
-            $c->id => [
-                'day_tour' => (float) $c->rate_daytour,
-                'overnight' => (float) $c->rate_overnight,
-                'peak_day_tour' => $c->peak_rate_daytour !== null ? (float) $c->peak_rate_daytour : null,
-                'peak_overnight' => $c->peak_rate_overnight !== null ? (float) $c->peak_rate_overnight : null,
-                'peak_start' => $c->peak_start?->format('m-d'),
-                'peak_end' => $c->peak_end?->format('m-d'),
-                'name' => $c->name,
-                'capacity' => $c->capacity,
-            ],
-        ]);
+        $rates = Cottage::ratesMap($cottages);
 
         return view('pages.booking-modify', compact('inquiry', 'cottages', 'blockedByCottage', 'rates'));
     }
@@ -275,10 +264,10 @@ class BookingPortalController extends Controller
         }
 
         $validated = $request->validate([
-            'booking_type' => ['required', 'string', 'in:day_tour,overnight'],
+            'booking_type' => ['required', 'string', 'in:' . implode(',', Inquiry::BOOKING_TYPES)],
             'cottage_id' => ['required', 'exists:cottages,id,is_available,1'],
             'check_in' => ['required', 'date', 'after_or_equal:today'],
-            'check_out' => ['nullable', 'required_if:booking_type,overnight', 'date', 'after:check_in'],
+            'check_out' => ['nullable', 'required_if:booking_type,' . Inquiry::TYPE_OVERNIGHT, 'date', 'after:check_in'],
             'pax' => ['required', 'integer', 'min:1', 'max:50'],
         ]);
 
@@ -289,7 +278,7 @@ class BookingPortalController extends Controller
             'check_out' => $inquiry->check_out?->format('Y-m-d'),
         ];
         $previous = $this->snapshotForEmail($inquiry);
-        $wasConfirmed = $inquiry->status === 'confirmed';
+        $wasConfirmed = $inquiry->status === Inquiry::STATUS_CONFIRMED;
 
         try {
             $inquiry = DB::transaction(function () use ($inquiry, $validated, $original, $wasConfirmed, $inquiryService) {
@@ -334,7 +323,7 @@ class BookingPortalController extends Controller
 
         // A schedule change shifts the dashboard's pending/confirmed counts and
         // revenue, so drop the cached aggregates like every other write path.
-        Cache::forget(DashboardController::cacheKey());
+        DashboardController::forgetCache();
 
         $this->logger->record('guest.modified', $inquiry, "Guest modified booking {$inquiry->reference_code}.", [
             'previous' => $previous,
@@ -354,7 +343,7 @@ class BookingPortalController extends Controller
      */
     private function canModify(Inquiry $inquiry): bool
     {
-        if (! in_array($inquiry->status, ['pending', 'confirmed'], true)) {
+        if (! in_array($inquiry->status, [Inquiry::STATUS_PENDING, Inquiry::STATUS_CONFIRMED], true)) {
             return false;
         }
 
@@ -362,7 +351,7 @@ class BookingPortalController extends Controller
             return false;
         }
 
-        if (now()->diffInHours($inquiry->check_in) < 24) {
+        if (now()->diffInHours($inquiry->check_in) < self::CUTOFF_HOURS) {
             return false;
         }
 
@@ -379,8 +368,8 @@ class BookingPortalController extends Controller
      */
     private function cannotModifyReason(Inquiry $inquiry): ?string
     {
-        if (! in_array($inquiry->status, ['pending', 'confirmed'], true)) {
-            return null;
+        if (! in_array($inquiry->status, [Inquiry::STATUS_PENDING, Inquiry::STATUS_CONFIRMED], true)) {
+            return 'This booking can no longer be modified.';
         }
 
         if ($this->hasPayments($inquiry)) {
@@ -391,7 +380,7 @@ class BookingPortalController extends Controller
             return 'This booking can no longer be modified.';
         }
 
-        if (now()->diffInHours($inquiry->check_in) < 24) {
+        if (now()->diffInHours($inquiry->check_in) < self::CUTOFF_HOURS) {
             return 'Modification is no longer available. This booking can be changed until 24 hours before check-in (cutoff: '
                 .$inquiry->check_in->format('M d, Y').').';
         }
@@ -420,9 +409,9 @@ class BookingPortalController extends Controller
     {
         return [
             'cottage' => $inquiry->cottage?->name ?? 'Not specified',
-            'booking_type' => $inquiry->booking_type === 'day_tour'
+            'booking_type' => $inquiry->booking_type === Inquiry::TYPE_DAY_TOUR
                 ? 'Day Tour'
-                : ($inquiry->booking_type === 'overnight' ? 'Overnight' : 'Inquiry'),
+                : ($inquiry->booking_type === Inquiry::TYPE_OVERNIGHT ? 'Overnight' : 'Inquiry'),
             'check_in' => $inquiry->check_in?->format('M d, Y'),
             'check_out' => $inquiry->check_out?->format('M d, Y'),
             'pax' => $inquiry->pax,
@@ -459,55 +448,70 @@ class BookingPortalController extends Controller
         $this->authorizeBookingAccess($inquiry);
 
         if (! $this->canCancel($inquiry)) {
-            return back()->with('error', 'This booking cannot be cancelled. Cancellations must be made at least 24 hours before check-in.');
+            return back()->with('error', 'This booking cannot be cancelled. Cancellations must be made at least ' . self::CUTOFF_HOURS . ' hours before check-in.');
         }
 
         $refunded = false;
         $refundFailed = false;
         $refundAlreadyProcessed = false;
+        $manualRefundRequired = false;
 
-        // Auto-refund the full amount if this booking was already paid.
-        if ($inquiry->isPaid()) {
-            // Atomically claim the refund so two concurrent cancels can never
-            // both reach the PayMongo refund API (double-refund TOCTOU guard).
-            $claimed = Inquiry::where('id', $inquiry->id)
-                ->whereNotNull('paid_at')
-                ->whereNull('refunded_at')
-                ->update(['refunded_at' => now()]);
+        // Refund whatever money was actually collected — a deposit-only
+        // settlement must be refunded too. isPaid() alone would silently
+        // retain deposits, since it only reports fully-settled bookings.
+        if ($inquiry->hasPayments()) {
+            if ($inquiry->paymongo_payment_id) {
+                // Atomically claim the refund so two concurrent cancels can never
+                // both reach the PayMongo refund API (double-refund TOCTOU guard).
+                $claimed = Inquiry::where('id', $inquiry->id)
+                    ->whereNull('refunded_at')
+                    ->update(['refunded_at' => now()]);
 
-            if ($claimed === 1) {
-                try {
-                    $payMongo->refund($inquiry);
-                    $refunded = true;
-                } catch (\RuntimeException $e) {
-                    Log::warning('Auto-refund failed on guest cancellation', [
-                        'inquiry_id' => $inquiry->id,
-                        'error' => $e->getMessage(),
-                    ]);
-                    // Roll the claim back so the guest (or an admin) can retry.
-                    // A model-level update() is not enough here: the in-memory
-                    // refunded_at is still null (the claim was a bulk update),
-                    // so the attribute is never dirty and would be skipped.
-                    Inquiry::where('id', $inquiry->id)->update(['refunded_at' => null]);
-                    $refundFailed = true;
+                if ($claimed === 1) {
+                    try {
+                        $payMongo->refund($inquiry);
+                        $refunded = true;
+                    } catch (\RuntimeException $e) {
+                        Log::warning('Auto-refund failed on guest cancellation', [
+                            'inquiry_id' => $inquiry->id,
+                            'error' => $e->getMessage(),
+                        ]);
+                        // Roll the claim back so the guest (or an admin) can retry.
+                        // A model-level update() is not enough here: the in-memory
+                        // refunded_at is still null (the claim was a bulk update),
+                        // so the attribute is never dirty and would be skipped.
+                        Inquiry::where('id', $inquiry->id)->update(['refunded_at' => null]);
+                        $refundFailed = true;
+                    }
+                } else {
+                    // Another request (or the admin) already processed the refund.
+                    $refundAlreadyProcessed = true;
                 }
             } else {
-                // Another request (or the admin) already processed the refund.
-                $refundAlreadyProcessed = true;
+                // Money collected manually (cash / bank transfer) has no PayMongo
+                // payment to reverse. Never silently retain it: flag it for an
+                // offline refund by the resort.
+                $manualRefundRequired = true;
+
+                Log::warning('Guest cancellation with manually-collected payment requires offline refund', [
+                    'inquiry_id' => $inquiry->id,
+                    'reference_code' => $inquiry->reference_code,
+                    'collected_amount' => $inquiry->collectedAmount(),
+                ]);
             }
         }
 
         // Reload so refunded_at/refund_amount reflect whatever state the
         // database holds after the claim above (a concurrent writer may have
         // set them), then update only the booking status.
-        $wasConfirmed = $inquiry->status === 'confirmed';
+        $wasConfirmed = $inquiry->status === Inquiry::STATUS_CONFIRMED;
         $inquiry->refresh();
 
         $inquiry->update([
-            'status' => 'cancelled',
+            'status' => Inquiry::STATUS_CANCELLED,
             'refunded_at' => $refunded ? now() : $inquiry->refunded_at,
             'refund_amount' => $refunded
-                ? ($inquiry->paid_amount ?? $inquiry->total_amount)
+                ? $inquiry->refundableAmount()
                 : $inquiry->refund_amount,
         ]);
         $inquiry->releaseBlocks();
@@ -515,17 +519,18 @@ class BookingPortalController extends Controller
         // Only decrement a recorded stay when this was a confirmed booking
         // (markConfirmed() increments it); never let a cancel push a pending
         // booking's count below zero.
-        if ($wasConfirmed && $inquiry->guest && $inquiry->guest->total_stays > 0) {
-            $inquiry->guest->decrement('total_stays');
+        if ($wasConfirmed) {
+            $inquiry->reverseStay();
         }
 
         // Guest cancellations change the same dashboard aggregates as admin
         // ones (pending/confirmed counts, revenue), so drop the cached stats.
-        Cache::forget(DashboardController::cacheKey());
+        DashboardController::forgetCache();
 
         $this->logger->record('guest.cancelled', $inquiry, "Guest cancelled booking {$inquiry->reference_code}.", [
             'refunded' => $refunded,
             'refund_failed' => $refundFailed,
+            'manual_refund_required' => $manualRefundRequired,
         ]);
 
         try {
@@ -538,6 +543,10 @@ class BookingPortalController extends Controller
             $ownerEmail = SiteSetting::getValue('contact_email');
             if ($ownerEmail) {
                 Mail::to($ownerEmail)->send(new BookingCancelled($inquiry));
+
+                if ($manualRefundRequired) {
+                    Mail::to($ownerEmail)->send(new ManualRefundRequired($inquiry->fresh()));
+                }
             }
         } catch (\Exception $e) {
             Log::warning('Failed to send cancellation notification', [
@@ -548,14 +557,16 @@ class BookingPortalController extends Controller
 
         return redirect()->route('booking.portal.show', $inquiry)
             ->with(
-                ($refundFailed || $refundAlreadyProcessed) ? 'warning' : 'success',
+                ($refundFailed || $refundAlreadyProcessed || $manualRefundRequired) ? 'warning' : 'success',
                 $refundFailed
                     ? 'Your booking has been cancelled, but the refund could not be processed automatically. Please contact the resort to complete your refund.'
                     : ($refunded
                         ? 'Your booking has been cancelled and your payment has been refunded.'
-                        : ($refundAlreadyProcessed
-                            ? 'Your booking has been cancelled. The refund was already processed.'
-                            : 'Your booking has been cancelled.'))
+                        : ($manualRefundRequired
+                            ? 'Your booking has been cancelled. Your payment of ₱'.$inquiry->collectedAmount().' will be refunded directly by the resort.'
+                            : ($refundAlreadyProcessed
+                                ? 'Your booking has been cancelled. The refund was already processed.'
+                                : 'Your booking has been cancelled.')))
             );
     }
 
@@ -566,7 +577,7 @@ class BookingPortalController extends Controller
      */
     private function canCancel(Inquiry $inquiry): bool
     {
-        if (! in_array($inquiry->status, ['pending', 'confirmed'])) {
+        if (! in_array($inquiry->status, [Inquiry::STATUS_PENDING, Inquiry::STATUS_CONFIRMED], true)) {
             return false;
         }
 
@@ -574,7 +585,7 @@ class BookingPortalController extends Controller
             return false;
         }
 
-        if (now()->diffInHours($inquiry->check_in) < 24) {
+        if (now()->diffInHours($inquiry->check_in) < self::CUTOFF_HOURS) {
             return false;
         }
 
@@ -588,15 +599,15 @@ class BookingPortalController extends Controller
      */
     private function cannotCancelReason(Inquiry $inquiry): ?string
     {
-        if (! in_array($inquiry->status, ['pending', 'confirmed'])) {
-            return null;
+        if (! in_array($inquiry->status, [Inquiry::STATUS_PENDING, Inquiry::STATUS_CONFIRMED], true)) {
+            return 'This booking can no longer be cancelled.';
         }
 
         if (! $inquiry->check_in || $inquiry->check_in->isPast()) {
             return 'This booking can no longer be cancelled.';
         }
 
-        if (now()->diffInHours($inquiry->check_in) < 24) {
+        if (now()->diffInHours($inquiry->check_in) < self::CUTOFF_HOURS) {
             return 'Cancellation is no longer available. This booking can be cancelled until 24 hours before check-in (cutoff: '
                 .$inquiry->check_in->format('M d, Y').').';
         }

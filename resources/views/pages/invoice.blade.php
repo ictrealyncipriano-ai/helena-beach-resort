@@ -185,24 +185,9 @@
         </div>
     </div>
 
-    @php
-        $nights = null; $rate = null; $qty = 1;
-        if ($inquiry->check_in && $inquiry->check_out) {
-            $nights = max((int) $inquiry->check_in->diffInDays($inquiry->check_out), 1);
-            $qty = $nights;
-        }
-        if ($inquiry->booking_type === 'day_tour' && $inquiry->cottage) {
-            $rate = $inquiry->cottage->rate_daytour; $qty = 1;
-        } elseif ($inquiry->booking_type === 'overnight' && $inquiry->cottage) {
-            $rate = $inquiry->cottage->rate_overnight;
-        }
-        $lineTotal = $rate ? $rate * $qty : $inquiry->total_amount;
-        $desc = $inquiry->booking_type === 'day_tour' ? 'Day Tour' : 'Overnight Stay';
-    @endphp
-
     <div class="booking-summary">
         <strong>{{ $inquiry->cottage?->name ?? 'Cottage' }}</strong>
-        <span class="sep">|</span> {{ $desc }}
+        <span class="sep">|</span> {{ $inquiry->booking_type === 'day_tour' ? 'Day Tour' : 'Overnight Stay' }}
         @if($inquiry->check_in && $inquiry->check_out)
             <span class="sep">|</span>
             {{ $inquiry->check_in->format('M d, Y') }} &mdash; {{ $inquiry->check_out->format('M d, Y') }}
@@ -224,40 +209,49 @@
             </tr>
         </thead>
         <tbody>
+            @foreach($items as $i => $item)
             <tr>
-                <td class="num">1</td>
+                <td class="num">{{ $i + 1 }}</td>
                 <td>
                     <strong>{{ $inquiry->cottage?->name ?? 'Cottage' }}</strong>
-                    @if($nights)
-                        <br><span style="font-size:9px;color:#6b7280;">{{ $desc }} &mdash; {{ $nights }} {{ $nights > 1 ? 'nights' : 'night' }}</span>
-                    @endif
+                    <br><span style="font-size:9px;color:#6b7280;">{{ $item['desc'] }}</span>
                 </td>
-                <td>{{ $qty }}</td>
-                <td>₱{{ number_format($rate ?? 0, 2) }}</td>
-                <td>₱{{ number_format($lineTotal ?? 0, 2) }}</td>
+                <td>{{ $item['qty'] }}</td>
+                <td>{{ formatPrice($item['rate']) }}</td>
+                <td>{{ formatPrice($item['total']) }}</td>
             </tr>
+            @endforeach
         </tbody>
         <tfoot>
             <tr class="subtotal">
                 <td colspan="4">Subtotal</td>
-                <td>₱{{ number_format($lineTotal ?? 0, 2) }}</td>
+                <td>{{ formatPrice($subtotal) }}</td>
             </tr>
-            @if(($inquiry->total_amount ?? 0) != ($lineTotal ?? 0))
+            @if(($inquiry->discount_amount ?? 0) > 0)
+            <tr>
+                <td colspan="4" style="font-size:9px;color:#6b7280;">Promo Discount</td>
+                <td>-{{ formatPrice($inquiry->discount_amount) }}</td>
+            </tr>
+            @endif
+            @php
+                $adjustment = round((float) ($inquiry->total_amount ?? 0) - ((float) $subtotal - (float) ($inquiry->discount_amount ?? 0)), 2);
+            @endphp
+            @if(abs($adjustment) >= 0.01)
             <tr>
                 <td colspan="4" style="font-size:9px;color:#6b7280;">Adjustment</td>
-                <td>₱{{ number_format(($inquiry->total_amount ?? 0) - ($lineTotal ?? 0), 2) }}</td>
+                <td>{{ formatPrice($adjustment) }}</td>
             </tr>
             @endif
             <tr class="total">
                 <td colspan="4">Total Due</td>
-                <td>₱{{ number_format($inquiry->total_amount ?? 0, 2) }}</td>
+                <td>{{ formatPrice($inquiry->total_amount ?? 0) }}</td>
             </tr>
         </tfoot>
     </table>
 
     <div class="terms">
         @if($inquiry->isPaid())
-            <strong>Payment Status:</strong> Paid{{ $inquiry->payment_method ? ' via ' . ucfirst($inquiry->payment_method) : '' }}{{ $inquiry->paid_at ? ' on ' . $inquiry->paid_at->format('M d, Y') : '' }}.<br>
+            <strong>Payment Status:</strong> Paid{{ $inquiry->payment_method ? ' via ' . ucfirst($inquiry->payment_method) : '' }}{{ ($inquiry->fully_paid_at ?? $inquiry->deposit_paid_at) ? ' on ' . ($inquiry->fully_paid_at ?? $inquiry->deposit_paid_at)->format('M d, Y') : '' }}.<br>
         @else
             <strong>Payment Terms:</strong> Full payment due upon booking confirmation. Pay online via QR Ph, or settle via Bank Transfer / Cash on site.<br>
         @endif

@@ -49,7 +49,7 @@ class Guest extends Model
         return $guest ?? static::create([...$attributes, 'email' => $email]);
     }
 
-    public static function normalizeEmail(?string $email): ?string
+    private static function normalizeEmail(?string $email): ?string
     {
         if ($email === null) {
             return null;

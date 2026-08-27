@@ -74,7 +74,7 @@ class="relative bg-white rounded-2xl shadow-sm border border-gray-100 p-5 overfl
             @if($revenueThisMonth)
                 <p class="text-xs text-emerald-600 font-medium mt-2 flex items-center gap-1">
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v12m-3-2.818l.879.659c0 0 .5.159 1.121.159 1.621 0 2.5-1.1 2.5-2.5 0-1.4-.879-2.5-2.5-2.5-.621 0-1.121.159-1.121.159l-.879.659M3 13.125V5.625A2.625 2.625 0 015.625 3h12.75A2.625 2.625 0 0121 5.625v7.5A2.625 2.625 0 0118.375 15.75h-5.25L7.5 21v-5.25H5.625A2.625 2.625 0 013 13.125z"/></svg>
-                    ₱ {{ number_format($revenueThisMonth, 2) }} collected · {{ $paidThisMonth }} paid
+                    {{ formatPrice($revenueThisMonth) }} collected · {{ $paidThisMonth }} paid
                 </p>
             @endif
         </div>
@@ -111,7 +111,7 @@ class="relative bg-white rounded-2xl shadow-sm border border-gray-100 p-5 overfl
                 </a>
             </div>
             @if($upcomingCheckIns->isEmpty())
-                @include('admin.components.empty-state', ['title' => 'No upcoming check-ins', 'message' => 'There are no confirmed bookings with upcoming check-in dates.'])
+                @include('components.admin.empty-state', ['title' => 'No upcoming check-ins', 'message' => 'There are no confirmed bookings with upcoming check-in dates.'])
             @else
                 {{-- Desktop table --}}
                 <div class="desktop-table overflow-x-auto">
@@ -132,11 +132,11 @@ class="relative bg-white rounded-2xl shadow-sm border border-gray-100 p-5 overfl
                             <tr class="hover:bg-gray-50/50 transition-colors dark:hover:bg-slate-700/40">
                                 <td class="px-5 py-3.5 text-gray-500 font-mono text-xs font-medium dark:text-slate-400">{{ $inquiry->reference_code }}</td>
                                 <td class="px-5 py-3.5 font-medium text-gray-900 dark:text-white">{{ $inquiry->name }}</td>
-                                <td class="px-5 py-3.5">@include('admin.components.badge', ['type' => 'primary', 'slot' => $inquiry->cottage?->name ?? 'N/A'])</td>
+                                <td class="px-5 py-3.5">@include('components.admin.badge', ['type' => 'primary', 'slot' => $inquiry->cottage?->name ?? 'N/A'])</td>
                                 <td class="px-5 py-3.5 text-gray-600 dark:text-slate-300">{{ $inquiry->check_in?->format('M d, Y') ?? '—' }}</td>
                                 <td class="px-5 py-3.5 text-gray-600 dark:text-slate-300">{{ $inquiry->check_out?->format('M d, Y') ?? '—' }}</td>
                                 <td class="px-5 py-3.5 text-center text-gray-600 dark:text-slate-300">{{ $inquiry->pax ?? '—' }}</td>
-                                <td class="px-5 py-3.5">@include('admin.components.badge', ['type' => $inquiry->booking_type === 'day_tour' ? 'info' : ($inquiry->booking_type === 'overnight' ? 'warning' : 'gray'), 'slot' => $inquiry->booking_type ? ucfirst(str_replace('_', ' ', $inquiry->booking_type)) : 'Inquiry'])</td>
+                                <td class="px-5 py-3.5">@include('components.admin.badge', ['type' => $inquiry->booking_type === 'day_tour' ? 'info' : ($inquiry->booking_type === 'overnight' ? 'warning' : 'gray'), 'slot' => $inquiry->booking_type ? ucfirst(str_replace('_', ' ', $inquiry->booking_type)) : 'Inquiry'])</td>
                             </tr>
                             @endforeach
                         </tbody>
@@ -149,7 +149,7 @@ class="relative bg-white rounded-2xl shadow-sm border border-gray-100 p-5 overfl
                     <div class="mobile-table-card">
                         <div class="flex items-center justify-between">
                             <span class="font-semibold text-gray-900 dark:text-white">{{ $inquiry->name }}</span>
-                            @include('admin.components.badge', ['type' => 'primary', 'slot' => $inquiry->cottage?->name ?? 'N/A'])
+                            @include('components.admin.badge', ['type' => 'primary', 'slot' => $inquiry->cottage?->name ?? 'N/A'])
                         </div>
                         <div class="field">
                             <span class="field-label">Ref #</span>
@@ -165,7 +165,7 @@ class="relative bg-white rounded-2xl shadow-sm border border-gray-100 p-5 overfl
                         </div>
                         <div class="flex items-center justify-between pt-1">
                             <span class="text-xs text-gray-500 dark:text-slate-400">{{ $inquiry->pax ?? '—' }} guest(s)</span>
-                            @include('admin.components.badge', ['type' => $inquiry->booking_type === 'day_tour' ? 'info' : ($inquiry->booking_type === 'overnight' ? 'warning' : 'gray'), 'slot' => $inquiry->booking_type ? ucfirst(str_replace('_', ' ', $inquiry->booking_type)) : 'Inquiry'])
+                            @include('components.admin.badge', ['type' => $inquiry->booking_type === 'day_tour' ? 'info' : ($inquiry->booking_type === 'overnight' ? 'warning' : 'gray'), 'slot' => $inquiry->booking_type ? ucfirst(str_replace('_', ' ', $inquiry->booking_type)) : 'Inquiry'])
                         </div>
                     </div>
                     @endforeach
@@ -186,7 +186,7 @@ class="relative bg-white rounded-2xl shadow-sm border border-gray-100 p-5 overfl
                 </a>
             </div>
             @if($recentInquiries->isEmpty())
-                @include('admin.components.empty-state', ['title' => 'No inquiries yet', 'message' => 'Inquiries from guests will appear here.'])
+                @include('components.admin.empty-state', ['title' => 'No inquiries yet', 'message' => 'Inquiries from guests will appear here.'])
             @else
                 {{-- Desktop table --}}
                 <div class="desktop-table overflow-x-auto">
@@ -205,7 +205,7 @@ class="relative bg-white rounded-2xl shadow-sm border border-gray-100 p-5 overfl
                             <tr class="hover:bg-gray-50/50 transition-colors dark:hover:bg-slate-700/40">
                                 <td class="px-5 py-3.5 font-medium text-gray-900 dark:text-white">{{ $inquiry->name }}</td>
                                 <td class="px-5 py-3.5 text-gray-500 dark:text-slate-400">{{ $inquiry->email }}</td>
-                                <td class="px-5 py-3.5">@include('admin.components.badge', ['type' => 'primary', 'slot' => $inquiry->cottage?->name ?? 'N/A'])</td>
+                                <td class="px-5 py-3.5">@include('components.admin.badge', ['type' => 'primary', 'slot' => $inquiry->cottage?->name ?? 'N/A'])</td>
                                 <td class="px-5 py-3.5">
                                     @php
                                         $statusDot = match($inquiry->status) {
@@ -216,7 +216,7 @@ class="relative bg-white rounded-2xl shadow-sm border border-gray-100 p-5 overfl
                                     @endphp
                                     <span class="inline-flex items-center gap-1.5">
                                         <span class="w-1.5 h-1.5 rounded-full {{ $statusDot }}"></span>
-                                        @include('admin.components.badge', ['type' => $inquiry->status === 'confirmed' ? 'success' : ($inquiry->status === 'cancelled' ? 'danger' : 'warning'), 'slot' => ucfirst($inquiry->status)])
+                                        @include('components.admin.badge', ['type' => $inquiry->status === 'confirmed' ? 'success' : ($inquiry->status === 'cancelled' ? 'danger' : 'warning'), 'slot' => ucfirst($inquiry->status)])
                                     </span>
                                 </td>
                                 <td class="px-5 py-3.5 text-gray-500 text-xs dark:text-slate-400">{{ $inquiry->created_at->format('M d, Y H:i') }}</td>
@@ -241,7 +241,7 @@ class="relative bg-white rounded-2xl shadow-sm border border-gray-100 p-5 overfl
                             @endphp
                             <span class="inline-flex items-center gap-1.5">
                                 <span class="w-1.5 h-1.5 rounded-full {{ $statusDot }}"></span>
-                                @include('admin.components.badge', ['type' => $inquiry->status === 'confirmed' ? 'success' : ($inquiry->status === 'cancelled' ? 'danger' : 'warning'), 'slot' => ucfirst($inquiry->status)])
+                                @include('components.admin.badge', ['type' => $inquiry->status === 'confirmed' ? 'success' : ($inquiry->status === 'cancelled' ? 'danger' : 'warning'), 'slot' => ucfirst($inquiry->status)])
                             </span>
                         </div>
                         <div class="field">
@@ -250,7 +250,7 @@ class="relative bg-white rounded-2xl shadow-sm border border-gray-100 p-5 overfl
                         </div>
                         <div class="field">
                             <span class="field-label">Cottage</span>
-                            <span class="field-value">@include('admin.components.badge', ['type' => 'primary', 'slot' => $inquiry->cottage?->name ?? 'N/A'])</span>
+                            <span class="field-value">@include('components.admin.badge', ['type' => 'primary', 'slot' => $inquiry->cottage?->name ?? 'N/A'])</span>
                         </div>
                         <div class="field">
                             <span class="field-label">Date</span>
@@ -342,7 +342,7 @@ class="relative bg-white rounded-2xl shadow-sm border border-gray-100 p-5 overfl
                     <span class="w-1.5 h-1.5 rounded-full bg-teal-500"></span>
                     Revenue (Last 6 Months)
                 </h2>
-                <span class="text-xs text-gray-500 font-medium dark:text-slate-400">₱ {{ number_format($revenueData->sum(), 2) }} total</span>
+                <span class="text-xs text-gray-500 font-medium dark:text-slate-400">{{ formatPrice($revenueData->sum()) }} total</span>
             </div>
             <div class="relative chart-container" style="max-height: 300px;">
                 <canvas id="revenueChart" role="img" aria-label="Revenue over the last 6 months line chart" x-data x-init="
@@ -430,7 +430,7 @@ class="relative bg-white rounded-2xl shadow-sm border border-gray-100 p-5 overfl
             @endif
         </div>
         @if($popularCottages->isEmpty())
-            @include('admin.components.empty-state', ['title' => 'No cottage data', 'message' => 'Book some cottages to see popularity data.'])
+            @include('components.admin.empty-state', ['title' => 'No cottage data', 'message' => 'Book some cottages to see popularity data.'])
         @else
             @php $maxBookings = $popularCottages->max('inquiries_count'); @endphp
 
@@ -467,8 +467,8 @@ class="relative bg-white rounded-2xl shadow-sm border border-gray-100 p-5 overfl
                                 </div>
                             </td>
                             <td class="px-5 py-3.5 text-center text-gray-600 dark:text-slate-300">{{ $cottage->capacity }}</td>
-                            <td class="px-5 py-3.5 text-right text-gray-600 font-medium dark:text-slate-300">₱ {{ number_format($cottage->rate_daytour, 2) }}</td>
-                            <td class="px-5 py-3.5 text-right text-gray-600 font-medium dark:text-slate-300">₱ {{ number_format($cottage->rate_overnight, 2) }}</td>
+                            <td class="px-5 py-3.5 text-right text-gray-600 font-medium dark:text-slate-300">{{ formatPrice($cottage->rate_daytour) }}</td>
+                            <td class="px-5 py-3.5 text-right text-gray-600 font-medium dark:text-slate-300">{{ formatPrice($cottage->rate_overnight) }}</td>
                             <td class="px-5 py-3.5 text-center">
                                 @if($cottage->is_available)
                                     <svg class="w-5 h-5 text-emerald-500 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
@@ -506,11 +506,11 @@ class="relative bg-white rounded-2xl shadow-sm border border-gray-100 p-5 overfl
                         <div class="grid grid-cols-2 gap-2 text-xs">
                             <div>
                                 <span class="text-gray-500 dark:text-slate-400">Day Tour</span>
-                                <p class="font-medium text-gray-700 dark:text-slate-200">₱ {{ number_format($cottage->rate_daytour, 2) }}</p>
+                                <p class="font-medium text-gray-700 dark:text-slate-200">{{ formatPrice($cottage->rate_daytour) }}</p>
                             </div>
                             <div>
                                 <span class="text-gray-500 dark:text-slate-400">Overnight</span>
-                                <p class="font-medium text-gray-700 dark:text-slate-200">₱ {{ number_format($cottage->rate_overnight, 2) }}</p>
+                                <p class="font-medium text-gray-700 dark:text-slate-200">{{ formatPrice($cottage->rate_overnight) }}</p>
                             </div>
                             <div>
                                 <span class="text-gray-500 dark:text-slate-400">Max Pax</span>

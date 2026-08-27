@@ -137,7 +137,7 @@
         {{-- Empty states --}}
         <div x-show="allUsers.length === 0">
             @if(request('search'))
-                @include('admin.components.empty-state', [
+                @include('components.admin.empty-state', [
                     'icon' => 'search',
                     'title' => 'No users match your search',
                     'message' => 'Try a different name or email, or clear the search to see all users.',
@@ -145,7 +145,7 @@
                     'actionLabel' => 'Clear Search',
                 ])
             @else
-                @include('admin.components.empty-state', [
+                @include('components.admin.empty-state', [
                     'icon' => 'inbox',
                     'title' => 'No users yet',
                     'message' => 'Create your first admin user to get started.',

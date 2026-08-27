@@ -40,11 +40,6 @@ class PromoCode extends Model
         return Str::upper(Str::trim($code));
     }
 
-    public function isFixed(): bool
-    {
-        return $this->type === 'fixed';
-    }
-
     public function isPercent(): bool
     {
         return $this->type === 'percent';
@@ -113,7 +108,7 @@ class PromoCode extends Model
             ? $subtotal * ((float) $this->value / 100)
             : (float) $this->value;
 
-        return number_format(min($discount, $subtotal), 2, '.', '');
+        return formatPrice(min($discount, $subtotal), 2, false);
     }
 
     /**
@@ -123,7 +118,7 @@ class PromoCode extends Model
     {
         return $this->isPercent()
             ? rtrim(rtrim(number_format((float) $this->value, 2, '.', ''), '0'), '.').'%'
-            : '₱'.number_format((float) $this->value, 2, '.', ',');
+            : formatPrice($this->value);
     }
 
     public function hasReachedUsageLimit(): bool

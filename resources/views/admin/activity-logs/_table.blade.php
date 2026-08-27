@@ -1,5 +1,5 @@
 @if($logs->isEmpty())
-    @include('admin.components.empty-state', [
+    @include('components.admin.empty-state', [
         'title' => 'No activity recorded',
         'message' => 'No audit entries match these filters.',
     ])
@@ -42,7 +42,7 @@
     </div>
 
     <div class="px-5 py-4 border-t border-gray-100 dark:border-slate-700">
-        @include('admin.components.pagination', ['paginator' => $logs, 'live' => true])
+        @include('components.admin.pagination', ['paginator' => $logs, 'live' => true])
     </div>
 @endif
 

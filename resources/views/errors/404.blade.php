@@ -12,10 +12,16 @@
         <p class="text-gray-600 mb-8 text-lg">
             The page you're looking for doesn't exist or has been moved.
         </p>
-        <a href="{{ route('home') }}"
-           class="inline-block bg-teal-700 hover:bg-teal-700 text-white font-semibold px-8 py-3 rounded-lg transition-colors">
-            Back to Home
-        </a>
+        <div class="flex flex-col sm:flex-row gap-3 justify-center">
+            <a href="{{ route('home') }}"
+               class="inline-block bg-teal-700 hover:bg-teal-700 text-white font-semibold px-8 py-3 rounded-lg transition-colors">
+                Back to Home
+            </a>
+            <a href="{{ route('booking.portal.lookup') }}"
+               class="inline-block border-2 border-teal-600 dark:border-teal-400 text-teal-700 dark:text-teal-300 font-semibold px-8 py-3 rounded-lg hover:bg-teal-50 dark:hover:bg-teal-900/30 transition-colors">
+                Find My Booking
+            </a>
+        </div>
     </div>
 </div>
 @endsection

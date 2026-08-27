@@ -168,8 +168,7 @@ class DatabaseHardeningTest extends TestCase
             'guest_id' => $guest->id,
             'status' => 'confirmed',
             'source' => 'website',
-            'paid_at' => now(),
-            'paid_amount' => 3000,
+            'amount_paid' => 3000,
             'total_amount' => 3000,
             'payment_method' => 'gcash',
         ]);

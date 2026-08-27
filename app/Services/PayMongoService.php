@@ -16,6 +16,9 @@ use Illuminate\Support\Facades\Log;
  */
 class PayMongoService
 {
+    public const CURRENCY = 'PHP';
+    public const WEBHOOK_SKEW_TOLERANCE = 300;
+
     /**
      * Create a hosted checkout session for the given (confirmed) inquiry.
      * When an amount is provided it is charged instead of the full total
@@ -42,7 +45,7 @@ class PayMongoService
                             [
                                 'name' => $this->lineItemName($inquiry),
                                 'amount' => $centavos,
-                                'currency' => 'PHP',
+                                'currency' => self::CURRENCY,
                                 'quantity' => 1,
                             ],
                         ],
@@ -119,14 +122,20 @@ class PayMongoService
         // be replayed. Allow 5 minutes of clock skew, then fail closed.
         $timestamp = (int) $parts['t'];
 
-        return $timestamp > 0 && abs(time() - $timestamp) <= 300;
+        return $timestamp > 0 && abs(time() - $timestamp) <= self::WEBHOOK_SKEW_TOLERANCE;
     }
 
     /**
-     * Issue a full refund for a paid booking via PayMongo's Refunds API.
+     * Issue a refund for a booking via PayMongo's Refunds API.
+     *
+     * The refund is always exactly what was collected (refundableAmount()):
+     * a deposit-only settlement is refunded the deposit, never the full
+     * total. Requires an online PayMongo payment — manually-collected
+     * money must be refunded offline by the resort.
      *
      * @throws \RuntimeException when the inquiry has no recorded PayMongo
-     *         payment, or when PayMongo returns an error.
+     *         payment (or nothing refundable), or when PayMongo returns
+     *         an error.
      */
     public function refund(Inquiry $inquiry): array
     {
@@ -136,12 +145,16 @@ class PayMongoService
             throw new \RuntimeException('This booking has no PayMongo payment reference, so it cannot be refunded online.');
         }
 
-        $amount = $this->toCentavos($inquiry->paid_amount ?? $inquiry->total_amount);
+        $amount = $this->toCentavos($inquiry->refundableAmount());
+
+        if ($amount <= 0) {
+            throw new \RuntimeException('This booking has no refundable amount.');
+        }
 
         // Idempotency-Key derived from the inquiry + when it was paid, so a
         // retried refund of the same payment is a no-op at PayMongo rather
         // than a double refund.
-        $idempotencyKey = 'refund-'.$inquiry->id.'-'.($inquiry->paid_at?->getTimestamp() ?? $inquiry->id);
+        $idempotencyKey = 'refund-'.$inquiry->id.'-'.($inquiry->fully_paid_at?->getTimestamp() ?? $inquiry->deposit_paid_at?->getTimestamp() ?? $inquiry->id);
 
         $response = Http::baseUrl(config('paymongo.base_url'))
             ->withBasicAuth(config('paymongo.secret_key'), '')
@@ -171,7 +184,7 @@ class PayMongoService
         return $response->json('data') ?? [];
     }
 
-    public function isLiveMode(): bool
+    private function isLiveMode(): bool
     {
         return str_starts_with((string) config('paymongo.secret_key'), 'sk_live_');
     }
@@ -200,7 +213,7 @@ class PayMongoService
 
     private function lineItemName(Inquiry $inquiry): string
     {
-        $label = $inquiry->booking_type === 'day_tour' ? 'Day Tour' : 'Overnight Stay';
+        $label = $inquiry->booking_type === Inquiry::TYPE_DAY_TOUR ? 'Day Tour' : 'Overnight Stay';
         $cottage = $inquiry->cottage?->name ?? 'Cottage';
 
         return "{$cottage} — {$label} ({$inquiry->reference_code})";

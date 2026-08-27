@@ -16,7 +16,7 @@
 </td>
 <td width="50%" style="padding: 6px 0 6px 12px; vertical-align: top;">
 <p style="margin: 0 0 2px; font-size: 11px; font-weight: 600; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em;">Refunded Amount</p>
-<p style="margin: 0; font-size: 18px; font-weight: 700; color: #0d9488;">₱{{ number_format($inquiry->refund_amount ?? $inquiry->paid_amount ?? $inquiry->total_amount) }}</p>
+<p style="margin: 0; font-size: 18px; font-weight: 700; color: #0d9488;">{{ formatPrice($inquiry->refund_amount ?? $inquiry->refundableAmount()) }}</p>
 </td>
 </tr>
 <tr>

@@ -45,6 +45,8 @@ class PublicCache
      */
     public const CONTENT_TTL = 600;
 
+    public const SITEMAP_TTL = 3600;
+
     /**
      * Drop every public-page cache entry. Called by model events whenever a
      * Cottage, CottagePhoto, Gallery, Testimonial, Faq, or Service is saved,

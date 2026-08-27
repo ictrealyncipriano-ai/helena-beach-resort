@@ -165,8 +165,11 @@ class AdminPasswordResetTest extends TestCase
             ])->assertStatus(302);
         }
 
+        // The fourth request is throttled. Instead of a raw 429, the exception
+        // handler redirects back with a user-friendly error flash.
         $this->post(route('admin.password.email'), [
             'email' => 'blocked@example.com',
-        ])->assertStatus(429);
+        ])->assertStatus(302)
+            ->assertSessionHas('errors');
     }
 }

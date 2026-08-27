@@ -38,7 +38,7 @@
         </div>
 
         @if($promoCodes->isEmpty())
-            @include('admin.components.empty-state', [
+            @include('components.admin.empty-state', [
                 'title' => 'No promo codes',
                 'message' => 'Create promo codes to offer booking discounts.',
             ])
@@ -66,10 +66,10 @@
                             <td class="px-5 py-3 font-mono font-medium text-gray-900 dark:text-white">{{ $promo->code }}</td>
                             <td class="px-5 py-3 text-gray-600 dark:text-slate-300">{{ $promo->valueLabel() }}
                                 @if($promo->min_amount)
-                                    <span class="text-xs text-gray-400 ">(min ₱{{ number_format((float) $promo->min_amount) }})</span>
+                                    <span class="text-xs text-gray-400 ">(min {{ formatPrice($promo->min_amount) }})</span>
                                 @endif
                             </td>
-                            <td class="px-5 py-3 text-gray-600 hidden md:table-cell dark:text-slate-300">{{ $promo->min_amount ? '₱'.number_format((float) $promo->min_amount, 2) : '—' }}</td>
+                            <td class="px-5 py-3 text-gray-600 hidden md:table-cell dark:text-slate-300">{{ $promo->min_amount ? formatPrice($promo->min_amount) : '—' }}</td>
                             <td class="px-5 py-3 text-xs text-gray-600 hidden lg:table-cell dark:text-slate-300">
                                 {{ $promo->valid_from ? $promo->valid_from->format('M d, Y') : 'Open' }}
                                 &rarr;
@@ -111,11 +111,11 @@
             </div>
 
             <div class="px-5 py-4 border-t border-gray-100 dark:border-slate-700">
-                @include('admin.components.pagination', ['paginator' => $promoCodes])
+                @include('components.admin.pagination', ['paginator' => $promoCodes])
             </div>
         @endif
     </div>
 </div>
 
-@include('admin.components.confirm-dialog', ['name' => 'delete', 'title' => 'Delete Promo Code?', 'message' => 'Are you sure? This cannot be undone.'])
+@include('components.admin.confirm-dialog', ['name' => 'delete', 'title' => 'Delete Promo Code?', 'message' => 'Are you sure? This cannot be undone.'])
 @endsection

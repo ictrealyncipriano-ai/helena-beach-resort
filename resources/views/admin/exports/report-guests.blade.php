@@ -12,7 +12,7 @@
         </div>
         <div class="stat">
             <div class="label">Total Revenue</div>
-            <div class="value">₱{{ number_format($totalRevenue, 2) }}</div>
+            <div class="value">{{ formatPrice($totalRevenue) }}</div>
         </div>
     </div>
 
@@ -46,7 +46,7 @@
                         <td class="r">{{ $guest->paid_count }}</td>
                         <td class="r">{{ $guest->refunded_count }}</td>
                         <td class="r">{{ $guest->failed_count }}</td>
-                        <td class="r">₱{{ number_format($guest->paid_amount ?? 0, 2) }}</td>
+                        <td class="r">{{ formatPrice($guest->paid_amount ?? 0) }}</td>
                     </tr>
                 @endforeach
             </tbody>
@@ -59,7 +59,7 @@
                     <td class="r">{{ $rows->sum('paid_count') }}</td>
                     <td class="r">{{ $rows->sum('refunded_count') }}</td>
                     <td class="r">{{ $rows->sum('failed_count') }}</td>
-                    <td class="r">₱{{ number_format($totalRevenue, 2) }}</td>
+                    <td class="r">{{ formatPrice($totalRevenue) }}</td>
                 </tr>
             </tfoot>
         </table>

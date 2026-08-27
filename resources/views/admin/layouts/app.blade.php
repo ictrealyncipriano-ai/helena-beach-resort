@@ -53,18 +53,13 @@
 
                 {{-- Flash Messages --}}
                 @if (session('success'))
-                    <div class="mb-4 rounded-lg bg-emerald-50 border border-emerald-200 px-4 py-3 text-sm text-emerald-700 flex items-center gap-2 dark:bg-emerald-500/10 dark:border-emerald-500/30 dark:text-emerald-300" x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 4000)" role="status">
-                        <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                        <span class="flex-1">{{ session('success') }}</span>
-                        <button type="button" @@click="show = false" class="text-emerald-500 hover:text-emerald-700">&times;</button>
-                    </div>
+                    <x-admin.alert type="success">{{ session('success') }}</x-admin.alert>
                 @endif
                 @if (session('error'))
-                    <div class="mb-4 rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700 flex items-center gap-2 dark:bg-red-500/10 dark:border-red-500/30 dark:text-red-300" x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 6000)" role="alert">
-                        <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                        <span class="flex-1">{{ session('error') }}</span>
-                        <button type="button" @@click="show = false" class="text-red-500 hover:text-red-700">&times;</button>
-                    </div>
+                    <x-admin.alert type="error">{{ session('error') }}</x-admin.alert>
+                @endif
+                @if (session('warning'))
+                    <x-admin.alert type="warning">{{ session('warning') }}</x-admin.alert>
                 @endif
 
                 @yield('content')

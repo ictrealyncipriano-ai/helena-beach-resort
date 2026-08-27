@@ -23,7 +23,7 @@ class PromoCodeController extends Controller
             $query->where('is_active', $request->boolean('is_active'));
         }
 
-        $promoCodes = $query->orderByDesc('id')->paginate(15);
+        $promoCodes = $query->orderByDesc('id')->paginate(self::ADMIN_PER_PAGE)->withQueryString();
 
         return view('admin.promo-codes.index', compact('promoCodes'));
     }
@@ -95,9 +95,9 @@ class PromoCodeController extends Controller
         ]);
 
         $data['is_active'] = $request->boolean('is_active');
-        $data['value'] = number_format((float) $data['value'], 2, '.', '');
+        $data['value'] = formatPrice($data['value'], 2, false);
         $data['min_amount'] = isset($data['min_amount']) && $data['min_amount'] !== null && $data['min_amount'] !== ''
-            ? number_format((float) $data['min_amount'], 2, '.', '')
+            ? formatPrice($data['min_amount'], 2, false)
             : null;
 
         foreach (['valid_from', 'valid_until'] as $field) {

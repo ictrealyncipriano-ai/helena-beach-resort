@@ -8,11 +8,11 @@
         </div>
         <div class="stat">
             <div class="label">Total Amount</div>
-            <div class="value">₱{{ number_format($totalAmount, 2) }}</div>
+            <div class="value">{{ formatPrice($totalAmount) }}</div>
         </div>
         <div class="stat">
             <div class="label">Total Paid</div>
-            <div class="value">₱{{ number_format($totalPaid, 2) }}</div>
+            <div class="value">{{ formatPrice($totalPaid) }}</div>
         </div>
         <div class="stat">
             <div class="label">By Status</div>
@@ -65,8 +65,8 @@
                         <td>{{ $inquiry->check_in?->format('M d, Y') ?? '—' }}</td>
                         <td>{{ $inquiry->check_out?->format('M d, Y') ?? '—' }}</td>
                         <td class="c">{{ $inquiry->pax ?? '—' }}</td>
-                        <td class="r">₱{{ number_format($inquiry->total_amount ?? 0, 2) }}</td>
-                        <td class="r">₱{{ number_format($inquiry->paid_amount ?? 0, 2) }}</td>
+                        <td class="r">{{ formatPrice($inquiry->total_amount ?? 0) }}</td>
+                        <td class="r">{{ formatPrice($inquiry->amount_paid ?? 0) }}</td>
                         <td>{{ $inquiry->paymentMethodLabel() }}</td>
                     </tr>
                 @endforeach
@@ -74,8 +74,8 @@
             <tfoot>
                 <tr>
                     <td colspan="8">Totals ({{ $totalCount }} inquiries)</td>
-                    <td class="r">₱{{ number_format($totalAmount, 2) }}</td>
-                    <td class="r">₱{{ number_format($totalPaid, 2) }}</td>
+                    <td class="r">{{ formatPrice($totalAmount) }}</td>
+                    <td class="r">{{ formatPrice($totalPaid) }}</td>
                     <td></td>
                 </tr>
             </tfoot>

@@ -135,7 +135,7 @@ class PaymentProofTest extends TestCase
     public function test_paid_booking_cannot_upload(): void
     {
         $inquiry = $this->confirmedBooking('paidproof@example.com');
-        $inquiry->update(['paid_at' => now(), 'paid_amount' => $inquiry->total_amount, 'fully_paid_at' => now()]);
+        $inquiry->update(['amount_paid' => $inquiry->total_amount, 'fully_paid_at' => now()]);
 
         $this->post(route('booking.portal.proof', $inquiry), [
             'payment_proof' => UploadedFile::fake()->image('proof.jpg'),

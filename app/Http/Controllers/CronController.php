@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Console\Commands\ReleaseExpiredReservations;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Log;
@@ -37,7 +38,7 @@ class CronController extends Controller
         }
 
         try {
-            Artisan::call('reservations:release-expired --hours=48');
+            Artisan::call('reservations:release-expired --hours=' . ReleaseExpiredReservations::DEFAULT_HOLD_HOURS);
 
             return response()->json(['ok' => true]);
         } catch (\Throwable $e) {

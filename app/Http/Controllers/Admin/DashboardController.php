@@ -5,11 +5,15 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Cottage;
 use App\Models\Inquiry;
+use App\Traits\QueriesByMonth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
+    use QueriesByMonth;
+
+    private const CACHE_TTL = 300;
     /**
      * Cache key for the aggregate stats block. Keyed by month so the 5-minute
      * TTL naturally resets when the month rolls over.
@@ -19,43 +23,43 @@ class DashboardController extends Controller
         return 'admin.dashboard.stats.'.now()->format('Y-m');
     }
 
+    public static function forgetCache(): void
+    {
+        Cache::forget(self::cacheKey());
+    }
+
     public function index()
     {
         // Aggregate counts/revenue are expensive (multiple GROUP BY queries)
         // and only change when an inquiry is created/confirmed/cancelled/
         // refunded/deleted, so they are cached for 5 minutes and invalidated
         // by the admin inquiry actions (see Admin\InquiryController).
-        $stats = Cache::remember(self::cacheKey(), 300, function () {
+        $stats = Cache::remember(self::cacheKey(), self::CACHE_TTL, function () {
             $totalCottages = Cottage::count();
             $availableCottages = Cottage::where('is_available', true)->count();
-            $pendingInquiries = Inquiry::where('status', 'pending')->count();
-            $confirmedThisMonth = Inquiry::where('status', 'confirmed')
+            $pendingInquiries = Inquiry::where('status', Inquiry::STATUS_PENDING)->count();
+            $confirmedThisMonth = Inquiry::where('status', Inquiry::STATUS_CONFIRMED)
                 ->whereMonth('created_at', now()->month)
                 ->whereYear('created_at', now()->year)
                 ->count();
-            $paidThisMonth = Inquiry::whereNotNull('paid_at')
-                ->whereMonth('paid_at', now()->month)
-                ->whereYear('paid_at', now()->year)
+            $paidThisMonth = Inquiry::where('amount_paid', '>', 0)
+                ->whereMonth('deposit_paid_at', now()->month)
+                ->whereYear('deposit_paid_at', now()->year)
                 ->count();
-            $revenueThisMonth = Inquiry::where('status', 'confirmed')
-                ->whereNotNull('paid_at')
-                ->whereMonth('paid_at', now()->month)
-                ->whereYear('paid_at', now()->year)
-                ->sum('paid_amount');
+            $revenueThisMonth = Inquiry::where('status', Inquiry::STATUS_CONFIRMED)
+                ->where('amount_paid', '>', 0)
+                ->whereMonth('deposit_paid_at', now()->month)
+                ->whereYear('deposit_paid_at', now()->year)
+                ->sum('amount_paid');
 
             $bookingTypeData = Inquiry::select('booking_type', DB::raw('count(*) as count'))
                 ->groupBy('booking_type')
                 ->pluck('count', 'booking_type');
 
-            $driver = DB::getDriverName();
-            $monthExpr = $driver === 'pgsql'
-                ? "to_char(created_at, 'YYYY-MM')"
-                : ($driver === 'sqlite' ? "strftime('%Y-%m', created_at)" : "DATE_FORMAT(created_at, '%Y-%m')");
-
-            $revenueData = Inquiry::where('status', 'confirmed')
-                ->whereNotNull('paid_at')
-                ->where('paid_at', '>=', now()->subMonths(6)->startOfMonth())
-                ->select(DB::raw("{$monthExpr} as month"), DB::raw('sum(paid_amount) as total'))
+            $revenueData = Inquiry::where('status', Inquiry::STATUS_CONFIRMED)
+                ->where('amount_paid', '>', 0)
+                ->where('deposit_paid_at', '>=', now()->subMonths(6)->startOfMonth())
+                ->select(DB::raw("{$this->monthExpression('created_at')} as month"), DB::raw('sum(amount_paid) as total'))
                 ->groupBy('month')
                 ->orderBy('month')
                 ->pluck('total', 'month');
@@ -70,7 +74,7 @@ class DashboardController extends Controller
         // The "live" lists are small, cheap queries and must always reflect
         // the latest data, so they stay out of the cache.
         $upcomingCheckIns = Inquiry::with('cottage')
-            ->where('status', 'confirmed')
+            ->where('status', Inquiry::STATUS_CONFIRMED)
             ->where('check_in', '>=', now()->startOfDay())
             ->orderBy('check_in')
             ->take(8)

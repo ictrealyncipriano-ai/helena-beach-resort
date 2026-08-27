@@ -28,7 +28,7 @@ class ServiceController extends Controller
             $query->where('is_active', $request->boolean('is_active'));
         }
 
-        $services = $query->orderBy('sort_order')->paginate(15)->withQueryString();
+        $services = $query->orderBy('sort_order')->paginate(self::ADMIN_PER_PAGE)->withQueryString();
 
         if ($request->header('X-LiveSearch') === '1') {
             return view('admin.services._table', compact('services'));
@@ -56,16 +56,7 @@ class ServiceController extends Controller
 
     public function store(Request $request, ActivityLogger $logger)
     {
-        $data = $request->validate([
-            'name' => 'required|max:255',
-            'description' => 'nullable',
-            'icon' => 'nullable|max:50',
-            'category' => 'nullable|in:Amenities,Dining,Activities,Events',
-            'sort_order' => 'nullable|integer|min:0',
-            'is_active' => 'boolean',
-        ]);
-
-        $data['is_active'] = $request->boolean('is_active');
+        $data = $this->validated($request);
         $service = Service::create($data);
 
         $logger->record('service.created', $service, "Service {$service->name} created.", [
@@ -83,16 +74,7 @@ class ServiceController extends Controller
 
     public function update(Request $request, Service $service, ActivityLogger $logger)
     {
-        $data = $request->validate([
-            'name' => 'required|max:255',
-            'description' => 'nullable',
-            'icon' => 'nullable|max:50',
-            'category' => 'nullable|in:Amenities,Dining,Activities,Events',
-            'sort_order' => 'nullable|integer|min:0',
-            'is_active' => 'boolean',
-        ]);
-
-        $data['is_active'] = $request->boolean('is_active');
+        $data = $this->validated($request);
         $service->update($data);
 
         $logger->record('service.updated', $service, "Service {$service->name} updated.", [
@@ -111,5 +93,21 @@ class ServiceController extends Controller
 
         return redirect()->route('admin.services.index')
             ->with('success', 'Service deleted successfully.');
+    }
+
+    private function validated(Request $request): array
+    {
+        $data = $request->validate([
+            'name' => 'required|max:255',
+            'description' => 'nullable',
+            'icon' => 'nullable|max:50',
+            'category' => 'nullable|in:Amenities,Dining,Activities,Events',
+            'sort_order' => 'nullable|integer|min:0',
+            'is_active' => 'boolean',
+        ]);
+
+        $data['is_active'] = $request->boolean('is_active');
+
+        return $data;
     }
 }

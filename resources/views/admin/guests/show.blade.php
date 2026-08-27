@@ -52,7 +52,7 @@
                 </div>
                 <div>
                     <span class="text-xs text-gray-500 uppercase tracking-wider font-medium dark:text-slate-400">Total Paid Amount</span>
-                    <p class="mt-1 text-sm font-semibold text-gray-900 dark:text-white">₱ {{ number_format($paidAmount, 2) }}</p>
+                    <p class="mt-1 text-sm font-semibold text-gray-900 dark:text-white">{{ formatPrice($paidAmount) }}</p>
                 </div>
                 <div>
                     <span class="text-xs text-gray-500 uppercase tracking-wider font-medium dark:text-slate-400">Payment Failures</span>
@@ -101,21 +101,21 @@
                             <td class="px-5 py-3 dark:text-slate-300">{{ $inquiry->cottage?->name ?? 'N/A' }}</td>
                             <td class="px-5 py-3 text-gray-600 dark:text-slate-300">{{ $inquiry->check_in?->format('M d, Y') ?? '—' }}</td>
                             <td class="px-5 py-3 text-gray-600 dark:text-slate-300">{{ $inquiry->check_out?->format('M d, Y') ?? '—' }}</td>
-                            <td class="px-5 py-3">@include('admin.components.badge', ['type' => $inquiry->booking_type === 'day_tour' ? 'info' : ($inquiry->booking_type === 'overnight' ? 'warning' : 'gray'), 'slot' => $inquiry->booking_type ? ucfirst(str_replace('_', ' ', $inquiry->booking_type)) : 'Inquiry'])</td>
-                            <td class="px-5 py-3">@include('admin.components.badge', ['type' => $inquiry->status === 'confirmed' ? 'success' : ($inquiry->status === 'cancelled' ? 'danger' : 'warning'), 'slot' => ucfirst($inquiry->status)])</td>
+                            <td class="px-5 py-3">@include('components.admin.badge', ['type' => $inquiry->booking_type === 'day_tour' ? 'info' : ($inquiry->booking_type === 'overnight' ? 'warning' : 'gray'), 'slot' => $inquiry->booking_type ? ucfirst(str_replace('_', ' ', $inquiry->booking_type)) : 'Inquiry'])</td>
+                            <td class="px-5 py-3">@include('components.admin.badge', ['type' => $inquiry->status === 'confirmed' ? 'success' : ($inquiry->status === 'cancelled' ? 'danger' : 'warning'), 'slot' => ucfirst($inquiry->status)])</td>
                             <td class="px-5 py-3">
                                 @if($inquiry->isRefunded())
-                                    @include('admin.components.badge', ['type' => 'danger', 'slot' => 'Refunded'])
+                                    @include('components.admin.badge', ['type' => 'danger', 'slot' => 'Refunded'])
                                 @elseif($inquiry->isPaid())
-                                    @include('admin.components.badge', ['type' => 'success', 'slot' => 'Paid'])
+                                    @include('components.admin.badge', ['type' => 'success', 'slot' => 'Paid'])
                                     <p class="mt-0.5 text-[11px] text-gray-500 dark:text-slate-400">{{ $inquiry->paymentMethodLabel() }}</p>
                                 @elseif($inquiry->hasFailedPayment())
-                                    @include('admin.components.badge', ['type' => 'danger', 'slot' => 'Payment Failed'])
+                                    @include('components.admin.badge', ['type' => 'danger', 'slot' => 'Payment Failed'])
                                 @else
-                                    @include('admin.components.badge', ['type' => 'gray', 'slot' => 'Unpaid'])
+                                    @include('components.admin.badge', ['type' => 'gray', 'slot' => 'Unpaid'])
                                 @endif
                             </td>
-                            <td class="px-5 py-3 text-right font-medium dark:text-white">₱ {{ number_format($inquiry->total_amount, 2) }}</td>
+                            <td class="px-5 py-3 text-right font-medium dark:text-white">{{ formatPrice($inquiry->total_amount) }}</td>
                         </tr>
                         @endforeach
                     </tbody>

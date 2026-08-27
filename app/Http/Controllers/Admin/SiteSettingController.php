@@ -57,17 +57,7 @@ class SiteSettingController extends Controller
 
     public function store(Request $request, ActivityLogger $logger)
     {
-        $data = $request->validate([
-            'key' => 'required|max:255|unique:site_settings,key',
-            'value' => [
-                'nullable',
-                Rule::when(
-                    fn ($input) => str_ends_with((string) ($input['key'] ?? ''), '_url') && filled($input['value'] ?? null),
-                    ['url', 'regex:/^https?:\/\//i']
-                ),
-            ],
-            'type' => 'required|in:text,textarea,image',
-        ]);
+        $data = $this->validated($request);
 
         $setting = SiteSetting::create($data);
 
@@ -86,17 +76,7 @@ class SiteSettingController extends Controller
 
     public function update(Request $request, SiteSetting $siteSetting, ActivityLogger $logger)
     {
-        $data = $request->validate([
-            'key' => 'required|max:255|unique:site_settings,key,'.$siteSetting->id,
-            'value' => [
-                'nullable',
-                Rule::when(
-                    fn ($input) => str_ends_with((string) ($input['key'] ?? ''), '_url') && filled($input['value'] ?? null),
-                    ['url', 'regex:/^https?:\/\//i']
-                ),
-            ],
-            'type' => 'required|in:text,textarea,image',
-        ]);
+        $data = $this->validated($request, $siteSetting);
 
         $siteSetting->update($data);
 
@@ -116,5 +96,20 @@ class SiteSettingController extends Controller
 
         return redirect()->route('admin.site-settings.index')
             ->with('success', 'Setting deleted successfully.');
+    }
+
+    private function validated(Request $request, ?SiteSetting $setting = null): array
+    {
+        return $request->validate([
+            'key' => 'required|max:255|unique:site_settings,key'.($setting ? ','.$setting->id : ''),
+            'value' => [
+                'nullable',
+                Rule::when(
+                    fn ($input) => str_ends_with((string) ($input['key'] ?? ''), '_url') && filled($input['value'] ?? null),
+                    ['url', 'regex:/^https?:\/\//i']
+                ),
+            ],
+            'type' => 'required|in:text,textarea,image',
+        ]);
     }
 }

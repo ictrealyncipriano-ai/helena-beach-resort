@@ -6,11 +6,13 @@ use App\Http\Controllers\Controller;
 use App\Models\Cottage;
 use App\Models\Testimonial;
 use App\Services\ActivityLogger;
+use App\Traits\ManagesCloudflareFiles;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
 class TestimonialController extends Controller
 {
+    use ManagesCloudflareFiles;
     public function index(Request $request)
     {
         $query = Testimonial::with('cottage');
@@ -34,7 +36,7 @@ class TestimonialController extends Controller
             $query->where('source', $request->source);
         }
 
-        $testimonials = $query->orderBy('sort_order')->paginate(15);
+        $testimonials = $query->orderBy('sort_order')->paginate(self::ADMIN_PER_PAGE)->withQueryString();
 
         $testimonialsData = $testimonials->map(function ($testimonial) {
             return [
@@ -64,17 +66,7 @@ class TestimonialController extends Controller
 
     public function store(Request $request, ActivityLogger $logger)
     {
-        $data = $request->validate([
-            'guest_name' => 'required|max:255',
-            'content' => 'required',
-            'rating' => 'required|integer|min:1|max:5',
-            'cottage_id' => 'nullable|exists:cottages,id',
-            'is_active' => 'boolean',
-            'sort_order' => 'nullable|integer|min:0',
-            'guest_avatar' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120',
-        ]);
-
-        $data['is_active'] = $request->boolean('is_active');
+        $data = $this->validated($request);
 
         if ($request->hasFile('guest_avatar')) {
             $data['guest_avatar'] = $request->file('guest_avatar')->store('testimonials', 'cloudflare');
@@ -99,22 +91,10 @@ class TestimonialController extends Controller
 
     public function update(Request $request, Testimonial $testimonial, ActivityLogger $logger)
     {
-        $data = $request->validate([
-            'guest_name' => 'required|max:255',
-            'content' => 'required',
-            'rating' => 'required|integer|min:1|max:5',
-            'cottage_id' => 'nullable|exists:cottages,id',
-            'is_active' => 'boolean',
-            'sort_order' => 'nullable|integer|min:0',
-            'guest_avatar' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120',
-        ]);
-
-        $data['is_active'] = $request->boolean('is_active');
+        $data = $this->validated($request);
 
         if ($request->hasFile('guest_avatar')) {
-            if ($testimonial->guest_avatar) {
-                Storage::disk('cloudflare')->delete($testimonial->guest_avatar);
-            }
+            $this->deleteFromCloudflare($testimonial->guest_avatar);
             $data['guest_avatar'] = $request->file('guest_avatar')->store('testimonials', 'cloudflare');
         }
 
@@ -130,9 +110,7 @@ class TestimonialController extends Controller
 
     public function destroy(Testimonial $testimonial, ActivityLogger $logger)
     {
-        if ($testimonial->guest_avatar) {
-            Storage::disk('cloudflare')->delete($testimonial->guest_avatar);
-        }
+        $this->deleteFromCloudflare($testimonial->guest_avatar);
         $testimonial->delete();
 
         $logger->record('testimonial.deleted', $testimonial, "Testimonial from {$testimonial->guest_name} deleted.", [
@@ -141,5 +119,22 @@ class TestimonialController extends Controller
 
         return redirect()->route('admin.testimonials.index')
             ->with('success', 'Testimonial deleted successfully.');
+    }
+
+    private function validated(Request $request): array
+    {
+        $data = $request->validate([
+            'guest_name' => 'required|max:255',
+            'content' => 'required',
+            'rating' => 'required|integer|min:1|max:5',
+            'cottage_id' => 'nullable|exists:cottages,id',
+            'is_active' => 'boolean',
+            'sort_order' => 'nullable|integer|min:0',
+            'guest_avatar' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120',
+        ]);
+
+        $data['is_active'] = $request->boolean('is_active');
+
+        return $data;
     }
 }

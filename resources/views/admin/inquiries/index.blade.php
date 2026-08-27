@@ -15,11 +15,11 @@ foreach ($inquiries as $inquiry) {
     };
 
     $paymentDetail = match ($paymentKey) {
-        'refunded' => 'Refunded ₱' . number_format($inquiry->refund_amount ?? $inquiry->paid_amount, 2)
+        'refunded' => 'Refunded ' . formatPrice($inquiry->refund_amount ?? $inquiry->refundableAmount())
             . ($inquiry->refunded_at ? ' on ' . $inquiry->refunded_at->format('M d, Y') : ''),
-        'paid' => '₱' . number_format($inquiry->paid_amount, 2)
+        'paid' => formatPrice($inquiry->amount_paid)
             . ' · ' . $inquiry->paymentMethodLabel()
-            . ($inquiry->paid_at ? ' · ' . $inquiry->paid_at->format('M d, Y') : ''),
+            . (($inquiry->fully_paid_at ?? $inquiry->deposit_paid_at) ? ' · ' . ($inquiry->fully_paid_at ?? $inquiry->deposit_paid_at)->format('M d, Y') : ''),
         'failed' => $inquiry->payment_failed_at
             ? 'Last attempt failed ' . $inquiry->payment_failed_at->format('M d, Y \a\t h:i A')
             : 'Last payment attempt failed',
@@ -130,7 +130,7 @@ if ($editingId) {
         </div>
 
         @if($inquiries->isEmpty())
-            @include('admin.components.empty-state', ['title' => 'No inquiries', 'message' => 'Inquiries from guests will appear here.'])
+            @include('components.admin.empty-state', ['title' => 'No inquiries', 'message' => 'Inquiries from guests will appear here.'])
         @else
             <div class="overflow-x-auto">
                 <table class="w-full text-sm">
@@ -154,20 +154,20 @@ if ($editingId) {
                             <td class="px-5 py-3 text-gray-500 font-medium dark:text-slate-400">{{ $inquiry->reference_code }}</td>
                             <td class="px-5 py-3 font-medium text-gray-900 dark:text-white">{{ $inquiry->name }}</td>
                             <td class="px-5 py-3 text-gray-500 hidden sm:table-cell dark:text-slate-400">{{ $inquiry->email }}</td>
-                            <td class="px-5 py-3">@include('admin.components.badge', ['type' => 'primary', 'slot' => $inquiry->cottage?->name ?? 'N/A'])</td>
+                            <td class="px-5 py-3">@include('components.admin.badge', ['type' => 'primary', 'slot' => $inquiry->cottage?->name ?? 'N/A'])</td>
                             <td class="px-5 py-3 text-gray-600 dark:text-slate-300">{{ $inquiry->check_in?->format('M d, Y') ?? '—' }}</td>
                             <td class="px-5 py-3 text-gray-600 dark:text-slate-300">{{ $inquiry->check_out?->format('M d, Y') ?? '—' }}</td>
                             <td class="px-5 py-3 text-center hidden md:table-cell">{{ $inquiry->pax ?? '—' }}</td>
-                            <td class="px-5 py-3 hidden md:table-cell">@include('admin.components.badge', ['type' => $inquiry->booking_type === 'day_tour' ? 'info' : ($inquiry->booking_type === 'overnight' ? 'warning' : 'gray'), 'slot' => $inquiry->booking_type ? ucfirst(str_replace('_', ' ', $inquiry->booking_type)) : '—'])</td>
+                            <td class="px-5 py-3 hidden md:table-cell">@include('components.admin.badge', ['type' => $inquiry->booking_type === 'day_tour' ? 'info' : ($inquiry->booking_type === 'overnight' ? 'warning' : 'gray'), 'slot' => $inquiry->booking_type ? ucfirst(str_replace('_', ' ', $inquiry->booking_type)) : '—'])</td>
                             <td class="px-5 py-3">
                                 <div class="flex items-center gap-1.5">
-                                    @include('admin.components.badge', ['type' => $inquiry->status === 'confirmed' ? 'success' : ($inquiry->status === 'cancelled' ? 'danger' : ($inquiry->status === 'expired' ? 'gray' : 'warning')), 'slot' => ucfirst($inquiry->status)])
+                                    @include('components.admin.badge', ['type' => $inquiry->status === 'confirmed' ? 'success' : ($inquiry->status === 'cancelled' ? 'danger' : ($inquiry->status === 'expired' ? 'gray' : 'warning')), 'slot' => ucfirst($inquiry->status)])
                                     @if($inquiry->isRefunded())
-                                        @include('admin.components.badge', ['type' => 'danger', 'slot' => 'Refunded'])
+                                        @include('components.admin.badge', ['type' => 'danger', 'slot' => 'Refunded'])
                                     @elseif($inquiry->isPaid())
-                                        @include('admin.components.badge', ['type' => 'primary', 'slot' => 'Paid'])
+                                        @include('components.admin.badge', ['type' => 'primary', 'slot' => 'Paid'])
                                     @elseif($inquiry->hasFailedPayment())
-                                        @include('admin.components.badge', ['type' => 'danger', 'slot' => 'Payment Failed'])
+                                        @include('components.admin.badge', ['type' => 'danger', 'slot' => 'Payment Failed'])
                                     @endif
                                 </div>
                             </td>
@@ -202,7 +202,7 @@ if ($editingId) {
             </div>
 
             <div class="px-5 py-4 border-t border-gray-100 dark:border-slate-700">
-                @include('admin.components.pagination', ['paginator' => $inquiries])
+                @include('components.admin.pagination', ['paginator' => $inquiries])
             </div>
         @endif
     </div>
@@ -260,11 +260,11 @@ if ($editingId) {
     </x-admin.modal>
 </div>
 
-@include('admin.components.confirm-dialog', ['name' => 'delete', 'title' => 'Delete Inquiry?', 'message' => 'Are you sure you want to delete this inquiry? This action cannot be undone.'])
-@include('admin.components.confirm-dialog', ['name' => 'confirm', 'title' => 'Confirm Booking?', 'message' => 'Confirm this booking? This will create date blocks and send a confirmation email to the guest.', 'confirmText' => 'Confirm Booking', 'confirmClass' => 'bg-emerald-600 hover:bg-emerald-700 text-white'])
-@include('admin.components.confirm-dialog', ['name' => 'cancel', 'title' => 'Cancel Booking?', 'message' => 'Cancel this booking? This will remove date blocks and send a cancellation email to the guest.', 'confirmText' => 'Cancel Booking', 'confirmClass' => 'bg-red-600 hover:bg-red-700 text-white'])
-@include('admin.components.confirm-dialog', ['name' => 'mark-paid', 'title' => 'Mark as Paid?', 'message' => 'Mark this booking as paid (e.g. bank transfer or cash on site)?', 'confirmText' => 'Mark as Paid', 'confirmClass' => 'bg-emerald-600 hover:bg-emerald-700 text-white'])
-@include('admin.components.confirm-dialog', ['name' => 'refund', 'title' => 'Refund Payment?', 'message' => 'Refund the full paid amount via PayMongo and cancel this booking? The guest will be notified by email.', 'confirmText' => 'Refund & Cancel', 'confirmClass' => 'bg-red-600 hover:bg-red-700 text-white'])
+@include('components.admin.confirm-dialog', ['name' => 'delete', 'title' => 'Delete Inquiry?', 'message' => 'Are you sure you want to delete this inquiry? This action cannot be undone.'])
+@include('components.admin.confirm-dialog', ['name' => 'confirm', 'title' => 'Confirm Booking?', 'message' => 'Confirm this booking? This will create date blocks and send a confirmation email to the guest.', 'confirmText' => 'Confirm Booking', 'confirmClass' => 'bg-emerald-600 hover:bg-emerald-700 text-white'])
+@include('components.admin.confirm-dialog', ['name' => 'cancel', 'title' => 'Cancel Booking?', 'message' => 'Cancel this booking? This will remove date blocks and send a cancellation email to the guest.', 'confirmText' => 'Cancel Booking', 'confirmClass' => 'bg-red-600 hover:bg-red-700 text-white'])
+@include('components.admin.confirm-dialog', ['name' => 'mark-paid', 'title' => 'Mark as Paid?', 'message' => 'Mark this booking as paid (e.g. bank transfer or cash on site)?', 'confirmText' => 'Mark as Paid', 'confirmClass' => 'bg-emerald-600 hover:bg-emerald-700 text-white'])
+@include('components.admin.confirm-dialog', ['name' => 'refund', 'title' => 'Refund Payment?', 'message' => 'Refund the collected amount via PayMongo and cancel this booking? The guest will be notified by email.', 'confirmText' => 'Refund & Cancel', 'confirmClass' => 'bg-red-600 hover:bg-red-700 text-white'])
 @endsection
 
 <script>

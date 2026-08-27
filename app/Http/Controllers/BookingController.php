@@ -9,7 +9,6 @@ use App\Models\Cottage;
 use App\Models\CottageDateBlock;
 use App\Models\Inquiry;
 use App\Services\InquiryService;
-use Illuminate\Support\Facades\Cache;
 
 /**
  * Handles the booking flow: show booking form and store new bookings.
@@ -19,14 +18,14 @@ class BookingController extends Controller
 {
     use GuardsBookingAccess;
 
+    private const DEDUP_WINDOW_MINUTES = 10;
+
     /**
      * Show booking form with available cottages, blocked dates, and rate info.
      */
     public function create()
     {
-        $cottages = Cottage::where('is_available', true)
-            ->orderBy('sort_order')
-            ->get();
+        $cottages = Cottage::available()->get();
 
         // Prefill only when the requested cottage is actually available. An
         // unavailable cottage (or a non-existent one) silently clears the
@@ -41,7 +40,7 @@ class BookingController extends Controller
         // 'Y-m-d' so the @js() output matches the flatpickr disable[] strings
         // and the 'Y-m-d' dateFormat used on the inputs.
         $blockedByCottage = CottageDateBlock::whereIn('cottage_id', $cottages->pluck('id'))
-            ->where('date', '>=', today())
+            ->future()
             ->select('cottage_id', 'date')
             ->get()
             ->groupBy('cottage_id')
@@ -49,18 +48,7 @@ class BookingController extends Controller
                 ->map(fn ($date) => $date->format('Y-m-d'))
                 ->values());
 
-        $rates = $cottages->mapWithKeys(fn ($c) => [
-            $c->id => [
-                'day_tour' => (float) $c->rate_daytour,
-                'overnight' => (float) $c->rate_overnight,
-                'peak_day_tour' => $c->peak_rate_daytour !== null ? (float) $c->peak_rate_daytour : null,
-                'peak_overnight' => $c->peak_rate_overnight !== null ? (float) $c->peak_rate_overnight : null,
-                'peak_start' => $c->peak_start?->format('m-d'),
-                'peak_end' => $c->peak_end?->format('m-d'),
-                'name' => $c->name,
-                'capacity' => $c->capacity,
-            ],
-        ]);
+        $rates = Cottage::ratesMap($cottages);
 
         return view('pages.book', compact('cottages', 'blockedByCottage', 'rates', 'prefillCottageId'));
     }
@@ -71,7 +59,7 @@ class BookingController extends Controller
     public function store(BookingRequest $request, InquiryService $inquiryService)
     {
         $data = $request->validated();
-        $data['source'] = 'booking';
+        $data['source'] = Inquiry::SOURCE_BOOKING;
 
         // Session marker of inquiry ids this session created, so the
         // idempotency guard below only reuses a booking this requester
@@ -87,7 +75,7 @@ class BookingController extends Controller
         // same cottage + dates. Reuse the earlier one instead.
         $duplicate = Inquiry::query()
             ->where('email', $data['email'])
-            ->where('status', 'pending')
+            ->where('status', Inquiry::STATUS_PENDING)
             ->where('booking_type', $data['booking_type'] ?? null)
             ->where('cottage_id', $data['cottage_id'] ?? null)
             ->when(
@@ -100,7 +88,7 @@ class BookingController extends Controller
                 fn ($q) => $q->whereDate('check_out', $data['check_out']),
                 fn ($q) => $q->whereNull('check_out')
             )
-            ->where('created_at', '>=', now()->subMinutes(10))
+            ->where('created_at', '>=', now()->subMinutes(self::DEDUP_WINDOW_MINUTES))
             ->latest('id')
             ->first();
 
@@ -116,7 +104,7 @@ class BookingController extends Controller
 
         // A new pending booking changes the dashboard's pending count, so drop
         // the cached stats block like the other write paths do.
-        Cache::forget(DashboardController::cacheKey());
+        DashboardController::forgetCache();
 
         $created[] = $inquiry->id;
         session(['booking_created_inquiries' => $created]);

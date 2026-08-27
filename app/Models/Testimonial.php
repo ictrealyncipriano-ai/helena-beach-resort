@@ -37,11 +37,6 @@ class Testimonial extends Model
         return $q->where('is_active', true)->orderBy('sort_order');
     }
 
-    public function scopeFromGuests($q)
-    {
-        return $q->where('source', 'guest');
-    }
-
     protected static function booted(): void
     {
         static::saved(fn () => PublicCache::flush());

@@ -39,7 +39,7 @@ class ActivityLogController extends Controller
             $query->whereDate('created_at', '<=', $request->get('to'));
         }
 
-        $logs = $query->latest('id')->paginate(25)->withQueryString();
+        $logs = $query->latest('id')->paginate(self::ACTIVITY_LOG_PER_PAGE)->withQueryString();
 
         if ($request->header('X-LiveSearch') === '1') {
             return view('admin.activity-logs._table', compact('logs'));

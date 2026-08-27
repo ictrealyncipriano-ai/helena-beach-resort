@@ -56,7 +56,7 @@
 <article class="py-16 sm:py-20 bg-white dark:bg-slate-800">
     <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
         @if($post->cover_image)
-        <img src="{{ Storage::url($post->cover_image) }}" alt="{{ $post->title }}" class="w-full aspect-[16/9] object-cover rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm mb-10">
+        <img src="{{ Storage::url($post->cover_image) }}" alt="{{ $post->title }}" width="768" height="432" class="w-full aspect-[16/9] object-cover rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm mb-10">
         @endif
 
         @if($post->excerpt)

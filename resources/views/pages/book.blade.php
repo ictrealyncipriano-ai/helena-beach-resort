@@ -92,7 +92,7 @@
                             <option value="">Choose a cottage</option>
                             @foreach($cottages as $cottage)
                             <option value="{{ $cottage->id }}" {{ old('cottage_id') == $cottage->id ? 'selected' : '' }}>
-                                {{ $cottage->name }} — ₱{{ number_format($cottage->rate_daytour) }} day / ₱{{ number_format($cottage->rate_overnight) }} night
+                                {{ $cottage->name }} — {{ formatPrice($cottage->rate_daytour) }} day / {{ formatPrice($cottage->rate_overnight) }} night
                             </option>
                             @endforeach
                         </select>
@@ -103,20 +103,22 @@
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
                         <div>
                             <label for="check_in" class="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">Check-in <span class="text-red-600">*</span></label>
-                            <input type="text" id="check_in" name="check_in" x-ref="checkIn" x-model="checkIn" readonly
+                            <input type="text" id="check_in" name="check_in" x-ref="checkIn" x-model="checkIn"
+                                inputmode="numeric" autocomplete="off"
                                 aria-invalid="{{ $errors->has('check_in') ? 'true' : 'false' }}"
                                 @error('check_in') aria-describedby="check-in-error" @enderror
                                 class="w-full px-4 py-2.5 border border-gray-300 dark:bg-slate-800 dark:border-slate-600 dark:text-white dark:placeholder-slate-400 rounded-lg focus:ring-2 focus:ring-teal-700 focus:border-teal-700 dark:focus:border-teal-700 dark:ring-teal-700/20 outline-none transition-colors text-sm @error('check_in') border-red-400 @enderror"
-                                placeholder="Select date">
+                                placeholder="YYYY-MM-DD or pick a date">
                             @error('check_in') <p id="check-in-error" class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                         </div>
                         <div x-show="bookingType === 'overnight'">
                             <label for="check_out" class="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">Check-out <span class="text-red-600">*</span></label>
-                            <input type="text" id="check_out" name="check_out" x-ref="checkOut" x-model="checkOut" readonly
+                            <input type="text" id="check_out" name="check_out" x-ref="checkOut" x-model="checkOut"
+                                inputmode="numeric" autocomplete="off"
                                 aria-invalid="{{ $errors->has('check_out') ? 'true' : 'false' }}"
                                 @error('check_out') aria-describedby="check-out-error" @enderror
                                 class="w-full px-4 py-2.5 border border-gray-300 dark:bg-slate-800 dark:border-slate-600 dark:text-white dark:placeholder-slate-400 rounded-lg focus:ring-2 focus:ring-teal-700 focus:border-teal-700 dark:focus:border-teal-700 dark:ring-teal-700/20 outline-none transition-colors text-sm @error('check_out') border-red-400 @enderror"
-                                placeholder="Select date">
+                                placeholder="YYYY-MM-DD or pick a date">
                             @error('check_out') <p id="check-out-error" class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                         </div>
                     </div>
@@ -327,6 +329,10 @@ function bookingForm() {
                     this.fpIn = flatpickr(this.$refs.checkIn, {
                         dateFormat: 'Y-m-d',
                         minDate: 'today',
+                        // Keyboard users must be able to type a date directly
+                        // (WCAG 2.1.1); the picker remains available via click
+                        // or Enter, and typed values are parsed on blur/Enter.
+                        allowInput: true,
                         disable: this.blockedDates,
                         onChange: function(selectedDates, dateStr) {
                             self.checkIn = dateStr;
@@ -341,6 +347,7 @@ function bookingForm() {
                     this.fpOut = flatpickr(this.$refs.checkOut, {
                         dateFormat: 'Y-m-d',
                         minDate: 'today',
+                        allowInput: true,
                         disable: this.blockedDates,
                         onChange: function(selectedDates, dateStr) {
                             self.checkOut = dateStr;

@@ -39,7 +39,16 @@ return Application::configure(basePath: dirname(__DIR__))
         // so getScheme() reflects X-Forwarded-Proto behind Vercel/Cloudflare.
         $middleware->append(\App\Http\Middleware\CanonicalHost::class);
         $middleware->append(\App\Http\Middleware\SecurityHeaders::class);
+        $middleware->append(\App\Http\Middleware\CompressResponse::class);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+        // When the admin-login or password-reset throttle fires, redirect
+        // back to the form with a user-friendly error instead of a raw 429.
+        $exceptions->renderable(function (\Illuminate\Http\Exceptions\ThrottleRequestsException $e, \Illuminate\Http\Request $request) {
+            if ($request->is('admin/login') || $request->is('admin/password/*')) {
+                return back()->withErrors([
+                    'email' => 'Too many failed attempts. Please try again in a few minutes.',
+                ])->onlyInput('email');
+            }
+        });
     })->create();

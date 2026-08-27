@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Cottage;
+use App\Models\Inquiry;
 use App\Models\CottageDateBlock;
 use Carbon\CarbonImmutable;
 use Carbon\CarbonInterface;
@@ -97,7 +98,7 @@ class AvailabilityController extends Controller
             $reason = $block->reason;
 
             if ($block->inquiry_id === null) {
-                $type = 'manual';
+                $type = Inquiry::METHOD_MANUAL;
             } elseif (is_string($reason) && str_contains($reason, 'Booked')) {
                 $type = 'booked';
             } else {

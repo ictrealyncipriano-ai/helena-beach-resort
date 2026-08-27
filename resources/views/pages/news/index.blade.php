@@ -34,7 +34,7 @@
                    class="group bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm overflow-hidden hover:shadow-lg hover:border-teal-100 dark:hover:border-teal-800 transition-all duration-300 reveal {{ $i > 0 ? 'reveal-delay-' . min($i % 3 + 1, 4) : '' }}">
                     <div class="aspect-[16/9] bg-gray-100 dark:bg-slate-700 overflow-hidden">
                         @if($post->cover_image)
-                            <img src="{{ Storage::url($post->cover_image) }}" alt="{{ $post->title }}" loading="lazy" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105">
+                            <img src="{{ Storage::url($post->cover_image) }}" alt="{{ $post->title }}" loading="lazy" width="600" height="338" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105">
                         @else
                             <div class="w-full h-full flex items-center justify-center text-teal-600 dark:text-teal-400">
                                 <x-icons name="sparkles" class="w-10 h-10" />

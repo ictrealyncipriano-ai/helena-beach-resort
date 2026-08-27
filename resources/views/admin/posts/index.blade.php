@@ -49,5 +49,5 @@
     </div>
 </div>
 
-@include('admin.components.confirm-dialog', ['name' => 'delete', 'title' => 'Delete Post?', 'message' => 'Are you sure? This cannot be undone.'])
+@include('components.admin.confirm-dialog', ['name' => 'delete', 'title' => 'Delete Post?', 'message' => 'Are you sure? This cannot be undone.'])
 @endsection

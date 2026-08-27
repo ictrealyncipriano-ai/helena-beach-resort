@@ -58,7 +58,7 @@ if ($editingId) {
         </div>
 
         @if($faqs->isEmpty())
-            @include('admin.components.empty-state', [
+            @include('components.admin.empty-state', [
                 'title' => 'No FAQs',
                 'message' => 'Create FAQs for your guests.',
                 'actionClick' => 'openCreate()',
@@ -107,7 +107,7 @@ if ($editingId) {
             </div>
 
             <div class="px-5 py-4 border-t border-gray-100 dark:border-slate-700">
-                @include('admin.components.pagination', ['paginator' => $faqs])
+                @include('components.admin.pagination', ['paginator' => $faqs])
             </div>
         @endif
     </div>
@@ -131,7 +131,7 @@ if ($editingId) {
     </x-admin.modal>
 </div>
 
-@include('admin.components.confirm-dialog', ['name' => 'delete', 'title' => 'Delete FAQ?', 'message' => 'Are you sure? This cannot be undone.'])
+@include('components.admin.confirm-dialog', ['name' => 'delete', 'title' => 'Delete FAQ?', 'message' => 'Are you sure? This cannot be undone.'])
 @endsection
 
 @push('scripts')

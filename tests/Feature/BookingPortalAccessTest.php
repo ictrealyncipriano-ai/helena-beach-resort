@@ -46,13 +46,42 @@ class BookingPortalAccessTest extends TestCase
         $this->get(route('booking.confirmation', $inquiry))->assertStatus(404);
     }
 
-    public function test_wrong_token_in_session_returns_404(): void
+    public function test_stale_token_after_rotation_redirects_to_lookup(): void
     {
         $inquiry = $this->createBooking();
 
-        $this->withSession(['booking_access_tokens' => [$inquiry->id => str_repeat('x', 40)]])
+        // The session once had access, then the token rotated underneath it:
+        // the guest must land on the lookup page, not a dead-end 404.
+        $this->withSession(['booking_access_tokens' => [$inquiry->id => 'stale-token-value']])
             ->get(route('booking.portal.show', $inquiry))
-            ->assertStatus(404);
+            ->assertRedirect(route('booking.portal.lookup'))
+            ->assertSessionHas('error');
+    }
+
+    public function test_stale_token_on_state_change_redirects_without_side_effects(): void
+    {
+        $inquiry = $this->createBooking();
+
+        $this->withSession(['booking_access_tokens' => [$inquiry->id => 'stale-token-value']])
+            ->post(route('booking.portal.cancel', $inquiry))
+            ->assertRedirect(route('booking.portal.lookup'));
+
+        $this->assertSame('pending', $inquiry->refresh()->status);
+    }
+
+    public function test_stale_token_entry_is_cleaned_up_on_redirect(): void
+    {
+        $inquiry = $this->createBooking();
+
+        $this->withSession(['booking_access_tokens' => [
+            $inquiry->id => 'stale-token-value',
+            999999 => 'other-booking',
+        ]])
+            ->get(route('booking.portal.show', $inquiry))
+            ->assertRedirect(route('booking.portal.lookup'));
+
+        // Follow-up with no tokens at all must be a plain 404 again.
+        $this->get(route('booking.portal.show', $inquiry))->assertStatus(404);
     }
 
     public function test_matching_session_token_can_view_booking(): void

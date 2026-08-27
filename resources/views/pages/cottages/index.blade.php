@@ -30,7 +30,7 @@
                             class="w-full px-3 py-2.5 text-sm bg-white border border-gray-200 dark:bg-slate-800 dark:border-slate-600 dark:text-white rounded-lg focus:ring-2 focus:ring-teal-600 focus:border-teal-500 outline-none transition-colors">
                             <option value="">Choose a cottage</option>
                             @foreach($cottages as $cottage)
-                            <option value="{{ $cottage->id }}" data-night="₱{{ number_format($cottage->rate_overnight) }}">{{ $cottage->name }}</option>
+                            <option value="{{ $cottage->id }}" data-night="{{ formatPrice($cottage->rate_overnight) }}">{{ $cottage->name }}</option>
                             @endforeach
                         </select>
                     </div>
@@ -155,7 +155,7 @@
                    x-bind:data-sort="{{ $cottage->sort_order }}">
                     <div class="aspect-[4/3] bg-teal-50 dark:bg-teal-900/30 overflow-hidden relative">
                         @if($cottage->primaryPhoto)
-                        <img src="{{ Storage::url($cottage->primaryPhoto->photo_path) }}" alt="{{ $cottage->name }}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" loading="lazy" decoding="async">
+                        <img src="{{ Storage::url($cottage->primaryPhoto->photo_path) }}" alt="{{ $cottage->name }}" width="400" height="300" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" loading="lazy" decoding="async">
                         @else
                         <div class="w-full h-full flex items-center justify-center text-teal-300">
                             <x-icons name="building" class="w-16 h-16" />
@@ -184,11 +184,11 @@
                             <div class="text-right">
                                 @if($cottage->rate_daytour)
                                 <div class="text-xs text-gray-500 dark:text-slate-400">Day Tour</div>
-                                <div class="text-sm font-semibold text-teal-700 dark:text-teal-300">₱{{ number_format($cottage->rate_daytour) }}</div>
+                                <div class="text-sm font-semibold text-teal-700 dark:text-teal-300">{{ formatPrice($cottage->rate_daytour) }}</div>
                                 @endif
                                 @if($cottage->rate_overnight)
                                 <div class="text-xs text-gray-500 dark:text-slate-400 mt-1">Overnight</div>
-                                <div class="text-sm font-semibold text-teal-700 dark:text-teal-300">₱{{ number_format($cottage->rate_overnight) }}</div>
+                                <div class="text-sm font-semibold text-teal-700 dark:text-teal-300">{{ formatPrice($cottage->rate_overnight) }}</div>
                                 @endif
                             </div>
                         </div>

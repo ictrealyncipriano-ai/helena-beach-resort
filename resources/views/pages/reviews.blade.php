@@ -58,7 +58,7 @@
                 <p class="text-gray-600 dark:text-slate-300 text-sm leading-relaxed flex-1 italic">"{{ $testimonial->content }}"</p>
                 <div class="flex items-center gap-3 mt-5 pt-4 border-t border-gray-100 dark:border-slate-700">
                     @if($testimonial->guest_avatar)
-                    <img src="{{ Storage::url($testimonial->guest_avatar) }}" alt="{{ $testimonial->guest_name }}" class="w-10 h-10 rounded-full object-cover ring-2 ring-white dark:ring-slate-700">
+                    <img src="{{ Storage::url($testimonial->guest_avatar) }}" alt="{{ $testimonial->guest_name }}" width="40" height="40" class="w-10 h-10 rounded-full object-cover ring-2 ring-white dark:ring-slate-700">
                     @else
                     <div class="w-10 h-10 rounded-full bg-teal-100 dark:bg-teal-900/40 flex items-center justify-center text-teal-700 dark:text-teal-300 font-semibold text-sm ring-2 ring-white dark:ring-slate-700">
                         {{ substr($testimonial->guest_name, 0, 1) }}

@@ -2,6 +2,7 @@
 
 @section('title', 'Find My Booking')
 @section('description', 'Look up your booking at Helena Beach Resort using your email and reference code.')
+@section('robots', 'noindex, nofollow')
 
 @section('content')
 <x-hero title="Find My Booking" subtitle="Enter your email and reference code to view your booking details." />

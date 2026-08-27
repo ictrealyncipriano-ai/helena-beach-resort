@@ -35,8 +35,7 @@ class ExportsTest extends TestCase
             'status' => 'confirmed',
             'source' => 'website',
             'total_amount' => 1500.00,
-            'paid_at' => now(),
-            'paid_amount' => 1500.00,
+            'amount_paid' => 1500.00,
             'payment_method' => 'gcash',
         ], $overrides));
     }
@@ -88,9 +87,9 @@ class ExportsTest extends TestCase
             'rate_daytour' => 1500, 'rate_overnight' => 3000,
             'is_available' => true, 'sort_order' => 1,
         ]);
-        $this->inquiry(['cottage_id' => $cottage->id, 'total_amount' => 1500, 'paid_amount' => 1500]);
-        $this->inquiry(['cottage_id' => $cottage->id, 'total_amount' => 1500, 'paid_amount' => 1500]);
-        $this->inquiry(['total_amount' => 5000, 'paid_amount' => 5000]); // unlinked cottage, no join row
+        $this->inquiry(['cottage_id' => $cottage->id, 'total_amount' => 1500, 'amount_paid' => 1500]);
+        $this->inquiry(['cottage_id' => $cottage->id, 'total_amount' => 1500, 'amount_paid' => 1500]);
+        $this->inquiry(['total_amount' => 5000, 'amount_paid' => 5000]); // unlinked cottage, no join row
 
         $body = $this->actingAs($this->admin())
             ->get(route('admin.exports.revenue'))
@@ -112,8 +111,7 @@ class ExportsTest extends TestCase
             'status' => 'confirmed',
             'source' => 'website',
             'total_amount' => 2000,
-            'paid_at' => now(),
-            'paid_amount' => 2000,
+            'amount_paid' => 2000,
         ]);
         $guest->update(['total_stays' => 1, 'last_stay_at' => now()]);
 
@@ -182,8 +180,8 @@ class ExportsTest extends TestCase
             'rate_daytour' => 1500, 'rate_overnight' => 3000,
             'is_available' => true, 'sort_order' => 1,
         ]);
-        $this->inquiry(['cottage_id' => $cottage->id, 'total_amount' => 1500, 'paid_amount' => 1500]);
-        $this->inquiry(['cottage_id' => $cottage->id, 'total_amount' => 1500, 'paid_amount' => 1500]);
+        $this->inquiry(['cottage_id' => $cottage->id, 'total_amount' => 1500, 'amount_paid' => 1500]);
+        $this->inquiry(['cottage_id' => $cottage->id, 'total_amount' => 1500, 'amount_paid' => 1500]);
 
         $this->actingAs($this->admin())
             ->get(route('admin.exports.revenue.view'))
@@ -205,8 +203,7 @@ class ExportsTest extends TestCase
             'status' => 'confirmed',
             'source' => 'website',
             'total_amount' => 2000,
-            'paid_at' => now(),
-            'paid_amount' => 2000,
+            'amount_paid' => 2000,
         ]);
         $guest->update(['total_stays' => 1, 'last_stay_at' => now()]);
 
