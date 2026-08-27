@@ -2,31 +2,38 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Concerns\CancelsBookings;
+use App\Concerns\ConfirmsBookings;
 use App\Exceptions\BookingConflictException;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\InquiryRequest;
-use App\Mail\BookingCancelled;
-use App\Mail\BookingConfirmed;
 use App\Mail\RefundReceived;
 use App\Models\Cottage;
 use App\Models\Guest;
 use App\Models\Inquiry;
-use App\Models\SiteSetting;
 use App\Services\ActivityLogger;
 use App\Services\InquiryService;
 use App\Services\PayMongoService;
+use App\Services\RefundService;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\View\View;
 
 class InquiryController extends Controller
 {
-    public function __construct(private ActivityLogger $logger)
-    {
+    use CancelsBookings;
+    use ConfirmsBookings;
+
+    public function __construct(
+        private ActivityLogger $logger,
+        private RefundService $refundService
+    ) {
     }
 
-    public function index(Request $request)
+    public function index(Request $request): View
     {
         $query = Inquiry::with(['cottage', 'guest']);
 
@@ -70,7 +77,7 @@ class InquiryController extends Controller
      * existing guest is selected, and auto-calculates the total from the
      * cottage rate when the amount is left blank.
      */
-    public function store(InquiryRequest $request, InquiryService $inquiryService)
+    public function store(InquiryRequest $request, InquiryService $inquiryService): RedirectResponse
     {
         $data = $request->validated();
 
@@ -97,41 +104,10 @@ class InquiryController extends Controller
             'reference_code' => Inquiry::generateReferenceCode(),
         ]);
 
-        if (empty($inquiry->guest_id) && $inquiry->email) {
-            // Include soft-deleted rows in the lookup: SoftDeletes hides
-            // trashed guests from updateOrCreate, whose INSERT would then
-            // collide with the unique guests.email index (HTTP 500). Reuse and
-            // restore the trashed profile instead. Emails are matched
-            // case-insensitively and normalized, so an email typed with
-            // different casing never creates a duplicate profile.
-            // Admin-entered name/phone are trusted here, so they are refreshed
-            // on the record.
-            $guest = Guest::findByEmailOrCreate(
-                $inquiry->email,
-                ['name' => $inquiry->name, 'phone' => $inquiry->phone]
-            );
-
-            if ($guest->trashed()) {
-                $guest->restore();
-                // A trashed profile carries another person's history; reset
-                // the transient stay/notes fields so the 'new' guest does
-                // not inherit it.
-                $guest->update(['total_stays' => 0, 'last_stay_at' => null, 'notes' => null]);
-            }
-
-            $guest->update(['name' => $inquiry->name, 'phone' => $inquiry->phone]);
-            $inquiry->guest()->associate($guest)->save();
-        }
+        $this->linkGuest($inquiry);
 
         try {
-            DB::transaction(function () use ($inquiry) {
-                if ($inquiry->status === Inquiry::STATUS_CONFIRMED) {
-                    $inquiry->bookBlocks();
-                    $this->markConfirmed($inquiry);
-                } elseif ($inquiry->status === Inquiry::STATUS_PENDING) {
-                    $inquiry->reserveBlocks();
-                }
-            });
+            $this->activateBlocks($inquiry);
         } catch (BookingConflictException $e) {
             // The inquiry was never usable (its blocks rolled back), so it
             // should not linger as a trashed row — fully remove it.
@@ -148,14 +124,66 @@ class InquiryController extends Controller
             ->with('success', "Walk-in inquiry {$inquiry->reference_code} created successfully.");
     }
 
-    public function show(Inquiry $inquiry)
+    /**
+     * Auto-link a guest profile for a walk-in booking when no existing guest
+     * was selected. Reuses and restores a soft-deleted profile instead of
+     * colliding with the unique guests.email index.
+     */
+    private function linkGuest(Inquiry $inquiry): void
+    {
+        if (! empty($inquiry->guest_id) || ! $inquiry->email) {
+            return;
+        }
+
+        // Include soft-deleted rows in the lookup: SoftDeletes hides
+        // trashed guests from updateOrCreate, whose INSERT would then
+        // collide with the unique guests.email index (HTTP 500). Reuse and
+        // restore the trashed profile instead. Emails are matched
+        // case-insensitively and normalized, so an email typed with
+        // different casing never creates a duplicate profile.
+        // Admin-entered name/phone are trusted here, so they are refreshed
+        // on the record.
+        $guest = Guest::findByEmailOrCreate(
+            $inquiry->email,
+            ['name' => $inquiry->name, 'phone' => $inquiry->phone]
+        );
+
+        if ($guest->trashed()) {
+            $guest->restore();
+            // A trashed profile carries another person's history; reset
+            // the transient stay/notes fields so the 'new' guest does
+            // not inherit it.
+            $guest->update(['total_stays' => 0, 'last_stay_at' => null, 'notes' => null]);
+        }
+
+        $guest->update(['name' => $inquiry->name, 'phone' => $inquiry->phone]);
+        $inquiry->guest()->associate($guest)->save();
+    }
+
+    /**
+     * Hold the inquiry's date blocks, promoting to booked (and recording the
+     * guest stay) when the booking is created directly as confirmed.
+     */
+    private function activateBlocks(Inquiry $inquiry): void
+    {
+        DB::transaction(function () use ($inquiry) {
+            if ($inquiry->status === Inquiry::STATUS_CONFIRMED) {
+                $inquiry->bookBlocks();
+                $this->markConfirmed($inquiry);
+            } elseif ($inquiry->status === Inquiry::STATUS_PENDING) {
+                $inquiry->reserveBlocks();
+            }
+        });
+    }
+
+    public function show(Inquiry $inquiry): View
     {
         $inquiry->load(['cottage', 'guest']);
 
         return view('admin.inquiries.show', compact('inquiry'));
     }
 
-    public function edit(Inquiry $inquiry)
+    public function edit(Inquiry $inquiry): View
     {
         $inquiry->load(['cottage', 'guest']);
         $cottages = Cottage::pluck('name', 'id');
@@ -164,7 +192,7 @@ class InquiryController extends Controller
         return view('admin.inquiries.form', compact('inquiry', 'cottages', 'guests'));
     }
 
-    public function update(InquiryRequest $request, Inquiry $inquiry)
+    public function update(InquiryRequest $request, Inquiry $inquiry): RedirectResponse
     {
         $data = $request->validated();
 
@@ -222,7 +250,7 @@ class InquiryController extends Controller
             ->with('success', 'Inquiry updated successfully.');
     }
 
-    public function destroy(Inquiry $inquiry)
+    public function destroy(Inquiry $inquiry): RedirectResponse
     {
         $inquiry->releaseBlocks();
         $inquiry->delete();
@@ -233,100 +261,13 @@ class InquiryController extends Controller
             ->with('success', 'Inquiry deleted successfully.');
     }
 
-    public function confirm(Inquiry $inquiry)
-    {
-        if ($inquiry->status !== Inquiry::STATUS_PENDING) {
-            return back()->with('error', 'Only pending inquiries can be confirmed.');
-        }
-
-        try {
-            DB::transaction(function () use ($inquiry) {
-                $inquiry->update(['status' => Inquiry::STATUS_CONFIRMED]);
-                $inquiry->bookBlocks();
-                $this->markConfirmed($inquiry);
-            });
-        } catch (BookingConflictException $e) {
-            return back()->with('error', $e->getMessage());
-        }
-
-        DashboardController::forgetCache();
-
-        $this->logger->record('inquiry.confirmed', $inquiry, "Booking {$inquiry->reference_code} confirmed.");
-
-        return redirect()->route('admin.inquiries.index')
-            ->with('success', "Booking {$inquiry->reference_code} confirmed successfully.");
-    }
-
-    /**
-     * Record the stay on the guest profile and email the guest to confirm
-     * their booking. Shared by the Confirm button and the edit form so
-     * both confirmation paths behave identically.
-     */
-    private function markConfirmed(Inquiry $inquiry): void
-    {
-        if ($inquiry->guest) {
-            $inquiry->guest->increment('total_stays');
-            $inquiry->guest->update(['last_stay_at' => now()]);
-        }
-
-        try {
-            Mail::to($inquiry->email)->send(new BookingConfirmed($inquiry));
-        } catch (\Exception $e) {
-            Log::error('Failed to send booking confirmation email', [
-                'inquiry_id' => $inquiry->id,
-                'error' => $e->getMessage(),
-            ]);
-        }
-    }
-
-    public function cancel(Inquiry $inquiry)
-    {
-        if ($inquiry->status !== Inquiry::STATUS_PENDING) {
-            return back()->with('error', 'Only pending inquiries can be cancelled.');
-        }
-
-        $wasConfirmed = $inquiry->status === Inquiry::STATUS_CONFIRMED;
-
-        $inquiry->update(['status' => Inquiry::STATUS_CANCELLED]);
-        $inquiry->releaseBlocks();
-
-        // total_stays is only incremented by markConfirmed(), and this path
-        // only accepts pending inquiries (guarded above), so a pending cancel
-        // must never decrement the counter — doing so silently subtracts a
-        // stay belonging to a different confirmed booking on the same guest.
-        if ($wasConfirmed) {
-            $inquiry->reverseStay();
-        }
-
-        DashboardController::forgetCache();
-
-        $this->logger->record('inquiry.cancelled', $inquiry, "Booking {$inquiry->reference_code} cancelled.");
-
-        try {
-            Mail::to($inquiry->email)->send(new BookingCancelled($inquiry));
-
-            $ownerEmail = SiteSetting::getValue('contact_email');
-            if ($ownerEmail) {
-                Mail::to($ownerEmail)->send(new BookingCancelled($inquiry));
-            }
-        } catch (\Exception $e) {
-            Log::error('Failed to send booking cancelled email', [
-                'inquiry_id' => $inquiry->id,
-                'error' => $e->getMessage(),
-            ]);
-        }
-
-        return redirect()->route('admin.inquiries.index')
-            ->with('success', "Booking {$inquiry->reference_code} cancelled successfully.");
-    }
-
     /**
      * Record a manually-collected settlement (bank transfer / cash-on-site).
      * The admin states how much money actually arrived: a partial (deposit)
      * payment is recorded as such and the booking stays confirmed-unpaid
      * until the balance is settled.
      */
-    public function markPaid(Request $request, Inquiry $inquiry)
+    public function markPaid(Request $request, Inquiry $inquiry): RedirectResponse
     {
         if ($inquiry->status !== Inquiry::STATUS_CONFIRMED) {
             return back()->with('error', 'Only confirmed bookings can be marked as paid.');
@@ -373,7 +314,7 @@ class InquiryController extends Controller
      * the amount currently due) so a deposit proof no longer marks the
      * whole booking as fully paid.
      */
-    public function approvePaymentProof(Request $request, Inquiry $inquiry)
+    public function approvePaymentProof(Request $request, Inquiry $inquiry): RedirectResponse
     {
         if (! $inquiry->hasPendingPaymentProof()) {
             return back()->with('error', 'This booking has no payment proof awaiting review.');
@@ -422,7 +363,7 @@ class InquiryController extends Controller
      * Reject a guest-submitted payment proof. The booking stays unpaid and
      * the guest can upload a new proof.
      */
-    public function rejectPaymentProof(Request $request, Inquiry $inquiry)
+    public function rejectPaymentProof(Request $request, Inquiry $inquiry): RedirectResponse
     {
         if (! $inquiry->hasPendingPaymentProof()) {
             return back()->with('error', 'This booking has no payment proof awaiting review.');
@@ -450,35 +391,23 @@ class InquiryController extends Controller
      * total; manually-collected money has no PayMongo reference and must be
      * returned offline.
      */
-    public function refund(Inquiry $inquiry, PayMongoService $payMongo)
+    public function refund(Inquiry $inquiry, PayMongoService $payMongo): RedirectResponse
     {
         if (! $inquiry->hasPayments()) {
             return redirect()->route('admin.inquiries.show', $inquiry)
                 ->with('error', 'This booking has no payment to refund.');
         }
 
-        // Atomically claim the refund BEFORE calling PayMongo so two
-        // concurrent requests can never double-refund (TOCTOU guard).
-        $claimed = Inquiry::where('id', $inquiry->id)
-            ->whereNull('refunded_at')
-            ->update(['refunded_at' => now()]);
-
-        if ($claimed !== 1) {
-            return redirect()->route('admin.inquiries.show', $inquiry)
-                ->with('error', 'This booking has already been refunded.');
-        }
-
         try {
-            $payMongo->refund($inquiry);
+            $claimed = $this->refundService->claimAndProcess($inquiry, $payMongo);
         } catch (\RuntimeException $e) {
-            // Roll the claim back so the admin can retry after fixing the cause.
-            // A model-level update() would skip the column: the in-memory
-            // refunded_at is still null (the claim was a bulk update), so it
-            // never registers as dirty. Update at the query level instead.
-            Inquiry::where('id', $inquiry->id)->update(['refunded_at' => null]);
-
             return redirect()->route('admin.inquiries.show', $inquiry)
                 ->with('error', $e->getMessage());
+        }
+
+        if ($claimed !== RefundService::CLAIMED) {
+            return redirect()->route('admin.inquiries.show', $inquiry)
+                ->with('error', 'This booking has already been refunded.');
         }
 
         $inquiry->refresh();

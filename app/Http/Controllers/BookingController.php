@@ -9,6 +9,8 @@ use App\Models\Cottage;
 use App\Models\CottageDateBlock;
 use App\Models\Inquiry;
 use App\Services\InquiryService;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\View\View;
 
 /**
  * Handles the booking flow: show booking form and store new bookings.
@@ -23,7 +25,7 @@ class BookingController extends Controller
     /**
      * Show booking form with available cottages, blocked dates, and rate info.
      */
-    public function create()
+    public function create(): View
     {
         $cottages = Cottage::available()->get();
 
@@ -56,7 +58,7 @@ class BookingController extends Controller
     /**
      * Store a new booking and redirect to confirmation page.
      */
-    public function store(BookingRequest $request, InquiryService $inquiryService)
+    public function store(BookingRequest $request, InquiryService $inquiryService): RedirectResponse
     {
         $data = $request->validated();
         $data['source'] = Inquiry::SOURCE_BOOKING;

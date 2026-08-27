@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Post;
 use App\Support\PublicCache;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\View\View;
 
 /**
  * Public news / announcements pages.
@@ -12,7 +13,7 @@ use Illuminate\Support\Facades\Cache;
 class PostController extends Controller
 {
     /** Paginated list of published posts */
-    public function index()
+    public function index(): View
     {
         $posts = $this->paginate(
             Cache::remember(PublicCache::POSTS_ALL, PublicCache::CONTENT_TTL, function () {
@@ -25,7 +26,7 @@ class PostController extends Controller
     }
 
     /** Single published article; unpublished/scheduled posts 404 */
-    public function show(Post $post)
+    public function show(Post $post): View
     {
         abort_unless($post->isPublished(), 404);
 

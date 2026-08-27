@@ -7,14 +7,16 @@ use App\Models\Cottage;
 use App\Models\CottagePhoto;
 use App\Services\ActivityLogger;
 use App\Traits\ManagesCloudflareFiles;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Illuminate\View\View;
 
 class CottageController extends Controller
 {
     use ManagesCloudflareFiles;
-    public function index(Request $request)
+    public function index(Request $request): View
     {
         $query = Cottage::withCount('inquiries')->with(['primaryPhoto', 'amenities', 'photos', 'dateBlocks']);
 
@@ -65,12 +67,12 @@ class CottageController extends Controller
         return view('admin.cottages.index', compact('cottages', 'cottagesData'));
     }
 
-    public function create()
+    public function create(): View
     {
         return view('admin.cottages.form', ['cottage' => new Cottage]);
     }
 
-    public function store(Request $request, ActivityLogger $logger)
+    public function store(Request $request, ActivityLogger $logger): RedirectResponse
     {
         $data = $this->validated($request);
 
@@ -81,38 +83,9 @@ class CottageController extends Controller
 
         $cottage = Cottage::create($data);
 
-        if ($request->has('amenities')) {
-            foreach ($request->input('amenities', []) as $amenity) {
-                if (! empty($amenity['name'])) {
-                    $cottage->amenities()->create([
-                        'name' => $amenity['name'],
-                        'icon' => $amenity['icon'] ?? null,
-                    ]);
-                }
-            }
-        }
-
-        if ($request->has('date_blocks')) {
-            foreach ($request->input('date_blocks', []) as $block) {
-                if (! empty($block['date'])) {
-                    $cottage->dateBlocks()->create([
-                        'date' => $block['date'],
-                        'reason' => $block['reason'] ?? null,
-                    ]);
-                }
-            }
-        }
-
-        if ($request->hasFile('photos')) {
-            foreach ($request->file('photos', []) as $i => $photo) {
-                $path = $photo->store('cottages', 'cloudflare');
-                $cottage->photos()->create([
-                    'photo_path' => $path,
-                    'is_primary' => $request->input('primary_photo_index') == $i,
-                    'sort_order' => $i,
-                ]);
-            }
-        }
+        $this->syncAmenities($cottage, $request);
+        $this->syncDateBlocks($cottage, $request);
+        $this->syncPhotos($cottage, $request);
 
         $logger->record('cottage.created', $cottage, "Cottage {$cottage->name} created.", [
             'capacity' => $cottage->capacity,
@@ -123,14 +96,14 @@ class CottageController extends Controller
             ->with('success', 'Cottage created successfully.');
     }
 
-    public function edit(Cottage $cottage)
+    public function edit(Cottage $cottage): View
     {
         $cottage->load(['amenities', 'photos', 'dateBlocks']);
 
         return view('admin.cottages.form', compact('cottage'));
     }
 
-    public function update(Request $request, Cottage $cottage, ActivityLogger $logger)
+    public function update(Request $request, Cottage $cottage, ActivityLogger $logger): RedirectResponse
     {
         $data = $this->validated($request, $cottage);
 
@@ -140,7 +113,25 @@ class CottageController extends Controller
         $data['slug'] = $data['slug'] ?: $cottage->slug;
         $cottage->update($data);
 
-        $cottage->amenities()->delete();
+        $this->syncAmenities($cottage, $request);
+        $this->syncDateBlocks($cottage, $request, true);
+        $this->syncPhotos($cottage, $request);
+
+        $logger->record('cottage.updated', $cottage, "Cottage {$cottage->name} updated.", [
+            'capacity' => $cottage->capacity,
+            'rate_overnight' => $cottage->rate_overnight,
+        ]);
+
+        return redirect()->route('admin.cottages.index')
+            ->with('success', 'Cottage updated successfully.');
+    }
+
+    /**
+     * Replace the cottage's amenities from the submitted form. Empty amenity
+     * names are skipped.
+     */
+    private function syncAmenities(Cottage $cottage, Request $request): void
+    {
         if ($request->has('amenities')) {
             foreach ($request->input('amenities', []) as $amenity) {
                 if (! empty($amenity['name'])) {
@@ -151,21 +142,35 @@ class CottageController extends Controller
                 }
             }
         }
+    }
 
-        // Delete only non-inquiry date blocks. Blocks whose reason contains
-        // "HB-" are held by live inquiries (Pending:/Booked:) and must never
-        // be wiped by a cottage edit — otherwise a confirmed guest's dates
-        // could be silently freed.
-        $cottage->dateBlocks()
-            ->where(fn ($q) => $q->whereNull('reason')->orWhere('reason', 'not like', '%HB-%'))
-            ->delete();
+    /**
+     * Apply the submitted date blocks. On update the existing non-inquiry
+     * blocks are deleted first, and with $protectInquiryBlocks a block held
+     * by a live inquiry (reason contains "HB-") is never touched.
+     */
+    private function syncDateBlocks(Cottage $cottage, Request $request, bool $protectInquiryBlocks = false): void
+    {
+        if (! $request->has('date_blocks')) {
+            return;
+        }
 
-        if ($request->has('date_blocks')) {
-            foreach ($request->input('date_blocks', []) as $block) {
-                if (empty($block['date'])) {
-                    continue;
-                }
+        if ($protectInquiryBlocks) {
+            // Delete only non-inquiry date blocks. Blocks whose reason contains
+            // "HB-" are held by live inquiries (Pending:/Booked:) and must never
+            // be wiped by a cottage edit — otherwise a confirmed guest's dates
+            // could be silently freed.
+            $cottage->dateBlocks()
+                ->where(fn ($q) => $q->whereNull('reason')->orWhere('reason', 'not like', '%HB-%'))
+                ->delete();
+        }
 
+        foreach ($request->input('date_blocks', []) as $block) {
+            if (empty($block['date'])) {
+                continue;
+            }
+
+            if ($protectInquiryBlocks) {
                 // Defense in depth: never touch a block that an inquiry holds.
                 $existing = $cottage->dateBlocks()->where('date', $block['date'])->first();
                 if ($existing && str_contains((string) $existing->reason, 'HB-')) {
@@ -176,9 +181,22 @@ class CottageController extends Controller
                     ['date' => $block['date']],
                     ['reason' => $block['reason'] ?? null]
                 );
+            } else {
+                $cottage->dateBlocks()->create([
+                    'date' => $block['date'],
+                    'reason' => $block['reason'] ?? null,
+                ]);
             }
         }
+    }
 
+    /**
+     * Upload new photos from the form, and (on update) delete the photos
+     * marked for removal. Only integer ids belonging to THIS cottage are
+     * honored, so a crafted id list can never delete another cottage's images.
+     */
+    private function syncPhotos(Cottage $cottage, Request $request): void
+    {
         if ($request->hasFile('photos')) {
             foreach ($request->file('photos', []) as $i => $photo) {
                 $path = $photo->store('cottages', 'cloudflare');
@@ -203,14 +221,6 @@ class CottageController extends Controller
                 }
             }
         }
-
-        $logger->record('cottage.updated', $cottage, "Cottage {$cottage->name} updated.", [
-            'capacity' => $cottage->capacity,
-            'rate_overnight' => $cottage->rate_overnight,
-        ]);
-
-        return redirect()->route('admin.cottages.index')
-            ->with('success', 'Cottage updated successfully.');
     }
 
     /**
@@ -276,7 +286,7 @@ class CottageController extends Controller
         return $data;
     }
 
-    public function destroy(Cottage $cottage, ActivityLogger $logger)
+    public function destroy(Cottage $cottage, ActivityLogger $logger): RedirectResponse
     {
         // Never delete a cottage that still holds dates for a live booking:
         // the cascade would silently destroy the date blocks (and the hold)

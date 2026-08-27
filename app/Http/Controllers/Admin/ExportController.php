@@ -6,8 +6,11 @@ use App\Http\Controllers\Controller;
 use App\Models\Guest;
 use App\Models\Inquiry;
 use App\Traits\QueriesByMonth;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
@@ -17,7 +20,7 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 class ExportController extends Controller
 {
     use QueriesByMonth;
-    public function index()
+    public function index(): View
     {
         return view('admin.exports.index');
     }
@@ -68,7 +71,7 @@ class ExportController extends Controller
     /**
      * Render the inquiries report as a PDF-style document in the browser.
      */
-    public function inquiriesView(Request $request)
+    public function inquiriesView(Request $request): View
     {
         $rows = $this->inquiriesQuery($request)->with('cottage')->get();
 
@@ -92,7 +95,7 @@ class ExportController extends Controller
     /**
      * Render the revenue report as a PDF-style document in the browser.
      */
-    public function revenueView(Request $request)
+    public function revenueView(Request $request): View
     {
         $rows = $this->revenueQuery($request)->get();
 
@@ -114,7 +117,7 @@ class ExportController extends Controller
     /**
      * Render the guests report as a PDF-style document in the browser.
      */
-    public function guestsView(Request $request)
+    public function guestsView(Request $request): View
     {
         $rows = $this->guestsData();
 
@@ -133,7 +136,7 @@ class ExportController extends Controller
      * Inquiries report query, honoring the from/to/status filters shared by
      * the CSV export and the in-browser report view.
      */
-    private function inquiriesQuery(Request $request)
+    private function inquiriesQuery(Request $request): \Illuminate\Database\Eloquent\Builder
     {
         $query = Inquiry::query()->latest('created_at');
 
@@ -155,7 +158,7 @@ class ExportController extends Controller
     /**
      * Revenue report query: paid bookings grouped by month and cottage.
      */
-    private function revenueQuery(Request $request)
+    private function revenueQuery(Request $request): \Illuminate\Database\Eloquent\Builder
     {
         $monthExpr = $this->monthExpression('deposit_paid_at');
 
@@ -181,7 +184,7 @@ class ExportController extends Controller
     /**
      * Guest lifetime stats shared by the CSV export and the in-browser report.
      */
-    private function guestsData()
+    private function guestsData(): Collection
     {
         return Guest::withCount(['inquiries as inquiries_count' => fn ($q) => $q->whereNull('deleted_at')])
             ->withCount(['inquiries as paid_count' => fn ($q) => $q->where('amount_paid', '>', 0)])
@@ -197,7 +200,7 @@ class ExportController extends Controller
      * injection (Excel treats = + - @ prefixes as formulas) by prefixing a
      * single quote, and utf-8 BOM is emitted so Excel reads headers correctly.
      */
-    private function download(string $filename, array $headers, $rows): StreamedResponse
+    private function download(string $filename, array $headers, Collection $rows): StreamedResponse
     {
         $rows = collect($rows)->map(fn ($row) => array_values((array) $row));
 
@@ -219,7 +222,7 @@ class ExportController extends Controller
      * Neutralize a value that Excel/Sheets would otherwise evaluate as a
      * formula while keeping the plain label readable.
      */
-    private static function csvCell($value): ?string
+    private static function csvCell(mixed $value): string
     {
         $value = (string) $value;
 

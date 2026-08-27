@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Concerns\CancelsBookings;
 use App\Exceptions\BookingConflictException;
 use App\Http\Controllers\Concerns\GuardsBookingAccess;
 use App\Http\Controllers\Admin\DashboardController;
@@ -17,11 +18,14 @@ use App\Models\Testimonial;
 use App\Services\ActivityLogger;
 use App\Services\InquiryService;
 use App\Services\PayMongoService;
+use App\Services\RefundService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\View\View;
 
 /**
  * Guest-facing booking portal: lookup bookings by email + reference code,
@@ -34,6 +38,7 @@ use Illuminate\Support\Facades\Mail;
 class BookingPortalController extends Controller
 {
     use GuardsBookingAccess;
+    use CancelsBookings;
 
     private const CUTOFF_HOURS = 24;
 
@@ -42,13 +47,13 @@ class BookingPortalController extends Controller
     }
 
     /** Show email/reference lookup form */
-    public function lookupForm()
+    public function lookupForm(): View
     {
         return view('pages.booking-lookup');
     }
 
     /** Find a booking by email + reference code */
-    public function lookup(Request $request)
+    public function lookup(Request $request): RedirectResponse
     {
         $validated = $request->validate([
             'email' => 'required|email',
@@ -72,7 +77,7 @@ class BookingPortalController extends Controller
     }
 
     /** Show booking detail page with cancellation option */
-    public function show(Inquiry $inquiry)
+    public function show(Inquiry $inquiry): View
     {
         $this->authorizeBookingAccess($inquiry);
 
@@ -130,7 +135,7 @@ class BookingPortalController extends Controller
      * Submit a guest review from the booking portal. Reviews are created
      * inactive so the resort can moderate them before they go public.
      */
-    public function review(Request $request, Inquiry $inquiry)
+    public function review(Request $request, Inquiry $inquiry): RedirectResponse
     {
         $this->authorizeBookingAccess($inquiry);
 
@@ -182,7 +187,7 @@ class BookingPortalController extends Controller
      * review; it is not shown publicly and never linked from an unauthenticated
      * URL.
      */
-    public function uploadPaymentProof(Request $request, Inquiry $inquiry)
+    public function uploadPaymentProof(Request $request, Inquiry $inquiry): RedirectResponse
     {
         $this->authorizeBookingAccess($inquiry);
 
@@ -213,7 +218,7 @@ class BookingPortalController extends Controller
      * by this very booking are excluded from the disabled list so the guest
      * can keep their current dates (or shift a pending request).
      */
-    public function modifyForm(Inquiry $inquiry)
+    public function modifyForm(Inquiry $inquiry): View|RedirectResponse
     {
         $this->authorizeBookingAccess($inquiry);
         $inquiry->load('cottage');
@@ -253,7 +258,7 @@ class BookingPortalController extends Controller
      * and the new ones held inside one transaction, so a conflict on the new
      * dates leaves the original booking (and its hold) untouched.
      */
-    public function modify(Request $request, Inquiry $inquiry, InquiryService $inquiryService)
+    public function modify(Request $request, Inquiry $inquiry, InquiryService $inquiryService): RedirectResponse
     {
         $this->authorizeBookingAccess($inquiry);
 
@@ -281,41 +286,7 @@ class BookingPortalController extends Controller
         $wasConfirmed = $inquiry->status === Inquiry::STATUS_CONFIRMED;
 
         try {
-            $inquiry = DB::transaction(function () use ($inquiry, $validated, $original, $wasConfirmed, $inquiryService) {
-                $inquiry->fill([
-                    'booking_type' => $validated['booking_type'],
-                    'cottage_id' => (int) $validated['cottage_id'],
-                    'check_in' => $validated['check_in'],
-                    'check_out' => $validated['check_out'] ?? null,
-                    'pax' => (int) $validated['pax'],
-                ]);
-
-                // Recompute the total for the new schedule, keeping any promo
-                // discount already applied so it is never silently re-awarded.
-                $newTotal = $inquiryService->calculateTotal([
-                    'booking_type' => $inquiry->booking_type,
-                    'cottage_id' => $inquiry->cottage_id,
-                    'check_in' => $inquiry->check_in?->format('Y-m-d'),
-                    'check_out' => $inquiry->check_out?->format('Y-m-d'),
-                ]);
-
-                if ($newTotal !== null) {
-                    $discount = (float) ($inquiry->discount_amount ?? 0);
-                    $inquiry->total_amount = number_format(max(0, (float) $newTotal - $discount), 2, '.', '');
-                }
-
-                $inquiry->save();
-
-                $inquiry->releaseBlocks($original);
-
-                if ($wasConfirmed) {
-                    $inquiry->bookBlocks();
-                } else {
-                    $inquiry->reserveBlocks();
-                }
-
-                return $inquiry;
-            });
+            $inquiry = $this->applyModification($inquiry, $validated, $original, $wasConfirmed, $inquiryService);
         } catch (BookingConflictException $e) {
             return back()->with('error', 'Those dates are no longer available. Your original booking was not changed.')
                 ->withInput();
@@ -333,6 +304,55 @@ class BookingPortalController extends Controller
 
         return redirect()->route('booking.portal.show', $inquiry)
             ->with('success', 'Your booking has been updated. A confirmation email is on its way.');
+    }
+
+    /**
+     * Apply a guest-initiated schedule change inside one transaction: the old
+     * blocks are released and the new ones held atomically, so a conflict on
+     * the new dates leaves the original booking (and its hold) untouched.
+     */
+    private function applyModification(
+        Inquiry $inquiry,
+        array $validated,
+        array $original,
+        bool $wasConfirmed,
+        InquiryService $inquiryService
+    ): Inquiry {
+        return DB::transaction(function () use ($inquiry, $validated, $original, $wasConfirmed, $inquiryService) {
+            $inquiry->fill([
+                'booking_type' => $validated['booking_type'],
+                'cottage_id' => (int) $validated['cottage_id'],
+                'check_in' => $validated['check_in'],
+                'check_out' => $validated['check_out'] ?? null,
+                'pax' => (int) $validated['pax'],
+            ]);
+
+            // Recompute the total for the new schedule, keeping any promo
+            // discount already applied so it is never silently re-awarded.
+            $newTotal = $inquiryService->calculateTotal([
+                'booking_type' => $inquiry->booking_type,
+                'cottage_id' => $inquiry->cottage_id,
+                'check_in' => $inquiry->check_in?->format('Y-m-d'),
+                'check_out' => $inquiry->check_out?->format('Y-m-d'),
+            ]);
+
+            if ($newTotal !== null) {
+                $discount = (float) ($inquiry->discount_amount ?? 0);
+                $inquiry->total_amount = number_format(max(0, (float) $newTotal - $discount), 2, '.', '');
+            }
+
+            $inquiry->save();
+
+            $inquiry->releaseBlocks($original);
+
+            if ($wasConfirmed) {
+                $inquiry->bookBlocks();
+            } else {
+                $inquiry->reserveBlocks();
+            }
+
+            return $inquiry;
+        });
     }
 
     /**
@@ -443,7 +463,7 @@ class BookingPortalController extends Controller
     }
 
     /** Cancel a booking (guest-facing), sends notification to guest and owner */
-    public function cancel(Request $request, Inquiry $inquiry, PayMongoService $payMongo)
+    public function cancel(Request $request, Inquiry $inquiry, PayMongoService $payMongo): RedirectResponse
     {
         $this->authorizeBookingAccess($inquiry);
 
@@ -451,39 +471,47 @@ class BookingPortalController extends Controller
             return back()->with('error', 'This booking cannot be cancelled. Cancellations must be made at least ' . self::CUTOFF_HOURS . ' hours before check-in.');
         }
 
+        $refundState = $this->processRefund($inquiry, $payMongo);
+
+        $this->finalizeCancellation($inquiry, $refundState['wasConfirmed']);
+        $this->sendGuestCancellationEmails($inquiry, $refundState);
+        $this->logger->record('guest.cancelled', $inquiry, "Guest cancelled booking {$inquiry->reference_code}.", [
+            'refunded' => $refundState['refunded'],
+            'refund_failed' => $refundState['refundFailed'],
+            'manual_refund_required' => $refundState['manualRefundRequired'],
+        ]);
+
+        return redirect()->route('booking.portal.show', $inquiry)
+            ->with($this->cancellationFlashType($refundState), $this->cancellationFlashMessage($inquiry, $refundState));
+    }
+
+    /**
+     * Refund whatever money was actually collected — a deposit-only
+     * settlement must be refunded too. isPaid() alone would silently retain
+     * deposits, since it only reports fully-settled bookings.
+     *
+     * @return array{refunded: bool, refundFailed: bool, refundAlreadyProcessed: bool, manualRefundRequired: bool, wasConfirmed: bool}
+     */
+    private function processRefund(Inquiry $inquiry, PayMongoService $payMongo): array
+    {
         $refunded = false;
         $refundFailed = false;
         $refundAlreadyProcessed = false;
         $manualRefundRequired = false;
 
-        // Refund whatever money was actually collected — a deposit-only
-        // settlement must be refunded too. isPaid() alone would silently
-        // retain deposits, since it only reports fully-settled bookings.
         if ($inquiry->hasPayments()) {
             if ($inquiry->paymongo_payment_id) {
-                // Atomically claim the refund so two concurrent cancels can never
-                // both reach the PayMongo refund API (double-refund TOCTOU guard).
-                $claimed = Inquiry::where('id', $inquiry->id)
-                    ->whereNull('refunded_at')
-                    ->update(['refunded_at' => now()]);
+                try {
+                    $refunded = $this->refundService()->claimAndProcess($inquiry, $payMongo) === RefundService::CLAIMED;
+                } catch (\RuntimeException $e) {
+                    Log::warning('Auto-refund failed on guest cancellation', [
+                        'inquiry_id' => $inquiry->id,
+                        'error' => $e->getMessage(),
+                    ]);
+                    $refundFailed = true;
+                }
 
-                if ($claimed === 1) {
-                    try {
-                        $payMongo->refund($inquiry);
-                        $refunded = true;
-                    } catch (\RuntimeException $e) {
-                        Log::warning('Auto-refund failed on guest cancellation', [
-                            'inquiry_id' => $inquiry->id,
-                            'error' => $e->getMessage(),
-                        ]);
-                        // Roll the claim back so the guest (or an admin) can retry.
-                        // A model-level update() is not enough here: the in-memory
-                        // refunded_at is still null (the claim was a bulk update),
-                        // so the attribute is never dirty and would be skipped.
-                        Inquiry::where('id', $inquiry->id)->update(['refunded_at' => null]);
-                        $refundFailed = true;
-                    }
-                } else {
+                if (! $refunded && ! $refundFailed) {
                     // Another request (or the admin) already processed the refund.
                     $refundAlreadyProcessed = true;
                 }
@@ -501,18 +529,30 @@ class BookingPortalController extends Controller
             }
         }
 
-        // Reload so refunded_at/refund_amount reflect whatever state the
-        // database holds after the claim above (a concurrent writer may have
-        // set them), then update only the booking status.
-        $wasConfirmed = $inquiry->status === Inquiry::STATUS_CONFIRMED;
+        return [
+            'refunded' => $refunded,
+            'refundFailed' => $refundFailed,
+            'refundAlreadyProcessed' => $refundAlreadyProcessed,
+            'manualRefundRequired' => $manualRefundRequired,
+            'wasConfirmed' => $inquiry->status === Inquiry::STATUS_CONFIRMED,
+        ];
+    }
+
+    /**
+     * Cancel the booking and reverse the recorded stay. Reloaded after the
+     * refund claim so refunded_at/refund_amount reflect whatever state the
+     * database holds (a concurrent writer may have set them).
+     *
+     * @param  array{refunded: bool, wasConfirmed: bool}  $refundState
+     */
+    private function finalizeCancellation(Inquiry $inquiry, bool $wasConfirmed): void
+    {
         $inquiry->refresh();
 
         $inquiry->update([
             'status' => Inquiry::STATUS_CANCELLED,
-            'refunded_at' => $refunded ? now() : $inquiry->refunded_at,
-            'refund_amount' => $refunded
-                ? $inquiry->refundableAmount()
-                : $inquiry->refund_amount,
+            'refunded_at' => $inquiry->refunded_at,
+            'refund_amount' => $inquiry->refunded_at ? $inquiry->refundableAmount() : $inquiry->refund_amount,
         ]);
         $inquiry->releaseBlocks();
 
@@ -526,17 +566,19 @@ class BookingPortalController extends Controller
         // Guest cancellations change the same dashboard aggregates as admin
         // ones (pending/confirmed counts, revenue), so drop the cached stats.
         DashboardController::forgetCache();
+    }
 
-        $this->logger->record('guest.cancelled', $inquiry, "Guest cancelled booking {$inquiry->reference_code}.", [
-            'refunded' => $refunded,
-            'refund_failed' => $refundFailed,
-            'manual_refund_required' => $manualRefundRequired,
-        ]);
-
+    /**
+     * Send the guest and owner cancellation (and refund) notifications.
+     *
+     * @param  array{refunded: bool, manualRefundRequired: bool}  $refundState
+     */
+    private function sendGuestCancellationEmails(Inquiry $inquiry, array $refundState): void
+    {
         try {
             Mail::to($inquiry->email)->send(new BookingCancelled($inquiry));
 
-            if ($refunded) {
+            if ($refundState['refunded']) {
                 Mail::to($inquiry->email)->send(new RefundReceived($inquiry->fresh()));
             }
 
@@ -544,7 +586,7 @@ class BookingPortalController extends Controller
             if ($ownerEmail) {
                 Mail::to($ownerEmail)->send(new BookingCancelled($inquiry));
 
-                if ($manualRefundRequired) {
+                if ($refundState['manualRefundRequired']) {
                     Mail::to($ownerEmail)->send(new ManualRefundRequired($inquiry->fresh()));
                 }
             }
@@ -554,20 +596,52 @@ class BookingPortalController extends Controller
                 'error' => $e->getMessage(),
             ]);
         }
+    }
 
-        return redirect()->route('booking.portal.show', $inquiry)
-            ->with(
-                ($refundFailed || $refundAlreadyProcessed || $manualRefundRequired) ? 'warning' : 'success',
-                $refundFailed
-                    ? 'Your booking has been cancelled, but the refund could not be processed automatically. Please contact the resort to complete your refund.'
-                    : ($refunded
-                        ? 'Your booking has been cancelled and your payment has been refunded.'
-                        : ($manualRefundRequired
-                            ? 'Your booking has been cancelled. Your payment of ₱'.$inquiry->collectedAmount().' will be refunded directly by the resort.'
-                            : ($refundAlreadyProcessed
-                                ? 'Your booking has been cancelled. The refund was already processed.'
-                                : 'Your booking has been cancelled.')))
-            );
+    /**
+     * The flash type (success vs warning) for the refund outcome.
+     *
+     * @param  array{refundFailed: bool, refundAlreadyProcessed: bool, manualRefundRequired: bool}  $refundState
+     */
+    private function cancellationFlashType(array $refundState): string
+    {
+        return ($refundState['refundFailed'] || $refundState['refundAlreadyProcessed'] || $refundState['manualRefundRequired'])
+            ? 'warning'
+            : 'success';
+    }
+
+    /**
+     * The flash message reflecting the refund outcome.
+     *
+     * @param  array{refunded: bool, refundFailed: bool, refundAlreadyProcessed: bool, manualRefundRequired: bool}  $refundState
+     */
+    private function cancellationFlashMessage(Inquiry $inquiry, array $refundState): string
+    {
+        if ($refundState['refundFailed']) {
+            return 'Your booking has been cancelled, but the refund could not be processed automatically. Please contact the resort to complete your refund.';
+        }
+
+        if ($refundState['refunded']) {
+            return 'Your booking has been cancelled and your payment has been refunded.';
+        }
+
+        if ($refundState['manualRefundRequired']) {
+            return 'Your booking has been cancelled. Your payment of ₱'.$inquiry->collectedAmount().' will be refunded directly by the resort.';
+        }
+
+        if ($refundState['refundAlreadyProcessed']) {
+            return 'Your booking has been cancelled. The refund was already processed.';
+        }
+
+        return 'Your booking has been cancelled.';
+    }
+
+    /**
+     * The shared refund service instance.
+     */
+    private function refundService(): RefundService
+    {
+        return app(RefundService::class);
     }
 
     /**

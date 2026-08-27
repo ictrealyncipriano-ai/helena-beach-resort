@@ -5,13 +5,15 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Services\ActivityLogger;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules\Password;
+use Illuminate\View\View;
 
 class UserController extends Controller
 {
-    public function index(Request $request)
+    public function index(Request $request): View
     {
         $query = User::query();
 
@@ -27,12 +29,12 @@ class UserController extends Controller
         return view('admin.users.index', compact('users'));
     }
 
-    public function create()
+    public function create(): View
     {
         return view('admin.users.form', ['user' => new User]);
     }
 
-    public function store(Request $request, ActivityLogger $logger)
+    public function store(Request $request, ActivityLogger $logger): RedirectResponse
     {
         $data = $request->validate([
             'name' => 'required|max:255',
@@ -60,12 +62,12 @@ class UserController extends Controller
             ->with('success', 'User created successfully.');
     }
 
-    public function edit(User $user)
+    public function edit(User $user): View
     {
         return view('admin.users.form', compact('user'));
     }
 
-    public function update(Request $request, User $user, ActivityLogger $logger)
+    public function update(Request $request, User $user, ActivityLogger $logger): RedirectResponse
     {
         $data = $request->validate([
             'name' => 'required|max:255',
@@ -112,7 +114,7 @@ class UserController extends Controller
             ->with('success', 'User updated successfully.');
     }
 
-    public function destroy(User $user, ActivityLogger $logger)
+    public function destroy(User $user, ActivityLogger $logger): RedirectResponse
     {
         if ($user->id === auth()->id()) {
             return back()->with('error', 'You cannot delete your own account.');

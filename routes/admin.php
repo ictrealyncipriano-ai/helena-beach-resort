@@ -5,6 +5,7 @@ use App\Http\Controllers\Admin\Auth\ForgotPasswordController;
 use App\Http\Controllers\Admin\Auth\LoginController;
 use App\Http\Controllers\Admin\Auth\ResetPasswordController;
 use App\Http\Controllers\Admin\AvailabilityController;
+use App\Http\Controllers\Admin\BookingActionsController;
 use App\Http\Controllers\Admin\CottageController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\ExportController;
@@ -75,8 +76,8 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::get('{inquiry}/edit', 'edit')->name('edit');
             Route::put('{inquiry}', 'update')->name('update');
             Route::delete('{inquiry}', 'destroy')->name('destroy');
-            Route::post('{inquiry}/confirm', 'confirm')->name('confirm');
-            Route::post('{inquiry}/cancel', 'cancel')->name('cancel');
+            Route::post('{inquiry}/confirm', [BookingActionsController::class, 'confirm'])->name('confirm');
+            Route::post('{inquiry}/cancel', [BookingActionsController::class, 'cancel'])->name('cancel');
             Route::post('{inquiry}/mark-paid', 'markPaid')->name('mark-paid');
             Route::post('{inquiry}/refund', 'refund')->name('refund');
             Route::post('{inquiry}/payment-proof/approve', 'approvePaymentProof')->name('payment-proof.approve');

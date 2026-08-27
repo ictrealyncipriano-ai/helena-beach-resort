@@ -6,11 +6,13 @@ use App\Http\Controllers\Controller;
 use App\Models\Cottage;
 use App\Models\Guest;
 use App\Services\ActivityLogger;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\View\View;
 
 class GuestController extends Controller
 {
-    public function index(Request $request)
+    public function index(Request $request): View
     {
         // Aggregate stats in SQL instead of hydrating every inquiry and its
         // cottage model for the page. The inquiry rows are still loaded (lean,
@@ -80,7 +82,7 @@ class GuestController extends Controller
         return view('admin.guests.index', compact('guests', 'guestsData'));
     }
 
-    public function show(Guest $guest)
+    public function show(Guest $guest): View
     {
         $guest->load('inquiries.cottage');
 
@@ -99,12 +101,12 @@ class GuestController extends Controller
         ));
     }
 
-    public function edit(Guest $guest)
+    public function edit(Guest $guest): View
     {
         return view('admin.guests.form', compact('guest'));
     }
 
-    public function update(Request $request, Guest $guest, ActivityLogger $logger)
+    public function update(Request $request, Guest $guest, ActivityLogger $logger): RedirectResponse
     {
         $data = $request->validate([
             'name' => 'required|max:255',
@@ -123,7 +125,7 @@ class GuestController extends Controller
             ->with('success', 'Guest updated successfully.');
     }
 
-    public function destroy(Guest $guest, ActivityLogger $logger)
+    public function destroy(Guest $guest, ActivityLogger $logger): RedirectResponse
     {
         $guest->delete();
 

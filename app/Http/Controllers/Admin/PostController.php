@@ -6,12 +6,14 @@ use App\Http\Controllers\Controller;
 use App\Models\Post;
 use App\Services\ActivityLogger;
 use App\Traits\ManagesCloudflareFiles;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\View\View;
 
 class PostController extends Controller
 {
     use ManagesCloudflareFiles;
-    public function index(Request $request)
+    public function index(Request $request): View
     {
         $query = Post::query();
 
@@ -32,12 +34,12 @@ class PostController extends Controller
         return view('admin.posts.index', compact('posts'));
     }
 
-    public function create()
+    public function create(): View
     {
         return view('admin.posts.form', ['post' => new Post]);
     }
 
-    public function store(Request $request, ActivityLogger $logger)
+    public function store(Request $request, ActivityLogger $logger): RedirectResponse
     {
         $data = $this->validated($request);
 
@@ -53,12 +55,12 @@ class PostController extends Controller
             ->with('success', 'Post created successfully.');
     }
 
-    public function edit(Post $post)
+    public function edit(Post $post): View
     {
         return view('admin.posts.form', compact('post'));
     }
 
-    public function update(Request $request, Post $post, ActivityLogger $logger)
+    public function update(Request $request, Post $post, ActivityLogger $logger): RedirectResponse
     {
         $data = $this->validated($request, $post);
 
@@ -75,7 +77,7 @@ class PostController extends Controller
             ->with('success', 'Post updated successfully.');
     }
 
-    public function destroy(Post $post, ActivityLogger $logger)
+    public function destroy(Post $post, ActivityLogger $logger): RedirectResponse
     {
         $this->deleteFromCloudflare($post->cover_image);
         $post->delete();

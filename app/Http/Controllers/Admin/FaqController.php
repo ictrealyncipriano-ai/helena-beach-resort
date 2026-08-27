@@ -6,11 +6,13 @@ use App\Http\Controllers\Controller;
 use App\Models\Faq;
 use App\Services\ActivityLogger;
 use App\Support\PublicCache;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\View\View;
 
 class FaqController extends Controller
 {
-    public function index(Request $request)
+    public function index(Request $request): View
     {
         $query = Faq::query();
 
@@ -40,12 +42,12 @@ class FaqController extends Controller
         return view('admin.faqs.index', compact('faqs', 'faqsData'));
     }
 
-    public function create()
+    public function create(): View
     {
         return view('admin.faqs.form', ['faq' => new Faq]);
     }
 
-    public function store(Request $request, ActivityLogger $logger)
+    public function store(Request $request, ActivityLogger $logger): RedirectResponse
     {
         $data = $this->validated($request);
         $faq = Faq::create($data);
@@ -56,12 +58,12 @@ class FaqController extends Controller
             ->with('success', 'FAQ created successfully.');
     }
 
-    public function edit(Faq $faq)
+    public function edit(Faq $faq): View
     {
         return view('admin.faqs.form', compact('faq'));
     }
 
-    public function update(Request $request, Faq $faq, ActivityLogger $logger)
+    public function update(Request $request, Faq $faq, ActivityLogger $logger): RedirectResponse
     {
         $data = $this->validated($request);
         $faq->update($data);
@@ -72,7 +74,7 @@ class FaqController extends Controller
             ->with('success', 'FAQ updated successfully.');
     }
 
-    public function destroy(Faq $faq, ActivityLogger $logger)
+    public function destroy(Faq $faq, ActivityLogger $logger): RedirectResponse
     {
         $faq->delete();
 
@@ -82,7 +84,7 @@ class FaqController extends Controller
             ->with('success', 'FAQ deleted successfully.');
     }
 
-    public function activateAll(ActivityLogger $logger)
+    public function activateAll(ActivityLogger $logger): RedirectResponse
     {
         Faq::query()->update(['is_active' => true]);
         PublicCache::flush();

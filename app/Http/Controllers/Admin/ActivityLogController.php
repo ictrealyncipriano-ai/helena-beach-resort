@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\ActivityLog;
 use Illuminate\Http\Request;
+use Illuminate\View\View;
 
 /**
  * Read-only audit trail viewer. Lists recent activity entries with filters
@@ -12,7 +13,7 @@ use Illuminate\Http\Request;
  */
 class ActivityLogController extends Controller
 {
-    public function index(Request $request)
+    public function index(Request $request): View
     {
         $query = ActivityLog::query();
 
@@ -54,7 +55,7 @@ class ActivityLogController extends Controller
         return view('admin.activity-logs.index', compact('logs', 'actions'));
     }
 
-    public function show(ActivityLog $activityLog)
+    public function show(ActivityLog $activityLog): View
     {
         return view('admin.activity-logs.show', ['log' => $activityLog]);
     }

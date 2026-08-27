@@ -12,7 +12,9 @@ use App\Models\Testimonial;
 use App\Support\HtmlSanitizer;
 use App\Support\PublicCache;
 use Carbon\CarbonInterface;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\View\View;
 
 /**
  * Handles all public pages (home, about, faq, services, reviews, sitemap).
@@ -20,7 +22,7 @@ use Illuminate\Support\Facades\Cache;
  */
 class PageController extends Controller
 {
-    public function home()
+    public function home(): View
     {
         [$cottages, $gallery, $testimonials, $avgRating, $posts] = Cache::remember(PublicCache::HOME, PublicCache::HOME_TTL, function () {
             $cottages = Cottage::with('primaryPhoto')
@@ -45,12 +47,12 @@ class PageController extends Controller
     }
 
     /** Static about page */
-    public function about()
+    public function about(): View
     {
         return view('pages.about');
     }
 
-    public function faq()
+    public function faq(): View
     {
         $faqs = Cache::remember(PublicCache::FAQS_ALL, PublicCache::CONTENT_TTL, function () {
             return Faq::where('is_active', true)
@@ -62,7 +64,7 @@ class PageController extends Controller
     }
 
     /** Display resort services grouped by category */
-    public function services()
+    public function services(): View
     {
         $services = Cache::remember(PublicCache::SERVICES_ALL, PublicCache::CONTENT_TTL, function () {
             return Service::active()->get()->groupBy('category');
@@ -72,19 +74,19 @@ class PageController extends Controller
     }
 
     /** Privacy Policy page (content editable via site settings) */
-    public function privacy()
+    public function privacy(): View
     {
         return $this->legalPage('legal_privacy', 'Privacy Policy');
     }
 
     /** Terms & Conditions page */
-    public function terms()
+    public function terms(): View
     {
         return $this->legalPage('legal_terms', 'Terms & Conditions');
     }
 
     /** Booking / refund policy page */
-    public function bookingPolicy()
+    public function bookingPolicy(): View
     {
         return $this->legalPage('legal_booking_policy', 'Booking Policy');
     }
@@ -103,7 +105,7 @@ class PageController extends Controller
     }
 
     /** Paginated guest reviews/testimonials */
-    public function reviews()
+    public function reviews(): View
     {
         $testimonials = $this->paginate(
             Cache::remember(PublicCache::REVIEWS_ALL, PublicCache::CONTENT_TTL, function () {
@@ -116,13 +118,13 @@ class PageController extends Controller
     }
 
     /** Health check endpoint for Render / monitoring */
-    public function health()
+    public function health(): Response
     {
         return response('ok', 200);
     }
 
     /** Generate XML sitemap for SEO, cached for 1 hour */
-    public function sitemap()
+    public function sitemap(): Response
     {
         $xml = Cache::remember(PublicCache::SITEMAP, PublicCache::SITEMAP_TTL, function () {
             $cottages = Cottage::where('is_available', true)->get();

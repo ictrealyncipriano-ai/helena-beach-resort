@@ -12,9 +12,9 @@ class User extends Authenticatable
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable;
 
-    const ROLE_SUPER_ADMIN = 'super_admin';
-    const ROLE_ADMIN = 'admin';
-    const ROLE_STAFF = 'staff';
+    public const ROLE_SUPER_ADMIN = 'super_admin';
+    public const ROLE_ADMIN = 'admin';
+    public const ROLE_STAFF = 'staff';
 
     protected $fillable = [
         'name',

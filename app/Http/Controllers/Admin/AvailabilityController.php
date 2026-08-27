@@ -10,6 +10,7 @@ use Carbon\CarbonImmutable;
 use Carbon\CarbonInterface;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
+use Illuminate\View\View;
 
 /**
  * Month-grid availability calendar. Shows every cottage's blocked nights for
@@ -18,7 +19,7 @@ use Illuminate\Support\Collection;
  */
 class AvailabilityController extends Controller
 {
-    public function index(Request $request)
+    public function index(Request $request): View
     {
         $month = $this->resolveMonth($request->get('month'));
         $monthStart = CarbonImmutable::createFromFormat('Y-m', $month)->startOfMonth();
@@ -56,7 +57,7 @@ class AvailabilityController extends Controller
      * @param  Collection<int, CottageDateBlock>  $blocks
      * @return array<int, array<int, array<string, mixed>|null>>
      */
-    private function buildWeeks(CarbonInterface $monthStart, $blocks): array
+    private function buildWeeks(CarbonInterface $monthStart, Collection $blocks): array
     {
         $daysInMonth = $monthStart->daysInMonth;
         $lead = ($monthStart->dayOfWeek + 6) % 7;

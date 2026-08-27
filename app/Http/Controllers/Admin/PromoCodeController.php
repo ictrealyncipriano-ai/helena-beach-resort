@@ -5,13 +5,15 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\PromoCode;
 use App\Services\ActivityLogger;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Validation\Rule;
+use Illuminate\View\View;
 
 class PromoCodeController extends Controller
 {
-    public function index(Request $request)
+    public function index(Request $request): View
     {
         $query = PromoCode::query();
 
@@ -28,12 +30,12 @@ class PromoCodeController extends Controller
         return view('admin.promo-codes.index', compact('promoCodes'));
     }
 
-    public function create()
+    public function create(): View
     {
         return view('admin.promo-codes.form', ['promo' => new PromoCode]);
     }
 
-    public function store(Request $request, ActivityLogger $logger)
+    public function store(Request $request, ActivityLogger $logger): RedirectResponse
     {
         $data = $this->validated($request);
 
@@ -48,12 +50,12 @@ class PromoCodeController extends Controller
             ->with('success', 'Promo code created successfully.');
     }
 
-    public function edit(PromoCode $promo)
+    public function edit(PromoCode $promo): View
     {
         return view('admin.promo-codes.form', compact('promo'));
     }
 
-    public function update(Request $request, PromoCode $promo, ActivityLogger $logger)
+    public function update(Request $request, PromoCode $promo, ActivityLogger $logger): RedirectResponse
     {
         $data = $this->validated($request, $promo);
 
@@ -68,7 +70,7 @@ class PromoCodeController extends Controller
             ->with('success', 'Promo code updated successfully.');
     }
 
-    public function destroy(PromoCode $promo, ActivityLogger $logger)
+    public function destroy(PromoCode $promo, ActivityLogger $logger): RedirectResponse
     {
         $promo->delete();
 

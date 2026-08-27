@@ -8,6 +8,7 @@ use App\Models\Inquiry;
 use App\Traits\QueriesByMonth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\View\View;
 
 class DashboardController extends Controller
 {
@@ -28,7 +29,7 @@ class DashboardController extends Controller
         Cache::forget(self::cacheKey());
     }
 
-    public function index()
+    public function index(): View
     {
         // Aggregate counts/revenue are expensive (multiple GROUP BY queries)
         // and only change when an inquiry is created/confirmed/cancelled/

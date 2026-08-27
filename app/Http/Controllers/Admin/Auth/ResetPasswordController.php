@@ -3,14 +3,16 @@
 namespace App\Http\Controllers\Admin\Auth;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rules\Password as PasswordRule;
+use Illuminate\View\View;
 
 class ResetPasswordController extends Controller
 {
-    public function showResetForm(Request $request, string $token)
+    public function showResetForm(Request $request, string $token): View
     {
         return view('admin.auth.reset-password', [
             'token' => $token,
@@ -18,7 +20,7 @@ class ResetPasswordController extends Controller
         ]);
     }
 
-    public function reset(Request $request)
+    public function reset(Request $request): RedirectResponse
     {
         $credentials = $request->validate([
             'token' => ['required'],

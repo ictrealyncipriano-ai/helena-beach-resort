@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Support\PublicCache;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -32,7 +33,7 @@ class Testimonial extends Model
         return $this->belongsTo(Inquiry::class);
     }
 
-    public function scopeActive($q)
+    public function scopeActive(Builder $q): Builder
     {
         return $q->where('is_active', true)->orderBy('sort_order');
     }

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Pagination\Paginator;
 
@@ -14,7 +15,7 @@ abstract class Controller
      * Turn a cached collection into a paginator without caching the paginator
      * itself (paginator objects embed request state).
      */
-    protected function paginate($items, int $perPage): LengthAwarePaginator
+    protected function paginate(Collection $items, int $perPage): LengthAwarePaginator
     {
         $page = Paginator::resolveCurrentPage();
         $slice = $items->forPage($page, $perPage)->values();

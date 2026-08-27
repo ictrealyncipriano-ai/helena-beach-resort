@@ -5,11 +5,13 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Service;
 use App\Services\ActivityLogger;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\View\View;
 
 class ServiceController extends Controller
 {
-    public function index(Request $request)
+    public function index(Request $request): View
     {
         $query = Service::query();
 
@@ -49,12 +51,12 @@ class ServiceController extends Controller
         return view('admin.services.index', compact('services', 'servicesData'));
     }
 
-    public function create()
+    public function create(): View
     {
         return view('admin.services.form', ['service' => new Service]);
     }
 
-    public function store(Request $request, ActivityLogger $logger)
+    public function store(Request $request, ActivityLogger $logger): RedirectResponse
     {
         $data = $this->validated($request);
         $service = Service::create($data);
@@ -67,12 +69,12 @@ class ServiceController extends Controller
             ->with('success', 'Service created successfully.');
     }
 
-    public function edit(Service $service)
+    public function edit(Service $service): View
     {
         return view('admin.services.form', compact('service'));
     }
 
-    public function update(Request $request, Service $service, ActivityLogger $logger)
+    public function update(Request $request, Service $service, ActivityLogger $logger): RedirectResponse
     {
         $data = $this->validated($request);
         $service->update($data);
@@ -85,7 +87,7 @@ class ServiceController extends Controller
             ->with('success', 'Service updated successfully.');
     }
 
-    public function destroy(Service $service, ActivityLogger $logger)
+    public function destroy(Service $service, ActivityLogger $logger): RedirectResponse
     {
         $service->delete();
 

@@ -6,13 +6,15 @@ use App\Http\Controllers\Controller;
 use App\Models\Gallery;
 use App\Services\ActivityLogger;
 use App\Traits\ManagesCloudflareFiles;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\View\View;
 
 class GalleryController extends Controller
 {
     use ManagesCloudflareFiles;
-    public function index(Request $request)
+    public function index(Request $request): View
     {
         $query = Gallery::query();
 
@@ -42,12 +44,12 @@ class GalleryController extends Controller
         return view('admin.gallery.index', compact('galleries', 'galleriesData'));
     }
 
-    public function create()
+    public function create(): View
     {
         return view('admin.gallery.form', ['gallery' => new Gallery]);
     }
 
-    public function store(Request $request, ActivityLogger $logger)
+    public function store(Request $request, ActivityLogger $logger): RedirectResponse
     {
         $data = $this->validated($request);
         $data['photo_path'] = $request->file('photo_path')->store('gallery', 'cloudflare');
@@ -62,12 +64,12 @@ class GalleryController extends Controller
             ->with('success', 'Gallery image added successfully.');
     }
 
-    public function edit(Gallery $gallery)
+    public function edit(Gallery $gallery): View
     {
         return view('admin.gallery.form', compact('gallery'));
     }
 
-    public function update(Request $request, Gallery $gallery, ActivityLogger $logger)
+    public function update(Request $request, Gallery $gallery, ActivityLogger $logger): RedirectResponse
     {
         $data = $this->validated($request, $gallery);
 
@@ -86,7 +88,7 @@ class GalleryController extends Controller
             ->with('success', 'Gallery image updated successfully.');
     }
 
-    public function destroy(Gallery $gallery, ActivityLogger $logger)
+    public function destroy(Gallery $gallery, ActivityLogger $logger): RedirectResponse
     {
         $this->deleteFromCloudflare($gallery->photo_path);
         $gallery->delete();

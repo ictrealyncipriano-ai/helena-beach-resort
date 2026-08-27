@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Support\HtmlSanitizer;
 use App\Support\PublicCache;
 use Carbon\CarbonInterface;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
@@ -55,7 +56,7 @@ class Cottage extends Model
         static::deleted(fn () => PublicCache::flush());
     }
 
-    public function scopeAvailable($query)
+    public function scopeAvailable(Builder $query): Builder
     {
         return $query->where('is_available', true)->orderBy('sort_order');
     }

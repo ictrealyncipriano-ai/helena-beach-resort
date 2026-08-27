@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -30,8 +31,8 @@ class CottageDateBlock extends Model
         return $this->belongsTo(Inquiry::class);
     }
 
-    public function scopeFuture($q)
+    public function scopeFuture(Builder $q): Builder
     {
-        $q->where('date', '>=', now()->startOfDay());
+        return $q->where('date', '>=', now()->startOfDay());
     }
 }

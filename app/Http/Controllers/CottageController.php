@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Cottage;
 use App\Support\PublicCache;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\View\View;
 
 /**
  * Public-facing cottage listing and detail pages.
@@ -12,7 +13,7 @@ use Illuminate\Support\Facades\Cache;
 class CottageController extends Controller
 {
     /** List all available cottages */
-    public function index()
+    public function index(): View
     {
         $cottages = Cache::remember(PublicCache::COTTAGES_INDEX, PublicCache::CONTENT_TTL, function () {
             return Cottage::with('primaryPhoto')
@@ -25,7 +26,7 @@ class CottageController extends Controller
     }
 
     /** Show a single cottage with its future blocked dates */
-    public function show(Cottage $cottage)
+    public function show(Cottage $cottage): View
     {
         $cottage->load(['photos', 'amenities', 'primaryPhoto']);
 

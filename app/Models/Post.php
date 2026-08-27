@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Support\CompressesImages;
 use App\Support\HtmlSanitizer;
 use App\Support\PublicCache;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
@@ -46,7 +47,7 @@ class Post extends Model
     /**
      * Posts that are currently visible on the public site.
      */
-    public function scopeActive($q)
+    public function scopeActive(Builder $q): Builder
     {
         return $q->where('is_active', true)
             ->whereNotNull('published_at')

@@ -8,6 +8,8 @@ use App\Models\Cottage;
 use App\Models\CottageDateBlock;
 use App\Models\Inquiry;
 use App\Services\InquiryService;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\View\View;
 
 /**
  * Handles general inquiries from the contact page.
@@ -18,7 +20,7 @@ class InquiryController extends Controller
     use GuardsBookingAccess;
 
     /** Show contact/inquiry form with cottage list and blocked dates */
-    public function create()
+    public function create(): View
     {
         $cottages = Cottage::available()->get();
 
@@ -39,7 +41,7 @@ class InquiryController extends Controller
     }
 
     /** Store inquiry, create guest record, notify owner */
-    public function store(InquiryRequest $request, InquiryService $inquiryService)
+    public function store(InquiryRequest $request, InquiryService $inquiryService): RedirectResponse
     {
         $inquiry = $inquiryService->store($request->validated());
 
@@ -51,7 +53,7 @@ class InquiryController extends Controller
     }
 
     /** Show booking confirmation after submission */
-    public function show(Inquiry $inquiry)
+    public function show(Inquiry $inquiry): View
     {
         $this->authorizeBookingAccess($inquiry);
 

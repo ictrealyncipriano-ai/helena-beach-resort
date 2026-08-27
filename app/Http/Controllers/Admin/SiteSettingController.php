@@ -5,15 +5,17 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\SiteSetting;
 use App\Services\ActivityLogger;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use Illuminate\View\View;
 
 class SiteSettingController extends Controller
 {
-    public function index(Request $request)
+    public function index(Request $request): View
     {
         $settings = SiteSetting::cachedAll();
 
@@ -50,12 +52,12 @@ class SiteSettingController extends Controller
         return view('admin.site-settings.index', compact('settings', 'settingsData'));
     }
 
-    public function create()
+    public function create(): View
     {
         return view('admin.site-settings.form', ['setting' => new SiteSetting]);
     }
 
-    public function store(Request $request, ActivityLogger $logger)
+    public function store(Request $request, ActivityLogger $logger): RedirectResponse
     {
         $data = $this->validated($request);
 
@@ -69,12 +71,12 @@ class SiteSettingController extends Controller
             ->with('success', 'Setting created successfully.');
     }
 
-    public function edit(SiteSetting $siteSetting)
+    public function edit(SiteSetting $siteSetting): View
     {
         return view('admin.site-settings.form', ['setting' => $siteSetting]);
     }
 
-    public function update(Request $request, SiteSetting $siteSetting, ActivityLogger $logger)
+    public function update(Request $request, SiteSetting $siteSetting, ActivityLogger $logger): RedirectResponse
     {
         $data = $this->validated($request, $siteSetting);
 
@@ -88,7 +90,7 @@ class SiteSettingController extends Controller
             ->with('success', 'Setting updated successfully.');
     }
 
-    public function destroy(SiteSetting $siteSetting, ActivityLogger $logger)
+    public function destroy(SiteSetting $siteSetting, ActivityLogger $logger): RedirectResponse
     {
         $siteSetting->delete();
 

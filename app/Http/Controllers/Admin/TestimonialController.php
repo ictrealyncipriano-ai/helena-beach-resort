@@ -7,13 +7,15 @@ use App\Models\Cottage;
 use App\Models\Testimonial;
 use App\Services\ActivityLogger;
 use App\Traits\ManagesCloudflareFiles;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\View\View;
 
 class TestimonialController extends Controller
 {
     use ManagesCloudflareFiles;
-    public function index(Request $request)
+    public function index(Request $request): View
     {
         $query = Testimonial::with('cottage');
 
@@ -57,14 +59,14 @@ class TestimonialController extends Controller
         return view('admin.testimonials.index', compact('testimonials', 'testimonialsData', 'cottages'));
     }
 
-    public function create()
+    public function create(): View
     {
         $cottages = Cottage::pluck('name', 'id');
 
         return view('admin.testimonials.form', ['testimonial' => new Testimonial, 'cottages' => $cottages]);
     }
 
-    public function store(Request $request, ActivityLogger $logger)
+    public function store(Request $request, ActivityLogger $logger): RedirectResponse
     {
         $data = $this->validated($request);
 
@@ -82,14 +84,14 @@ class TestimonialController extends Controller
             ->with('success', 'Testimonial created successfully.');
     }
 
-    public function edit(Testimonial $testimonial)
+    public function edit(Testimonial $testimonial): View
     {
         $cottages = Cottage::pluck('name', 'id');
 
         return view('admin.testimonials.form', compact('testimonial', 'cottages'));
     }
 
-    public function update(Request $request, Testimonial $testimonial, ActivityLogger $logger)
+    public function update(Request $request, Testimonial $testimonial, ActivityLogger $logger): RedirectResponse
     {
         $data = $this->validated($request);
 
@@ -108,7 +110,7 @@ class TestimonialController extends Controller
             ->with('success', 'Testimonial updated successfully.');
     }
 
-    public function destroy(Testimonial $testimonial, ActivityLogger $logger)
+    public function destroy(Testimonial $testimonial, ActivityLogger $logger): RedirectResponse
     {
         $this->deleteFromCloudflare($testimonial->guest_avatar);
         $testimonial->delete();

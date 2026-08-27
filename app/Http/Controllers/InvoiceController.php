@@ -6,6 +6,8 @@ use App\Http\Controllers\Concerns\GuardsBookingAccess;
 use App\Models\Inquiry;
 use App\Services\PricingService;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Http\Response;
+use Illuminate\View\View;
 
 /**
  * Invoice display and PDF download for confirmed bookings.
@@ -15,7 +17,7 @@ class InvoiceController extends Controller
     use GuardsBookingAccess;
 
     /** Display invoice in-browser (HTML) */
-    public function show(Inquiry $inquiry)
+    public function show(Inquiry $inquiry): View
     {
         $this->authorizeBookingAccess($inquiry);
 
@@ -28,7 +30,7 @@ class InvoiceController extends Controller
     }
 
     /** Download invoice as PDF */
-    public function download(Inquiry $inquiry)
+    public function download(Inquiry $inquiry): Response
     {
         $this->authorizeBookingAccess($inquiry);
 
