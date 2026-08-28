@@ -247,6 +247,23 @@ class RateLimitTest extends TestCase
         $response->assertHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), payment=()');
     }
 
+    public function test_hsts_header_only_sent_over_https_in_production(): void
+    {
+        // Non-production env: HSTS must never be emitted (local http dev).
+        $response = $this->get('/');
+        $response->assertHeaderMissing('Strict-Transport-Security');
+
+        // Production + HTTPS (matching the real app.url host so CanonicalHost
+        // passes through): HSTS IS emitted.
+        $this->app->detectEnvironment(fn () => 'production');
+        try {
+            $response = $this->get('https://'.parse_url(config('app.url'), PHP_URL_HOST).'/');
+            $response->assertHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+        } finally {
+            $this->app->detectEnvironment(fn () => 'testing');
+        }
+    }
+
     /*
     |--------------------------------------------------------------------------
     | Helpers
