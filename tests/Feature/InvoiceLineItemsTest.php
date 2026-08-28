@@ -141,4 +141,66 @@ class InvoiceLineItemsTest extends TestCase
                 return count($items) === 1 && (float) $items[0]['total'] === 5000.0;
             });
     }
+
+    public function test_confirmed_invoice_downloads_pdf(): void
+    {
+        $inquiry = $this->bookedAndConfirmed();
+
+        $response = $this->withSession($this->portalSession($inquiry))
+            ->get(route('invoice.download', $inquiry));
+
+        $response->assertOk();
+        $this->assertStringContainsString('application/pdf', $response->headers->get('Content-Type'));
+        $this->assertStringContainsString('attachment', $response->headers->get('Content-Disposition'));
+        $this->assertStringContainsString("invoice-{$inquiry->reference_code}.pdf", $response->headers->get('Content-Disposition'));
+        $this->assertNotEmpty($response->getContent());
+    }
+
+    public function test_invoice_download_requires_confirmed_status(): void
+    {
+        $cottage = $this->peakCottage();
+        $inquiry = Inquiry::create([
+            'reference_code' => Inquiry::generateReferenceCode(),
+            'name' => 'Pending Guest',
+            'email' => 'pending@example.com',
+            'phone' => '09170000000',
+            'check_in' => '2026-09-01',
+            'check_out' => '2026-09-03',
+            'cottage_id' => $cottage->id,
+            'pax' => 2,
+            'booking_type' => 'overnight',
+            'status' => 'pending',
+            'source' => 'booking',
+        ]);
+
+        $this->withSession($this->portalSession($inquiry))
+            ->get(route('invoice.download', $inquiry))
+            ->assertNotFound();
+    }
+
+    public function test_invoice_download_requires_portal_session_token(): void
+    {
+        // Build a confirmed inquiry WITHOUT going through the /book flow, so
+        // no access token is ever granted to this test's session.
+        $cottage = $this->peakCottage();
+        $inquiry = Inquiry::create([
+            'reference_code' => Inquiry::generateReferenceCode(),
+            'name' => 'NoAccess Guest',
+            'email' => 'noaccess@example.com',
+            'phone' => '09170000000',
+            'check_in' => '2026-09-01',
+            'check_out' => '2026-09-03',
+            'cottage_id' => $cottage->id,
+            'pax' => 2,
+            'booking_type' => 'overnight',
+            'status' => 'confirmed',
+            'total_amount' => '4000.00',
+            'source' => 'booking',
+        ]);
+
+        // No session entry for this inquiry is indistinguishable from a 404,
+        // so guessed ids never confirm the booking's existence.
+        $this->get(route('invoice.download', $inquiry))
+            ->assertNotFound();
+    }
 }
