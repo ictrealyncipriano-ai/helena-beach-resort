@@ -1,7 +1,7 @@
 <header class="flex h-16 shrink-0 items-center gap-4 border-b border-gray-200 bg-white px-4 sm:px-6 dark:border-slate-700 dark:bg-slate-900">
     {{-- Mobile hamburger --}}
     <button type="button" class="lg:hidden -ml-1 p-2 text-gray-500 hover:text-teal-700 hover:bg-gray-100 rounded-lg transition-colors dark:text-slate-400 dark:hover:text-teal-300 dark:hover:bg-slate-800" @@click="sidebarOpen = !sidebarOpen" aria-label="Toggle sidebar" :aria-expanded="sidebarOpen" aria-controls="admin-sidebar">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"/></svg>
+        <x-icons name="menu" class="w-5 h-5" />
     </button>
 
     {{-- Breadcrumb --}}
@@ -19,7 +19,7 @@
                     {{ substr(Auth::user()->name ?? 'A', 0, 1) }}
                 </div>
                 <span class="text-sm font-medium text-gray-700 hidden md:block dark:text-slate-200">{{ Auth::user()->name ?? 'Admin' }}</span>
-                <svg class="w-4 h-4 text-gray-500 dark:text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.5 8.25l-7.5 7.5-7.5-7.5"/></svg>
+                <x-icons name="chevron-down" class="w-4 h-4 text-gray-500 dark:text-slate-400" />
             </button>
 
             {{-- Dropdown --}}
@@ -29,14 +29,14 @@
                     <p class="text-xs text-gray-500 truncate dark:text-slate-400">{{ Auth::user()->email }}</p>
                 </div>
                 <a href="{{ route('home') }}" target="_blank" class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors dark:text-slate-200 dark:hover:bg-slate-700/50">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+                    <x-icons name="external" class="w-4 h-4" />
                     Visit Website
                 </a>
                 <div class="border-t border-gray-50 mt-1 pt-1 dark:border-slate-700">
                     <form method="POST" action="{{ route('admin.logout') }}">
                         @csrf
                         <button type="submit" class="flex items-center gap-2 w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors dark:text-red-400 dark:hover:bg-red-500/10">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9"/></svg>
+                            <x-icons name="logout" class="w-4 h-4" />
                             Sign out
                         </button>
                     </form>

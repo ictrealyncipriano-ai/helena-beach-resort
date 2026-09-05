@@ -51,7 +51,7 @@ $usersData = $users->map(fn ($u) => [
     </x-admin.modal>
 </div>
 
-@include('components.admin.confirm-dialog', ['name' => 'delete', 'title' => 'Delete User?', 'message' => 'Are you sure you want to delete this user? This action cannot be undone.'])
+<x-admin.confirm-dialog name="delete" title="Delete User?" message="Are you sure you want to delete this user? This action cannot be undone." />
 @endsection
 
 <script>

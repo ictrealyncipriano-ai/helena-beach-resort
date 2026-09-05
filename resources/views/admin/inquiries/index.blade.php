@@ -260,11 +260,11 @@ if ($editingId) {
     </x-admin.modal>
 </div>
 
-@include('components.admin.confirm-dialog', ['name' => 'delete', 'title' => 'Delete Inquiry?', 'message' => 'Are you sure you want to delete this inquiry? This action cannot be undone.'])
-@include('components.admin.confirm-dialog', ['name' => 'confirm', 'title' => 'Confirm Booking?', 'message' => 'Confirm this booking? This will create date blocks and send a confirmation email to the guest.', 'confirmText' => 'Confirm Booking', 'confirmClass' => 'bg-emerald-600 hover:bg-emerald-700 text-white'])
-@include('components.admin.confirm-dialog', ['name' => 'cancel', 'title' => 'Cancel Booking?', 'message' => 'Cancel this booking? This will remove date blocks and send a cancellation email to the guest.', 'confirmText' => 'Cancel Booking', 'confirmClass' => 'bg-red-600 hover:bg-red-700 text-white'])
-@include('components.admin.confirm-dialog', ['name' => 'mark-paid', 'title' => 'Mark as Paid?', 'message' => 'Mark this booking as paid (e.g. bank transfer or cash on site)?', 'confirmText' => 'Mark as Paid', 'confirmClass' => 'bg-emerald-600 hover:bg-emerald-700 text-white'])
-@include('components.admin.confirm-dialog', ['name' => 'refund', 'title' => 'Refund Payment?', 'message' => 'Refund the collected amount via PayMongo and cancel this booking? The guest will be notified by email.', 'confirmText' => 'Refund & Cancel', 'confirmClass' => 'bg-red-600 hover:bg-red-700 text-white'])
+<x-admin.confirm-dialog name="delete" title="Delete Inquiry?" message="Are you sure you want to delete this inquiry? This action cannot be undone." />
+<x-admin.confirm-dialog name="confirm" title="Confirm Booking?" message="Confirm this booking? This will create date blocks and send a confirmation email to the guest." confirmText="Confirm Booking" confirmClass="bg-emerald-600 hover:bg-emerald-700 text-white" />
+<x-admin.confirm-dialog name="cancel" title="Cancel Booking?" message="Cancel this booking? This will remove date blocks and send a cancellation email to the guest." confirmText="Cancel Booking" confirmClass="bg-red-600 hover:bg-red-700 text-white" />
+<x-admin.confirm-dialog name="mark-paid" title="Mark as Paid?" message="Mark this booking as paid (e.g. bank transfer or cash on site)?" confirmText="Mark as Paid" confirmClass="bg-emerald-600 hover:bg-emerald-700 text-white" />
+<x-admin.confirm-dialog name="refund" title="Refund Payment?" message="Refund the collected amount via PayMongo and cancel this booking? The guest will be notified by email." confirmText="Refund & Cancel" confirmClass="bg-red-600 hover:bg-red-700 text-white" />
 @endsection
 
 <script>

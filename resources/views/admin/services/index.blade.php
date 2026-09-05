@@ -88,7 +88,7 @@ if ($editingId) {
     </x-admin.modal>
 </div>
 
-@include('components.admin.confirm-dialog', ['name' => 'delete', 'title' => 'Delete Service?', 'message' => 'Are you sure? This cannot be undone.'])
+<x-admin.confirm-dialog name="delete" title="Delete Service?" message="Are you sure? This cannot be undone." />
 @endsection
 
 @push('scripts')

@@ -49,7 +49,7 @@
                 <a href="{{ route($item['route']) }}"
                    class="flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-all duration-150 group"
                    :class="'{{ $active }}' ? 'bg-white text-teal-800 shadow-sm' : 'text-teal-100 hover:bg-teal-700/50 hover:text-white'">
-                    <span class="shrink-0">@include('admin.layouts.partials.icon', ['name' => $item['icon'], 'active' => $active])</span>
+                    <span class="shrink-0"><x-icons :name="$item['icon']" class="w-5 h-5" /></span>
                     <span>{{ $item['label'] }}</span>
                 </a>
             @endforeach
@@ -61,7 +61,7 @@
         <form method="POST" action="{{ route('admin.logout') }}">
             @csrf
             <button type="submit" class="flex items-center gap-2 w-full px-3 py-2 text-sm font-medium text-teal-200 hover:text-white hover:bg-teal-700/50 rounded-lg transition-colors">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9"/></svg>
+                <x-icons name="logout" class="w-5 h-5" />
                 <span>Sign out</span>
             </button>
         </form>

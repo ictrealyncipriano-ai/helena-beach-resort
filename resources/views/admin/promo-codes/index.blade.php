@@ -117,5 +117,5 @@
     </div>
 </div>
 
-@include('components.admin.confirm-dialog', ['name' => 'delete', 'title' => 'Delete Promo Code?', 'message' => 'Are you sure? This cannot be undone.'])
+<x-admin.confirm-dialog name="delete" title="Delete Promo Code?" message="Are you sure? This cannot be undone." />
 @endsection
