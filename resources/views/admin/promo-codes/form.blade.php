@@ -4,13 +4,7 @@
 @section('header', $promo->exists ? 'Edit Promo Code' : 'Create Promo Code')
 
 @section('breadcrumb')
-    <nav class="flex items-center gap-1 text-xs text-gray-500 dark:text-slate-400">
-        <a href="{{ route('admin.dashboard') }}" class="hover:text-teal-700 transition-colors dark:hover:text-teal-300">Dashboard</a>
-        <span>/</span>
-        <a href="{{ route('admin.promo-codes.index') }}" class="hover:text-teal-700 transition-colors dark:hover:text-teal-300">Promo Codes</a>
-        <span>/</span>
-        <span class="text-gray-700 font-medium dark:text-slate-200">{{ $promo->exists ? $promo->code : 'New' }}</span>
-    </nav>
+    <x-admin.breadcrumb :items="[['label' => 'Promo Codes', 'url' => route('admin.promo-codes.index')], ['label' => $promo->exists ? $promo->code : 'New']]" />
 @endsection
 
 @section('content')

@@ -4,15 +4,7 @@
 @section('header', 'Edit Guest')
 
 @section('breadcrumb')
-    <nav class="flex items-center gap-1 text-xs text-gray-500 dark:text-slate-400">
-        <a href="{{ route('admin.dashboard') }}" class="hover:text-teal-700 transition-colors dark:hover:text-teal-300">Dashboard</a>
-        <span>/</span>
-        <a href="{{ route('admin.guests.index') }}" class="hover:text-teal-700 transition-colors dark:hover:text-teal-300">Guests</a>
-        <span>/</span>
-        <a href="{{ route('admin.guests.show', $guest) }}" class="hover:text-teal-700 transition-colors dark:hover:text-teal-300">{{ $guest->name }}</a>
-        <span>/</span>
-        <span class="text-gray-700 font-medium dark:text-slate-200">Edit</span>
-    </nav>
+    <x-admin.breadcrumb :items="[['label' => 'Guests', 'url' => route('admin.guests.index')], ['label' => $guest->name, 'url' => route('admin.guests.show', $guest)], ['label' => 'Edit']]" />
 @endsection
 
 @section('content')

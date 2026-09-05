@@ -5,13 +5,7 @@
 @section('description', $cottage->exists ? 'Update cottage details, amenities, photos, and availability.' : 'Add a new cottage to your resort.')
 
 @section('breadcrumb')
-    <nav class="flex items-center gap-1 text-xs text-gray-500 dark:text-slate-400">
-        <a href="{{ route('admin.dashboard') }}" class="hover:text-teal-700 transition-colors dark:hover:text-teal-300">Dashboard</a>
-        <span>/</span>
-        <a href="{{ route('admin.cottages.index') }}" class="hover:text-teal-700 transition-colors dark:hover:text-teal-300">Cottages</a>
-        <span>/</span>
-        <span class="text-gray-700 font-medium dark:text-slate-200">{{ $cottage->exists ? $cottage->name : 'New' }}</span>
-    </nav>
+    <x-admin.breadcrumb :items="[['label' => 'Cottages', 'url' => route('admin.cottages.index')], ['label' => $cottage->exists ? $cottage->name : 'New']]" />
 @endsection
 
 @section('content')

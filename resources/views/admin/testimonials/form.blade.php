@@ -4,13 +4,7 @@
 @section('header', $testimonial->exists ? 'Edit Testimonial' : 'Create Testimonial')
 
 @section('breadcrumb')
-    <nav class="flex items-center gap-1 text-xs text-gray-500 dark:text-slate-400">
-        <a href="{{ route('admin.dashboard') }}" class="hover:text-teal-700 transition-colors dark:hover:text-teal-300">Dashboard</a>
-        <span>/</span>
-        <a href="{{ route('admin.testimonials.index') }}" class="hover:text-teal-700 transition-colors dark:hover:text-teal-300">Testimonials</a>
-        <span>/</span>
-        <span class="text-gray-700 font-medium dark:text-slate-200">{{ $testimonial->exists ? $testimonial->guest_name : 'New' }}</span>
-    </nav>
+    <x-admin.breadcrumb :items="[['label' => 'Testimonials', 'url' => route('admin.testimonials.index')], ['label' => $testimonial->exists ? $testimonial->guest_name : 'New']]" />
 @endsection
 
 @section('content')

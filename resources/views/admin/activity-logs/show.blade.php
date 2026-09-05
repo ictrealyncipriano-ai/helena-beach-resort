@@ -5,13 +5,7 @@
 @section('description', 'Audit trail entry details')
 
 @section('breadcrumb')
-    <nav class="flex items-center gap-1 text-xs text-gray-500 dark:text-slate-400">
-        <a href="{{ route('admin.dashboard') }}" class="hover:text-teal-700 transition-colors dark:hover:text-teal-300">Dashboard</a>
-        <span>/</span>
-        <a href="{{ route('admin.activity-logs.index') }}" class="hover:text-teal-700 transition-colors dark:hover:text-teal-300">Activity Logs</a>
-        <span>/</span>
-        <span class="text-gray-700 font-medium dark:text-slate-200">#{{ $log->id }}</span>
-    </nav>
+    <x-admin.breadcrumb :items="[['label' => 'Activity Logs', 'url' => route('admin.activity-logs.index')], ['label' => '#' . $log->id]]" />
 @endsection
 
 @section('content')

@@ -4,13 +4,7 @@
 @section('header', $post->exists ? 'Edit Post' : 'Create Post')
 
 @section('breadcrumb')
-    <nav class="flex items-center gap-1 text-xs text-gray-500 dark:text-slate-400">
-        <a href="{{ route('admin.dashboard') }}" class="hover:text-teal-700 transition-colors dark:hover:text-teal-300">Dashboard</a>
-        <span>/</span>
-        <a href="{{ route('admin.posts.index') }}" class="hover:text-teal-700 transition-colors dark:hover:text-teal-300">News &amp; Posts</a>
-        <span>/</span>
-        <span class="text-gray-700 font-medium dark:text-slate-200">{{ $post->exists ? $post->title : 'New' }}</span>
-    </nav>
+    <x-admin.breadcrumb :items="[['label' => 'News & Posts', 'url' => route('admin.posts.index')], ['label' => $post->exists ? $post->title : 'New']]" />
 @endsection
 
 @section('content')
