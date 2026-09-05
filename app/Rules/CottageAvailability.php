@@ -25,6 +25,7 @@ class CottageAvailability implements ValidationRule
         private readonly mixed $bookingType,
         private readonly mixed $checkOut,
         private readonly bool $skipOwnDuplicate = false,
+        private readonly mixed $excludeInquiryId = null,
     ) {}
 
     public function validate(string $attribute, mixed $value, Closure $fail): void
@@ -64,14 +65,17 @@ class CottageAvailability implements ValidationRule
 
         $checkOut = $this->checkOut ?? $value;
 
-        $blockedDates = $cottage->dateBlocks()
+        $blocked = $cottage->dateBlocks()
+            ->when($this->excludeInquiryId, fn ($q) => $q->where('inquiry_id', '!=', $this->excludeInquiryId))
             ->whereBetween('date', [$value, $checkOut])
             ->pluck('date')
-            ->map(fn ($d) => $d->format('M d, Y'))
-            ->implode(', ');
+            ->map(fn ($d) => $d->format('M d, Y'));
 
-        if ($blockedDates) {
-            $fail("The cottage is not available on: {$blockedDates}.");
+        if ($blocked->isNotEmpty()) {
+            $shown = $blocked->take(5)->implode(', ');
+            $extra = $blocked->count() - 5;
+            $suffix = $extra > 0 ? " and {$extra} more" : '';
+            $fail("The cottage is not available on: {$shown}{$suffix}.");
         }
     }
 }

@@ -20,7 +20,11 @@ return [
     /**
      * Payment methods offered on the hosted checkout page.
      * Must be enabled on the PayMongo account.
+     * Override via PAYMONGO_PAYMENT_METHODS (comma-separated).
      */
-    'payment_method_types' => ['qrph'],
+    'payment_method_types' => array_values(array_filter(array_map(
+        fn ($m) => trim($m),
+        explode(',', env('PAYMONGO_PAYMENT_METHODS', 'qrph'))
+    ))) ?: ['qrph'],
 
 ];

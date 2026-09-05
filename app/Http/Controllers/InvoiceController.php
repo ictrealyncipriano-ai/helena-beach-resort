@@ -17,7 +17,7 @@ class InvoiceController extends Controller
     use GuardsBookingAccess;
 
     /** Display invoice in-browser (HTML) */
-    public function show(Inquiry $inquiry): View
+    public function show(Inquiry $inquiry, PricingService $pricing): View
     {
         $this->authorizeBookingAccess($inquiry);
 
@@ -25,12 +25,12 @@ class InvoiceController extends Controller
 
         return view('pages.invoice', [
             'inquiry' => $inquiry,
-            ...$this->buildLineItems($inquiry),
+            ...$this->buildLineItems($inquiry, $pricing),
         ]);
     }
 
     /** Download invoice as PDF */
-    public function download(Inquiry $inquiry): Response
+    public function download(Inquiry $inquiry, PricingService $pricing): Response
     {
         $this->authorizeBookingAccess($inquiry);
 
@@ -38,7 +38,7 @@ class InvoiceController extends Controller
 
         $pdf = Pdf::loadView('pages.invoice', [
             'inquiry' => $inquiry,
-            ...$this->buildLineItems($inquiry),
+            ...$this->buildLineItems($inquiry, $pricing),
         ]);
 
         return $pdf->download("invoice-{$inquiry->reference_code}.pdf");
@@ -52,10 +52,9 @@ class InvoiceController extends Controller
      *
      * @return array{items: array<int, array{desc:string, qty:int, rate:string|int|float|null, total:string}>, subtotal:string}
      */
-    private function buildLineItems(Inquiry $inquiry): array
+    private function buildLineItems(Inquiry $inquiry, PricingService $pricing): array
     {
         $inquiry->loadMissing('cottage');
-        $pricing = app(PricingService::class);
 
         $items = [];
 

@@ -65,12 +65,12 @@ class CronControllerTest extends TestCase
         ]);
     }
 
-    public function test_migrate_endpoint_requires_bearer_token(): void
+    public function test_migrate_endpoint_is_removed(): void
     {
-        $this->post('/cron/migrate')->assertStatus(401);
+        $this->post('/cron/migrate')->assertNotFound();
 
         $this->withHeader('Authorization', 'Bearer wrong-secret')
             ->post('/cron/migrate')
-            ->assertStatus(401);
+            ->assertNotFound();
     }
 }

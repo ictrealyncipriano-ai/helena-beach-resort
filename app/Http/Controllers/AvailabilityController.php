@@ -19,7 +19,7 @@ use Illuminate\Validation\Rule;
  */
 class AvailabilityController extends Controller
 {
-    public function check(Request $request): JsonResponse
+    public function check(Request $request, PricingService $pricing): JsonResponse
     {
         $validated = $request->validate([
             'cottage_id' => ['required', 'integer', Rule::exists('cottages', 'id')->where('is_available', true)],
@@ -41,7 +41,7 @@ class AvailabilityController extends Controller
             ->sort()
             ->values();
 
-        $rate = $this->rateForRange($cottage, $validated['booking_type'], $checkIn, $checkOut, app(PricingService::class));
+        $rate = $this->rateForRange($cottage, $validated['booking_type'], $checkIn, $checkOut, $pricing);
 
         return response()->json([
             'available' => $blocked->isEmpty(),

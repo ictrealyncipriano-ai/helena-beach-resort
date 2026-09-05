@@ -46,14 +46,36 @@ class Cottage extends Model
     }
 
     /**
-     * Boot events: auto-generates URL slug from cottage name.
+     * Boot events: auto-generates URL slug from cottage name, with uniqueness
+     * suffix retry so duplicate names never collide.
      */
     protected static function booted(): void
     {
-        static::creating(fn ($cottage) => $cottage->slug = $cottage->slug ?: Str::slug($cottage->name));
+        static::creating(function ($cottage) {
+            $cottage->slug = $cottage->slug ?: static::uniqueSlug($cottage->name);
+        });
+
+        static::updating(function ($cottage) {
+            if ($cottage->isDirty('name') && empty($cottage->slug)) {
+                $cottage->slug = static::uniqueSlug($cottage->name);
+            }
+        });
 
         static::saved(fn () => PublicCache::flush());
         static::deleted(fn () => PublicCache::flush());
+    }
+
+    protected static function uniqueSlug(?string $name): string
+    {
+        $base = Str::slug((string) $name) ?: 'cottage';
+        $slug = $base;
+        $i = 2;
+        while (static::where('slug', $slug)->exists()) {
+            $slug = "{$base}-{$i}";
+            $i++;
+        }
+
+        return $slug;
     }
 
     public function scopeAvailable(Builder $query): Builder
@@ -97,7 +119,7 @@ class Cottage extends Model
             return false;
         }
 
-        $dateMd = $date->format('md');
+        $dateMd = (int) $date->format('md');
         $start = (int) $this->peak_start->format('md');
         $end = (int) $this->peak_end->format('md');
 
@@ -140,10 +162,15 @@ class Cottage extends Model
     /**
      * Rate data payload for frontend JavaScript (peak-aware date pickers).
      * Used by BookingController, BookingPortalController, and Admin\InquiryController.
+     * Callers should pass an explicit collection; the fallback selects only
+     * the columns needed for pricing so it never hydrates full models.
      */
     public static function ratesMap(?Collection $cottages = null): \Illuminate\Support\Collection
     {
-        $cottages ??= static::all();
+        $cottages ??= static::query()->select([
+            'id', 'name', 'capacity', 'rate_daytour', 'rate_overnight',
+            'peak_rate_daytour', 'peak_rate_overnight', 'peak_start', 'peak_end',
+        ])->get();
 
         return $cottages->mapWithKeys(fn ($c) => [
             $c->id => [

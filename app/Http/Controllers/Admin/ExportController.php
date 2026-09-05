@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\ExportFilterRequest;
 use App\Models\Guest;
 use App\Models\Inquiry;
 use App\Traits\QueriesByMonth;
@@ -25,7 +26,7 @@ class ExportController extends Controller
         return view('admin.exports.index');
     }
 
-    public function inquiries(Request $request): StreamedResponse
+    public function inquiries(ExportFilterRequest $request): StreamedResponse
     {
         $rows = $this->inquiriesQuery($request)->get([
             'id', 'reference_code', 'name', 'email', 'phone', 'booking_type',
@@ -47,7 +48,7 @@ class ExportController extends Controller
         ]));
     }
 
-    public function revenue(Request $request): StreamedResponse
+    public function revenue(ExportFilterRequest $request): StreamedResponse
     {
         $rows = $this->revenueQuery($request)->get();
 
@@ -71,7 +72,7 @@ class ExportController extends Controller
     /**
      * Render the inquiries report as a PDF-style document in the browser.
      */
-    public function inquiriesView(Request $request): View
+    public function inquiriesView(ExportFilterRequest $request): View
     {
         $rows = $this->inquiriesQuery($request)->with('cottage')->get();
 
@@ -95,7 +96,7 @@ class ExportController extends Controller
     /**
      * Render the revenue report as a PDF-style document in the browser.
      */
-    public function revenueView(Request $request): View
+    public function revenueView(ExportFilterRequest $request): View
     {
         $rows = $this->revenueQuery($request)->get();
 

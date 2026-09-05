@@ -17,9 +17,12 @@ class ActivityLog extends Model
         'description', 'properties',
     ];
 
-    protected $casts = [
-        'properties' => 'array',
-    ];
+    protected function casts(): array
+    {
+        return [
+            'properties' => 'array',
+        ];
+    }
 
     public function user(): BelongsTo
     {

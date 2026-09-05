@@ -37,46 +37,15 @@ class CronController extends Controller
             return response()->json(['error' => 'Unauthorized'], 401);
         }
 
+        $hours = (int) $request->input('hours', ReleaseExpiredReservations::DEFAULT_HOLD_HOURS);
+        $hours = max(1, min(168, $hours));
+
         try {
-            Artisan::call('reservations:release-expired --hours=' . ReleaseExpiredReservations::DEFAULT_HOLD_HOURS);
+            Artisan::call('reservations:release-expired', ['--hours' => $hours]);
 
             return response()->json(['ok' => true]);
         } catch (\Throwable $e) {
             Log::error('Cron releaseExpiredReservations failed: '.$e->getMessage(), [
-                'exception' => $e,
-            ]);
-
-            return response()->json(['error' => 'Internal server error'], 500);
-        }
-    }
-
-    /**
-     * Run pending database migrations against the production database.
-     * Guarded by the same CRON_SECRET bearer token so it can be triggered
-     * manually (e.g. `curl -X POST -H "Authorization: Bearer <CRON_SECRET>" ...`)
-     * and is never exposed to anonymous traffic.
-     */
-    public function migrate(Request $request): Response
-    {
-        if (! $this->isAuthorized($request)) {
-            return response()->json(['error' => 'Unauthorized'], 401);
-        }
-
-        try {
-            Artisan::call('migrate --force', [], null);
-            $migrateOutput = Artisan::output();
-
-            Artisan::call('migrate:status', [], null);
-            $statusOutput = Artisan::output();
-
-            Log::info('Cron migrate completed.', [
-                'output' => $migrateOutput,
-                'status' => $statusOutput,
-            ]);
-
-            return response()->json(['ok' => true]);
-        } catch (\Throwable $e) {
-            Log::error('Cron migrate failed: '.$e->getMessage(), [
                 'exception' => $e,
             ]);
 

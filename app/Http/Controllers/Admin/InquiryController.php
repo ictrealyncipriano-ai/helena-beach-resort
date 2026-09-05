@@ -86,7 +86,7 @@ class InquiryController extends Controller
             $totalAmount = $inquiryService->calculateTotal($data);
         }
 
-        $inquiry = Inquiry::create([
+        $inquiry = Inquiry::forceCreate([
             'name' => $data['name'],
             'email' => $data['email'],
             'phone' => $data['phone'] ?? null,

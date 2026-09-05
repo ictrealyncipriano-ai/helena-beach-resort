@@ -11,6 +11,7 @@ use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\PageController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\PostController;
+use App\Http\Controllers\RobotsController;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Support\Facades\Route;
 
@@ -28,16 +29,7 @@ Route::get('/health', [PageController::class, 'health'])->name('health');
 | for hosts that serve static files before reaching Laravel.
 |--------------------------------------------------------------------------
 */
-Route::get('/robots.txt', function () {
-    $base = rtrim(config('app.url'), '/');
-    $content = "User-agent: *\n"
-        ."Allow: /\n"
-        ."Disallow: /admin\n"
-        ."\n"
-        ."Sitemap: {$base}/sitemap.xml\n";
-
-    return response($content, 200)->header('Content-Type', 'text/plain');
-});
+Route::get('/robots.txt', RobotsController::class);
 
 /*
 |--------------------------------------------------------------------------
@@ -118,12 +110,12 @@ Route::get('/booking/lookup', [BookingPortalController::class, 'lookupForm'])->n
 Route::post('/booking/lookup', [BookingPortalController::class, 'lookup'])
     ->middleware('throttle:lookup')
     ->name('booking.portal.lookup.post');
-Route::get('/booking/{inquiry}', [BookingPortalController::class, 'show'])->name('booking.portal.show');
+Route::get('/booking/{inquiry}', [BookingPortalController::class, 'show'])->middleware('throttle:lookup')->name('booking.portal.show');
 Route::get('/booking/{inquiry}/modify', [BookingPortalController::class, 'modifyForm'])->name('booking.portal.modify');
 Route::put('/booking/{inquiry}/modify', [BookingPortalController::class, 'modify'])
     ->middleware('throttle:modify')
     ->name('booking.portal.modify.update');
-Route::get('/booking/{inquiry}/status', [BookingPortalController::class, 'status'])->name('booking.portal.status');
+Route::get('/booking/{inquiry}/status', [BookingPortalController::class, 'status'])->middleware('throttle:lookup')->name('booking.portal.status');
 Route::post('/booking/{inquiry}/cancel', [BookingPortalController::class, 'cancel'])
     ->middleware('throttle:cancel')
     ->name('booking.portal.cancel');
@@ -139,7 +131,7 @@ Route::post('/booking/{inquiry}/payment-proof', [BookingPortalController::class,
 | Invoice
 |--------------------------------------------------------------------------
 */
-Route::get('/booking/{inquiry}/invoice', [InvoiceController::class, 'show'])->name('invoice.show');
+Route::get('/booking/{inquiry}/invoice', [InvoiceController::class, 'show'])->middleware('throttle:invoice')->name('invoice.show');
 Route::get('/booking/{inquiry}/invoice/pdf', [InvoiceController::class, 'download'])
     ->middleware('throttle:invoice')
     ->name('invoice.download');
@@ -161,16 +153,13 @@ Route::post('/paymongo/webhook', [PaymentController::class, 'webhook'])
 
 /*
 |--------------------------------------------------------------------------
-| Cron Endpoints (triggered by Vercel Cron)
+| Cron Endpoints (triggered by scheduler / external POST)
 |--------------------------------------------------------------------------
 */
-// Vercel Cron fires GET requests; the bearer CRON_SECRET (hash_equals, fail-closed)
-// is the only auth, so a GET that mutates state is safe here. POST is kept so the
-// endpoints can still be triggered manually with curl.
-Route::match(['get', 'post'], '/cron/reservations', [CronController::class, 'releaseExpiredReservations'])
-    ->withoutMiddleware(VerifyCsrfToken::class)
-    ->middleware('throttle:cron');
-Route::match(['get', 'post'], '/cron/migrate', [CronController::class, 'migrate'])
+// POST only: releasing reservations mutates state and must never run via GET.
+// The scheduler in routes/console.php is the primary trigger; this endpoint
+// exists only for manual/external POST triggers with CRON_SECRET bearer auth.
+Route::post('/cron/reservations', [CronController::class, 'releaseExpiredReservations'])
     ->withoutMiddleware(VerifyCsrfToken::class)
     ->middleware('throttle:cron');
 

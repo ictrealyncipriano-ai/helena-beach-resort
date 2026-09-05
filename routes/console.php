@@ -9,7 +9,6 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote');
 
 // Expire pending reservations past their 48h hold window and release date blocks.
-// The deploy triggers this via the HTTP cron endpoint (POST /cron/reservations,
-// see routes/web.php) on Vercel/Render, so the scheduler entry is intentionally
-// disabled here to avoid running the job twice.
-// Schedule::command('reservations:release-expired --hours=48')->dailyAt('02:00');
+// The scheduler is the primary trigger. The HTTP endpoint (POST /cron/reservations,
+// see routes/web.php) remains only as a manual fallback for hosts without scheduler.
+Schedule::command('reservations:release-expired --hours=48')->dailyAt('02:00');

@@ -67,10 +67,14 @@ class InquiryService
                     $discount = $pricing['discount'];
 
                     if ($promo) {
-                        $promo->consume();
+                        if (! $promo->consume()) {
+                            throw ValidationException::withMessages([
+                                'promo_code' => 'This promo code just reached its usage limit.',
+                            ]);
+                        }
                     }
 
-                    $inquiry = Inquiry::create([
+                    $inquiry = Inquiry::forceCreate([
                         'name' => $data['name'],
                         'email' => $data['email'],
                         'phone' => $data['phone'] ?? null,
@@ -145,7 +149,7 @@ class InquiryService
             return $inquiry;
         }
 
-        throw $lastException;
+        throw $lastException ?? new \RuntimeException('Failed to create inquiry.');
     }
 
     /**

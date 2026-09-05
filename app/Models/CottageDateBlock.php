@@ -18,7 +18,7 @@ class CottageDateBlock extends Model
 
     protected function casts(): array
     {
-        return ['date' => 'date:Y-m-d'];
+        return ['date' => 'date'];
     }
 
     public function cottage(): BelongsTo

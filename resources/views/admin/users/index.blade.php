@@ -3,7 +3,7 @@
 @php
 $showUserModal = $errors->hasAny(['name', 'email', 'password', 'role']);
 $editingId = old('_editing', 0);
-$editingUser = $editingId ? \App\Models\User::find($editingId) : null;
+$editingUser = $editingUser ?? null;
 $editingUserJson = $editingUser ? $editingUser->only('id', 'name', 'email', 'role') : null;
 $usersData = $users->map(fn ($u) => [
     'id' => $u->id,

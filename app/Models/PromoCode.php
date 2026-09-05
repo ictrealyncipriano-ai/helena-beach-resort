@@ -127,10 +127,19 @@ class PromoCode extends Model
     }
 
     /**
-     * Atomically increment the usage counter. Safe to call repeatedly.
+     * Atomically increment the usage counter, respecting the usage limit.
+     * Returns false when the limit was already reached (no increment done).
      */
-    public function consume(): void
+    public function consume(): bool
     {
-        static::whereKey($this->id)->increment('used_count');
+        if ($this->usage_limit === null) {
+            static::whereKey($this->id)->increment('used_count');
+
+            return true;
+        }
+
+        return static::whereKey($this->id)
+            ->whereColumn('used_count', '<', 'usage_limit')
+            ->increment('used_count') > 0;
     }
 }

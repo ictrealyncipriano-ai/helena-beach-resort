@@ -74,21 +74,21 @@ class PageController extends Controller
     }
 
     /** Privacy Policy page (content editable via site settings) */
-    public function privacy(): View
+    public function privacy(HtmlSanitizer $sanitizer): View
     {
-        return $this->legalPage('legal_privacy', 'Privacy Policy');
+        return $this->legalPage('legal_privacy', 'Privacy Policy', $sanitizer);
     }
 
     /** Terms & Conditions page */
-    public function terms(): View
+    public function terms(HtmlSanitizer $sanitizer): View
     {
-        return $this->legalPage('legal_terms', 'Terms & Conditions');
+        return $this->legalPage('legal_terms', 'Terms & Conditions', $sanitizer);
     }
 
     /** Booking / refund policy page */
-    public function bookingPolicy(): View
+    public function bookingPolicy(HtmlSanitizer $sanitizer): View
     {
-        return $this->legalPage('legal_booking_policy', 'Booking Policy');
+        return $this->legalPage('legal_booking_policy', 'Booking Policy', $sanitizer);
     }
 
     /**
@@ -96,9 +96,9 @@ class PageController extends Controller
      * content is admin-entered HTML, so it is run through the same allow-list
      * sanitizer used for cottage descriptions before it is rendered.
      */
-    private function legalPage(string $key, string $title)
+    private function legalPage(string $key, string $title, HtmlSanitizer $sanitizer)
     {
-        $content = app(HtmlSanitizer::class)
+        $content = $sanitizer
             ->sanitize((string) SiteSetting::getValue($key, ''));
 
         return view('pages.legal', compact('title', 'content'));

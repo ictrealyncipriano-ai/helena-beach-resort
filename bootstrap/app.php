@@ -11,12 +11,10 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        // Only trust proxies listed in TRUSTED_PROXIES (comma-separated
-        // IPs/CIDRs). Empty by default = trust none, so spoofed
-        // X-Forwarded-* headers are ignored unless explicitly configured.
-        // The literal value "*" must be passed as the string "*" (not the
-        // array ["*"]) for Symfony to interpret it as "trust all proxies".
-        $trustedProxiesRaw = trim((string) (env('TRUSTED_PROXIES') ?: ''));
+        // Only trust proxies listed in config/trustedproxy.php (from TRUSTED_PROXIES).
+        // Empty by default = trust none, so spoofed X-Forwarded-* headers are
+        // ignored unless explicitly configured. "*" trusts all proxies.
+        $trustedProxiesRaw = trim((string) (config('trustedproxy.proxies') ?: ''));
 
         if ($trustedProxiesRaw === '*') {
             $trustedProxies = '*';

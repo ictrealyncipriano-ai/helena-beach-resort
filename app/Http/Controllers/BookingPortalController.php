@@ -6,6 +6,10 @@ use App\Concerns\CancelsBookings;
 use App\Exceptions\BookingConflictException;
 use App\Http\Controllers\Concerns\GuardsBookingAccess;
 use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Requests\Portal\BookingLookupRequest;
+use App\Http\Requests\Portal\BookingModifyRequest;
+use App\Http\Requests\Portal\BookingReviewRequest;
+use App\Http\Requests\Portal\PaymentProofRequest;
 use App\Mail\BookingCancelled;
 use App\Mail\BookingModified;
 use App\Mail\ManualRefundRequired;
@@ -42,8 +46,10 @@ class BookingPortalController extends Controller
 
     private const CUTOFF_HOURS = 24;
 
-    public function __construct(private ActivityLogger $logger)
-    {
+    public function __construct(
+        private ActivityLogger $logger,
+        private RefundService $refundService,
+    ) {
     }
 
     /** Show email/reference lookup form */
@@ -53,12 +59,9 @@ class BookingPortalController extends Controller
     }
 
     /** Find a booking by email + reference code */
-    public function lookup(Request $request): RedirectResponse
+    public function lookup(BookingLookupRequest $request): RedirectResponse
     {
-        $validated = $request->validate([
-            'email' => 'required|email',
-            'reference_code' => 'required|string',
-        ]);
+        $validated = $request->validated();
 
         $inquiry = Inquiry::where('email', $validated['email'])
             ->where('reference_code', $validated['reference_code'])
@@ -135,7 +138,7 @@ class BookingPortalController extends Controller
      * Submit a guest review from the booking portal. Reviews are created
      * inactive so the resort can moderate them before they go public.
      */
-    public function review(Request $request, Inquiry $inquiry): RedirectResponse
+    public function review(BookingReviewRequest $request, Inquiry $inquiry): RedirectResponse
     {
         $this->authorizeBookingAccess($inquiry);
 
@@ -143,10 +146,7 @@ class BookingPortalController extends Controller
             return back()->with('error', 'This booking is not eligible for a review yet.');
         }
 
-        $data = $request->validate([
-            'rating' => 'required|integer|min:1|max:5',
-            'content' => 'required|string|max:2000',
-        ]);
+        $data = $request->validated();
 
         Testimonial::create([
             'guest_name' => $inquiry->name,
@@ -187,7 +187,7 @@ class BookingPortalController extends Controller
      * review; it is not shown publicly and never linked from an unauthenticated
      * URL.
      */
-    public function uploadPaymentProof(Request $request, Inquiry $inquiry): RedirectResponse
+    public function uploadPaymentProof(PaymentProofRequest $request, Inquiry $inquiry): RedirectResponse
     {
         $this->authorizeBookingAccess($inquiry);
 
@@ -195,9 +195,7 @@ class BookingPortalController extends Controller
             return back()->with('error', 'This booking is not eligible to submit a payment proof right now.');
         }
 
-        $data = $request->validate([
-            'payment_proof' => 'required|image|mimes:jpeg,png,jpg,webp|max:5120',
-        ]);
+        $data = $request->validated();
 
         $inquiry->update([
             'payment_proof_path' => $request->file('payment_proof')->store('payment-proofs', 'cloudflare'),
@@ -258,7 +256,7 @@ class BookingPortalController extends Controller
      * and the new ones held inside one transaction, so a conflict on the new
      * dates leaves the original booking (and its hold) untouched.
      */
-    public function modify(Request $request, Inquiry $inquiry, InquiryService $inquiryService): RedirectResponse
+    public function modify(BookingModifyRequest $request, Inquiry $inquiry, InquiryService $inquiryService): RedirectResponse
     {
         $this->authorizeBookingAccess($inquiry);
 
@@ -268,13 +266,7 @@ class BookingPortalController extends Controller
             return back()->with('error', $reason ?? 'This booking cannot be modified right now.');
         }
 
-        $validated = $request->validate([
-            'booking_type' => ['required', 'string', 'in:' . implode(',', Inquiry::BOOKING_TYPES)],
-            'cottage_id' => ['required', 'exists:cottages,id,is_available,1'],
-            'check_in' => ['required', 'date', 'after_or_equal:today'],
-            'check_out' => ['nullable', 'required_if:booking_type,' . Inquiry::TYPE_OVERNIGHT, 'date', 'after:check_in'],
-            'pax' => ['required', 'integer', 'min:1', 'max:50'],
-        ]);
+        $validated = $request->validated();
 
         $inquiry->load('cottage');
         $original = [
@@ -502,7 +494,7 @@ class BookingPortalController extends Controller
         if ($inquiry->hasPayments()) {
             if ($inquiry->paymongo_payment_id) {
                 try {
-                    $refunded = $this->refundService()->claimAndProcess($inquiry, $payMongo) === RefundService::CLAIMED;
+                    $refunded = $this->refundService->claimAndProcess($inquiry, $payMongo) === RefundService::CLAIMED;
                 } catch (\RuntimeException $e) {
                     Log::warning('Auto-refund failed on guest cancellation', [
                         'inquiry_id' => $inquiry->id,
@@ -634,14 +626,6 @@ class BookingPortalController extends Controller
         }
 
         return 'Your booking has been cancelled.';
-    }
-
-    /**
-     * The shared refund service instance.
-     */
-    private function refundService(): RefundService
-    {
-        return app(RefundService::class);
     }
 
     /**

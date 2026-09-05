@@ -231,17 +231,15 @@
                 <h2>{{ $title }}</h2>
                 <p><strong>Generated:</strong> {{ now()->format('M d, Y \a\t h:i A') }}</p>
                 <p><strong>Period:</strong>
-                    @php
-                        $period = 'All time';
-                        if (! empty($from) && ! empty($to)) {
-                            $period = $from.' &mdash; '.$to;
-                        } elseif (! empty($from)) {
-                            $period = 'From '.$from;
-                        } elseif (! empty($to)) {
-                            $period = 'Until '.$to;
-                        }
-                    @endphp
-                    {!! $period !!}
+                    @if (! empty($from) && ! empty($to))
+                        {{ $from }} &mdash; {{ $to }}
+                    @elseif (! empty($from))
+                        From {{ $from }}
+                    @elseif (! empty($to))
+                        Until {{ $to }}
+                    @else
+                        All time
+                    @endif
                 </p>
                 @if (! empty($status))
                     <p><strong>Status:</strong> {{ ucfirst($status) }}</p>

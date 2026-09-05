@@ -4,6 +4,7 @@ namespace App\Http\Requests;
 
 use App\Rules\CottageAvailability;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class InquiryRequest extends FormRequest
 {
@@ -18,7 +19,7 @@ class InquiryRequest extends FormRequest
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255'],
             'phone' => ['nullable', 'string', 'max:20'],
-            'cottage_id' => ['nullable', 'exists:cottages,id'],
+            'cottage_id' => ['nullable', Rule::exists('cottages', 'id')->where('is_available', true)],
             'check_in' => ['nullable', 'date', new CottageAvailability(
                 $this->input('cottage_id'),
                 $this->input('email'),

@@ -7,7 +7,6 @@ use App\Models\User;
 use App\Services\ActivityLogger;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules\Password;
 use Illuminate\View\View;
 
@@ -25,8 +24,10 @@ class UserController extends Controller
         }
 
         $users = $query->latest()->get();
+        $editingId = (int) ($request->get('_editing', $request->old('_editing', 0)));
+        $editingUser = $editingId ? User::find($editingId) : null;
 
-        return view('admin.users.index', compact('users'));
+        return view('admin.users.index', compact('users', 'editingUser'));
     }
 
     public function create(): View
@@ -39,7 +40,7 @@ class UserController extends Controller
         $data = $request->validate([
             'name' => 'required|max:255',
             'email' => 'required|email|max:255|unique:users',
-            'password' => ['required', Password::min(8)->letters()->numbers()],
+            'password' => ['required', Password::min(12)->letters()->numbers()->symbols()->uncompromised()],
             'role' => 'required|in:super_admin,admin,staff',
         ]);
 
@@ -50,7 +51,7 @@ class UserController extends Controller
             ]);
         }
 
-        $data['password'] = Hash::make($data['password']);
+        // Password hashing is handled by the User 'hashed' cast.
         $user = User::create($data);
 
         $logger->record('user.created', $user, "User {$user->name} created.", [
@@ -72,7 +73,7 @@ class UserController extends Controller
         $data = $request->validate([
             'name' => 'required|max:255',
             'email' => 'required|email|max:255|unique:users,email,'.$user->id,
-            'password' => ['nullable', Password::min(8)->letters()->numbers()],
+            'password' => ['nullable', Password::min(12)->letters()->numbers()->symbols()->uncompromised()],
             'role' => 'required|in:super_admin,admin,staff',
         ]);
 
@@ -99,9 +100,8 @@ class UserController extends Controller
 
         if (empty($data['password'])) {
             unset($data['password']);
-        } else {
-            $data['password'] = Hash::make($data['password']);
         }
+        // Non-empty passwords are hashed by the User 'hashed' cast.
 
         $user->update($data);
 

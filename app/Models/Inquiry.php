@@ -109,18 +109,27 @@ class Inquiry extends Model
             throw new \InvalidArgumentException('Invalid booking type: '.$this->booking_type);
         }
 
-        if ($this->check_in !== null && $this->check_out !== null && $this->check_out->lt($this->check_in)) {
-            throw new \InvalidArgumentException('Check-out must be on or after check-in.');
+        if ($this->check_in !== null && $this->check_out !== null) {
+            $checkIn = $this->check_in instanceof \DateTimeInterface
+                ? \Carbon\Carbon::parse($this->check_in)
+                : \Carbon\Carbon::parse((string) $this->check_in);
+            $checkOut = $this->check_out instanceof \DateTimeInterface
+                ? \Carbon\Carbon::parse($this->check_out)
+                : \Carbon\Carbon::parse((string) $this->check_out);
+
+            if ($checkOut->lt($checkIn)) {
+                throw new \InvalidArgumentException('Check-out must be on or after check-in.');
+            }
         }
     }
 
     /**
-     * Human-readable, collision-resistant reference code (10 hex chars).
+     * Human-readable, collision-resistant reference code (HB- + 10 hex chars).
      * Unique-violation retries are handled by the callers (see InquiryService).
      */
     public static function generateReferenceCode(): string
     {
-        return 'HB-'.strtoupper(substr(bin2hex(random_bytes(5)), 0, 10));
+        return 'HB-'.strtoupper(bin2hex(random_bytes(5)));
     }
 
     protected function casts(): array
@@ -243,7 +252,17 @@ class Inquiry extends Model
      */
     public function hasPayments(): bool
     {
-        return $this->collectedAmount() > 0;
+        return (float) $this->collectedAmount() > 0;
+    }
+
+    /**
+     * Remaining balance: total minus collected, never negative.
+     */
+    public function outstandingBalance(): string
+    {
+        $balance = (float) ($this->total_amount ?? 0) - (float) $this->collectedAmount();
+
+        return formatPrice(max(0, $balance), 2, false);
     }
 
     /**

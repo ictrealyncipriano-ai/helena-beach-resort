@@ -41,7 +41,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::post('logout', [LoginController::class, 'logout'])->name('logout');
 
         Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
-        Route::get('/', fn () => redirect()->route('admin.dashboard'))->name('home');
+        Route::redirect('/', '/admin/dashboard')->name('home');
 
         Route::get('/availability', [AvailabilityController::class, 'index'])->name('availability');
 
@@ -69,19 +69,14 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::resource('site-settings', SiteSettingController::class)->parameters(['site-settings' => 'siteSetting']);
         Route::resource('guests', GuestController::class)->except(['create', 'store']);
 
-        Route::prefix('inquiries')->name('inquiries.')->controller(InquiryController::class)->group(function () {
-            Route::get('/', 'index')->name('index');
-            Route::post('/', 'store')->name('store');
-            Route::get('{inquiry}', 'show')->name('show');
-            Route::get('{inquiry}/edit', 'edit')->name('edit');
-            Route::put('{inquiry}', 'update')->name('update');
-            Route::delete('{inquiry}', 'destroy')->name('destroy');
+        Route::resource('inquiries', InquiryController::class)->except(['create']);
+        Route::prefix('inquiries')->name('inquiries.')->group(function () {
             Route::post('{inquiry}/confirm', [BookingActionsController::class, 'confirm'])->name('confirm');
             Route::post('{inquiry}/cancel', [BookingActionsController::class, 'cancel'])->name('cancel');
-            Route::post('{inquiry}/mark-paid', 'markPaid')->name('mark-paid');
-            Route::post('{inquiry}/refund', 'refund')->name('refund');
-            Route::post('{inquiry}/payment-proof/approve', 'approvePaymentProof')->name('payment-proof.approve');
-            Route::post('{inquiry}/payment-proof/reject', 'rejectPaymentProof')->name('payment-proof.reject');
+            Route::post('{inquiry}/mark-paid', [InquiryController::class, 'markPaid'])->name('mark-paid');
+            Route::post('{inquiry}/refund', [InquiryController::class, 'refund'])->name('refund');
+            Route::post('{inquiry}/payment-proof/approve', [InquiryController::class, 'approvePaymentProof'])->name('payment-proof.approve');
+            Route::post('{inquiry}/payment-proof/reject', [InquiryController::class, 'rejectPaymentProof'])->name('payment-proof.reject');
         });
 
         Route::post('faqs/activate-all', [FaqController::class, 'activateAll'])->name('faqs.activate-all');

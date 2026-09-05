@@ -13,7 +13,9 @@ class InquiryRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return true;
+        // Role check is enforced by AdminMiddleware; require auth here so the
+        // request can never be used outside the admin guard.
+        return auth()->check();
     }
 
     public function rules(): array
@@ -25,17 +27,20 @@ class InquiryRequest extends FormRequest
             'guest_id' => 'nullable|exists:guests,id',
             'booking_type' => 'nullable|in:day_tour,overnight',
             'check_in' => 'nullable|date',
-            'check_out' => ['nullable', 'date', function ($attribute, $value, $fail) {
-                if ($value && $this->input('check_in') && $value < $this->input('check_in')) {
-                    $fail('Check-out must be on or after check-in.');
-                }
-            }],
+            'check_out' => 'nullable|date|after_or_equal:check_in',
             'pax' => 'nullable|integer|min:1|max:50',
             'total_amount' => 'nullable|numeric|min:0',
             'deposit_amount' => 'nullable|numeric|min:0',
             'cottage_id' => 'nullable|exists:cottages,id',
             'status' => 'required|in:pending,confirmed,cancelled,expired',
             'message' => 'nullable|string',
+        ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'check_out.after_or_equal' => 'Check-out must be on or after check-in.',
         ];
     }
 }

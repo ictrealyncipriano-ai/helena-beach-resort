@@ -201,14 +201,24 @@ class PayMongoService
             return 0;
         }
 
-        $amount = (string) $amount;
-        $parts = explode('.', $amount);
+        $amount = trim((string) $amount);
+        $sign = 1;
+        if (str_starts_with($amount, '-')) {
+            $sign = -1;
+            $amount = substr($amount, 1);
+        } elseif (str_starts_with($amount, '+')) {
+            $amount = substr($amount, 1);
+        }
+
+        // Round to 2 decimals first so 10.005 -> 10.01, never truncate.
+        $rounded = round((float) $amount, 2);
+        $parts = explode('.', number_format($rounded, 2, '.', ''));
         $whole = (int) $parts[0];
         $fraction = isset($parts[1])
             ? str_pad(substr($parts[1], 0, 2), 2, '0')
             : '00';
 
-        return $whole * 100 + (int) $fraction;
+        return $sign * ($whole * 100 + (int) $fraction);
     }
 
     private function lineItemName(Inquiry $inquiry): string
