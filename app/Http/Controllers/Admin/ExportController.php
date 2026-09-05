@@ -57,9 +57,9 @@ class ExportController extends Controller
         ]));
     }
 
-    public function guests(Request $request): StreamedResponse
+    public function guests(ExportFilterRequest $request): StreamedResponse
     {
-        $rows = $this->guestsData();
+        $rows = $this->guestsData($request);
 
         return $this->download('guests.csv', ['id', 'Name', 'Email', 'Phone', 'Notes', 'Stays', 'Last Stay', 'Inquiries', 'Paid', 'Refunded', 'Failed', 'Revenue (PHP)', 'Created At'], $rows->map(fn ($g) => [
             $g->id, $g->name, $g->email, $g->phone, $g->notes,
@@ -118,9 +118,9 @@ class ExportController extends Controller
     /**
      * Render the guests report as a PDF-style document in the browser.
      */
-    public function guestsView(Request $request): View
+    public function guestsView(ExportFilterRequest $request): View
     {
-        $rows = $this->guestsData();
+        $rows = $this->guestsData($request);
 
         $data = [
             'rows' => $rows,
@@ -128,6 +128,8 @@ class ExportController extends Controller
             'totalStays' => $rows->sum('total_stays'),
             'totalRevenue' => $rows->sum('amount_paid'),
             'title' => 'Guests Report',
+            'from' => $request->from,
+            'to' => $request->to,
         ];
 
         return view('admin.exports.report-guests', $data);
@@ -184,16 +186,26 @@ class ExportController extends Controller
 
     /**
      * Guest lifetime stats shared by the CSV export and the in-browser report.
+     * Honors the same from/to window as the other reports (on guest creation).
      */
-    private function guestsData(): Collection
+    private function guestsData(?Request $request = null): Collection
     {
-        return Guest::withCount(['inquiries as inquiries_count' => fn ($q) => $q->whereNull('deleted_at')])
+        $query = Guest::withCount(['inquiries as inquiries_count' => fn ($q) => $q->whereNull('deleted_at')])
             ->withCount(['inquiries as paid_count' => fn ($q) => $q->where('amount_paid', '>', 0)])
             ->withCount(['inquiries as failed_count' => fn ($q) => $q->whereNotNull('payment_failed_at')])
             ->withCount(['inquiries as refunded_count' => fn ($q) => $q->whereNotNull('refunded_at')])
             ->withSum(['inquiries as paid_amount' => fn ($q) => $q->where('amount_paid', '>', 0)], 'amount_paid')
-            ->orderBy('created_at')
-            ->get();
+            ->orderBy('created_at');
+
+        if ($request?->filled('from')) {
+            $query->whereDate('created_at', '>=', $request->from);
+        }
+
+        if ($request?->filled('to')) {
+            $query->whereDate('created_at', '<=', $request->to);
+        }
+
+        return $query->get();
     }
 
     /**

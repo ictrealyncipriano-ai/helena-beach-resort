@@ -231,15 +231,22 @@ class BookingPortalController extends Controller
         $cottages = Cottage::available()->get();
 
         // Any future block not held by this booking is disabled in the
-        // pickers. Matching on inquiry_id OR the legacy reference-code reason
-        // keeps pre-inquiry_id blocks excluded too.
+        // pickers. FK-primary: NULL-safe exclude of own inquiry_id in SQL,
+        // legacy reason-string fallback covers pre-backfill rows.
         $blockedByCottage = CottageDateBlock::whereIn('cottage_id', $cottages->pluck('id'))
             ->future()
+            ->where(function ($q) use ($inquiry) {
+                $q->where('inquiry_id', '!=', $inquiry->id)
+                    ->orWhereNull('inquiry_id');
+            })
             ->select('cottage_id', 'date', 'reason', 'inquiry_id')
             ->get()
-            ->filter(function (CottageDateBlock $block) use ($inquiry) {
-                return $block->inquiry_id !== $inquiry->id
-                    && ! str_contains((string) $block->reason, $inquiry->reference_code);
+            ->reject(function (CottageDateBlock $block) use ($inquiry) {
+                // Own rows (FK match already excluded above; legacy NULL-FK
+                // rows carrying our reference code) are not blocked.
+                return $block->inquiry_id === $inquiry->id
+                    || ($block->inquiry_id === null
+                        && str_contains((string) $block->reason, $inquiry->reference_code));
             })
             ->groupBy('cottage_id')
             ->map(fn ($blocks) => $blocks->pluck('date')

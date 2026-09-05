@@ -41,11 +41,12 @@ class ReleaseExpiredReservations extends Command
         Inquiry::pending()
             ->where('created_at', '<=', $cutoff)
             ->chunkById(100, function ($inquiries) use (&$count) {
-                // A block's reason encodes the owning inquiry's reference code
-                // (e.g. "Pending: HB-ABC123"), which is unique per inquiry, so
-                // matching cottage + date range + reason here preserves the
-                // per-inquiry releaseBlocks() semantics. One grouped OR query
-                // covers the whole chunk instead of one SELECT per inquiry.
+                // FK-primary release: every block carries inquiry_id since the
+                // backfill migration, so delete by FK in one batched query.
+                // Legacy reason-string match kept as fallback for any
+                // pre-backfill rows still missing inquiry_id.
+                $ids = $inquiries->pluck('id');
+                CottageDateBlock::whereIn('inquiry_id', $ids)->delete();
                 $blockIds = CottageDateBlock::query()
                     ->where(function ($q) use ($inquiries) {
                         foreach ($inquiries as $inquiry) {
@@ -59,6 +60,7 @@ class ReleaseExpiredReservations extends Command
                             $q->orWhere(function ($sub) use ($inquiry, $checkIn, $checkOut) {
                                 $sub->where('cottage_id', $inquiry->cottage_id)
                                     ->whereBetween('date', [$checkIn, $checkOut])
+                                    ->whereNull('inquiry_id')
                                     ->whereIn('reason', [
                                         "Pending: {$inquiry->reference_code}",
                                         "Booked: {$inquiry->reference_code}",

@@ -23,10 +23,14 @@ class GuestController extends Controller
             ->withCount(['inquiries as failed_count' => fn ($q) => $q->whereNotNull('payment_failed_at')])
             ->withCount(['inquiries as refunded_count' => fn ($q) => $q->whereNotNull('refunded_at')])
             ->withSum(['inquiries as paid_amount' => fn ($q) => $q->where('amount_paid', '>', 0)], 'amount_paid')
-            // Hydrate only the most recent inquiries per guest for the history
-            // modal (the exact counts come from the withCount/withSum above),
-            // so a long booking history cannot balloon the index page memory.
-            ->with(['inquiries' => fn ($q) => $q->latest()->limit(10)]);
+            // Hydrate recent inquiries per guest for the history modal (counts
+            // come from withCount/withSum above). No global limit here: a LIMIT
+            // inside eager loads applies to the whole query, not per parent.
+            ->with(['inquiries' => fn ($q) => $q->latest()->select(
+                'id', 'guest_id', 'reference_code', 'cottage_id', 'check_in',
+                'check_out', 'booking_type', 'status', 'amount_paid',
+                'payment_failed_at', 'refunded_at', 'total_amount', 'payment_method',
+            )]);
 
         if ($search = $request->get('search')) {
             $query->where(function ($q) use ($search) {
@@ -84,21 +88,20 @@ class GuestController extends Controller
 
     public function show(Guest $guest): View
     {
-        $guest->load('inquiries.cottage');
+        $guest->loadCount('inquiries');
+        $guest->loadCount(['inquiries as paid_count' => fn ($q) => $q->where('amount_paid', '>', 0)]);
+        $guest->loadCount(['inquiries as failed_count' => fn ($q) => $q->whereNotNull('payment_failed_at')]);
+        $guest->loadCount(['inquiries as refunded_count' => fn ($q) => $q->whereNotNull('refunded_at')]);
+        $guest->loadSum(['inquiries as paid_amount' => fn ($q) => $q->where('amount_paid', '>', 0)], 'amount_paid');
+        $guest->load(['inquiries.cottage:id,name']);
 
-        $inquiries = $guest->inquiries;
-        $paidCount = $inquiries->filter(fn ($i) => $i->isPaid())->count();
-        $paidAmount = $inquiries->filter(fn ($i) => $i->isPaid())->sum('amount_paid');
-        $failedCount = $inquiries->filter(fn ($i) => $i->hasFailedPayment())->count();
-        $refundedCount = $inquiries->filter(fn ($i) => $i->isRefunded())->count();
-
-        return view('admin.guests.show', compact(
-            'guest',
-            'paidCount',
-            'paidAmount',
-            'failedCount',
-            'refundedCount',
-        ));
+        return view('admin.guests.show', [
+            'guest' => $guest,
+            'paidCount' => (int) $guest->paid_count,
+            'paidAmount' => $guest->paid_amount ?? 0,
+            'failedCount' => (int) $guest->failed_count,
+            'refundedCount' => (int) $guest->refunded_count,
+        ]);
     }
 
     public function edit(Guest $guest): View

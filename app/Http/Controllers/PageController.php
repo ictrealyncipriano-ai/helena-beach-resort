@@ -127,8 +127,8 @@ class PageController extends Controller
     public function sitemap(): Response
     {
         $xml = Cache::remember(PublicCache::SITEMAP, PublicCache::SITEMAP_TTL, function () {
-            $cottages = Cottage::where('is_available', true)->get();
-            $posts = Post::active()->get();
+            $cottages = Cottage::where('is_available', true)->select('id', 'slug', 'updated_at')->get();
+            $posts = Post::active()->select('id', 'slug', 'updated_at')->get();
             $galleryLastmod = Gallery::where('is_active', true)->max('updated_at');
 
             $pages = [
