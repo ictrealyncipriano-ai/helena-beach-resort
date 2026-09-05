@@ -198,7 +198,7 @@ if ($editingId) {
             </div>
 
             <div class="px-5 py-4 border-t border-gray-100 dark:border-slate-700">
-                @include('components.admin.pagination', ['paginator' => $inquiries])
+                <x-admin.pagination :paginator="$inquiries" />
             </div>
         @endif
     </div>

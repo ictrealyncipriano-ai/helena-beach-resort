@@ -52,7 +52,7 @@
     </div>
 
     <div class="px-5 py-4 border-t border-gray-100 dark:border-slate-700">
-        @include('components.admin.pagination', ['paginator' => $services, 'live' => true])
+        <x-admin.pagination :paginator="$services" live />
     </div>
 @endif
 
