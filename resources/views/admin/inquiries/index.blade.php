@@ -126,7 +126,7 @@ if ($editingId) {
         </div>
 
         @if($inquiries->isEmpty())
-            @include('components.admin.empty-state', ['title' => 'No inquiries', 'message' => 'Inquiries from guests will appear here.'])
+            <x-admin.empty-state title="No inquiries" message="Inquiries from guests will appear here." />
         @else
             <div class="overflow-x-auto">
                 <table class="w-full text-sm">

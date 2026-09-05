@@ -48,12 +48,12 @@ if ($editingId) {
         </div>
 
         @if($cottages->isEmpty())
-            @include('components.admin.empty-state', [
-                'title' => 'No cottages yet',
-                'message' => 'Create your first cottage to start accepting bookings.',
-                'actionClick' => 'openCreate()',
-                'actionLabel' => 'Add Cottage',
-            ])
+            <x-admin.empty-state
+                title="No cottages yet"
+                message="Create your first cottage to start accepting bookings."
+                actionClick="openCreate()"
+                actionLabel="Add Cottage"
+            />
         @else
             <div class="overflow-x-auto">
                 <table class="w-full text-sm">

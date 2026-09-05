@@ -34,10 +34,10 @@
         </div>
 
         @if($promoCodes->isEmpty())
-            @include('components.admin.empty-state', [
-                'title' => 'No promo codes',
-                'message' => 'Create promo codes to offer booking discounts.',
-            ])
+            <x-admin.empty-state
+                title="No promo codes"
+                message="Create promo codes to offer booking discounts."
+            />
         @else
             <div class="overflow-x-auto">
                 <table class="w-full text-sm">

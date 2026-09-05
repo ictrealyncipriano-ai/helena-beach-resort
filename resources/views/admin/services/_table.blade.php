@@ -1,10 +1,10 @@
 @if($services->isEmpty())
-    @include('components.admin.empty-state', [
-        'title' => 'No services',
-        'message' => 'Add services to display on your website.',
-        'actionClick' => 'openCreate()',
-        'actionLabel' => 'Add Service',
-    ])
+    <x-admin.empty-state
+        title="No services"
+        message="Add services to display on your website."
+        actionClick="openCreate()"
+        actionLabel="Add Service"
+    />
 @else
     <div class="overflow-x-auto">
         <table class="w-full text-sm">

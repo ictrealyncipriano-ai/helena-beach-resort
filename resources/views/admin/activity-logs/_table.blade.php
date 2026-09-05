@@ -1,8 +1,8 @@
 @if($logs->isEmpty())
-    @include('components.admin.empty-state', [
-        'title' => 'No activity recorded',
-        'message' => 'No audit entries match these filters.',
-    ])
+    <x-admin.empty-state
+        title="No activity recorded"
+        message="No audit entries match these filters."
+    />
 @else
     <div class="overflow-x-auto">
         <table class="w-full text-sm">

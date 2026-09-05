@@ -54,12 +54,12 @@ if ($editingId) {
         </div>
 
         @if($faqs->isEmpty())
-            @include('components.admin.empty-state', [
-                'title' => 'No FAQs',
-                'message' => 'Create FAQs for your guests.',
-                'actionClick' => 'openCreate()',
-                'actionLabel' => 'Add FAQ',
-            ])
+            <x-admin.empty-state
+                title="No FAQs"
+                message="Create FAQs for your guests."
+                actionClick="openCreate()"
+                actionLabel="Add FAQ"
+            />
         @else
             <div class="overflow-x-auto">
                 <table class="w-full text-sm">

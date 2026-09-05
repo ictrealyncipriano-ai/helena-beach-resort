@@ -111,7 +111,7 @@ class="relative bg-white rounded-2xl shadow-sm border border-gray-100 p-5 overfl
                 </a>
             </div>
             @if($upcomingCheckIns->isEmpty())
-                @include('components.admin.empty-state', ['title' => 'No upcoming check-ins', 'message' => 'There are no confirmed bookings with upcoming check-in dates.'])
+                <x-admin.empty-state title="No upcoming check-ins" message="There are no confirmed bookings with upcoming check-in dates." />
             @else
                 {{-- Desktop table --}}
                 <div class="desktop-table overflow-x-auto">
@@ -186,7 +186,7 @@ class="relative bg-white rounded-2xl shadow-sm border border-gray-100 p-5 overfl
                 </a>
             </div>
             @if($recentInquiries->isEmpty())
-                @include('components.admin.empty-state', ['title' => 'No inquiries yet', 'message' => 'Inquiries from guests will appear here.'])
+                <x-admin.empty-state title="No inquiries yet" message="Inquiries from guests will appear here." />
             @else
                 {{-- Desktop table --}}
                 <div class="desktop-table overflow-x-auto">
@@ -430,7 +430,7 @@ class="relative bg-white rounded-2xl shadow-sm border border-gray-100 p-5 overfl
             @endif
         </div>
         @if($popularCottages->isEmpty())
-            @include('components.admin.empty-state', ['title' => 'No cottage data', 'message' => 'Book some cottages to see popularity data.'])
+            <x-admin.empty-state title="No cottage data" message="Book some cottages to see popularity data." />
         @else
             @php $maxBookings = $popularCottages->max('inquiries_count'); @endphp
 

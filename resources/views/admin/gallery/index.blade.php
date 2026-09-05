@@ -55,7 +55,7 @@ if ($editingId) {
         </div>
 
         @if($galleries->isEmpty())
-            @include('components.admin.empty-state', ['icon' => 'photo', 'title' => 'No gallery images', 'message' => 'Add beautiful photos of your resort.'])
+            <x-admin.empty-state icon="photo" title="No gallery images" message="Add beautiful photos of your resort." />
         @else
             <div class="overflow-x-auto">
                 <table class="w-full text-sm">

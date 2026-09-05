@@ -1,8 +1,8 @@
 @if($posts->isEmpty())
-    @include('components.admin.empty-state', [
-        'title' => 'No posts',
-        'message' => 'Write an announcement or news post to share with guests.',
-    ])
+    <x-admin.empty-state
+        title="No posts"
+        message="Write an announcement or news post to share with guests."
+    />
 @else
     <div class="overflow-x-auto">
         <table class="w-full text-sm">

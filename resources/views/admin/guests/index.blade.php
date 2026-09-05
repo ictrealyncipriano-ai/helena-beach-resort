@@ -39,7 +39,7 @@ if ($editingId) {
         </div>
 
         @if($guests->isEmpty())
-            @include('components.admin.empty-state', ['title' => 'No guests', 'message' => 'Guest profiles are automatically created from inquiries.'])
+            <x-admin.empty-state title="No guests" message="Guest profiles are automatically created from inquiries." />
         @else
             <div class="overflow-x-auto">
                 <table class="w-full text-sm">

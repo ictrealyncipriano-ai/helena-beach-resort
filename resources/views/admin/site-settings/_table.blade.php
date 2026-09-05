@@ -1,10 +1,10 @@
 @if($settings->isEmpty())
-    @include('components.admin.empty-state', [
-        'title' => 'No settings',
-        'message' => 'Add your first site setting.',
-        'actionClick' => 'openCreate()',
-        'actionLabel' => 'Add Setting',
-    ])
+    <x-admin.empty-state
+        title="No settings"
+        message="Add your first site setting."
+        actionClick="openCreate()"
+        actionLabel="Add Setting"
+    />
 @else
     <div class="overflow-x-auto">
         <table class="w-full text-sm">

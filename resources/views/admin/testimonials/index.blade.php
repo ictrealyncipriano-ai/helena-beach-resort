@@ -59,12 +59,12 @@ if ($editingId) {
         </div>
 
         @if($testimonials->isEmpty())
-            @include('components.admin.empty-state', [
-                'title' => 'No testimonials',
-                'message' => 'Guest reviews will appear here.',
-                'actionClick' => 'openCreate()',
-                'actionLabel' => 'Add Testimonial',
-            ])
+            <x-admin.empty-state
+                title="No testimonials"
+                message="Guest reviews will appear here."
+                actionClick="openCreate()"
+                actionLabel="Add Testimonial"
+            />
         @else
             <div class="overflow-x-auto">
                 <table class="w-full text-sm">

@@ -137,19 +137,19 @@
         {{-- Empty states --}}
         <div x-show="allUsers.length === 0">
             @if(request('search'))
-                @include('components.admin.empty-state', [
-                    'icon' => 'search',
-                    'title' => 'No users match your search',
-                    'message' => 'Try a different name or email, or clear the search to see all users.',
-                    'actionUrl' => route('admin.users.index'),
-                    'actionLabel' => 'Clear Search',
-                ])
+                <x-admin.empty-state
+                    icon="search"
+                    title="No users match your search"
+                    message="Try a different name or email, or clear the search to see all users."
+                    :actionUrl="route('admin.users.index')"
+                    actionLabel="Clear Search"
+                />
             @else
-                @include('components.admin.empty-state', [
-                    'icon' => 'inbox',
-                    'title' => 'No users yet',
-                    'message' => 'Create your first admin user to get started.',
-                ])
+                <x-admin.empty-state
+                    icon="inbox"
+                    title="No users yet"
+                    message="Create your first admin user to get started."
+                />
             @endif
         </div>
 
