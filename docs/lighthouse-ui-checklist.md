@@ -85,6 +85,7 @@ Record scores + date; keep old rows for history.
 | Date | Scope | Tests | Build | Lighthouse | Verdict |
 | ---- | ----- | ----- | ----- | ---------- | ------- |
 | 2026-09-05 | Phase 1+2+3A–H+E–H | targeted green; pre-existing calendar reds* | green | n/a (manual) | pass with notes |
+| 2026-09-05 | Test-clock freeze (`tests/TestCase.php` → 2026-08-15 12:00) | **full suite green: 528 tests, 1807 assertions, 3 skipped, 0 failures** | green | n/a (manual) | pass — calendar reds resolved |
 | | | | | | |
 
 \* Pre-existing reds proven identical on pristine `bcec339` via worktree:
