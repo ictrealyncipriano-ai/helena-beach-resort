@@ -24,7 +24,7 @@
                 <tr class="hover:bg-gray-50 transition-colors dark:hover:bg-slate-700/40">
                     <td class="px-5 py-3 text-gray-500 font-mono text-xs dark:text-slate-400">{{ $service->icon }}</td>
                     <td class="px-5 py-3 font-medium text-gray-900 dark:text-white">{{ $service->name }}</td>
-                    <td class="px-5 py-3">@include('components.admin.badge', ['type' => $service->category === 'Amenities' ? 'info' : ($service->category === 'Dining' ? 'warning' : ($service->category === 'Activities' ? 'success' : ($service->category === 'Events' ? 'danger' : 'gray'))), 'slot' => $service->category ?? '—'])</td>
+                    <td class="px-5 py-3"><x-admin.badge :type="$service->category === 'Amenities' ? 'info' : ($service->category === 'Dining' ? 'warning' : ($service->category === 'Activities' ? 'success' : ($service->category === 'Events' ? 'danger' : 'gray')))" :label="$service->category ?? '—'" /></td>
                     <td class="px-5 py-3 text-gray-600 max-w-xs truncate hidden sm:table-cell dark:text-slate-300">{{ Str::limit($service->description, 60) }}</td>
                     <td class="px-5 py-3 text-center">
                         @if($service->is_active)

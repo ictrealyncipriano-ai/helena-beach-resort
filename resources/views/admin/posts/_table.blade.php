@@ -41,7 +41,7 @@
                                 default => 'danger',
                             };
                         @endphp
-                        @include('components.admin.badge', ['type' => $badgeType, 'slot' => ucfirst($status)])
+                        <x-admin.badge :type="$badgeType" :label="ucfirst($status)" />
                     </td>
                     <td class="px-5 py-3 text-gray-600 hidden md:table-cell dark:text-slate-300">
                         {{ $post->published_at ? $post->published_at->format('M j, Y g:i A') : '—' }}

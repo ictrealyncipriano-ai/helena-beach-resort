@@ -132,11 +132,11 @@ class="relative bg-white rounded-2xl shadow-sm border border-gray-100 p-5 overfl
                             <tr class="hover:bg-gray-50/50 transition-colors dark:hover:bg-slate-700/40">
                                 <td class="px-5 py-3.5 text-gray-500 font-mono text-xs font-medium dark:text-slate-400">{{ $inquiry->reference_code }}</td>
                                 <td class="px-5 py-3.5 font-medium text-gray-900 dark:text-white">{{ $inquiry->name }}</td>
-                                <td class="px-5 py-3.5">@include('components.admin.badge', ['type' => 'primary', 'slot' => $inquiry->cottage?->name ?? 'N/A'])</td>
+                                <td class="px-5 py-3.5"><x-admin.badge type="primary" :label="$inquiry->cottage?->name ?? 'N/A'" /></td>
                                 <td class="px-5 py-3.5 text-gray-600 dark:text-slate-300">{{ $inquiry->check_in?->format('M d, Y') ?? '—' }}</td>
                                 <td class="px-5 py-3.5 text-gray-600 dark:text-slate-300">{{ $inquiry->check_out?->format('M d, Y') ?? '—' }}</td>
                                 <td class="px-5 py-3.5 text-center text-gray-600 dark:text-slate-300">{{ $inquiry->pax ?? '—' }}</td>
-                                <td class="px-5 py-3.5">@include('components.admin.badge', ['type' => $inquiry->booking_type === 'day_tour' ? 'info' : ($inquiry->booking_type === 'overnight' ? 'warning' : 'gray'), 'slot' => $inquiry->booking_type ? ucfirst(str_replace('_', ' ', $inquiry->booking_type)) : 'Inquiry'])</td>
+                                <td class="px-5 py-3.5"><x-admin.badge :type="$inquiry->booking_type === 'day_tour' ? 'info' : ($inquiry->booking_type === 'overnight' ? 'warning' : 'gray')" :label="$inquiry->booking_type ? ucfirst(str_replace('_', ' ', $inquiry->booking_type)) : 'Inquiry'" /></td>
                             </tr>
                             @endforeach
                         </tbody>
@@ -149,7 +149,7 @@ class="relative bg-white rounded-2xl shadow-sm border border-gray-100 p-5 overfl
                     <div class="mobile-table-card">
                         <div class="flex items-center justify-between">
                             <span class="font-semibold text-gray-900 dark:text-white">{{ $inquiry->name }}</span>
-                            @include('components.admin.badge', ['type' => 'primary', 'slot' => $inquiry->cottage?->name ?? 'N/A'])
+                            <x-admin.badge type="primary" :label="$inquiry->cottage?->name ?? 'N/A'" />
                         </div>
                         <div class="field">
                             <span class="field-label">Ref #</span>
@@ -165,7 +165,7 @@ class="relative bg-white rounded-2xl shadow-sm border border-gray-100 p-5 overfl
                         </div>
                         <div class="flex items-center justify-between pt-1">
                             <span class="text-xs text-gray-500 dark:text-slate-400">{{ $inquiry->pax ?? '—' }} guest(s)</span>
-                            @include('components.admin.badge', ['type' => $inquiry->booking_type === 'day_tour' ? 'info' : ($inquiry->booking_type === 'overnight' ? 'warning' : 'gray'), 'slot' => $inquiry->booking_type ? ucfirst(str_replace('_', ' ', $inquiry->booking_type)) : 'Inquiry'])
+                            <x-admin.badge :type="$inquiry->booking_type === 'day_tour' ? 'info' : ($inquiry->booking_type === 'overnight' ? 'warning' : 'gray')" :label="$inquiry->booking_type ? ucfirst(str_replace('_', ' ', $inquiry->booking_type)) : 'Inquiry'" />
                         </div>
                     </div>
                     @endforeach
@@ -205,7 +205,7 @@ class="relative bg-white rounded-2xl shadow-sm border border-gray-100 p-5 overfl
                             <tr class="hover:bg-gray-50/50 transition-colors dark:hover:bg-slate-700/40">
                                 <td class="px-5 py-3.5 font-medium text-gray-900 dark:text-white">{{ $inquiry->name }}</td>
                                 <td class="px-5 py-3.5 text-gray-500 dark:text-slate-400">{{ $inquiry->email }}</td>
-                                <td class="px-5 py-3.5">@include('components.admin.badge', ['type' => 'primary', 'slot' => $inquiry->cottage?->name ?? 'N/A'])</td>
+                                <td class="px-5 py-3.5"><x-admin.badge type="primary" :label="$inquiry->cottage?->name ?? 'N/A'" /></td>
                                 <td class="px-5 py-3.5">
                                     @php
                                         $statusDot = match($inquiry->status) {
@@ -216,7 +216,7 @@ class="relative bg-white rounded-2xl shadow-sm border border-gray-100 p-5 overfl
                                     @endphp
                                     <span class="inline-flex items-center gap-1.5">
                                         <span class="w-1.5 h-1.5 rounded-full {{ $statusDot }}"></span>
-                                        @include('components.admin.badge', ['type' => $inquiry->status === 'confirmed' ? 'success' : ($inquiry->status === 'cancelled' ? 'danger' : 'warning'), 'slot' => ucfirst($inquiry->status)])
+                                        <x-admin.badge :type="$inquiry->status === 'confirmed' ? 'success' : ($inquiry->status === 'cancelled' ? 'danger' : 'warning')" :label="ucfirst($inquiry->status)" />
                                     </span>
                                 </td>
                                 <td class="px-5 py-3.5 text-gray-500 text-xs dark:text-slate-400">{{ $inquiry->created_at->format('M d, Y H:i') }}</td>
@@ -241,7 +241,7 @@ class="relative bg-white rounded-2xl shadow-sm border border-gray-100 p-5 overfl
                             @endphp
                             <span class="inline-flex items-center gap-1.5">
                                 <span class="w-1.5 h-1.5 rounded-full {{ $statusDot }}"></span>
-                                @include('components.admin.badge', ['type' => $inquiry->status === 'confirmed' ? 'success' : ($inquiry->status === 'cancelled' ? 'danger' : 'warning'), 'slot' => ucfirst($inquiry->status)])
+                                <x-admin.badge :type="$inquiry->status === 'confirmed' ? 'success' : ($inquiry->status === 'cancelled' ? 'danger' : 'warning')" :label="ucfirst($inquiry->status)" />
                             </span>
                         </div>
                         <div class="field">
@@ -250,7 +250,7 @@ class="relative bg-white rounded-2xl shadow-sm border border-gray-100 p-5 overfl
                         </div>
                         <div class="field">
                             <span class="field-label">Cottage</span>
-                            <span class="field-value">@include('components.admin.badge', ['type' => 'primary', 'slot' => $inquiry->cottage?->name ?? 'N/A'])</span>
+                            <span class="field-value"><x-admin.badge type="primary" :label="$inquiry->cottage?->name ?? 'N/A'" /></span>
                         </div>
                         <div class="field">
                             <span class="field-label">Date</span>

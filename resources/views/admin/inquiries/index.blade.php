@@ -150,20 +150,20 @@ if ($editingId) {
                             <td class="px-5 py-3 text-gray-500 font-medium dark:text-slate-400">{{ $inquiry->reference_code }}</td>
                             <td class="px-5 py-3 font-medium text-gray-900 dark:text-white">{{ $inquiry->name }}</td>
                             <td class="px-5 py-3 text-gray-500 hidden sm:table-cell dark:text-slate-400">{{ $inquiry->email }}</td>
-                            <td class="px-5 py-3">@include('components.admin.badge', ['type' => 'primary', 'slot' => $inquiry->cottage?->name ?? 'N/A'])</td>
+                            <td class="px-5 py-3"><x-admin.badge type="primary" :label="$inquiry->cottage?->name ?? 'N/A'" /></td>
                             <td class="px-5 py-3 text-gray-600 dark:text-slate-300">{{ $inquiry->check_in?->format('M d, Y') ?? '—' }}</td>
                             <td class="px-5 py-3 text-gray-600 dark:text-slate-300">{{ $inquiry->check_out?->format('M d, Y') ?? '—' }}</td>
                             <td class="px-5 py-3 text-center hidden md:table-cell">{{ $inquiry->pax ?? '—' }}</td>
-                            <td class="px-5 py-3 hidden md:table-cell">@include('components.admin.badge', ['type' => $inquiry->booking_type === 'day_tour' ? 'info' : ($inquiry->booking_type === 'overnight' ? 'warning' : 'gray'), 'slot' => $inquiry->booking_type ? ucfirst(str_replace('_', ' ', $inquiry->booking_type)) : '—'])</td>
+                            <td class="px-5 py-3 hidden md:table-cell"><x-admin.badge :type="$inquiry->booking_type === 'day_tour' ? 'info' : ($inquiry->booking_type === 'overnight' ? 'warning' : 'gray')" :label="$inquiry->booking_type ? ucfirst(str_replace('_', ' ', $inquiry->booking_type)) : '—'" /></td>
                             <td class="px-5 py-3">
                                 <div class="flex items-center gap-1.5">
-                                    @include('components.admin.badge', ['type' => $inquiry->status === 'confirmed' ? 'success' : ($inquiry->status === 'cancelled' ? 'danger' : ($inquiry->status === 'expired' ? 'gray' : 'warning')), 'slot' => ucfirst($inquiry->status)])
+                                    <x-admin.badge :type="$inquiry->status === 'confirmed' ? 'success' : ($inquiry->status === 'cancelled' ? 'danger' : ($inquiry->status === 'expired' ? 'gray' : 'warning'))" :label="ucfirst($inquiry->status)" />
                                     @if($inquiry->isRefunded())
-                                        @include('components.admin.badge', ['type' => 'danger', 'slot' => 'Refunded'])
+                                        <x-admin.badge type="danger" label="Refunded" />
                                     @elseif($inquiry->isPaid())
-                                        @include('components.admin.badge', ['type' => 'primary', 'slot' => 'Paid'])
+                                        <x-admin.badge type="primary" label="Paid" />
                                     @elseif($inquiry->hasFailedPayment())
-                                        @include('components.admin.badge', ['type' => 'danger', 'slot' => 'Payment Failed'])
+                                        <x-admin.badge type="danger" label="Payment Failed" />
                                     @endif
                                 </div>
                             </td>

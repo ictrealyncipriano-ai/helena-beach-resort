@@ -21,7 +21,7 @@
                 <tr class="hover:bg-gray-50 transition-colors dark:hover:bg-slate-700/40">
                     <td class="px-5 py-3 font-medium text-gray-500 font-mono text-xs dark:text-slate-400">{{ $setting->key }}</td>
                     <td class="px-5 py-3 text-gray-700 max-w-md truncate dark:text-slate-300">{{ Str::limit($setting->value, 60) }}</td>
-                    <td class="px-5 py-3">@include('components.admin.badge', ['type' => $setting->type === 'image' ? 'info' : ($setting->type === 'textarea' ? 'warning' : 'gray'), 'slot' => ucfirst($setting->type)])</td>
+                    <td class="px-5 py-3"><x-admin.badge :type="$setting->type === 'image' ? 'info' : ($setting->type === 'textarea' ? 'warning' : 'gray')" :label="ucfirst($setting->type)" /></td>
                     <td class="px-5 py-3 text-right">
                         <div class="flex items-center justify-end gap-1">
                             <button type="button" @@click="openEdit({{ $setting->id }})" class="p-1.5 text-gray-500 hover:text-teal-700 hover:bg-teal-50 rounded-lg transition-colors dark:text-slate-400 dark:hover:text-teal-300 dark:hover:bg-teal-900/30" aria-label="Edit">

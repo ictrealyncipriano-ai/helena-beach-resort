@@ -82,7 +82,7 @@ if ($editingId) {
                                 @endif
                             </td>
                             <td class="px-5 py-3 font-medium text-gray-900 dark:text-white">{{ $gallery->title ?? 'Untitled' }}</td>
-                            <td class="px-5 py-3">@include('components.admin.badge', ['type' => $gallery->category === 'Beach' ? 'info' : ($gallery->category === 'Food' ? 'warning' : ($gallery->category === 'Events' ? 'success' : 'gray')), 'slot' => $gallery->category ?? '—'])</td>
+                            <td class="px-5 py-3"><x-admin.badge :type="$gallery->category === 'Beach' ? 'info' : ($gallery->category === 'Food' ? 'warning' : ($gallery->category === 'Events' ? 'success' : 'gray'))" :label="$gallery->category ?? '—'" /></td>
                             <td class="px-5 py-3 text-center">
                                 @if($gallery->is_active)
                                     <svg class="w-5 h-5 text-emerald-500 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>

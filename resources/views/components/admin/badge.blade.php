@@ -1,4 +1,4 @@
-@props(['type' => 'gray', 'size' => 'sm'])
+@props(['type' => 'gray', 'size' => 'sm', 'label' => null])
 
 @php
 $colors = [
@@ -16,5 +16,5 @@ $sizes = [
 @endphp
 
 <span class="inline-flex items-center rounded-md font-medium ring-1 ring-inset {{ $colors[$type] ?? $colors['gray'] }} {{ $sizes[$size] ?? $sizes['sm'] }}">
-    {{ $slot }}
+    {{ $label ?? $slot }}
 </span>

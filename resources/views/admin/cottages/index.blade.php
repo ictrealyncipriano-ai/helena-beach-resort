@@ -94,7 +94,7 @@ if ($editingId) {
                                     <svg class="w-5 h-5 text-red-400 mx-auto dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 9.75l4.5 4.5m0-4.5l-4.5 4.5M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                                 @endif
                             </td>
-                            <td class="px-5 py-3 text-center">@include('components.admin.badge', ['type' => 'primary', 'slot' => $cottage->inquiries_count])</td>
+                            <td class="px-5 py-3 text-center"><x-admin.badge type="primary" :label="$cottage->inquiries_count" /></td>
                             <td class="px-5 py-3 text-center text-gray-500 dark:text-slate-400">{{ $cottage->sort_order }}</td>
                             <td class="px-5 py-3 text-right">
                                 <div class="flex items-center justify-end gap-1">

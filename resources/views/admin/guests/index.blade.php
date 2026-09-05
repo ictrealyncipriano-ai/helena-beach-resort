@@ -60,7 +60,7 @@ if ($editingId) {
                             <td class="px-5 py-3 font-medium text-gray-900 dark:text-white">{{ $guest->name }}</td>
                             <td class="px-5 py-3 text-gray-500 dark:text-slate-400">{{ $guest->email }}</td>
                             <td class="px-5 py-3 text-gray-500 hidden sm:table-cell dark:text-slate-400">{{ $guest->phone ?? '—' }}</td>
-                            <td class="px-5 py-3 text-center">@include('components.admin.badge', ['type' => 'primary', 'slot' => $guest->inquiries_count])</td>
+                            <td class="px-5 py-3 text-center"><x-admin.badge type="primary" :label="$guest->inquiries_count" /></td>
                             <td class="px-5 py-3 text-gray-600 dark:text-slate-300">{{ $guest->last_stay_at?->format('M d, Y') ?? '—' }}</td>
                             <td class="px-5 py-3 text-gray-500 hidden md:table-cell dark:text-slate-400">{{ $guest->created_at->format('M d, Y') }}</td>
                             <td class="px-5 py-3 text-right">

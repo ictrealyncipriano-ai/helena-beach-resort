@@ -78,7 +78,7 @@
             <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-6 mb-5">
                 <div>
                     <span class="text-xs text-gray-500 uppercase tracking-wider font-medium dark:text-slate-400">Type</span>
-                    <p class="mt-1">@include('components.admin.badge', ['type' => $inquiry->booking_type === 'day_tour' ? 'info' : ($inquiry->booking_type === 'overnight' ? 'warning' : 'gray'), 'slot' => $inquiry->booking_type ? ucfirst(str_replace('_', ' ', $inquiry->booking_type)) : 'Inquiry'])</p>
+                    <p class="mt-1"><x-admin.badge :type="$inquiry->booking_type === 'day_tour' ? 'info' : ($inquiry->booking_type === 'overnight' ? 'warning' : 'gray')" :label="$inquiry->booking_type ? ucfirst(str_replace('_', ' ', $inquiry->booking_type)) : 'Inquiry'" /></p>
                 </div>
                 <div>
                     <span class="text-xs text-gray-500 uppercase tracking-wider font-medium dark:text-slate-400">Check In</span>
@@ -94,7 +94,7 @@
                 </div>
                 <div>
                     <span class="text-xs text-gray-500 uppercase tracking-wider font-medium dark:text-slate-400">Cottage</span>
-                    <p class="mt-1">@include('components.admin.badge', ['type' => 'primary', 'slot' => $inquiry->cottage?->name ?? 'N/A'])</p>
+                    <p class="mt-1"><x-admin.badge type="primary" :label="$inquiry->cottage?->name ?? 'N/A'" /></p>
                 </div>
                 <div>
                     <span class="text-xs text-gray-500 uppercase tracking-wider font-medium dark:text-slate-400">Total Amount</span>
@@ -109,15 +109,15 @@
                     <span class="text-xs text-gray-500 uppercase tracking-wider font-medium">Payment</span>
                     <p class="mt-1">
                         @if($inquiry->isRefunded())
-                            @include('components.admin.badge', ['type' => 'danger', 'slot' => 'Refunded'])
+                            <x-admin.badge type="danger" label="Refunded" />
                         @elseif($inquiry->isPaid())
-                            @include('components.admin.badge', ['type' => 'success', 'slot' => 'Paid'])
+                            <x-admin.badge type="success" label="Paid" />
                         @elseif($inquiry->isDepositPaid())
-                            @include('components.admin.badge', ['type' => 'warning', 'slot' => 'Deposit Paid'])
+                            <x-admin.badge type="warning" label="Deposit Paid" />
                         @elseif($inquiry->hasFailedPayment())
-                            @include('components.admin.badge', ['type' => 'danger', 'slot' => 'Payment Failed'])
+                            <x-admin.badge type="danger" label="Payment Failed" />
                         @else
-                            @include('components.admin.badge', ['type' => 'gray', 'slot' => 'Unpaid'])
+                            <x-admin.badge type="gray" label="Unpaid" />
                         @endif
                     </p>
                     @if($inquiry->isRefunded())
@@ -133,7 +133,7 @@
             </div>
             <div class="flex items-center gap-3">
                 <span class="text-xs text-gray-500 uppercase tracking-wider font-medium dark:text-slate-400">Status</span>
-                @include('components.admin.badge', ['type' => $inquiry->status === 'confirmed' ? 'success' : ($inquiry->status === 'cancelled' ? 'danger' : 'warning'), 'size' => 'md', 'slot' => ucfirst($inquiry->status)])
+                <x-admin.badge :type="$inquiry->status === 'confirmed' ? 'success' : ($inquiry->status === 'cancelled' ? 'danger' : 'warning')" size="md" :label="ucfirst($inquiry->status)" />
             </div>
         </div>
     </div>
@@ -155,10 +155,10 @@
     <div class="bg-white rounded-xl shadow-sm border border-gray-100 dark:bg-slate-800 dark:border-slate-700">
         <div class="px-5 py-4 border-b border-gray-100 flex items-center justify-between dark:border-slate-700">
             <h2 class="text-sm font-semibold text-gray-900 dark:text-white">Payment Proof</h2>
-            @include('components.admin.badge', [
-                'type' => $inquiry->hasPendingPaymentProof() ? 'warning' : ($inquiry->hasApprovedPaymentProof() ? 'success' : 'danger'),
-                'slot' => ucfirst($inquiry->payment_proof_status),
-            ])
+            <x-admin.badge
+                :type="$inquiry->hasPendingPaymentProof() ? 'warning' : ($inquiry->hasApprovedPaymentProof() ? 'success' : 'danger')"
+                :label="ucfirst($inquiry->payment_proof_status)"
+            />
         </div>
         <div class="p-5">
             <img src="{{ Storage::disk('cloudflare')->url($inquiry->payment_proof_path) }}"
