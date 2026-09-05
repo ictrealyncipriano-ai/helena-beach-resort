@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
+    <meta name="robots" content="noindex, nofollow, noarchive">
     <title>Invoice — {{ $inquiry->reference_code }}</title>
     <style>
         @page { margin: 15mm 20mm; }

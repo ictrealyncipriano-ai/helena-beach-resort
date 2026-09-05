@@ -24,8 +24,7 @@ class PageController extends Controller
 {
     public function home(): View
     {
-        [$cottages, $gallery, $testimonials, $avgRating, $posts] = Cache::remember(PublicCache::HOME, PublicCache::HOME_TTL, function () {
-            $cottages = Cottage::with('primaryPhoto:cottage_id,photo_path,is_primary')
+        [$cottages, $gallery, $testimonials, $avgRating, $testimonialCount, $posts] = Cache::remember(PublicCache::HOME, PublicCache::HOME_TTL, function () {            $cottages = Cottage::with('primaryPhoto:cottage_id,photo_path,is_primary')
                 ->available()
                 ->select('id', 'name', 'slug', 'description', 'capacity', 'rate_daytour', 'rate_overnight', 'sort_order', 'is_available')
                 ->take(6)
@@ -39,13 +38,14 @@ class PageController extends Controller
 
             $testimonials = Testimonial::active()->with('cottage:id,name')->take(3)->get();
             $avgRating = Testimonial::where('is_active', true)->avg('rating');
+            $testimonialCount = Testimonial::where('is_active', true)->count();
 
             $posts = Post::active()->select('id', 'title', 'slug', 'excerpt', 'cover_image', 'published_at')->take(3)->get();
 
-            return [$cottages, $gallery, $testimonials, $avgRating, $posts];
+            return [$cottages, $gallery, $testimonials, $avgRating, $testimonialCount, $posts];
         });
 
-        return view('pages.home', compact('cottages', 'gallery', 'testimonials', 'avgRating', 'posts'));
+        return view('pages.home', compact('cottages', 'gallery', 'testimonials', 'avgRating', 'testimonialCount', 'posts'));
     }
 
     /** Static about page */
@@ -149,7 +149,7 @@ class PageController extends Controller
                 ['loc' => route('home'), 'priority' => '1.0', 'changefreq' => 'daily', 'lastmod' => date('Y-m-d')],
                 ['loc' => route('about'), 'priority' => '0.7', 'changefreq' => 'monthly', 'lastmod' => date('Y-m-d')],
                 ['loc' => route('faq'), 'priority' => '0.5', 'changefreq' => 'monthly', 'lastmod' => date('Y-m-d')],
-                ['loc' => route('book'), 'priority' => '0.8', 'changefreq' => 'weekly', 'lastmod' => date('Y-m-d')],
+                ['loc' => route('book'), 'priority' => '0.5', 'changefreq' => 'weekly', 'lastmod' => date('Y-m-d')],
                 ['loc' => route('services'), 'priority' => '0.6', 'changefreq' => 'weekly', 'lastmod' => date('Y-m-d')],
                 ['loc' => route('reviews'), 'priority' => '0.6', 'changefreq' => 'weekly', 'lastmod' => date('Y-m-d')],
                 ['loc' => route('news.index'), 'priority' => '0.6', 'changefreq' => 'weekly', 'lastmod' => date('Y-m-d')],

@@ -4,7 +4,8 @@
 @section('description', \Illuminate\Support\Str::limit(strip_tags(html_entity_decode($cottage->description)), 150))
 
 @if($cottage->primaryPhoto)
-@section('og_image', Storage::url($cottage->primaryPhoto->photo_path))
+@section('canonical', route('cottages.show', $cottage))
+@section('og_image', url(Storage::url($cottage->primaryPhoto->photo_path)))
 @section('og_image_alt', $cottage->name)
 @endif
 
@@ -19,7 +20,7 @@
             '@type' => 'Product',
             'name' => $cottage->name,
             'description' => \Illuminate\Support\Str::limit(strip_tags(html_entity_decode($cottage->description)), 200),
-            'image' => $cottage->primaryPhoto ? Storage::url($cottage->primaryPhoto->photo_path) : null,
+            'image' => $cottage->primaryPhoto ? url(Storage::url($cottage->primaryPhoto->photo_path)) : null,
             'url' => route('cottages.show', $cottage),
             'offers' => [
                 '@type' => 'Offer',
@@ -202,14 +203,16 @@
                                     <x-icons name="chevron-right" class="w-4 h-4" />
                                 </button>
                             </div>
-                            <div class="grid grid-cols-7 gap-0 text-center mb-1" role="row">
+                            <div class="grid grid-cols-7 gap-0 text-center mb-1" role="presentation">
                                 <template x-for="day in ['Sun','Mon','Tue','Wed','Thu','Fri','Sat']" :key="day">
-                                    <span role="columnheader" class="text-xs font-medium text-gray-500 dark:text-slate-400 py-1" x-text="day"></span>
+                                    <span class="text-xs font-medium text-gray-500 dark:text-slate-400 py-1" x-text="day"></span>
                                 </template>
                             </div>
-                            <div class="grid grid-cols-7 gap-0" role="grid" aria-label="Availability calendar">
+                            {{-- Read-only availability overview (not interactive): dates carry
+                                 text cues ("Booked"/"Available") beyond color + strikethrough. --}}
+                            <div class="grid grid-cols-7 gap-0" role="list" aria-label="Availability calendar (read-only overview)">
                                 <template x-for="(day, i) in days" :key="i">
-                                    <div class="text-sm py-1.5 rounded-lg text-center"
+                                    <div role="listitem" class="text-sm py-1.5 rounded-lg text-center"
                                         :class="{
                                             'text-gray-300': !day,
                                             'text-gray-900 dark:text-slate-200': day && !day.blocked && !day.isPast,
@@ -238,6 +241,9 @@
                                     Past
                                 </span>
                             </div>
+                            <p class="mt-3 text-sm">
+                                <a href="{{ route('book') }}?cottage_id={{ $cottage->id }}" class="text-teal-700 dark:text-teal-300 underline underline-offset-2 hover:no-underline">Check availability for this cottage in the booking form →</a>
+                            </p>
                         </div>
                     </div>
                 </div>
@@ -247,8 +253,8 @@
 </section>
 
 {{-- Photo Lightbox --}}
-<div id="photo-lightbox" role="dialog" aria-modal="true" aria-label="Cottage photo" tabindex="-1" class="fixed inset-0 z-50 bg-black/95 hidden items-center justify-center p-4" onclick="closePhotoLightbox(event)">
-    <button onclick="closePhotoLightbox(event)" class="absolute top-4 right-4 w-12 h-12 flex items-center justify-center text-white/60 hover:text-white rounded-full hover:bg-white/10 transition-all z-30" aria-label="Close">
+<div id="photo-lightbox" role="dialog" aria-modal="true" aria-label="Cottage photo viewer" tabindex="-1" class="fixed inset-0 z-50 bg-black/95 hidden items-center justify-center p-4" onclick="closePhotoLightbox(event)">
+    <button onclick="closePhotoLightbox(event)" class="absolute top-4 right-4 w-12 h-12 flex items-center justify-center text-white/60 hover:text-white rounded-full hover:bg-white/10 transition-all z-30" aria-label="Close photo viewer">
         <x-icons name="x" class="w-6 h-6" />
     </button>
     <img id="photo-lightbox-img" src="" alt="" class="max-w-full max-h-[85vh] object-contain rounded-xl transition-all duration-300 shadow-2xl">

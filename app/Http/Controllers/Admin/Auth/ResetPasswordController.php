@@ -25,7 +25,7 @@ class ResetPasswordController extends Controller
         $credentials = $request->validate([
             'token' => ['required'],
             'email' => ['required', 'email', 'max:255'],
-            'password' => ['required', 'confirmed', PasswordRule::min(8)->letters()->numbers()],
+            'password' => ['required', 'confirmed', PasswordRule::min(12)->letters()->numbers()->symbols()->uncompromised()],
         ]);
 
         $status = Password::broker()->reset($credentials, function ($user, $password) {

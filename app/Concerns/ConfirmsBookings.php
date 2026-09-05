@@ -27,7 +27,7 @@ trait ConfirmsBookings
         }
 
         try {
-            Mail::to($inquiry->email)->send(new BookingConfirmed($inquiry));
+            Mail::to($inquiry->email)->queue(new BookingConfirmed($inquiry));
         } catch (\Exception $e) {
             Log::error('Failed to send booking confirmation email', [
                 'inquiry_id' => $inquiry->id,

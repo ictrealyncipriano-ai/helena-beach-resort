@@ -4,6 +4,7 @@ namespace App\Mail;
 
 use App\Models\Inquiry;
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
 
@@ -12,7 +13,7 @@ use Illuminate\Queue\SerializesModels;
  * submitted. Contains their reference code and submitted details so they
  * can keep track of the request before the admin confirms it.
  */
-class InquiryAcknowledgment extends Mailable
+class InquiryAcknowledgment extends Mailable implements ShouldQueue
 {
     use Queueable, SerializesModels;
 

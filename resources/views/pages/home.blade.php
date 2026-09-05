@@ -2,6 +2,7 @@
 
 @section('title', 'Helena Beach Resort | Beachfront Cottages in Infanta, Quezon')
 @section('description', 'Helena Beach Resort — beachfront cottages, fresh seafood, and unforgettable stays in Infanta, Quezon. Book your day tour or overnight getaway today.')
+@section('canonical', route('home'))
 
 @push('head')
 @if($sections['hero_background'])
@@ -29,7 +30,7 @@
             '@type' => 'AggregateRating',
             'ratingValue' => round($avgRating, 1),
             'bestRating' => 5,
-            'ratingCount' => $testimonials->count(),
+            'ratingCount' => $testimonialCount ?? $testimonials->count(),
         ];
     }
 @endphp

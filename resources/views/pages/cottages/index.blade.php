@@ -2,6 +2,7 @@
 
 @section('title', 'Cottages')
 @section('description', 'Browse our beachfront cottages at Helena Beach Resort in Infanta, Quezon.')
+@section('canonical', route('cottages.index'))
 
 @section('content')
 <x-hero title="Our Cottages" subtitle="Choose the perfect cottage for your beach getaway." />
@@ -40,16 +41,17 @@
                     </div>
                     <div>
                         <label for="widget-check-in" class="block text-xs font-semibold tracking-wide text-gray-500 dark:text-slate-400 uppercase mb-1.5">Check-in</label>
-                        <input type="text" id="widget-check-in" readonly x-ref="checkIn" x-model="checkIn"
-                            @click.prevent="openCheckIn()" placeholder="Select date"
+                        <input type="text" id="widget-check-in" x-ref="checkIn" x-model="checkIn"
+                            @click.prevent="openCheckIn()" placeholder="YYYY-MM-DD" inputmode="numeric" autocomplete="off"
                             class="w-full px-3 py-2.5 text-sm bg-white border border-gray-200 dark:bg-slate-800 dark:border-slate-600 dark:text-white rounded-lg focus:ring-2 focus:ring-teal-600 focus:border-teal-500 outline-none transition-colors cursor-pointer">
                     </div>
                     <div x-show="bookingType === 'overnight'">
                         <label for="widget-check-out" class="block text-xs font-semibold tracking-wide text-gray-500 dark:text-slate-400 uppercase mb-1.5">Check-out</label>
-                        <input type="text" id="widget-check-out" readonly x-ref="checkOut" x-model="checkOut"
-                            @click.prevent="openCheckOut()" placeholder="Select date"
+                        <input type="text" id="widget-check-out" x-ref="checkOut" x-model="checkOut"
+                            @click.prevent="openCheckOut()" placeholder="YYYY-MM-DD" inputmode="numeric" autocomplete="off"
                             class="w-full px-3 py-2.5 text-sm bg-white border border-gray-200 dark:bg-slate-800 dark:border-slate-600 dark:text-white rounded-lg focus:ring-2 focus:ring-teal-600 focus:border-teal-500 outline-none transition-colors cursor-pointer">
                     </div>
+                    <noscript><p class="text-xs text-gray-500 sm:col-span-3">Enable JavaScript to use the availability checker, or <a href="{{ route('book') }}" class="underline">go to the booking form</a> and type dates as YYYY-MM-DD.</p></noscript>
                     <div class="sm:col-span-3">
                         <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 px-4 py-3 rounded-xl bg-white dark:bg-slate-800">
                             <div class="flex flex-wrap items-center gap-2">
@@ -106,11 +108,11 @@
             <div class="bg-gray-50 dark:bg-slate-800/50 rounded-2xl p-4 sm:p-6 border border-gray-100 dark:border-slate-700 reveal">
                 <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
                     <div>
-                        <label class="block text-xs font-medium text-gray-500 dark:text-slate-400 mb-1">
+                        <label for="filter-capacity" class="block text-xs font-medium text-gray-500 dark:text-slate-400 mb-1">
                             <x-icons name="users" class="w-3 h-3 inline -mt-0.5 mr-1 text-gray-500 dark:text-slate-400" />
                             Capacity
                         </label>
-                        <select x-model="filters.capacity" class="w-full px-3 py-2 border border-gray-200 dark:bg-slate-800 dark:border-slate-600 dark:text-white rounded-lg text-sm focus:ring-2 focus:ring-teal-700 focus:border-teal-500 dark:focus:border-teal-500 dark:ring-teal-500/20 outline-none bg-white">
+                        <select id="filter-capacity" x-model="filters.capacity" class="w-full px-3 py-2 border border-gray-200 dark:bg-slate-800 dark:border-slate-600 dark:text-white rounded-lg text-sm focus:ring-2 focus:ring-teal-700 focus:border-teal-500 dark:focus:border-teal-500 dark:ring-teal-500/20 outline-none bg-white">
                             <option value="">Any</option>
                             <option value="2">2 guests</option>
                             <option value="4">4 guests</option>
@@ -120,18 +122,18 @@
                         </select>
                     </div>
                     <div>
-                        <label class="block text-xs font-medium text-gray-500 dark:text-slate-400 mb-1">
+                        <label for="filter-max-price" class="block text-xs font-medium text-gray-500 dark:text-slate-400 mb-1">
                             <x-icons name="tag" class="w-3 h-3 inline -mt-0.5 mr-1 text-gray-500 dark:text-slate-400" />
                             Max Day Tour Rate
                         </label>
-                        <input type="number" x-model="filters.maxPrice" placeholder="Any" class="w-full px-3 py-2 border border-gray-200 dark:bg-slate-800 dark:border-slate-600 dark:text-white dark:placeholder-slate-400 rounded-lg text-sm focus:ring-2 focus:ring-teal-700 focus:border-teal-500 dark:focus:border-teal-500 dark:ring-teal-500/20 outline-none">
+                        <input id="filter-max-price" type="number" x-model="filters.maxPrice" placeholder="Any" class="w-full px-3 py-2 border border-gray-200 dark:bg-slate-800 dark:border-slate-600 dark:text-white dark:placeholder-slate-400 rounded-lg text-sm focus:ring-2 focus:ring-teal-700 focus:border-teal-500 dark:focus:border-teal-500 dark:ring-teal-500/20 outline-none">
                     </div>
                     <div>
-                        <label class="block text-xs font-medium text-gray-500 dark:text-slate-400 mb-1">
+                        <label for="filter-sort" class="block text-xs font-medium text-gray-500 dark:text-slate-400 mb-1">
                             <x-icons name="list" class="w-3 h-3 inline -mt-0.5 mr-1 text-gray-500 dark:text-slate-400" />
                             Sort by
                         </label>
-                        <select x-model="filters.sort" class="w-full px-3 py-2 border border-gray-200 dark:bg-slate-800 dark:border-slate-600 dark:text-white rounded-lg text-sm focus:ring-2 focus:ring-teal-700 focus:border-teal-500 dark:focus:border-teal-500 dark:ring-teal-500/20 outline-none bg-white">
+                        <select id="filter-sort" x-model="filters.sort" class="w-full px-3 py-2 border border-gray-200 dark:bg-slate-800 dark:border-slate-600 dark:text-white rounded-lg text-sm focus:ring-2 focus:ring-teal-700 focus:border-teal-500 dark:focus:border-teal-500 dark:ring-teal-500/20 outline-none bg-white">
                             <option value="sort_order">Default</option>
                             <option value="price_low">Price: Low to High</option>
                             <option value="price_high">Price: High to Low</option>
@@ -311,6 +313,7 @@ function cottageFilter() {
                             fpIn = flatpickr(this.$refs.checkIn, {
                                 dateFormat: 'Y-m-d',
                                 minDate: 'today',
+                                allowInput: true,
                                 onChange: function (selectedDates, dateStr) {
                                     self.checkIn = dateStr;
                                     self.result = null;
@@ -322,6 +325,7 @@ function cottageFilter() {
                             fpOut = flatpickr(this.$refs.checkOut, {
                                 dateFormat: 'Y-m-d',
                                 minDate: 'today',
+                                allowInput: true,
                                 onChange: function (selectedDates, dateStr) {
                                     self.checkOut = dateStr;
                                     self.result = null;

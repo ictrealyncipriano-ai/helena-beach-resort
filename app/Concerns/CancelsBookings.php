@@ -45,11 +45,11 @@ trait CancelsBookings
     protected function sendCancellationEmails(Inquiry $inquiry): void
     {
         try {
-            Mail::to($inquiry->email)->send(new BookingCancelled($inquiry));
+            Mail::to($inquiry->email)->queue(new BookingCancelled($inquiry));
 
             $ownerEmail = SiteSetting::getValue('contact_email');
             if ($ownerEmail) {
-                Mail::to($ownerEmail)->send(new BookingCancelled($inquiry));
+                Mail::to($ownerEmail)->queue(new BookingCancelled($inquiry));
             }
         } catch (\Exception $e) {
             Log::warning('Failed to send cancellation notification', [

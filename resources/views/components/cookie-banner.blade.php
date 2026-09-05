@@ -15,8 +15,7 @@
     x-transition:leave-end="opacity-0 translate-y-4"
     x-on:keydown.escape.window="decline()"
     class="fixed z-50 bottom-4 left-4 right-4 sm:left-auto sm:right-6 sm:bottom-6 sm:max-w-md"
-    role="dialog"
-    aria-modal="false"
+    role="region"
     aria-labelledby="cookie-banner-title"
 >
     <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-gray-200/80 dark:border-slate-700 p-5 sm:p-6">

@@ -33,7 +33,7 @@ class ForgotPasswordController extends Controller
                 'email' => $user->getEmailForPasswordReset(),
             ]);
 
-            Mail::to($user->email)->send(new AdminPasswordReset($user->name, $resetUrl));
+            Mail::to($user->email)->queue(new AdminPasswordReset($user->name, $resetUrl));
         }
 
         // Return the same message whether or not the account exists so the

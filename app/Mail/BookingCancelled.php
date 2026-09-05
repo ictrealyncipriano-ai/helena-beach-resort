@@ -4,6 +4,7 @@ namespace App\Mail;
 
 use App\Models\Inquiry;
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
 
@@ -11,7 +12,7 @@ use Illuminate\Queue\SerializesModels;
  * Sent to guest (and optionally the owner) when a booking is cancelled,
  * either by admin or by the guest through the booking portal.
  */
-class BookingCancelled extends Mailable
+class BookingCancelled extends Mailable implements ShouldQueue
 {
     use Queueable, SerializesModels;
 

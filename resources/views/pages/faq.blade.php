@@ -2,6 +2,7 @@
 
 @section('title', 'Frequently Asked Questions')
 @section('description', 'Find answers to common questions about Helena Beach Resort — reservations, rates, amenities, policies, and more.')
+@section('canonical', route('faq'))
 
 @push('head')
 @if($faqs->isNotEmpty())
@@ -14,7 +15,8 @@
             'name' => $faq->question,
             'acceptedAnswer' => [
                 '@type' => 'Answer',
-                'text' => $faq->answer,
+                // Rich-result text must be plain text, not raw HTML.
+                'text' => strip_tags(html_entity_decode($faq->answer)),
             ],
         ])->values(),
     ];

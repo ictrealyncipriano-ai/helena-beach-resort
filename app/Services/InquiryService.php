@@ -164,7 +164,7 @@ class InquiryService
         $ownerEmail = SiteSetting::getValue('contact_email');
         if ($ownerEmail) {
             try {
-                Mail::to($ownerEmail)->send(new InquiryNotification($inquiry));
+                Mail::to($ownerEmail)->queue(new InquiryNotification($inquiry));
             } catch (\Exception $e) {
                 Log::warning('Failed to send inquiry notification', [
                     'inquiry_id' => $inquiry->id,
@@ -176,7 +176,7 @@ class InquiryService
         // Send the guest an acknowledgment with their reference code so they
         // don't lose track of the request before it is confirmed.
         try {
-            Mail::to($inquiry->email)->send(new InquiryAcknowledgment($inquiry));
+            Mail::to($inquiry->email)->queue(new InquiryAcknowledgment($inquiry));
         } catch (\Exception $e) {
             Log::warning('Failed to send inquiry acknowledgment to guest', [
                 'inquiry_id' => $inquiry->id,

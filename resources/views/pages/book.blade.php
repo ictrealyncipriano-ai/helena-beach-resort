@@ -62,7 +62,7 @@
                                     aria-required="true"
                                     class="sr-only peer">
                                 <div class="text-center px-4 py-3 border-2 border-gray-200 dark:border-slate-700 rounded-xl peer-checked:border-teal-700 peer-checked:bg-teal-50 dark:peer-checked:bg-teal-900/30 peer-checked:text-teal-700 dark:peer-checked:text-teal-300 transition-colors">
-                                    <div class="text-2xl mb-1">☀️</div>
+                                    <div class="text-2xl mb-1" aria-hidden="true">☀️</div>
                                     <div class="font-medium text-sm">Day Tour</div>
                                     <div class="text-xs text-gray-500 dark:text-slate-400">8 AM - 6 PM</div>
                                 </div>
@@ -73,7 +73,7 @@
                                     aria-required="true"
                                     class="sr-only peer">
                                 <div class="text-center px-4 py-3 border-2 border-gray-200 dark:border-slate-700 rounded-xl peer-checked:border-teal-700 peer-checked:bg-teal-50 dark:peer-checked:bg-teal-900/30 peer-checked:text-teal-700 dark:peer-checked:text-teal-300 transition-colors">
-                                    <div class="text-2xl mb-1">🌙</div>
+                                    <div class="text-2xl mb-1" aria-hidden="true">🌙</div>
                                     <div class="font-medium text-sm">Overnight</div>
                                     <div class="text-xs text-gray-500 dark:text-slate-400">Check-in after 2 PM</div>
                                 </div>

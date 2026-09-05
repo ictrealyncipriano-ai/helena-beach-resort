@@ -2,6 +2,7 @@
 
 @section('title', 'About Us')
 @section('description', 'Learn more about Helena Beach Resort in Infanta, Quezon.')
+@section('canonical', route('about'))
 
 @section('content')
 <x-hero title="About Helena Beach Resort" subtitle="Discover your perfect beach getaway." />
@@ -47,6 +48,10 @@
                     referrerpolicy="no-referrer-when-downgrade"
                     title="Helena Beach Resort Location">
                 </iframe>
+                <p class="mt-2 text-sm text-gray-600 dark:text-slate-300">
+                    <a href="https://maps.google.com/?q={{ $mapLat }},{{ $mapLng }}" target="_blank" rel="noopener" class="underline underline-offset-2">Get directions on Google Maps</a>
+                    — Purok Buyan, Brgy. Dinahican, Infanta, Quezon.
+                </p>
             </div>
         </div>
 

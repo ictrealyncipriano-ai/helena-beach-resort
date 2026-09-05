@@ -109,18 +109,18 @@ class BookingCancellationService
     public function sendGuestCancellationEmails(Inquiry $inquiry, array $refundState): void
     {
         try {
-            Mail::to($inquiry->email)->send(new BookingCancelled($inquiry));
+            Mail::to($inquiry->email)->queue(new BookingCancelled($inquiry));
 
             if ($refundState['refunded']) {
-                Mail::to($inquiry->email)->send(new RefundReceived($inquiry->fresh()));
+                Mail::to($inquiry->email)->queue(new RefundReceived($inquiry->fresh()));
             }
 
             $ownerEmail = SiteSetting::getValue('contact_email');
             if ($ownerEmail) {
-                Mail::to($ownerEmail)->send(new BookingCancelled($inquiry));
+                Mail::to($ownerEmail)->queue(new BookingCancelled($inquiry));
 
                 if ($refundState['manualRefundRequired']) {
-                    Mail::to($ownerEmail)->send(new ManualRefundRequired($inquiry->fresh()));
+                    Mail::to($ownerEmail)->queue(new ManualRefundRequired($inquiry->fresh()));
                 }
             }
         } catch (\Exception $e) {

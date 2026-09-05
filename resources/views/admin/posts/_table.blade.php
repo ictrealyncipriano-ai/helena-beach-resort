@@ -20,7 +20,7 @@
                 <tr class="hover:bg-gray-50 transition-colors dark:hover:bg-slate-700/40">
                     <td class="px-5 py-3">
                         @if($post->cover_image)
-                            <img src="{{ Storage::url($post->cover_image) }}" alt="" class="w-14 h-10 rounded-lg object-cover border border-gray-200 dark:border-slate-600">
+                            <img src="{{ Storage::url($post->cover_image) }}" alt="{{ $post->title }} cover image" class="w-14 h-10 rounded-lg object-cover border border-gray-200 dark:border-slate-600">
                         @else
                             <div class="w-14 h-10 rounded-lg bg-gray-100 dark:bg-slate-700/40 flex items-center justify-center">
                                 <svg class="w-4 h-4 text-gray-300 dark:text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>

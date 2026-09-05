@@ -2,7 +2,7 @@
 
 @section('title', 'Gallery')
 @section('description', 'Browse photos of Helena Beach Resort in Infanta, Quezon.')
-@section('canonical', route('gallery.index'))
+@section('canonical', $galleries->currentPage() > 1 ? route('gallery.index', ['page' => $galleries->currentPage()]) : route('gallery.index'))
 
 @section('content')
 <x-hero title="Gallery" subtitle="Explore the beauty of Helena Beach Resort through photos." />
@@ -26,17 +26,18 @@
                  onclick="openModal(this)"
                  data-src="{{ Storage::url($item->photo_path) }}"
                  data-title="{{ $item->title ?? '' }}"
-                 aria-haspopup="dialog">
+                 aria-haspopup="dialog"
+                 aria-label="View photo{{ $item->title ? ': ' . $item->title : '' }}">
                 {{-- Intrinsic dimensions are stored on upload (see CompressesImages);
                      older rows without dims fall back to no attributes. --}}
                 <img src="{{ Storage::url($item->photo_path) }}" alt="{{ $item->title ?: 'Helena Beach Resort — gallery photo' }}"
                      @if(!empty($item->width) && !empty($item->height)) width="{{ $item->width }}" height="{{ $item->height }}" style="aspect-ratio: {{ $item->width }} / {{ $item->height }}" @endif
                      class="w-full h-auto object-cover group-hover:scale-105 transition-transform duration-700" loading="lazy" decoding="async">
-                <span class="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all duration-300 flex flex-col items-center justify-center">
+                <span class="absolute inset-0 bg-black/0 group-hover:bg-black/30 group-focus-visible:bg-black/30 group-focus-within:bg-black/30 transition-all duration-300 flex flex-col items-center justify-center">
                     @if($item->title)
-                    <span class="text-white text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity duration-300 px-4 text-center">{{ $item->title }}</span>
+                    <span class="text-white text-sm font-medium opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100 group-focus-within:opacity-100 transition-opacity duration-300 px-4 text-center">{{ $item->title }}</span>
                     @endif
-                    <span class="mt-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    <span class="mt-2 opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100 group-focus-within:opacity-100 transition-opacity duration-300">
                         <x-icons name="search" class="w-6 h-6 text-white" />
                     </span>
                 </span>
@@ -51,16 +52,16 @@
 </section>
 
 {{-- Lightbox Modal --}}
-<div id="lightbox" role="dialog" aria-modal="true" aria-label="Photo gallery" tabindex="-1" class="fixed inset-0 z-50 bg-black/95 hidden items-center justify-center p-4" onclick="closeModal(event)">
-    <button onclick="closeModal(event)" class="absolute top-4 right-4 w-12 h-12 flex items-center justify-center text-white/60 hover:text-white rounded-full hover:bg-white/10 transition-all z-30" aria-label="Close">
+<div id="lightbox" role="dialog" aria-modal="true" aria-labelledby="lightbox-caption" tabindex="-1" class="fixed inset-0 z-50 bg-black/95 hidden items-center justify-center p-4" onclick="closeModal(event)">
+    <button onclick="closeModal(event)" class="absolute top-4 right-4 w-12 h-12 flex items-center justify-center text-white/60 hover:text-white rounded-full hover:bg-white/10 transition-all z-30" aria-label="Close photo viewer">
         <x-icons name="x" class="w-6 h-6" />
     </button>
 
-    <button onclick="prevImage(event)" class="absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 flex items-center justify-center text-white/60 hover:text-white rounded-full hover:bg-white/10 transition-all z-30" aria-label="Previous">
+    <button onclick="prevImage(event)" class="absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 flex items-center justify-center text-white/60 hover:text-white rounded-full hover:bg-white/10 transition-all z-30" aria-label="Show previous photo">
         <x-icons name="chevron-left" class="w-8 h-8" />
     </button>
 
-    <button onclick="nextImage(event)" class="absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 flex items-center justify-center text-white/60 hover:text-white rounded-full hover:bg-white/10 transition-all z-30" aria-label="Next">
+    <button onclick="nextImage(event)" class="absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 flex items-center justify-center text-white/60 hover:text-white rounded-full hover:bg-white/10 transition-all z-30" aria-label="Show next photo">
         <x-icons name="chevron-right" class="w-8 h-8" />
     </button>
 
@@ -69,7 +70,7 @@
              class="max-w-full max-h-[80vh] object-contain rounded-xl transition-all duration-300 shadow-2xl">
         <div class="text-center">
             <p id="lightbox-caption" class="text-white/80 text-sm text-center px-4"></p>
-            <p id="lightbox-counter" class="text-white/40 text-xs text-center mt-1"></p>
+            <p id="lightbox-counter" class="text-white/70 text-xs text-center mt-1" aria-live="polite"></p>
         </div>
     </div>
 </div>

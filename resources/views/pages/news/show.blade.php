@@ -5,7 +5,7 @@
 @section('canonical', route('news.show', $post))
 @section('og_type', 'article')
 @if($post->cover_image)
-@section('og_image', Storage::url($post->cover_image))
+@section('og_image', url(Storage::url($post->cover_image)))
 @section('og_image_alt', $post->title)
 @endif
 
@@ -25,7 +25,7 @@
         ],
     ];
     if ($post->cover_image) {
-        $articleSchema['image'] = Storage::url($post->cover_image);
+        $articleSchema['image'] = url(Storage::url($post->cover_image));
     }
 @endphp
 <script type="application/ld+json">

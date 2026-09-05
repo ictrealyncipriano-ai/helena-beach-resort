@@ -4,6 +4,7 @@ namespace App\Mail;
 
 use App\Models\Inquiry;
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
 
@@ -13,7 +14,7 @@ use Illuminate\Queue\SerializesModels;
  * through PayMongo. Flags the amount so the refund is processed offline
  * instead of being silently retained.
  */
-class ManualRefundRequired extends Mailable
+class ManualRefundRequired extends Mailable implements ShouldQueue
 {
     use Queueable, SerializesModels;
 

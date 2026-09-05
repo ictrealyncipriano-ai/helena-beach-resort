@@ -75,7 +75,7 @@ if ($editingId) {
                             <td class="px-5 py-3">
                                 <div class="flex items-center gap-3">
                                     @if($cottage->primaryPhoto)
-                                        <img src="{{ Storage::url($cottage->primaryPhoto->photo_path) }}" alt="" class="w-8 h-8 rounded-lg object-cover shrink-0">
+                                        <img src="{{ Storage::url($cottage->primaryPhoto->photo_path) }}" alt="{{ $cottage->name }} thumbnail" class="w-8 h-8 rounded-lg object-cover shrink-0">
                                     @else
                                         <div class="w-8 h-8 rounded-lg bg-teal-50 dark:bg-teal-900/40 flex items-center justify-center shrink-0">
                                             <svg class="w-4 h-4 text-teal-500 dark:text-teal-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8.25 21v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21m0 0h4.5V3.545M12.75 21h7.5V10.75M2.25 21h1.5m18 0h-18M2.25 9l4.5-1.636M18.75 3l-1.5.545m0 6.205l3 1m1.5.5l-1.5-.5M6.75 7.364V3h-3v18m3-13.636l10.5-3.819"/></svg>

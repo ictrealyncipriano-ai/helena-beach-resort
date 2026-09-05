@@ -4,13 +4,14 @@ namespace App\Mail;
 
 use App\Models\Inquiry;
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
 
 /**
  * Sent to the guest when a payment for their booking is refunded.
  */
-class RefundReceived extends Mailable
+class RefundReceived extends Mailable implements ShouldQueue
 {
     use Queueable, SerializesModels;
 

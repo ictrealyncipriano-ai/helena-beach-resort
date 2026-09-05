@@ -13,7 +13,7 @@
                 <label for="photo-path-field" class="block text-sm font-medium text-gray-700 mb-1 dark:text-slate-300">Image <span class="text-red-600" x-show="!isEditing">*</span></label>
                 <template x-if="isEditing && form.photo_url">
                     <div class="mb-2">
-                        <img x-bind:src="form.photo_url" alt="" class="w-32 h-24 rounded-lg object-cover border border-gray-200 dark:border-slate-600">
+                        <img x-bind:src="form.photo_url" alt="Gallery photo preview" class="w-32 h-24 rounded-lg object-cover border border-gray-200 dark:border-slate-600">
                     </div>
                 </template>
                 <input type="file" id="photo-path-field" name="photo_path" accept="image/jpeg,image/png,image/webp" :required="!isEditing"

@@ -15,10 +15,10 @@ $icons = [
 ];
 @endphp
 
-<div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 5000)" class="{{ $styles[$type] ?? $styles['info'] }} border rounded-lg px-4 py-3 text-sm flex items-center gap-2">
-    <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">{!! $icons[$type] ?? $icons['info'] !!}</svg>
+<div x-data="{ show: true }" x-show="show" role="{{ $type === 'error' ? 'alert' : 'status' }}" class="{{ $styles[$type] ?? $styles['info'] }} border rounded-lg px-4 py-3 text-sm flex items-center gap-2">
+    <svg class="w-4 h-4 shrink-0" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" viewBox="0 0 24 24">{!! $icons[$type] ?? $icons['info'] !!}</svg>
     <span class="flex-1">{{ $slot }}</span>
     @if($dismissible)
-        <button type="button" @@click="show = false" class="shrink-0 opacity-60 hover:opacity-100 transition-opacity">&times;</button>
+        <button type="button" @@click="show = false" aria-label="Dismiss notification" class="shrink-0 min-w-[44px] min-h-[44px] inline-flex items-center justify-center opacity-60 hover:opacity-100 transition-opacity">&times;</button>
     @endif
 </div>

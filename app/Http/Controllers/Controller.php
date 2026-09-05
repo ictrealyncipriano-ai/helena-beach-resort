@@ -3,11 +3,14 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Pagination\Paginator;
 
 abstract class Controller
 {
+    use AuthorizesRequests;
+
     protected const ADMIN_PER_PAGE = 15;
     protected const ACTIVITY_LOG_PER_PAGE = 25;
 

@@ -2,6 +2,7 @@
 
 @section('title', 'Contact Us')
 @section('description', 'Contact Helena Beach Resort to book your stay or ask any questions.')
+@section('canonical', route('contact'))
 
 @section('content')
 <x-hero title="Contact Us" subtitle="Send us a message and we'll get back to you as soon as possible." />
@@ -58,7 +59,7 @@
                                 </option>
                                 @endforeach
                             </select>
-                            <div id="availability-info" class="mt-2 text-xs hidden"></div>
+                            <div id="availability-info" role="status" aria-live="polite" class="mt-2 text-xs hidden"></div>
                         </div>
                     </div>
 

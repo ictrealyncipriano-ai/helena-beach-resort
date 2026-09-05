@@ -3,8 +3,8 @@
             @click="open = !open"
             :aria-expanded="open"
             aria-haspopup="menu"
-            class="inline-flex items-center justify-center w-9 h-9 rounded-lg text-gray-500 hover:text-teal-700 hover:bg-gray-100 dark:text-slate-300 dark:hover:text-teal-400 dark:hover:bg-slate-700/50 transition-colors"
-            aria-label="Toggle theme">
+            class="inline-flex items-center justify-center min-w-[44px] min-h-[44px] rounded-lg text-gray-500 hover:text-teal-700 hover:bg-gray-100 dark:text-slate-300 dark:hover:text-teal-400 dark:hover:bg-slate-700/50 transition-colors"
+            aria-label="Choose theme">
         <span x-show="dark" x-cloak style="display:none" class="inline-flex"><x-icons name="sun" class="w-5 h-5" /></span>
         <span x-show="!dark" x-cloak style="display:none" class="inline-flex"><x-icons name="moon" class="w-5 h-5" /></span>
     </button>

@@ -4,6 +4,7 @@ namespace App\Mail;
 
 use App\Models\Inquiry;
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
 
@@ -11,7 +12,7 @@ use Illuminate\Queue\SerializesModels;
  * Admin notification sent to the resort owner when a new inquiry or booking
  * is submitted through the website or booking form.
  */
-class InquiryNotification extends Mailable
+class InquiryNotification extends Mailable implements ShouldQueue
 {
     use Queueable, SerializesModels;
 

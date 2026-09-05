@@ -4,6 +4,7 @@ namespace App\Mail;
 
 use App\Models\Inquiry;
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
 
@@ -12,7 +13,7 @@ use Illuminate\Queue\SerializesModels;
  * booking request is within ~12h of the hold window expiring, so the guest
  * can still act before their dates are released.
  */
-class BookingExpiringSoon extends Mailable
+class BookingExpiringSoon extends Mailable implements ShouldQueue
 {
     use Queueable, SerializesModels;
 

@@ -65,4 +65,4 @@ $icons = [
 ];
 @endphp
 
-{!! $icons[$name] ?? '' !!}
+{!! str_replace('<svg ', '<svg aria-hidden="true" focusable="false" ', $icons[$name] ?? '') !!}

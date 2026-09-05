@@ -10,7 +10,7 @@
 <section class="py-20 bg-white dark:bg-slate-800">
     <div class="max-w-lg mx-auto px-4 sm:px-6 lg:px-8">
         @if($errors->any())
-        <div class="mb-6 p-4 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-xl text-sm text-red-700 dark:text-red-300 flex items-center gap-2">
+        <div role="alert" tabindex="-1" autofocus class="mb-6 p-4 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-xl text-sm text-red-700 dark:text-red-300 flex items-center gap-2">
             <x-icons name="x" class="w-4 h-4 shrink-0" />
             {{ $errors->first() ?: 'Please check the details below.' }}
         </div>
@@ -27,8 +27,10 @@
                     </label>
                     <input type="email" name="email" id="email" required
                         value="{{ old('email') }}"
+                        @if($errors->has('email')) aria-invalid="true" aria-describedby="email-error" @endif
                         class="w-full px-4 py-2.5 border border-gray-200 dark:bg-slate-800 dark:border-slate-600 dark:text-white dark:placeholder-slate-400 rounded-xl text-sm focus:ring-2 focus:ring-teal-700 focus:border-teal-500 dark:focus:border-teal-500 dark:ring-teal-500/20 outline-none transition-all"
                         placeholder="you@example.com">
+                    @error('email')<p id="email-error" class="mt-1 text-xs text-red-600" role="alert">{{ $message }}</p>@enderror
                 </div>
 
                 <div class="mb-6">
@@ -38,8 +40,11 @@
                     </label>
                     <input type="text" name="reference_code" id="reference_code" required
                         value="{{ old('reference_code') }}"
-                        class="w-full px-4 py-2.5 border border-gray-200 dark:bg-slate-800 dark:border-slate-600 dark:text-white dark:placeholder-slate-400 rounded-xl text-sm focus:ring-2 focus:ring-teal-700 focus:border-teal-500 dark:focus:border-teal-500 dark:ring-teal-500/20 outline-none font-mono transition-all"
+                        autocapitalize="characters" autocorrect="off" spellcheck="false" inputmode="text"
+                        @if($errors->has('reference_code')) aria-invalid="true" aria-describedby="reference-error" @endif
+                        class="w-full px-4 py-2.5 border border-gray-200 dark:bg-slate-800 dark:border-slate-600 dark:text-white dark:placeholder-slate-400 rounded-xl text-sm focus:ring-2 focus:ring-teal-700 focus:border-teal-500 dark:focus:border-teal-500 dark:ring-teal-500/20 outline-none font-mono uppercase transition-all"
                         placeholder="HB-000001">
+                    @error('reference_code')<p id="reference-error" class="mt-1 text-xs text-red-600" role="alert">{{ $message }}</p>@enderror
                 </div>
 
                 <button type="submit"

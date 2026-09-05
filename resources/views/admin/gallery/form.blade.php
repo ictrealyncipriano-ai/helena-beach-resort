@@ -22,7 +22,7 @@
                 <label class="block text-sm font-medium text-gray-700 mb-1 dark:text-slate-300">Image {{ $gallery->exists ? '' : '*' }}</label>
                 @if($gallery->photo_path)
                     <div class="mb-2">
-                        <img src="{{ Storage::url($gallery->photo_path) }}" alt="" class="w-32 h-24 rounded-lg object-cover border border-gray-200 dark:border-slate-600">
+                        <img src="{{ Storage::url($gallery->photo_path) }}" alt="Gallery photo preview" class="w-32 h-24 rounded-lg object-cover border border-gray-200 dark:border-slate-600">
                     </div>
                 @endif
                 <input type="file" name="photo_path" accept="image/jpeg,image/png,image/webp" {{ $gallery->exists ? '' : 'required' }} class="block w-full text-sm text-gray-500 dark:text-slate-400 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-teal-50 file:text-teal-700 hover:file:bg-teal-100 dark:file:bg-teal-900/30 dark:file:text-teal-300 dark:hover:file:bg-teal-900/40">

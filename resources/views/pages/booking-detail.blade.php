@@ -277,15 +277,15 @@
             <form method="POST" action="{{ route('booking.portal.review', $inquiry) }}" class="space-y-5">
                 @csrf
                 <div>
-                    <span class="block text-sm font-medium text-gray-700 mb-2 dark:text-slate-300">Your Rating</span>
-                    <div class="flex items-center gap-1" role="radiogroup" aria-label="Rating">
+                    <span class="block text-sm font-medium text-gray-700 mb-2 dark:text-slate-300" id="rating-label">Your Rating</span>
+                    <div class="flex items-center gap-1" role="radiogroup" aria-labelledby="rating-label">
                         @foreach(range(1, 5) as $star)
-                        <button type="button" role="radio" @click="rating = {{ $star }}" :aria-checked="rating === {{ $star }}" :class="{ 'text-amber-400': rating >= {{ $star }}, 'text-gray-300': rating < {{ $star }} }" class="focus:outline-none focus:ring-2 focus:ring-teal-600 rounded-lg p-0.5 transition-colors" aria-label="{{ $star }} star{{ $star > 1 ? 's' : '' }}">
+                        <label :class="{ 'text-amber-400': rating >= {{ $star }}, 'text-gray-300': rating < {{ $star }} }" class="cursor-pointer focus-within:ring-2 focus-within:ring-teal-600 rounded-lg p-0.5 transition-colors">
+                            <input type="radio" name="rating" value="{{ $star }}" @change="rating = {{ $star }}" :checked="rating === {{ $star }}" class="sr-only" aria-label="{{ $star }} star{{ $star > 1 ? 's' : '' }}">
                             <x-icons name="star" class="w-8 h-8" />
-                        </button>
+                        </label>
                         @endforeach
                     </div>
-                    <input type="hidden" name="rating" :value="rating">
                 </div>
                 <div>
                     <label for="review-content" class="block text-sm font-medium text-gray-700 mb-1 dark:text-slate-300">Your Review</label>

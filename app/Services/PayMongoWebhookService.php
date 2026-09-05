@@ -263,7 +263,7 @@ class PayMongoWebhookService
 
                 DB::afterCommit(function () use ($locked) {
                     try {
-                        Mail::to($locked->email)->send(new PaymentReceived($locked));
+                        Mail::to($locked->email)->queue(new PaymentReceived($locked));
                     } catch (\Throwable $e) {
                         Log::error('PayMongo webhook: payment recorded but receipt email failed', [
                             'inquiry_id' => $locked->id,
@@ -290,7 +290,7 @@ class PayMongoWebhookService
                 $ownerEmail = SiteSetting::getValue('contact_email');
                 if ($ownerEmail) {
                     try {
-                        Mail::to($ownerEmail)->send(new InquiryNotification($inquiry));
+                        Mail::to($ownerEmail)->queue(new InquiryNotification($inquiry));
                     } catch (\Throwable $e) {
                         Log::error('PayMongo webhook: admin alert email failed', [
                             'inquiry_id' => $inquiry->id,

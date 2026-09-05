@@ -3,6 +3,7 @@
 namespace App\Mail;
 
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
 
@@ -10,7 +11,7 @@ use Illuminate\Queue\SerializesModels;
  * Sent to an admin user when they request a password reset link from the
  * admin login page. Contains a single-use, time-limited reset token.
  */
-class AdminPasswordReset extends Mailable
+class AdminPasswordReset extends Mailable implements ShouldQueue
 {
     use Queueable, SerializesModels;
 

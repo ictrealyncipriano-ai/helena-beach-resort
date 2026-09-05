@@ -35,6 +35,8 @@ class InquiryController extends Controller
 
     public function index(Request $request): View
     {
+        $this->authorize('viewAny', Inquiry::class);
+
         $query = Inquiry::with(['cottage', 'guest']);
 
         if ($search = $request->get('search')) {
@@ -79,6 +81,8 @@ class InquiryController extends Controller
      */
     public function store(InquiryRequest $request, InquiryService $inquiryService): RedirectResponse
     {
+        $this->authorize('create', Inquiry::class);
+
         $data = $request->validated();
 
         $totalAmount = $data['total_amount'] ?? null;
@@ -178,6 +182,8 @@ class InquiryController extends Controller
 
     public function show(Inquiry $inquiry): View
     {
+        $this->authorize('view', $inquiry);
+
         $inquiry->load(['cottage', 'guest']);
 
         return view('admin.inquiries.show', compact('inquiry'));
@@ -185,6 +191,8 @@ class InquiryController extends Controller
 
     public function edit(Inquiry $inquiry): View
     {
+        $this->authorize('view', $inquiry);
+
         $inquiry->load(['cottage', 'guest']);
         $cottages = Cottage::pluck('name', 'id');
         $guests = Guest::pluck('name', 'id');
@@ -194,6 +202,8 @@ class InquiryController extends Controller
 
     public function update(InquiryRequest $request, Inquiry $inquiry): RedirectResponse
     {
+        $this->authorize('update', $inquiry);
+
         $data = $request->validated();
 
         $original = [
@@ -252,6 +262,8 @@ class InquiryController extends Controller
 
     public function destroy(Inquiry $inquiry): RedirectResponse
     {
+        $this->authorize('delete', $inquiry);
+
         $inquiry->releaseBlocks();
         $inquiry->delete();
         DashboardController::forgetCache();
@@ -269,6 +281,8 @@ class InquiryController extends Controller
      */
     public function markPaid(Request $request, Inquiry $inquiry): RedirectResponse
     {
+        $this->authorize('markPaid', $inquiry);
+
         if ($inquiry->status !== Inquiry::STATUS_CONFIRMED) {
             return back()->with('error', 'Only confirmed bookings can be marked as paid.');
         }
@@ -316,6 +330,8 @@ class InquiryController extends Controller
      */
     public function approvePaymentProof(Request $request, Inquiry $inquiry): RedirectResponse
     {
+        $this->authorize('approvePaymentProof', $inquiry);
+
         if (! $inquiry->hasPendingPaymentProof()) {
             return back()->with('error', 'This booking has no payment proof awaiting review.');
         }
@@ -365,6 +381,8 @@ class InquiryController extends Controller
      */
     public function rejectPaymentProof(Request $request, Inquiry $inquiry): RedirectResponse
     {
+        $this->authorize('rejectPaymentProof', $inquiry);
+
         if (! $inquiry->hasPendingPaymentProof()) {
             return back()->with('error', 'This booking has no payment proof awaiting review.');
         }
@@ -393,6 +411,8 @@ class InquiryController extends Controller
      */
     public function refund(Inquiry $inquiry, PayMongoService $payMongo): RedirectResponse
     {
+        $this->authorize('refund', $inquiry);
+
         if (! $inquiry->hasPayments()) {
             return redirect()->route('admin.inquiries.show', $inquiry)
                 ->with('error', 'This booking has no payment to refund.');
@@ -429,7 +449,7 @@ class InquiryController extends Controller
         $this->logger->record('inquiry.refunded', $inquiry, "Payment for {$inquiry->reference_code} refunded and booking cancelled.");
 
         try {
-            Mail::to($inquiry->email)->send(new RefundReceived($inquiry));
+            Mail::to($inquiry->email)->queue(new RefundReceived($inquiry));
         } catch (\Exception $e) {
             Log::error('Failed to send refund email', [
                 'inquiry_id' => $inquiry->id,

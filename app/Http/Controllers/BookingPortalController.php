@@ -287,11 +287,11 @@ class BookingPortalController extends Controller
     private function sendModifiedNotifications(Inquiry $inquiry, ?array $previous): void
     {
         try {
-            Mail::to($inquiry->email)->send(new BookingModified($inquiry, $previous));
+            Mail::to($inquiry->email)->queue(new BookingModified($inquiry, $previous));
 
             $ownerEmail = SiteSetting::getValue('contact_email');
             if ($ownerEmail) {
-                Mail::to($ownerEmail)->send(new BookingModified($inquiry, $previous));
+                Mail::to($ownerEmail)->queue(new BookingModified($inquiry, $previous));
             }
         } catch (\Exception $e) {
             Log::warning('Failed to send booking modification notification', [

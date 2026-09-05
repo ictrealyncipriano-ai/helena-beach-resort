@@ -2,6 +2,7 @@
 
 @section('title', 'Amenities & Services')
 @section('description', 'Explore the amenities and services offered at Helena Beach Resort in Infanta, Quezon.')
+@section('canonical', route('services'))
 
 @section('content')
 <x-hero title="Amenities & Services" subtitle="Everything you need for a memorable beach getaway." />

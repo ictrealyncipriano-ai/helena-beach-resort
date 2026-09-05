@@ -1,6 +1,7 @@
 @extends('layouts.app')
 
 @section('title', trim($__env->yieldContent('code') . ' ' . $__env->yieldContent('heading')))
+@section('robots', 'noindex, nofollow')
 
 @section('content')
 <div class="min-h-[70vh] flex items-center justify-center px-4">

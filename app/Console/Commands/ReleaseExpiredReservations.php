@@ -125,7 +125,7 @@ class ReleaseExpiredReservations extends Command
             ->chunkById(100, function ($inquiries) use (&$count) {
                 foreach ($inquiries as $inquiry) {
                     try {
-                        Mail::to($inquiry->email)->send(new BookingExpiringSoon($inquiry));
+                        Mail::to($inquiry->email)->queue(new BookingExpiringSoon($inquiry));
                         $inquiry->update(['expiry_warned_at' => now()]);
                         $this->line("  WARNED {$inquiry->reference_code} ({$inquiry->name})");
                         $count++;
@@ -149,7 +149,7 @@ class ReleaseExpiredReservations extends Command
     private function notifyExpired(Inquiry $inquiry): void
     {
         try {
-            Mail::to($inquiry->email)->send(new BookingExpired($inquiry));
+            Mail::to($inquiry->email)->queue(new BookingExpired($inquiry));
         } catch (\Exception $e) {
             Log::warning('Failed to send expiry notification', [
                 'inquiry_id' => $inquiry->id,

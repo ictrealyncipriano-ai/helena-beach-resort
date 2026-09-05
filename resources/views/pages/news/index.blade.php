@@ -2,7 +2,7 @@
 
 @section('title', 'News & Updates')
 @section('description', 'News, announcements, and promotions from Helena Beach Resort in Infanta, Quezon.')
-@section('canonical', route('news.index'))
+@section('canonical', $posts->currentPage() > 1 ? route('news.index', ['page' => $posts->currentPage()]) : route('news.index'))
 
 @section('content')
 <x-hero title="News &amp; Updates"

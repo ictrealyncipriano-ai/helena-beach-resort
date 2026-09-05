@@ -4,6 +4,7 @@ namespace App\Mail;
 
 use App\Models\Inquiry;
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
 
@@ -11,7 +12,7 @@ use Illuminate\Queue\SerializesModels;
  * Sent to the guest (and the resort owner) when the guest changes their
  * booking from the booking portal.
  */
-class BookingModified extends Mailable
+class BookingModified extends Mailable implements ShouldQueue
 {
     use Queueable, SerializesModels;
 

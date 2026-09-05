@@ -4,6 +4,7 @@ namespace App\Mail;
 
 use App\Models\Inquiry;
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
 
@@ -11,7 +12,7 @@ use Illuminate\Queue\SerializesModels;
  * Sent to guest when an admin confirms their booking via the
  * Confirm action on the inquiry table or by editing the status.
  */
-class BookingConfirmed extends Mailable
+class BookingConfirmed extends Mailable implements ShouldQueue
 {
     use Queueable, SerializesModels;
 

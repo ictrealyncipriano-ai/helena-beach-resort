@@ -13,7 +13,8 @@
     $current = Route::currentRouteName();
 @endphp
 
-<nav class="fixed top-0 left-0 right-0 z-50 transition-all duration-300"
+<header>
+<nav aria-label="Primary" class="fixed top-0 left-0 right-0 z-50 transition-all duration-300"
      x-data="{ scrolled: false }"
      x-on:scroll.window="scrolled = window.scrollY > 20"
      :class="scrolled ? 'bg-white shadow-sm border-b border-teal-100 dark:bg-slate-900 dark:border-slate-700' : 'bg-white/80 backdrop-blur-md border-b border-transparent dark:bg-slate-900/80'">
@@ -146,3 +147,4 @@
         </div>
     </div>
 </nav>
+</header>

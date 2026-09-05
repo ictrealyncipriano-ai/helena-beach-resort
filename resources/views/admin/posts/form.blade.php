@@ -41,7 +41,7 @@
                 <label class="block text-sm font-medium text-gray-700 mb-1 dark:text-slate-300">Cover Image</label>
                 @if($post->cover_image)
                     <div class="mb-2">
-                        <img src="{{ Storage::url($post->cover_image) }}" alt="" class="w-full max-w-sm h-40 rounded-lg object-cover border border-gray-200 dark:border-slate-600">
+                        <img src="{{ Storage::url($post->cover_image) }}" alt="Post cover preview" class="w-full max-w-sm h-40 rounded-lg object-cover border border-gray-200 dark:border-slate-600">
                     </div>
                 @endif
                 <input type="file" name="cover_image" accept="image/jpeg,image/png,image/webp" class="block w-full text-sm text-gray-500 dark:text-slate-400 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-teal-50 file:text-teal-700 hover:file:bg-teal-100 dark:file:bg-teal-900/30 dark:file:text-teal-300 dark:hover:file:bg-teal-900/40">

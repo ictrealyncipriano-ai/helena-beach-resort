@@ -7,8 +7,14 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <link rel="icon" href="{{ asset('favicon.ico') }}" sizes="any">
     <link rel="apple-touch-icon" href="{{ asset('apple-touch-icon.png') }}">
-    <title>@yield('title', config('app.name')) — {{ config('app.name') }}</title>
+    <title>@php $pageTitle = trim($__env->yieldContent('title', config('app.name'))); echo e($pageTitle) . (str_contains($pageTitle, config('app.name')) ? '' : ' — ' . config('app.name')); @endphp</title>
     <meta name="description" content="@yield('description', 'Helena Beach Resort — Experience paradise in Infanta, Quezon. Beachfront cottages, fresh seafood, and unforgettable memories.')">
+    <meta name="theme-color" content="#0f766e">
+    <meta name="geo.region" content="PH-QUE">
+    <meta name="geo.placename" content="Infanta, Quezon">
+    @if(!empty($sections['map_lat'] ?? null) && !empty($sections['map_lng'] ?? null))
+    <meta name="ICBM" content="{{ $sections['map_lat'] }}, {{ $sections['map_lng'] }}">
+    @endif
     <link rel="canonical" href="@yield('canonical', \Illuminate\Support\Str::before(url()->current(), '?'))" />
     @hasSection('robots')
     <meta name="robots" content="@yield('robots')" />
@@ -29,6 +35,19 @@
     <meta name="twitter:title" content="@yield('og_title', config('app.name'))" />
     <meta name="twitter:description" content="@yield('og_description', 'Experience paradise in Infanta, Quezon.')" />
     <meta name="twitter:image" content="@yield('og_image', $site['og_image'])" />
+    @php
+        $orgSameAs = array_values(array_filter($socials ?? []));
+    @endphp
+    <script type="application/ld+json">
+    @json([
+        '@context' => 'https://schema.org',
+        '@type' => 'Organization',
+        'name' => $site['name'] ?? config('app.name'),
+        'url' => url('/'),
+        'logo' => $site['og_image'] ?? asset('images/logo.jpg'),
+        'sameAs' => $orgSameAs,
+    ])
+    </script>
 
     <link rel="preconnect" href="https://fonts.bunny.net">
     {{-- Load webfonts asynchronously so they never block first paint.

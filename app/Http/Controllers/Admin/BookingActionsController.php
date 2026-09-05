@@ -27,6 +27,8 @@ class BookingActionsController extends Controller
 
     public function confirm(Inquiry $inquiry): RedirectResponse
     {
+        $this->authorize('confirm', $inquiry);
+
         if ($inquiry->status !== Inquiry::STATUS_PENDING) {
             return back()->with('error', 'Only pending inquiries can be confirmed.');
         }
@@ -51,6 +53,8 @@ class BookingActionsController extends Controller
 
     public function cancel(Inquiry $inquiry): RedirectResponse
     {
+        $this->authorize('cancel', $inquiry);
+
         if ($inquiry->status !== Inquiry::STATUS_PENDING) {
             return back()->with('error', 'Only pending inquiries can be cancelled.');
         }
