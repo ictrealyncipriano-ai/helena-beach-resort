@@ -25,20 +25,22 @@ class PageController extends Controller
     public function home(): View
     {
         [$cottages, $gallery, $testimonials, $avgRating, $posts] = Cache::remember(PublicCache::HOME, PublicCache::HOME_TTL, function () {
-            $cottages = Cottage::with('primaryPhoto')
+            $cottages = Cottage::with('primaryPhoto:cottage_id,photo_path,is_primary')
                 ->available()
+                ->select('id', 'name', 'slug', 'description', 'capacity', 'rate_daytour', 'rate_overnight', 'sort_order', 'is_available')
                 ->take(6)
                 ->get();
 
             $gallery = Gallery::where('is_active', true)
                 ->orderBy('sort_order')
+                ->select('id', 'title', 'photo_path', 'category', 'sort_order')
                 ->take(8)
                 ->get();
 
-            $testimonials = Testimonial::active()->with('cottage')->take(3)->get();
+            $testimonials = Testimonial::active()->with('cottage:id,name')->take(3)->get();
             $avgRating = Testimonial::where('is_active', true)->avg('rating');
 
-            $posts = Post::active()->take(3)->get();
+            $posts = Post::active()->select('id', 'title', 'slug', 'excerpt', 'cover_image', 'published_at')->take(3)->get();
 
             return [$cottages, $gallery, $testimonials, $avgRating, $posts];
         });
@@ -107,12 +109,24 @@ class PageController extends Controller
     /** Paginated guest reviews/testimonials */
     public function reviews(): View
     {
-        $testimonials = $this->paginate(
-            Cache::remember(PublicCache::REVIEWS_ALL, PublicCache::CONTENT_TTL, function () {
-                return Testimonial::active()->with('cottage')->get();
-            }),
-            12
+        $page = max(1, (int) request()->query('page', 1));
+        $testimonials = Cache::remember(
+            PublicCache::REVIEWS_ALL.".page.{$page}",
+            PublicCache::CONTENT_TTL,
+            fn () => Testimonial::active()
+                ->with('cottage:id,name')
+                ->select('id', 'guest_name', 'content', 'rating', 'cottage_id', 'created_at')
+                ->paginate(12)
+                ->withQueryString()
         );
+
+        if ($testimonials->currentPage() !== $page) {
+            $testimonials = Testimonial::active()
+                ->with('cottage:id,name')
+                ->select('id', 'guest_name', 'content', 'rating', 'cottage_id', 'created_at')
+                ->paginate(12)
+                ->withQueryString();
+        }
 
         return view('pages.reviews', compact('testimonials'));
     }

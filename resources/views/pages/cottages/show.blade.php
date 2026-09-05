@@ -255,38 +255,8 @@
 </div>
 
 @push('scripts')
+@vite('resources/js/lightbox.js')
 <script>
-    let lastPhotoTrigger = null;
-    function openPhotoLightbox(el, src, alt) {
-        lastPhotoTrigger = el;
-        const img = document.getElementById('photo-lightbox-img');
-        img.src = src;
-        img.alt = alt || '';
-        const lb = document.getElementById('photo-lightbox');
-        lb.classList.remove('hidden');
-        lb.classList.add('flex');
-        document.body.style.overflow = 'hidden';
-        lb.focus({ preventScroll: true });
-    }
-    function closePhotoLightbox(e) {
-        if (e.target === e.currentTarget || e.target.closest('button')) {
-            document.getElementById('photo-lightbox').classList.add('hidden');
-            document.getElementById('photo-lightbox').classList.remove('flex');
-            document.body.style.overflow = '';
-            if (lastPhotoTrigger) lastPhotoTrigger.focus({ preventScroll: true });
-        }
-    }
-    document.addEventListener('keydown', function(e) {
-        const lb = document.getElementById('photo-lightbox');
-        if (lb.classList.contains('hidden')) return;
-        if (e.key === 'Escape') {
-            lb.classList.add('hidden');
-            lb.classList.remove('flex');
-            document.body.style.overflow = '';
-            if (lastPhotoTrigger) lastPhotoTrigger.focus({ preventScroll: true });
-        }
-    });
-
     function calendar(blockedData) {
         // The Blade js directive now passes a real array literal; older
         // JSON-string payloads are still accepted so both render paths
@@ -296,6 +266,7 @@
             try { blocked = JSON.parse(blockedData || '[]'); } catch { blocked = []; }
         }
         blocked = Array.isArray(blocked) ? blocked : [];
+        const blockedSet = new Set(blocked);
 
         const today = new Date();
         today.setHours(0,0,0,0);
@@ -319,7 +290,7 @@
                     grid.push({
                         label: d,
                         date: dateStr,
-                        blocked: blocked.includes(dateStr),
+                        blocked: blockedSet.has(dateStr),
                         isPast: dateObj < today,
                     });
                 }

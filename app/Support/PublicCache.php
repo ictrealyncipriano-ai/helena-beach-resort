@@ -51,6 +51,8 @@ class PublicCache
      * Drop every public-page cache entry. Called by model events whenever a
      * Cottage, CottagePhoto, Gallery, Testimonial, Faq, or Service is saved,
      * deleted, or restored (and by bulk actions that bypass model events).
+     * Per-page keys cover the realistic page range; beyond that TTL expiry
+     * applies (database cache store has no tags).
      */
     public static function flush(): void
     {
@@ -63,5 +65,10 @@ class PublicCache
         Cache::forget(self::GALLERY_CATEGORIES);
         Cache::forget(self::POSTS_ALL);
         Cache::forget(self::SITEMAP);
+        for ($page = 1; $page <= 20; $page++) {
+            Cache::forget(self::GALLERY_ALL.".page.{$page}");
+            Cache::forget(self::POSTS_ALL.".page.{$page}");
+            Cache::forget(self::REVIEWS_ALL.".page.{$page}");
+        }
     }
 }

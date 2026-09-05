@@ -10,7 +10,7 @@ class Gallery extends Model
 {
     use CompressesImages;
 
-    protected $fillable = ['title', 'photo_path', 'category', 'sort_order', 'is_active'];
+    protected $fillable = ['title', 'photo_path', 'category', 'sort_order', 'is_active', 'width', 'height'];
 
     protected function casts(): array
     {
@@ -24,7 +24,11 @@ class Gallery extends Model
     {
         static::saving(function (Gallery $gallery) {
             if ($gallery->isDirty('photo_path') && $gallery->photo_path) {
-                static::compressImage($gallery->photo_path);
+                $dims = static::compressImage($gallery->photo_path);
+                if ($dims) {
+                    $gallery->width = $dims['width'];
+                    $gallery->height = $dims['height'];
+                }
             }
         });
 

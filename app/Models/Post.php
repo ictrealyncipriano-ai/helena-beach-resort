@@ -21,7 +21,7 @@ class Post extends Model
     use CompressesImages;
 
     protected $fillable = [
-        'title', 'slug', 'excerpt', 'body', 'cover_image', 'is_active', 'published_at',
+        'title', 'slug', 'excerpt', 'body', 'cover_image', 'cover_width', 'cover_height', 'is_active', 'published_at',
     ];
 
     protected function casts(): array
@@ -71,7 +71,11 @@ class Post extends Model
 
         static::saving(function (Post $post) {
             if ($post->isDirty('cover_image') && $post->cover_image) {
-                static::compressImage($post->cover_image);
+                $dims = static::compressImage($post->cover_image);
+                if ($dims) {
+                    $post->cover_width = $dims['width'];
+                    $post->cover_height = $dims['height'];
+                }
             }
         });
 

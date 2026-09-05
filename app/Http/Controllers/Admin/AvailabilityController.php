@@ -63,6 +63,9 @@ class AvailabilityController extends Controller
         $lead = ($monthStart->dayOfWeek + 6) % 7;
         $cells = (int) ceil(($lead + $daysInMonth) / 7) * 7;
 
+        // Key once for O(1) lookup per cell instead of a linear scan.
+        $byDate = $blocks->keyBy(fn ($b) => $b->date->toDateString());
+
         $weeks = [];
         $week = [];
 
@@ -73,7 +76,7 @@ class AvailabilityController extends Controller
                 $week[] = null;
             } else {
                 $date = $monthStart->addDays($dayNo - 1);
-                $block = $blocks->first(fn ($b) => $b->date->toDateString() === $date->toDateString());
+                $block = $byDate->get($date->toDateString());
 
                 $week[] = $this->cell($date, $block);
             }

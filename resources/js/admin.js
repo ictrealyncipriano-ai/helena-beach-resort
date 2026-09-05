@@ -124,12 +124,18 @@ function liveSearchState() {
 }
 
 document.addEventListener('DOMContentLoaded', function() {
-    flatpickr('.datepicker', {
+    // flatpickr ships in the shared vendor-flatpickr chunk (see vite.config
+    // manualChunks); guard so admin pages without date inputs never throw.
+    if (typeof flatpickr === 'undefined' && ! window.flatpickr) {
+        return;
+    }
+    const fp = window.flatpickr || flatpickr;
+    fp('.datepicker', {
         dateFormat: 'Y-m-d',
         allowInput: true,
     });
 
-    flatpickr('.datepicker-range', {
+    fp('.datepicker-range', {
         mode: 'range',
         dateFormat: 'Y-m-d',
         allowInput: true,

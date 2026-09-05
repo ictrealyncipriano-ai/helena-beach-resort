@@ -27,12 +27,10 @@
                  data-src="{{ Storage::url($item->photo_path) }}"
                  data-title="{{ $item->title ?? '' }}"
                  aria-haspopup="dialog">
-                {{-- width/height dimensions for the masonry layout are not
-                     stored in the DB yet (requires the resize pipeline that
-                     records intrinsic sizes — see Phase 3.7 follow-up). The
-                     column layout preserves natural heights; these attributes
-                     keep the browser from decoding offscreen images eagerly. --}}
+                {{-- Intrinsic dimensions are stored on upload (see CompressesImages);
+                     older rows without dims fall back to no attributes. --}}
                 <img src="{{ Storage::url($item->photo_path) }}" alt="{{ $item->title ?: 'Helena Beach Resort — gallery photo' }}"
+                     @if(!empty($item->width) && !empty($item->height)) width="{{ $item->width }}" height="{{ $item->height }}" style="aspect-ratio: {{ $item->width }} / {{ $item->height }}" @endif
                      class="w-full h-auto object-cover group-hover:scale-105 transition-transform duration-700" loading="lazy" decoding="async">
                 <span class="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all duration-300 flex flex-col items-center justify-center">
                     @if($item->title)
@@ -76,76 +74,7 @@
     </div>
 </div>
 
-<script>
-let currentImages = [];
-let currentTitles = [];
-let currentIndex = 0;
-let lastTrigger = null;
-
-function openModal(el) {
-    const items = document.querySelectorAll('#gallery-grid > button');
-    currentImages = Array.from(items).map(item => item.dataset.src);
-    currentTitles = Array.from(items).map(item => item.dataset.title);
-    currentIndex = currentImages.indexOf(el.dataset.src);
-
-    lastTrigger = el;
-    showImage(currentIndex);
-    const lightbox = document.getElementById('lightbox');
-    lightbox.classList.remove('hidden');
-    lightbox.classList.add('flex');
-    document.body.style.overflow = 'hidden';
-    lightbox.focus({ preventScroll: true });
-}
-
-function showImage(index) {
-    const img = document.getElementById('lightbox-img');
-    const caption = document.getElementById('lightbox-caption');
-
-    img.style.opacity = '0';
-    setTimeout(() => {
-        img.src = currentImages[index];
-        img.alt = currentTitles[index] || '';
-        img.style.opacity = '1';
-    }, 150);
-
-    caption.textContent = currentTitles[index] || '';
-    document.getElementById('lightbox-counter').textContent = (index + 1) + ' / ' + currentImages.length;
-    currentIndex = index;
-}
-
-function nextImage(e) {
-    if (e) { e.stopPropagation(); }
-    const next = (currentIndex + 1) % currentImages.length;
-    showImage(next);
-}
-
-function prevImage(e) {
-    if (e) { e.stopPropagation(); }
-    const prev = (currentIndex - 1 + currentImages.length) % currentImages.length;
-    showImage(prev);
-}
-
-function closeModal(e) {
-    if (e.target === e.currentTarget || e.target.closest('button')) {
-        document.getElementById('lightbox').classList.add('hidden');
-        document.getElementById('lightbox').classList.remove('flex');
-        document.body.style.overflow = '';
-        if (lastTrigger) lastTrigger.focus({ preventScroll: true });
-    }
-}
-
-document.addEventListener('keydown', function(e) {
-    const lb = document.getElementById('lightbox');
-    if (lb.classList.contains('hidden')) return;
-
-    if (e.key === 'Escape') {
-        lb.classList.add('hidden');
-        lb.classList.remove('flex');
-        document.body.style.overflow = '';
-        if (lastTrigger) lastTrigger.focus({ preventScroll: true });
-    }
-    if (e.key === 'ArrowRight') nextImage();
-    if (e.key === 'ArrowLeft') prevImage();
-});
-</script>
+@push('scripts')
+@vite('resources/js/lightbox.js')
+@endpush
 @endsection

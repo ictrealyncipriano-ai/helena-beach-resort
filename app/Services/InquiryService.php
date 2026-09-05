@@ -188,15 +188,16 @@ class InquiryService
     /**
      * Calculate the total amount for a booking based on booking type and
      * cottage rates. Returns null when the amount cannot be determined
-     * (e.g. missing cottage or incomplete overnight dates).
+     * (e.g. missing cottage or incomplete overnight dates). Accepts an
+     * already-loaded cottage to avoid an extra query per store/modify.
      */
-    public function calculateTotal(array $data): ?string
+    public function calculateTotal(array $data, ?Cottage $cottage = null): ?string
     {
         if (empty($data['booking_type']) || empty($data['cottage_id'])) {
             return null;
         }
 
-        $cottage = Cottage::find($data['cottage_id']);
+        $cottage ??= Cottage::find($data['cottage_id']);
         if (! $cottage) {
             return null;
         }

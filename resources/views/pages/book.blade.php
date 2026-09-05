@@ -311,6 +311,10 @@ function bookingForm() {
             return this.cottageId && blockedData[this.cottageId] ? blockedData[this.cottageId] : [];
         },
 
+        get blockedSet() {
+            return new Set(this.blockedDates);
+        },
+
         addDays(dateStr, days) {
             const d = new Date(dateStr + 'T00:00:00');
             d.setDate(d.getDate() + days);
@@ -321,7 +325,7 @@ function bookingForm() {
         },
 
         isBlocked(dateStr) {
-            return !!dateStr && this.blockedDates.includes(dateStr);
+            return !!dateStr && this.blockedSet.has(dateStr);
         },
 
         refreshDisable() {

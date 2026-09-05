@@ -1,7 +1,7 @@
 <section {{ $attributes->merge(['class' => 'relative pt-32 pb-20 overflow-hidden']) }}>
     <div class="absolute inset-0 bg-gradient-to-br from-teal-600 via-teal-700 to-cyan-800">
         @if($image ?? false)
-        <img src="{{ $image }}" alt="" class="absolute inset-0 w-full h-full object-cover opacity-20">
+        <img src="{{ $image }}" alt="" aria-hidden="true" loading="lazy" decoding="async" class="absolute inset-0 w-full h-full object-cover opacity-20">
         <div class="absolute inset-0 bg-gradient-to-br from-teal-600/80 via-teal-700/80 to-cyan-800/80"></div>
         @endif
     </div>

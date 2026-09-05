@@ -12,11 +12,22 @@ export default defineConfig({
                 'resources/css/admin-auth.css',
                 'resources/js/admin.js',
                 'resources/js/flatpickr.js',
+                'resources/js/lightbox.js',
             ],
             refresh: true,
         }),
         tailwindcss(),
     ],
+    build: {
+        rollupOptions: {
+            output: {
+                manualChunks: {
+                    'vendor-alpine': ['alpinejs', '@alpinejs/focus'],
+                    'vendor-flatpickr': ['flatpickr'],
+                },
+            },
+        },
+    },
     server: {
         watch: {
             ignored: ['**/storage/framework/views/**'],

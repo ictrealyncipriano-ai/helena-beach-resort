@@ -6,9 +6,11 @@ use App\Models\Cottage;
 use App\Models\CottageDateBlock;
 use App\Models\Inquiry;
 use App\Services\PricingService;
+use App\Support\PublicCache;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Validation\Rule;
 
 /**
@@ -28,9 +30,23 @@ class AvailabilityController extends Controller
             'check_out' => ['nullable', 'required_if:booking_type,' . Inquiry::TYPE_OVERNIGHT, 'date', 'after:check_in'],
         ]);
 
-        $cottage = Cottage::find($validated['cottage_id']);
+        // Cached briefly; admin cottage edits flush the index but per-id
+        // rows may stay stale up to CONTENT_TTL (rates only, not blocks).
+        $cottage = Cache::remember(
+            PublicCache::COTTAGES_INDEX.".id.{$validated['cottage_id']}",
+            PublicCache::CONTENT_TTL,
+            fn () => Cottage::select('id', 'name', 'capacity', 'rate_daytour', 'rate_overnight', 'peak_start', 'peak_end', 'peak_rate_daytour', 'peak_rate_overnight', 'is_available')->find($validated['cottage_id'])
+        );
+        abort_if(! $cottage, 404);
         $checkIn = Carbon::parse($validated['check_in']);
         $checkOut = isset($validated['check_out']) ? Carbon::parse($validated['check_out']) : null;
+
+        // Bound the lookup: the widget never books more than ~2 months, and
+        // an unbounded range would let a scraper mine the full calendar.
+        $nights = $checkOut ? $checkIn->diffInDays($checkOut) : 0;
+        if ($nights > 62) {
+            return response()->json(['message' => 'Date range too long (max 62 nights).'], 422);
+        }
 
         $range = $this->dateRange($checkIn, $checkOut);
 

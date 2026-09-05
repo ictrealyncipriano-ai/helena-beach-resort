@@ -27,7 +27,9 @@ class BookingController extends Controller
      */
     public function create(): View
     {
-        $cottages = Cottage::available()->get();
+        $cottages = Cottage::available()
+            ->select('id', 'name', 'capacity', 'rate_daytour', 'rate_overnight', 'peak_start', 'peak_end', 'peak_rate_daytour', 'peak_rate_overnight', 'sort_order', 'is_available')
+            ->get();
 
         // Prefill only when the requested cottage is actually available. An
         // unavailable cottage (or a non-existent one) silently clears the
@@ -38,11 +40,10 @@ class BookingController extends Controller
         }
 
         // Fetch blocked dates for every cottage in a single query instead of
-        // one dateBlocks() query per cottage (N+1). Dates are formatted to
-        // 'Y-m-d' so the @js() output matches the flatpickr disable[] strings
-        // and the 'Y-m-d' dateFormat used on the inputs.
+        // one dateBlocks() query per cottage (N+1). Capped at the 180-day
+        // booking window so a far-future block backlog never balloons the page.
         $blockedByCottage = CottageDateBlock::whereIn('cottage_id', $cottages->pluck('id'))
-            ->future()
+            ->whereBetween('date', [now()->startOfDay(), now()->addDays(180)->endOfDay()])
             ->select('cottage_id', 'date')
             ->get()
             ->groupBy('cottage_id')

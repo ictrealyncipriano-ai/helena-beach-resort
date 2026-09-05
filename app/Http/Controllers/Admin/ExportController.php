@@ -28,28 +28,39 @@ class ExportController extends Controller
 
     public function inquiries(ExportFilterRequest $request): StreamedResponse
     {
-        $rows = $this->inquiriesQuery($request)->get([
+        $query = $this->inquiriesQuery($request)->select([
             'id', 'reference_code', 'name', 'email', 'phone', 'booking_type',
             'status', 'source', 'check_in', 'check_out', 'pax', 'total_amount',
             'amount_paid', 'deposit_paid_at', 'fully_paid_at', 'payment_method', 'refunded_at', 'created_at',
-        ]);
+        ])->orderBy('id');
 
         $headers = ['Reference', 'Name', 'Email', 'Phone', 'Type', 'Status', 'Source', 'Check In', 'Check Out', 'Pax', 'Total (PHP)', 'Paid (PHP)', 'Payment Method', 'Paid At', 'Refunded At', 'Created At'];
 
-        return $this->download('inquiries.csv', $headers, $rows->map(fn ($i) => [
-            $i->reference_code, $i->name, $i->email, $i->phone,
-            $i->booking_type ? str_replace('_', ' ', ucfirst($i->booking_type)) : '',
-            $i->status, $i->source,
-            $i->check_in?->toDateString() ?? '', $i->check_out?->toDateString() ?? '',
-            $i->pax, $i->total_amount, $i->amount_paid,
-            $i->paymentMethodLabel(),
-            ($i->fully_paid_at ?? $i->deposit_paid_at)?->toDateTimeString() ?? '', $i->refunded_at?->toDateTimeString() ?? '',
-            $i->created_at?->toDateTimeString() ?? '',
-        ]));
+        // Stream row-by-row via cursor so a 10k-row export never hydrates
+        // the full table before the first byte is sent.
+        return response()->streamDownload(function () use ($query, $headers) {
+            $out = fopen('php://output', 'w');
+            fwrite($out, "\xEF\xBB\xBF");
+            fputcsv($out, array_map(fn ($h) => static::csvCell($h), $headers));
+            foreach ($query->cursor() as $i) {
+                fputcsv($out, array_map(fn ($cell) => static::csvCell(is_scalar($cell) ? $cell : (string) $cell), [
+                    $i->reference_code, $i->name, $i->email, $i->phone,
+                    $i->booking_type ? str_replace('_', ' ', ucfirst($i->booking_type)) : '',
+                    $i->status, $i->source,
+                    $i->check_in?->toDateString() ?? '', $i->check_out?->toDateString() ?? '',
+                    $i->pax, $i->total_amount, $i->amount_paid,
+                    $i->paymentMethodLabel(),
+                    ($i->fully_paid_at ?? $i->deposit_paid_at)?->toDateTimeString() ?? '', $i->refunded_at?->toDateTimeString() ?? '',
+                    $i->created_at?->toDateTimeString() ?? '',
+                ]));
+            }
+            fclose($out);
+        }, 'inquiries.csv', ['Content-Type' => 'text/csv; charset=UTF-8']);
     }
 
     public function revenue(ExportFilterRequest $request): StreamedResponse
     {
+        // Aggregated by month+cottage (bounded rows); plain get() is fine.
         $rows = $this->revenueQuery($request)->get();
 
         return $this->download('revenue.csv', ['Period', 'Cottage', 'Bookings', 'Revenue (PHP)'], $rows->map(fn ($r) => [
@@ -59,14 +70,22 @@ class ExportController extends Controller
 
     public function guests(ExportFilterRequest $request): StreamedResponse
     {
-        $rows = $this->guestsData($request);
+        $headers = ['id', 'Name', 'Email', 'Phone', 'Notes', 'Stays', 'Last Stay', 'Inquiries', 'Paid', 'Refunded', 'Failed', 'Revenue (PHP)', 'Created At'];
 
-        return $this->download('guests.csv', ['id', 'Name', 'Email', 'Phone', 'Notes', 'Stays', 'Last Stay', 'Inquiries', 'Paid', 'Refunded', 'Failed', 'Revenue (PHP)', 'Created At'], $rows->map(fn ($g) => [
-            $g->id, $g->name, $g->email, $g->phone, $g->notes,
-            $g->total_stays, $g->last_stay_at?->format('Y-m-d') ?? '',
-            $g->inquiries_count, $g->paid_count, $g->refunded_count, $g->failed_count,
-            $g->paid_amount ?? 0, $g->created_at?->toDateTimeString() ?? '',
-        ]));
+        return response()->streamDownload(function () use ($request, $headers) {
+            $out = fopen('php://output', 'w');
+            fwrite($out, "\xEF\xBB\xBF");
+            fputcsv($out, array_map(fn ($h) => static::csvCell($h), $headers));
+            foreach ($this->guestsQuery($request)->orderBy('guests.id')->cursor() as $g) {
+                fputcsv($out, array_map(fn ($cell) => static::csvCell(is_scalar($cell) ? $cell : (string) $cell), [
+                    $g->id, $g->name, $g->email, $g->phone, $g->notes,
+                    $g->total_stays, $g->last_stay_at?->format('Y-m-d') ?? '',
+                    $g->inquiries_count, $g->paid_count, $g->refunded_count, $g->failed_count,
+                    $g->paid_amount ?? 0, $g->created_at?->toDateTimeString() ?? '',
+                ]));
+            }
+            fclose($out);
+        }, 'guests.csv', ['Content-Type' => 'text/csv; charset=UTF-8']);
     }
 
     /**
@@ -185,10 +204,11 @@ class ExportController extends Controller
     }
 
     /**
-     * Guest lifetime stats shared by the CSV export and the in-browser report.
-     * Honors the same from/to window as the other reports (on guest creation).
+     * Guest lifetime stats query shared by the CSV export and the in-browser
+     * report. Honors the same from/to window as the other reports (on guest
+     * creation).
      */
-    private function guestsData(?Request $request = null): Collection
+    private function guestsQuery(?Request $request = null): \Illuminate\Database\Eloquent\Builder
     {
         $query = Guest::withCount(['inquiries as inquiries_count' => fn ($q) => $q->whereNull('deleted_at')])
             ->withCount(['inquiries as paid_count' => fn ($q) => $q->where('amount_paid', '>', 0)])
@@ -198,14 +218,23 @@ class ExportController extends Controller
             ->orderBy('created_at');
 
         if ($request?->filled('from')) {
-            $query->whereDate('created_at', '>=', $request->from);
+            $query->whereDate('guests.created_at', '>=', $request->from);
         }
 
         if ($request?->filled('to')) {
-            $query->whereDate('created_at', '<=', $request->to);
+            $query->whereDate('guests.created_at', '<=', $request->to);
         }
 
-        return $query->get();
+        return $query;
+    }
+
+    /**
+     * Guest lifetime stats shared by the CSV export and the in-browser report.
+     * Honors the same from/to window as the other reports (on guest creation).
+     */
+    private function guestsData(?Request $request = null): Collection
+    {
+        return $this->guestsQuery($request)->get();
     }
 
     /**
