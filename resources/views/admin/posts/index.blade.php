@@ -5,11 +5,7 @@
 @section('description', 'Manage blog posts, announcements, and promos')
 
 @section('breadcrumb')
-    <nav class="flex items-center gap-1 text-xs text-gray-500 dark:text-slate-400">
-        <a href="{{ route('admin.dashboard') }}" class="hover:text-teal-700 transition-colors dark:hover:text-teal-300">Dashboard</a>
-        <span>/</span>
-        <span class="text-gray-700 font-medium dark:text-slate-200">News &amp; Posts</span>
-    </nav>
+    <x-admin.breadcrumb :items="[['label' => 'News & Posts']]" />
 @endsection
 
 @section('content')
