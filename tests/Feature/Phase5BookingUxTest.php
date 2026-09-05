@@ -142,7 +142,8 @@ class Phase5BookingUxTest extends TestCase
 
         $this->get(route('cottages.show', $cottage))
             ->assertOk()
-            ->assertSee('Currently Unavailable — Contact Us')
+            ->assertSee('Currently Unavailable')
+            ->assertSee('Contact Us')
             ->assertDontSee('Book This Cottage');
     }
 

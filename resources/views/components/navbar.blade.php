@@ -126,7 +126,7 @@
                 My Booking
             </a>
             <div class="flex items-center gap-2 px-4 py-3">
-                @foreach($socialHrefs as $icon => $href)
+                @foreach($socials as $icon => $href)
                     @if($href)
                     <a href="{{ $href }}" target="_blank" rel="noopener noreferrer"
                        class="min-w-[44px] min-h-[44px] flex items-center justify-center text-gray-500 hover:text-teal-700 dark:text-slate-300 dark:hover:text-teal-300 transition-colors" aria-label="{{ ucfirst($icon) }}"
