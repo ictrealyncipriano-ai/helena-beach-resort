@@ -6,8 +6,8 @@ use App\Http\Controllers\Concerns\GuardsBookingAccess;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Requests\BookingRequest;
 use App\Models\Cottage;
-use App\Models\CottageDateBlock;
 use App\Models\Inquiry;
+use App\Queries\BlockedDates;
 use App\Services\InquiryService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
@@ -42,14 +42,7 @@ class BookingController extends Controller
         // Fetch blocked dates for every cottage in a single query instead of
         // one dateBlocks() query per cottage (N+1). Capped at the 180-day
         // booking window so a far-future block backlog never balloons the page.
-        $blockedByCottage = CottageDateBlock::whereIn('cottage_id', $cottages->pluck('id'))
-            ->whereBetween('date', [now()->startOfDay(), now()->addDays(180)->endOfDay()])
-            ->select('cottage_id', 'date')
-            ->get()
-            ->groupBy('cottage_id')
-            ->map(fn ($blocks) => $blocks->pluck('date')
-                ->map(fn ($date) => $date->format('Y-m-d'))
-                ->values());
+        $blockedByCottage = BlockedDates::byCottage($cottages->pluck('id'));
 
         $rates = Cottage::ratesMap($cottages);
 

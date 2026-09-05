@@ -15,11 +15,12 @@ use App\Mail\BookingModified;
 use App\Mail\ManualRefundRequired;
 use App\Mail\RefundReceived;
 use App\Models\Cottage;
-use App\Models\CottageDateBlock;
 use App\Models\Inquiry;
 use App\Models\SiteSetting;
 use App\Models\Testimonial;
+use App\Queries\BlockedDates;
 use App\Services\ActivityLogger;
+use App\Services\BookingEligibility;
 use App\Services\InquiryService;
 use App\Services\PayMongoService;
 use App\Services\RefundService;
@@ -49,6 +50,7 @@ class BookingPortalController extends Controller
     public function __construct(
         private ActivityLogger $logger,
         private RefundService $refundService,
+        private BookingEligibility $eligibility,
     ) {
     }
 
@@ -86,16 +88,17 @@ class BookingPortalController extends Controller
 
         $inquiry->load('cottage');
 
-        $canCancel = $this->canCancel($inquiry);
+        $canCancel = $this->eligibility->canCancel($inquiry);
+        $canModify = $this->eligibility->canModify($inquiry);
 
         return view('pages.booking-detail', [
             'inquiry' => $inquiry,
             'canCancel' => $canCancel,
-            'cancelBlockReason' => $canCancel ? null : $this->cannotCancelReason($inquiry),
-            'canModify' => $this->canModify($inquiry),
-            'modifyBlockReason' => $this->canModify($inquiry) ? null : $this->cannotModifyReason($inquiry),
-            'canReview' => $this->canReview($inquiry),
-            'canSubmitPaymentProof' => $this->canSubmitPaymentProof($inquiry),
+            'cancelBlockReason' => $canCancel ? null : $this->eligibility->cannotCancelReason($inquiry),
+            'canModify' => $canModify,
+            'modifyBlockReason' => $canModify ? null : $this->eligibility->cannotModifyReason($inquiry),
+            'canReview' => $this->eligibility->canReview($inquiry),
+            'canSubmitPaymentProof' => $this->eligibility->canSubmitPaymentProof($inquiry),
         ]);
     }
 
@@ -115,26 +118,6 @@ class BookingPortalController extends Controller
     }
 
     /**
-     * Whether the guest may leave a review for this booking: the stay must be
-     * confirmed and already completed (check-out in the past; day tours count
-     * as complete once their check-in day has passed), and the guest must not
-     * have reviewed it already.
-     */
-    private function canReview(Inquiry $inquiry): bool
-    {
-        if ($inquiry->status !== Inquiry::STATUS_CONFIRMED) {
-            return false;
-        }
-
-        $endDate = $inquiry->booking_type === Inquiry::TYPE_DAY_TOUR ? $inquiry->check_in : $inquiry->check_out;
-        if (! $endDate || $endDate->isFuture()) {
-            return false;
-        }
-
-        return ! Testimonial::where('inquiry_id', $inquiry->id)->exists();
-    }
-
-    /**
      * Submit a guest review from the booking portal. Reviews are created
      * inactive so the resort can moderate them before they go public.
      */
@@ -142,7 +125,7 @@ class BookingPortalController extends Controller
     {
         $this->authorizeBookingAccess($inquiry);
 
-        if (! $this->canReview($inquiry)) {
+        if (! $this->eligibility->canReview($inquiry)) {
             return back()->with('error', 'This booking is not eligible for a review yet.');
         }
 
@@ -168,20 +151,6 @@ class BookingPortalController extends Controller
     }
 
     /**
-     * Whether the guest can submit a proof of a manual payment for this
-     * booking: it must be confirmed, not already paid, and must not have a
-     * proof pending or approved.
-     */
-    private function canSubmitPaymentProof(Inquiry $inquiry): bool
-    {
-        if ($inquiry->status !== Inquiry::STATUS_CONFIRMED || $inquiry->isPaid()) {
-            return false;
-        }
-
-        return ! in_array($inquiry->payment_proof_status, [Inquiry::PROOF_PENDING, Inquiry::PROOF_APPROVED], true);
-    }
-
-    /**
      * Upload a proof of a manual payment (bank transfer, GCash, etc.) from
      * the booking portal. The image is stored privately and flagged for admin
      * review; it is not shown publicly and never linked from an unauthenticated
@@ -191,7 +160,7 @@ class BookingPortalController extends Controller
     {
         $this->authorizeBookingAccess($inquiry);
 
-        if (! $this->canSubmitPaymentProof($inquiry)) {
+        if (! $this->eligibility->canSubmitPaymentProof($inquiry)) {
             return back()->with('error', 'This booking is not eligible to submit a payment proof right now.');
         }
 
@@ -221,8 +190,8 @@ class BookingPortalController extends Controller
         $this->authorizeBookingAccess($inquiry);
         $inquiry->load('cottage');
 
-        if (! $this->canModify($inquiry)) {
-            $reason = $this->cannotModifyReason($inquiry);
+        if (! $this->eligibility->canModify($inquiry)) {
+            $reason = $this->eligibility->cannotModifyReason($inquiry);
 
             return redirect()->route('booking.portal.show', $inquiry)
                 ->with('error', $reason ?? 'This booking cannot be modified right now.');
@@ -233,25 +202,11 @@ class BookingPortalController extends Controller
         // Any future block not held by this booking is disabled in the
         // pickers. FK-primary: NULL-safe exclude of own inquiry_id in SQL,
         // legacy reason-string fallback covers pre-backfill rows.
-        $blockedByCottage = CottageDateBlock::whereIn('cottage_id', $cottages->pluck('id'))
-            ->future()
-            ->where(function ($q) use ($inquiry) {
-                $q->where('inquiry_id', '!=', $inquiry->id)
-                    ->orWhereNull('inquiry_id');
-            })
-            ->select('cottage_id', 'date', 'reason', 'inquiry_id')
-            ->get()
-            ->reject(function (CottageDateBlock $block) use ($inquiry) {
-                // Own rows (FK match already excluded above; legacy NULL-FK
-                // rows carrying our reference code) are not blocked.
-                return $block->inquiry_id === $inquiry->id
-                    || ($block->inquiry_id === null
-                        && str_contains((string) $block->reason, $inquiry->reference_code));
-            })
-            ->groupBy('cottage_id')
-            ->map(fn ($blocks) => $blocks->pluck('date')
-                ->map(fn ($date) => $date->format('Y-m-d'))
-                ->values());
+        $blockedByCottage = BlockedDates::byCottageExcludingInquiry(
+            $cottages->pluck('id'),
+            $inquiry->id,
+            $inquiry->reference_code,
+        );
 
         $rates = Cottage::ratesMap($cottages);
 
@@ -267,8 +222,8 @@ class BookingPortalController extends Controller
     {
         $this->authorizeBookingAccess($inquiry);
 
-        if (! $this->canModify($inquiry)) {
-            $reason = $this->cannotModifyReason($inquiry);
+        if (! $this->eligibility->canModify($inquiry)) {
+            $reason = $this->eligibility->cannotModifyReason($inquiry);
 
             return back()->with('error', $reason ?? 'This booking cannot be modified right now.');
         }
@@ -360,64 +315,6 @@ class BookingPortalController extends Controller
      * recorded yet. Once any money has been collected the guest must contact
      * the resort, because a reschedule there can change the amount owed.
      */
-    private function canModify(Inquiry $inquiry): bool
-    {
-        if (! in_array($inquiry->status, [Inquiry::STATUS_PENDING, Inquiry::STATUS_CONFIRMED], true)) {
-            return false;
-        }
-
-        if (! $inquiry->check_in || $inquiry->check_in->isPast()) {
-            return false;
-        }
-
-        if (now()->diffInHours($inquiry->check_in) < self::CUTOFF_HOURS) {
-            return false;
-        }
-
-        if ($this->hasPayments($inquiry)) {
-            return false;
-        }
-
-        return true;
-    }
-
-    /**
-     * Explain why modification is unavailable, mirroring the cancel-flow
-     * messaging so the portal always shows a clear reason.
-     */
-    private function cannotModifyReason(Inquiry $inquiry): ?string
-    {
-        if (! in_array($inquiry->status, [Inquiry::STATUS_PENDING, Inquiry::STATUS_CONFIRMED], true)) {
-            return 'This booking can no longer be modified.';
-        }
-
-        if ($this->hasPayments($inquiry)) {
-            return 'To change the dates or cottage of a paid booking, please contact the resort.';
-        }
-
-        if (! $inquiry->check_in || $inquiry->check_in->isPast()) {
-            return 'This booking can no longer be modified.';
-        }
-
-        if (now()->diffInHours($inquiry->check_in) < self::CUTOFF_HOURS) {
-            return 'Modification is no longer available. This booking can be changed until 24 hours before check-in (cutoff: '
-                .$inquiry->check_in->format('M d, Y').').';
-        }
-
-        return null;
-    }
-
-    /**
-     * Whether any funds have been recorded against this booking (deposit,
-     * partial, or full settlement). Used to gate self-modification.
-     */
-    private function hasPayments(Inquiry $inquiry): bool
-    {
-        return $inquiry->isPaid()
-            || $inquiry->isDepositPaid()
-            || (float) ($inquiry->amount_paid ?? 0) > 0;
-    }
-
     /**
      * Human-readable description of the schedule before a change, used both
      * for the activity log and the "before" column of the modification email.
@@ -466,7 +363,7 @@ class BookingPortalController extends Controller
     {
         $this->authorizeBookingAccess($inquiry);
 
-        if (! $this->canCancel($inquiry)) {
+        if (! $this->eligibility->canCancel($inquiry)) {
             return back()->with('error', 'This booking cannot be cancelled. Cancellations must be made at least ' . self::CUTOFF_HOURS . ' hours before check-in.');
         }
 
@@ -635,48 +532,4 @@ class BookingPortalController extends Controller
         return 'Your booking has been cancelled.';
     }
 
-    /**
-     * Check if cancellation is allowed:
-     * - Status must be pending or confirmed
-     * - Must have a check-in date that is at least 24 hours in the future
-     */
-    private function canCancel(Inquiry $inquiry): bool
-    {
-        if (! in_array($inquiry->status, [Inquiry::STATUS_PENDING, Inquiry::STATUS_CONFIRMED], true)) {
-            return false;
-        }
-
-        if (! $inquiry->check_in || $inquiry->check_in->isPast()) {
-            return false;
-        }
-
-        if (now()->diffInHours($inquiry->check_in) < self::CUTOFF_HOURS) {
-            return false;
-        }
-
-        return true;
-    }
-
-    /**
-     * Explain why a pending/confirmed booking cannot be cancelled, so the
-     * portal can show a clear reason instead of silently omitting the action.
-     * Returns null when the booking can be cancelled.
-     */
-    private function cannotCancelReason(Inquiry $inquiry): ?string
-    {
-        if (! in_array($inquiry->status, [Inquiry::STATUS_PENDING, Inquiry::STATUS_CONFIRMED], true)) {
-            return 'This booking can no longer be cancelled.';
-        }
-
-        if (! $inquiry->check_in || $inquiry->check_in->isPast()) {
-            return 'This booking can no longer be cancelled.';
-        }
-
-        if (now()->diffInHours($inquiry->check_in) < self::CUTOFF_HOURS) {
-            return 'Cancellation is no longer available. This booking can be cancelled until 24 hours before check-in (cutoff: '
-                .$inquiry->check_in->format('M d, Y').').';
-        }
-
-        return null;
-    }
 }
