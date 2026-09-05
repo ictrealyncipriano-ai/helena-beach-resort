@@ -13,7 +13,7 @@
         @csrf
         @if($promo->exists) @method('PUT') @endif
 
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 space-y-5 dark:bg-slate-800 dark:border-slate-700">
+        <x-admin.card :padding="false" class="p-5" :spacing="true">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1 dark:text-slate-300">Code <span class="text-red-500">*</span></label>
@@ -71,7 +71,7 @@
                     Used {{ $promo->used_count }} times{{ $promo->usage_limit ? ' of '.$promo->usage_limit : '' }}.
                 </div>
             @endif
-        </div>
+        </x-admin.card>
 
         <div class="flex items-center justify-end gap-3">
             <a href="{{ route('admin.promo-codes.index') }}" class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors dark:bg-slate-800 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-700">Cancel</a>
