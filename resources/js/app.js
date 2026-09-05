@@ -2,40 +2,11 @@ import './bootstrap';
 import './form-validation';
 import Alpine from 'alpinejs';
 import focus from '@alpinejs/focus';
+import { themeToggle } from './theme-toggle';
 
 window.Alpine = Alpine;
 
 Alpine.plugin(focus);
-
-function themeToggle() {
-    return {
-        open: false,
-        mode: localStorage.getItem('theme') || 'system',
-        dark: false,
-        init() {
-            this.dark = this.isDarkMode();
-            const mql = window.matchMedia('(prefers-color-scheme: dark)');
-            if (typeof mql.addEventListener === 'function') {
-                mql.addEventListener('change', (e) => {
-                    if (this.mode === 'system') {
-                        this.dark = e.matches;
-                        document.documentElement.classList.toggle('dark', this.dark);
-                    }
-                });
-            }
-        },
-        isDarkMode() {
-            return this.mode === 'dark' || (this.mode === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
-        },
-        set(m) {
-            this.mode = m;
-            localStorage.setItem('theme', m);
-            this.dark = this.isDarkMode();
-            this.open = false;
-            document.documentElement.classList.toggle('dark', this.dark);
-        }
-    };
-}
 
 function cookieConsent() {
     return {

@@ -9,6 +9,7 @@ export default defineConfig({
                 'resources/css/app.css',
                 'resources/js/app.js',
                 'resources/css/admin.css',
+                'resources/css/admin-auth.css',
                 'resources/js/admin.js',
                 'resources/js/flatpickr.js',
             ],
