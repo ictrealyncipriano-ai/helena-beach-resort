@@ -13,7 +13,7 @@
             You don't have permission to view this page.
         </p>
         <a href="{{ route('home') }}"
-           class="inline-block bg-teal-700 hover:bg-teal-700 text-white font-semibold px-8 py-3 rounded-lg transition-colors">
+           class="inline-block bg-teal-700 hover:bg-teal-800 text-white font-semibold px-8 py-3 rounded-lg transition-colors">
             Back to Home
         </a>
     </div>

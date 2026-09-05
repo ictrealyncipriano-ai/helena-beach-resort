@@ -122,6 +122,7 @@
                             @error('check_out') <p id="check-out-error" class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                         </div>
                     </div>
+                    <p x-show="notice" x-text="notice" id="date-notice" role="status" x-cloak class="text-xs text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800 rounded-lg px-3 py-2"></p>
 
                     {{-- Pax --}}
                     <div>
@@ -153,11 +154,12 @@
                     </div>
 
                     <button type="submit" :disabled="submitting"
-                        :class="submitting ? 'opacity-60 cursor-not-allowed' : 'hover:bg-teal-700 transition-colors'"
-                        class="w-full sm:w-auto px-8 py-3 bg-teal-700 text-white font-medium rounded-full inline-flex items-center justify-center gap-2">
+                        :class="submitting ? 'opacity-60 cursor-not-allowed' : 'hover:bg-teal-800 transition-colors'"
+                        class="w-full sm:w-auto px-8 py-3 min-h-[44px] bg-teal-700 text-white font-medium rounded-full inline-flex items-center justify-center gap-2">
                         <span x-show="submitting" class="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" x-cloak></span>
                         <span x-text="submitting ? 'Submitting…' : 'Submit Booking Request'"></span>
                     </button>
+                    <p class="text-xs text-gray-500 dark:text-slate-400">No payment now · We confirm within 24h · 48h hold · Free cancellation · <a href="{{ route('contact') }}" class="underline underline-offset-2 hover:text-teal-700">Questions? Contact us</a> · <a href="{{ route('booking-policy') }}" class="underline underline-offset-2 hover:text-teal-700">Booking Policy</a></p>
                 </form>
             </div>
 
@@ -178,37 +180,37 @@
                                     <span class="text-sm font-medium text-gray-900 dark:text-white" x-text="selectedCottageName"></span>
                                 </div>
 
-                                <div class="flex items-center justify-between pb-3 border-b border-teal-100">
+                                <div class="flex items-center justify-between pb-3 border-b border-teal-100 dark:border-teal-700">
                                     <span class="text-sm text-gray-600 dark:text-slate-300">Type</span>
                                     <span class="text-sm font-medium text-gray-900 dark:text-white" x-text="bookingType === 'day_tour' ? 'Day Tour' : 'Overnight'"></span>
                                 </div>
 
-                                <div class="flex items-center justify-between pb-3 border-b border-teal-100">
+                                <div class="flex items-center justify-between pb-3 border-b border-teal-100 dark:border-teal-700">
                                     <span class="text-sm text-gray-600 dark:text-slate-300">Guests</span>
                                     <span class="text-sm font-medium text-gray-900 dark:text-white" x-text="pax"></span>
                                 </div>
 
-                                <div class="flex items-center justify-between pb-3 border-b border-teal-100">
+                                <div class="flex items-center justify-between pb-3 border-b border-teal-100 dark:border-teal-700">
                                     <span class="text-sm text-gray-600 dark:text-slate-300">Check-in</span>
                                     <span class="text-sm font-medium text-gray-900 dark:text-white" x-text="checkIn || '—'"></span>
                                 </div>
 
-                                <div x-show="bookingType === 'overnight'" class="flex items-center justify-between pb-3 border-b border-teal-100">
+                                <div x-show="bookingType === 'overnight'" class="flex items-center justify-between pb-3 border-b border-teal-100 dark:border-teal-700">
                                     <span class="text-sm text-gray-600 dark:text-slate-300">Check-out</span>
                                     <span class="text-sm font-medium text-gray-900 dark:text-white" x-text="checkOut || '—'"></span>
                                 </div>
 
-                                <div x-show="bookingType === 'overnight'" class="flex items-center justify-between pb-3 border-b border-teal-100">
+                                <div x-show="bookingType === 'overnight'" class="flex items-center justify-between pb-3 border-b border-teal-100 dark:border-teal-700">
                                     <span class="text-sm text-gray-600 dark:text-slate-300">Nights</span>
                                     <span class="text-sm font-medium text-gray-900 dark:text-white" x-text="nights"></span>
                                 </div>
 
-                                <div class="flex items-center justify-between pb-3 border-b border-teal-100">
+                                <div class="flex items-center justify-between pb-3 border-b border-teal-100 dark:border-teal-700">
                                     <span class="text-sm text-gray-600 dark:text-slate-300">Rate</span>
                                     <span class="text-sm font-medium text-gray-900 dark:text-white" x-text="rateLabel"></span>
                                 </div>
 
-                                <div x-show="promoCode" class="flex items-center justify-between pb-3 border-b border-teal-100">
+                                <div x-show="promoCode" class="flex items-center justify-between pb-3 border-b border-teal-100 dark:border-teal-700">
                                     <span class="text-sm text-gray-600 dark:text-slate-300">Promo</span>
                                     <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 text-xs font-medium dark:bg-amber-900/40 dark:text-amber-300">
                                         <span x-text="promoCode.toUpperCase()"></span>
@@ -246,6 +248,7 @@ function bookingForm() {
         fpIn: null,
         fpOut: null,
         submitting: false,
+        notice: '',
 
         get selectedCottageName() {
             return this.cottageId && rateData[this.cottageId] ? rateData[this.cottageId].name : '';
@@ -317,6 +320,15 @@ function bookingForm() {
             return `${y}-${m}-${day}`;
         },
 
+        isBlocked(dateStr) {
+            return !!dateStr && this.blockedDates.includes(dateStr);
+        },
+
+        refreshDisable() {
+            if (this.fpIn) this.fpIn.set('disable', this.blockedDates);
+            if (this.fpOut) this.fpOut.set('disable', this.blockedDates);
+        },
+
         initFlatpickr() {
             const self = this;
 
@@ -335,6 +347,7 @@ function bookingForm() {
                         allowInput: true,
                         disable: this.blockedDates,
                         onChange: function(selectedDates, dateStr) {
+                            self.notice = '';
                             self.checkIn = dateStr;
                             if (self.fpOut) {
                                 // Same-day checkout is not allowed: the earliest
@@ -350,6 +363,7 @@ function bookingForm() {
                         allowInput: true,
                         disable: this.blockedDates,
                         onChange: function(selectedDates, dateStr) {
+                            self.notice = '';
                             self.checkOut = dateStr;
                         },
                     });
@@ -373,27 +387,49 @@ function bookingForm() {
 
         init() {
             this.$watch('cottageId', () => {
-                if (this.fpIn) {
-                    this.fpIn.set('disable', this.blockedDates);
-                    this.fpIn.clear();
-                    this.checkIn = '';
+                this.notice = '';
+                this.refreshDisable();
+                const name = this.selectedCottageName || 'this cottage';
+                if (this.checkIn) {
+                    if (this.isBlocked(this.checkIn)) {
+                        if (this.fpIn) this.fpIn.clear();
+                        this.checkIn = '';
+                        this.notice = `That check-in date is blocked for ${name} — please pick another.`;
+                        if (this.$refs.checkIn) this.$refs.checkIn.focus();
+                    } else if (this.fpIn) {
+                        this.fpIn.setDate(this.checkIn, false);
+                    }
+                }
+                if (this.checkOut) {
+                    const invalidOut = this.isBlocked(this.checkOut)
+                        || (this.checkIn && this.checkOut <= this.checkIn);
+                    if (invalidOut) {
+                        if (this.fpOut) this.fpOut.clear();
+                        this.checkOut = '';
+                        if (!this.notice) this.notice = `That check-out date is not available for ${name} — please pick another.`;
+                    } else if (this.fpOut) {
+                        this.fpOut.setDate(this.checkOut, false);
+                    }
                 }
                 if (this.fpOut) {
-                    this.fpOut.set('disable', this.blockedDates);
-                    this.fpOut.set('minDate', 'today');
-                    this.fpOut.clear();
-                    this.checkOut = '';
+                    this.fpOut.set('minDate', this.checkIn ? this.addDays(this.checkIn, 1) : 'today');
                 }
             });
 
             this.$watch('bookingType', () => {
-                if (this.fpIn) this.fpIn.clear();
-                if (this.fpOut) {
-                    this.fpOut.set('minDate', 'today');
-                    this.fpOut.clear();
+                this.notice = '';
+                this.refreshDisable();
+                if (this.bookingType === 'day_tour') {
+                    if (this.fpOut) {
+                        this.fpOut.set('minDate', 'today');
+                        this.fpOut.clear();
+                    }
+                    this.checkOut = '';
+                } else if (this.checkOut && this.checkIn && this.checkOut <= this.checkIn) {
+                    if (this.fpOut) this.fpOut.clear();
+                    this.checkOut = '';
+                    this.notice = 'Please choose a check-out date after check-in for overnight stays.';
                 }
-                this.checkIn = '';
-                this.checkOut = '';
             });
         },
     };

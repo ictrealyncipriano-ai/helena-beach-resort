@@ -43,7 +43,7 @@
                 </div>
 
                 <button type="submit"
-                    class="w-full px-6 py-3 bg-teal-700 text-white font-medium rounded-xl hover:bg-teal-700 transition-all hover:shadow-lg hover:shadow-teal-600/20 active:scale-[0.98] inline-flex items-center justify-center gap-2">
+                    class="w-full px-6 py-3 bg-teal-700 text-white font-medium rounded-xl hover:bg-teal-800 transition-all hover:shadow-lg hover:shadow-teal-600/20 active:scale-[0.98] inline-flex items-center justify-center gap-2">
                     <x-icons name="search" class="w-4 h-4" />
                     Find Booking
                 </button>

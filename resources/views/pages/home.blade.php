@@ -67,12 +67,12 @@
             {{ App\Models\SiteSetting::getValue('hero_subtitle', 'Escape to paradise — unwind on pristine shores, enjoy beachfront cottages, and create unforgettable memories with family and friends in Infanta, Quezon.') }}
         </p>
         <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <a href="{{ route('cottages.index') }}" class="inline-flex items-center px-8 py-4 bg-amber-400 text-amber-900 text-base font-semibold rounded-full hover:bg-amber-300 transition-all shadow-lg shadow-amber-400/30 hover:shadow-xl hover:shadow-amber-400/40 active:scale-95 group">
-                <span>{{ App\Models\SiteSetting::getValue('hero_primary_btn_text', 'Explore Cottages') }}</span>
+            <a href="{{ route('book') }}" class="inline-flex items-center px-8 py-4 bg-amber-400 text-amber-900 text-base font-semibold rounded-full hover:bg-amber-300 transition-all shadow-lg shadow-amber-400/30 hover:shadow-xl hover:shadow-amber-400/40 active:scale-95 group">
+                <span>{{ App\Models\SiteSetting::getValue('hero_secondary_btn_text', 'Book Now') }}</span>
                 <x-icons name="arrow-right" class="ml-2 w-5 h-5 group-hover:translate-x-0.5 transition-transform" />
             </a>
-            <a href="{{ route('book') }}" class="inline-flex items-center px-8 py-4 border-2 border-white/30 text-white text-base font-semibold rounded-full hover:bg-white/10 transition-all backdrop-blur-sm active:scale-95">
-                {{ App\Models\SiteSetting::getValue('hero_secondary_btn_text', 'Book Now') }}
+            <a href="{{ route('cottages.index') }}" class="inline-flex items-center px-8 py-4 border-2 border-white/30 text-white text-base font-semibold rounded-full hover:bg-white/10 transition-all backdrop-blur-sm active:scale-95">
+                {{ App\Models\SiteSetting::getValue('hero_primary_btn_text', 'Explore Cottages') }}
             </a>
         </div>
     </div>
@@ -98,8 +98,8 @@
         </div>
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
             @foreach($cottages as $i => $cottage)
-            <a href="{{ route('cottages.show', $cottage) }}" class="group bg-white dark:bg-slate-800 rounded-2xl overflow-hidden shadow-sm hover:shadow-xl border border-gray-100 dark:border-slate-700 transition-all duration-300 reveal {{ $i > 0 ? 'reveal-delay-' . min($i, 4) : '' }}">
-                <div class="aspect-[4/3] bg-teal-50 dark:bg-teal-900/30 overflow-hidden relative">
+            <article class="group bg-white dark:bg-slate-800 rounded-2xl overflow-hidden shadow-sm hover:shadow-xl border border-gray-100 dark:border-slate-700 transition-all duration-300 reveal flex flex-col {{ $i > 0 ? 'reveal-delay-' . min($i, 4) : '' }}">
+                <a href="{{ route('cottages.show', $cottage) }}" aria-label="View {{ $cottage->name }}" class="block aspect-[4/3] bg-teal-50 dark:bg-teal-900/30 overflow-hidden relative">
                     @if($cottage->primaryPhoto)
                     <img src="{{ Storage::url($cottage->primaryPhoto->photo_path) }}" alt="{{ $cottage->name }}" width="400" height="300" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" loading="lazy" decoding="async">
                     @else
@@ -107,16 +107,16 @@
                         <x-icons name="building" class="w-16 h-16" />
                     </div>
                     @endif
-                    <div class="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-5">
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity duration-300 flex items-end p-5">
                         <span class="text-white text-sm font-medium flex items-center gap-1">
                             <x-icons name="arrow-right" class="w-4 h-4" />
                             View Details
                         </span>
                     </div>
-                </div>
-                <div class="p-5">
+                </a>
+                <div class="p-5 flex flex-col flex-1">
                     <div class="flex items-center justify-between mb-2">
-                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white group-hover:text-teal-700 dark:group-hover:text-teal-300 transition-colors">{{ $cottage->name }}</h3>
+                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white group-hover:text-teal-700 dark:group-hover:text-teal-300 transition-colors"><a href="{{ route('cottages.show', $cottage) }}" class="hover:underline underline-offset-4">{{ $cottage->name }}</a></h3>
                     </div>
                     <p class="text-sm text-gray-500 dark:text-slate-400 line-clamp-2">{{ Str::limit(strip_tags($cottage->description), 100) }}</p>
                     <div class="flex items-center justify-between mt-4 pt-4 border-t border-gray-100 dark:border-slate-700">
@@ -129,10 +129,18 @@
                             <div class="text-xs text-gray-500 dark:text-slate-400">Day Tour</div>
                             <div class="text-sm font-semibold text-teal-700 dark:text-teal-300">{{ formatPrice($cottage->rate_daytour) }}</div>
                             @endif
+                            @if($cottage->rate_overnight)
+                            <div class="text-xs text-gray-500 dark:text-slate-400 mt-1">Overnight</div>
+                            <div class="text-sm font-semibold text-teal-700 dark:text-teal-300">{{ formatPrice($cottage->rate_overnight) }}</div>
+                            @endif
                         </div>
                     </div>
+                    <div class="mt-4 grid grid-cols-2 gap-2">
+                        <a href="{{ route('cottages.show', $cottage) }}" class="inline-flex items-center justify-center px-4 py-2.5 min-h-[44px] border-2 border-teal-600 text-teal-700 text-sm font-medium rounded-xl hover:bg-teal-50 transition-colors">View</a>
+                        <a href="{{ route('book') }}?cottage_id={{ $cottage->id }}" class="inline-flex items-center justify-center gap-1 px-4 py-2.5 min-h-[44px] bg-teal-700 text-white text-sm font-medium rounded-xl hover:bg-teal-800 transition-colors">Book</a>
+                    </div>
                 </div>
-            </a>
+            </article>
             @endforeach
         </div>
         <div class="text-center mt-12 reveal">
@@ -160,14 +168,14 @@
         </div>
         <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
             @foreach($gallery->take(8) as $i => $item)
-            <div class="aspect-square rounded-xl overflow-hidden bg-gray-100 dark:bg-slate-800 reveal {{ $i > 0 ? 'reveal-delay-' . min($i % 4 + 1, 4) : '' }}">
-                <img src="{{ Storage::url($item->photo_path) }}" alt="{{ $item->title ?: 'Helena Beach Resort — gallery photo' }}" width="400" height="400" class="w-full h-full object-cover hover:scale-110 transition-transform duration-700" loading="lazy" decoding="async">
+            <figure class="relative group aspect-square rounded-xl overflow-hidden bg-gray-100 dark:bg-slate-800 reveal {{ $i > 0 ? 'reveal-delay-' . min($i % 4 + 1, 4) : '' }}">
+                <img src="{{ Storage::url($item->photo_path) }}" alt="{{ $item->title ?: 'Helena Beach Resort — gallery photo' }}" width="400" height="400" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" loading="lazy" decoding="async">
                 @if($item->title)
-                <div class="absolute inset-0 bg-black/0 hover:bg-black/30 transition-colors flex items-end p-3 opacity-0 hover:opacity-100">
+                <figcaption class="absolute inset-0 bg-black/30 md:bg-black/0 md:group-hover:bg-black/30 md:focus-within:bg-black/30 transition-colors flex items-end p-3 opacity-100 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100">
                     <p class="text-white text-xs font-medium">{{ $item->title }}</p>
-                </div>
+                </figcaption>
                 @endif
-            </div>
+            </figure>
             @endforeach
         </div>
         <div class="text-center mt-12 reveal">
@@ -240,16 +248,16 @@
 
             {{-- Carousel Controls --}}
             <div class="flex items-center justify-center gap-4 mt-8">
-                <button @click="prev" aria-label="Previous testimonials" class="w-10 h-10 rounded-full border border-gray-200 dark:border-slate-700 flex items-center justify-center text-gray-500 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-700/50 hover:text-teal-700 dark:hover:text-teal-300 transition-colors" :disabled="current === 0">
+                <button @click="prev" aria-label="Previous testimonials" class="min-w-[44px] min-h-[44px] p-3 rounded-full border border-gray-200 dark:border-slate-700 flex items-center justify-center text-gray-500 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-700/50 hover:text-teal-700 dark:hover:text-teal-300 transition-colors" :disabled="current === 0">
                     <x-icons name="chevron-left" class="w-5 h-5" />
                 </button>
-                <div class="flex items-center gap-2">
+                <div class="flex items-center gap-1">
                     <template x-for="(_, i) in Array.from({length: totalPages})" :key="i">
-                        <button @click="goTo(i)" :aria-label="'Go to slide ' + (i + 1)" :aria-current="i === current ? 'true' : 'false'" class="w-2 h-2 rounded-full transition-all duration-300"
-                                :class="i === current ? 'bg-teal-700 w-6' : 'bg-gray-400 hover:bg-gray-500'"></button>
+                        <button @click="goTo(i)" :aria-label="'Go to slide ' + (i + 1)" :aria-current="i === current ? 'true' : 'false'" class="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full transition-all duration-300"
+                                :class="i === current ? 'text-teal-700' : 'text-gray-400 hover:text-gray-500'"><span class="block rounded-full transition-all duration-300" :class="i === current ? 'bg-teal-700 w-6 h-2' : 'bg-gray-400 w-2 h-2'"></span></button>
                     </template>
                 </div>
-                <button @click="next" aria-label="Next testimonials" class="w-10 h-10 rounded-full border border-gray-200 dark:border-slate-700 flex items-center justify-center text-gray-500 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-700/50 hover:text-teal-700 dark:hover:text-teal-300 transition-colors" :disabled="current >= totalPages - 1">
+                <button @click="next" aria-label="Next testimonials" class="min-w-[44px] min-h-[44px] p-3 rounded-full border border-gray-200 dark:border-slate-700 flex items-center justify-center text-gray-500 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-700/50 hover:text-teal-700 dark:hover:text-teal-300 transition-colors" :disabled="current >= totalPages - 1">
                     <x-icons name="chevron-right" class="w-5 h-5" />
                 </button>
             </div>
@@ -342,11 +350,16 @@ function testimonialCarousel() {
         <div class="reveal">
             <h2 class="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-4 font-heading">{{ App\Models\SiteSetting::getValue('section_cta_heading', 'Ready for a Getaway?') }}</h2>
             <div class="w-16 h-1 bg-amber-400 rounded-full mx-auto mb-4"></div>
-            <p class="text-teal-100/90 text-lg sm:text-xl mb-10 max-w-2xl mx-auto">{{ App\Models\SiteSetting::getValue('section_cta_subtitle', 'Contact us to book your stay or ask any questions.') }}</p>
-            <a href="{{ route('contact') }}" class="inline-flex items-center px-8 py-4 bg-amber-400 text-amber-900 text-base font-semibold rounded-full hover:bg-amber-300 transition-all shadow-lg shadow-amber-400/30 hover:shadow-xl hover:shadow-amber-400/40 active:scale-95 group">
-                <span>{{ App\Models\SiteSetting::getValue('section_cta_btn_text', 'Contact Us') }}</span>
-                <x-icons name="arrow-right" class="ml-2 w-5 h-5 group-hover:translate-x-0.5 transition-transform" />
-            </a>
+            <p class="text-teal-100/90 text-lg sm:text-xl mb-10 max-w-2xl mx-auto">{{ App\Models\SiteSetting::getValue('section_cta_subtitle', 'Book direct — no payment now, free cancellation. Check live availability in seconds.') }}</p>
+            <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
+                <a href="{{ route('book') }}" class="inline-flex items-center px-8 py-4 bg-amber-400 text-amber-900 text-base font-semibold rounded-full hover:bg-amber-300 transition-all shadow-lg shadow-amber-400/30 hover:shadow-xl hover:shadow-amber-400/40 active:scale-95 group">
+                    <span>{{ App\Models\SiteSetting::getValue('section_cta_btn_text', 'Book Now') }}</span>
+                    <x-icons name="arrow-right" class="ml-2 w-5 h-5 group-hover:translate-x-0.5 transition-transform" />
+                </a>
+                <a href="{{ route('contact') }}" class="inline-flex items-center px-6 py-3 text-teal-100 text-sm font-medium hover:text-white transition-colors underline-offset-4 hover:underline">
+                    Prefer to ask first? Contact us
+                </a>
+            </div>
         </div>
     </div>
     {{-- Wave Divider Top --}}

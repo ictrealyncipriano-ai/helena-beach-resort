@@ -201,7 +201,7 @@
     {{-- Submit --}}
     <div class="flex items-center justify-end gap-3">
         <a href="{{ route('admin.cottages.index') }}" class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors dark:bg-slate-800 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-700">Cancel</a>
-        <button type="submit" class="px-6 py-2 text-sm font-medium text-white bg-teal-700 rounded-lg hover:bg-teal-700 transition-colors shadow-sm">
+        <button type="submit" class="px-6 py-2 text-sm font-medium text-white bg-teal-700 rounded-lg hover:bg-teal-800 transition-colors shadow-sm">
             {{ $cottage->exists ? 'Update Cottage' : 'Create Cottage' }}
         </button>
     </div>

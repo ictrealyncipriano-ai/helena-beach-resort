@@ -6,20 +6,10 @@
 @source '../../storage/framework/views/*.php';
 @source '../**/*.blade.php';
 
+@import './tokens.css';
+
 @theme {
     --font-sans: 'Inter', system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
-    --font-heading: 'Playfair Display', Georgia, 'Times New Roman', serif;
-
-    --color-beach-50: #f0fdfa;
-    --color-beach-100: #ccfbf1;
-    --color-beach-200: #99f6e4;
-    --color-beach-300: #5eead4;
-    --color-beach-400: #2dd4bf;
-    --color-beach-500: #14b8a6;
-    --color-beach-600: #0d9488;
-    --color-beach-700: #0f766e;
-    --color-beach-800: #115e59;
-    --color-beach-900: #134e4a;
 }
 
 [x-cloak] { display: none !important; }

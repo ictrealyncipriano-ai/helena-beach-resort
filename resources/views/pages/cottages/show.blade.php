@@ -171,13 +171,17 @@
                         </div>
                         @if($cottage->is_available)
                         <a href="{{ route('book') }}?cottage_id={{ $cottage->id }}"
-                           class="block w-full text-center px-6 py-3.5 bg-teal-700 text-white font-semibold rounded-full hover:bg-teal-700 transition-all hover:shadow-lg hover:shadow-teal-600/20 active:scale-[0.98]">
+                           class="block w-full text-center px-6 py-3.5 min-h-[44px] flex items-center justify-center bg-teal-700 text-white font-semibold rounded-full hover:bg-teal-800 transition-all hover:shadow-lg hover:shadow-teal-600/20 active:scale-[0.98]">
                             Book This Cottage
                         </a>
+                        <p class="text-xs text-gray-500 dark:text-slate-400 text-center">No payment now · Free cancellation · <a href="{{ route('booking-policy') }}" class="underline underline-offset-2 hover:text-teal-700">Booking Policy</a> · <a href="{{ route('contact') }}" class="underline underline-offset-2 hover:text-teal-700">Questions? Contact us</a></p>
                         @else
+                        <p class="block w-full text-center px-6 py-3.5 min-h-[44px] flex items-center justify-center bg-gray-400 opacity-60 text-white font-semibold rounded-full cursor-not-allowed" aria-disabled="true">
+                            Currently Unavailable
+                        </p>
                         <a href="{{ route('contact') }}"
-                           class="block w-full text-center px-6 py-3.5 bg-gray-400 text-white font-semibold rounded-full cursor-not-allowed hover:bg-gray-400 hover:shadow-none" aria-disabled="true">
-                            Currently Unavailable — Contact Us
+                           class="block w-full text-center px-6 py-3 min-h-[44px] flex items-center justify-center border-2 border-teal-600 text-teal-700 font-semibold rounded-full hover:bg-teal-50 transition-colors">
+                            Contact Us
                         </a>
                         @endif
                     </div>
@@ -190,41 +194,48 @@
                         </h3>
                         <div x-data="calendar(@js($blockedDates))">
                             <div class="flex items-center justify-between mb-3">
-                                <button @click="prevMonth" class="w-8 h-8 flex items-center justify-center hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg transition-colors text-gray-500 dark:text-slate-400">
+                                <button @click="prevMonth" aria-label="Previous month" class="min-w-[44px] min-h-[44px] p-3 flex items-center justify-center hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg transition-colors text-gray-500 dark:text-slate-400">
                                     <x-icons name="chevron-left" class="w-4 h-4" />
                                 </button>
-                                <span class="text-sm font-semibold text-gray-700 dark:text-slate-200" x-text="monthLabel"></span>
-                                <button @click="nextMonth" class="w-8 h-8 flex items-center justify-center hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg transition-colors text-gray-500 dark:text-slate-400">
+                                <span class="text-sm font-semibold text-gray-700 dark:text-slate-200" x-text="monthLabel" aria-live="polite" role="status"></span>
+                                <button @click="nextMonth" aria-label="Next month" class="min-w-[44px] min-h-[44px] p-3 flex items-center justify-center hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg transition-colors text-gray-500 dark:text-slate-400">
                                     <x-icons name="chevron-right" class="w-4 h-4" />
                                 </button>
                             </div>
-                            <div class="grid grid-cols-7 gap-0 text-center mb-1">
+                            <div class="grid grid-cols-7 gap-0 text-center mb-1" role="row">
                                 <template x-for="day in ['Sun','Mon','Tue','Wed','Thu','Fri','Sat']" :key="day">
-                                    <span class="text-xs font-medium text-gray-500 dark:text-slate-400 py-1" x-text="day"></span>
+                                    <span role="columnheader" class="text-xs font-medium text-gray-500 dark:text-slate-400 py-1" x-text="day"></span>
                                 </template>
                             </div>
-                            <div class="grid grid-cols-7 gap-0">
+                            <div class="grid grid-cols-7 gap-0" role="grid" aria-label="Availability calendar">
                                 <template x-for="(day, i) in days" :key="i">
                                     <div class="text-sm py-1.5 rounded-lg text-center"
                                         :class="{
                                             'text-gray-300': !day,
-                                            'text-gray-900': day && !day.blocked && !day.isPast,
-                                            'text-red-400 line-through': day && day.blocked,
+                                            'text-gray-900 dark:text-slate-200': day && !day.blocked && !day.isPast,
+                                            'text-red-400 dark:text-red-300 line-through': day && day.blocked,
                                             'text-gray-500': day && day.isPast && !day.blocked,
                                             'text-red-300 line-through': day && day.isPast && day.blocked
                                         }"
+                                        :aria-label="day ? day.date + (day.blocked ? ' Booked' : ' Available') : null"
+                                        :aria-disabled="day ? (day.blocked || day.isPast) : null"
+                                        :title="day ? day.date + (day.blocked ? ' — Booked' : ' — Available') : null"
                                         x-text="day ? day.label : ''">
                                     </div>
                                 </template>
                             </div>
-                            <div class="mt-4 flex items-center gap-4 text-xs text-gray-500 dark:text-slate-400">
+                            <div class="mt-4 flex flex-wrap items-center gap-4 text-xs text-gray-500 dark:text-slate-400">
                                 <span class="flex items-center gap-1.5">
-                                    <span class="w-2.5 h-2.5 rounded-sm bg-red-100 dark:bg-red-900/40 border border-red-200 dark:border-red-800"></span>
-                                    Booked
+                                    <span class="w-2.5 h-2.5 rounded-sm bg-red-100 dark:bg-red-900/40 border border-red-200 dark:border-red-800" aria-hidden="true"></span>
+                                    Booked (struck through)
                                 </span>
                                 <span class="flex items-center gap-1.5">
-                                    <span class="w-2.5 h-2.5 rounded-sm bg-green-100 dark:bg-green-900/40 border border-green-200 dark:border-green-800"></span>
+                                    <span class="w-2.5 h-2.5 rounded-sm bg-green-100 dark:bg-green-900/40 border border-green-200 dark:border-green-800" aria-hidden="true"></span>
                                     Available
+                                </span>
+                                <span class="flex items-center gap-1.5">
+                                    <span class="w-2.5 h-2.5 rounded-sm bg-gray-200 dark:bg-slate-700 border border-gray-300 dark:border-slate-600" aria-hidden="true"></span>
+                                    Past
                                 </span>
                             </div>
                         </div>

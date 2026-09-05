@@ -44,7 +44,7 @@
                 </div>
                 <h2 class="text-xl font-semibold text-gray-800 dark:text-slate-100 mb-2">No FAQs Available</h2>
                 <p class="text-gray-500 dark:text-slate-400 max-w-md mx-auto">We haven't added any frequently asked questions yet. Check back later or reach out to us directly!</p>
-                <a href="{{ route('contact') }}" class="inline-flex items-center gap-2 mt-6 px-6 py-3 bg-teal-700 text-white rounded-xl font-medium hover:bg-teal-700 transition-colors shadow-sm">
+                <a href="{{ route('contact') }}" class="inline-flex items-center gap-2 mt-6 px-6 py-3 bg-teal-700 text-white rounded-xl font-medium hover:bg-teal-800 transition-colors shadow-sm">
                     <x-icons name="email" class="w-5 h-5" />
                     Contact Us
                 </a>
@@ -126,7 +126,7 @@
                 @endphp
                 <a
                     href="{{ route('contact') }}"
-                    class="inline-flex items-center justify-center gap-2 px-8 py-3.5 bg-teal-700 text-white rounded-xl font-semibold hover:bg-teal-700 transition-all shadow-sm hover:shadow-md active:scale-95"
+                    class="inline-flex items-center justify-center gap-2 px-8 py-3.5 bg-teal-700 text-white rounded-xl font-semibold hover:bg-teal-800 transition-all shadow-sm hover:shadow-md active:scale-95"
                 >
                     <x-icons name="email" class="w-5 h-5" />
                     Send us a message

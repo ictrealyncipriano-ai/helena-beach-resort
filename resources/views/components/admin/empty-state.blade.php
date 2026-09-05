@@ -25,12 +25,12 @@
     <h3 class="text-base font-semibold text-gray-900 mb-1 dark:text-white">{{ $title }}</h3>
     <p class="text-sm text-gray-500 mb-6 max-w-sm text-center dark:text-slate-400">{{ $message }}</p>
     @if($actionUrl)
-        <a href="{{ $actionUrl }}" class="inline-flex items-center gap-2 px-4 py-2 bg-teal-700 text-white text-sm font-medium rounded-lg hover:bg-teal-700 transition-colors shadow-sm">
+        <a href="{{ $actionUrl }}" class="inline-flex items-center gap-2 px-4 py-2 bg-teal-700 text-white text-sm font-medium rounded-lg hover:bg-teal-800 transition-colors shadow-sm">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.5v15m7.5-7.5h-15"/></svg>
             {{ $actionLabel }}
         </a>
     @elseif($actionClick)
-        <button type="button" @@click="{{ $actionClick }}" class="inline-flex items-center gap-2 px-4 py-2 bg-teal-700 text-white text-sm font-medium rounded-lg hover:bg-teal-700 transition-colors shadow-sm">
+        <button type="button" @@click="{{ $actionClick }}" class="inline-flex items-center gap-2 px-4 py-2 bg-teal-700 text-white text-sm font-medium rounded-lg hover:bg-teal-800 transition-colors shadow-sm">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.5v15m7.5-7.5h-15"/></svg>
             {{ $actionLabel }}
         </button>

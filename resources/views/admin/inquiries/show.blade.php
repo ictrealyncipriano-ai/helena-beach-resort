@@ -202,7 +202,7 @@
             Back to List
         </a>
         <div class="flex items-center gap-2">
-            <a href="{{ route('admin.inquiries.edit', $inquiry) }}" class="px-4 py-2 text-sm font-medium text-white bg-teal-700 rounded-lg hover:bg-teal-700 transition-colors shadow-sm">Edit</a>
+            <a href="{{ route('admin.inquiries.edit', $inquiry) }}" class="px-4 py-2 text-sm font-medium text-white bg-teal-700 rounded-lg hover:bg-teal-800 transition-colors shadow-sm">Edit</a>
             @if($inquiry->status === 'confirmed' && ! $inquiry->isPaid())
                 <form method="POST" action="{{ route('admin.inquiries.mark-paid', $inquiry) }}" class="inline-flex items-center gap-2">
                     @csrf

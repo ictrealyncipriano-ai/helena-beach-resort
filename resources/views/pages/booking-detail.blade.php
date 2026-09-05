@@ -197,7 +197,7 @@
             @if($inquiry->status === 'confirmed' && ! $inquiry->isPaid() && $inquiry->total_amount)            <form method="POST" action="{{ route('payment.pay', $inquiry) }}" class="flex-1" id="pay-now-form">
                 @csrf
                 <button type="submit"
-                    class="w-full text-center px-6 py-3 bg-teal-700 text-white font-medium rounded-xl hover:bg-teal-700 transition-all inline-flex items-center justify-center gap-2">
+                    class="w-full text-center px-6 py-3 bg-teal-700 text-white font-medium rounded-xl hover:bg-teal-800 transition-all inline-flex items-center justify-center gap-2">
                     <x-icons name="qr-code" class="w-4 h-4" />
                     @if($inquiry->hasDeposit() && ! $inquiry->isDepositPaid())
                         Pay Deposit — {{ formatPrice($inquiry->amountDueNow()) }}
@@ -295,7 +295,7 @@
                     @error('content') <p id="review-content-error" class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
                 </div>
                 <button type="submit"
-                    class="px-6 py-3 bg-teal-700 text-white font-medium rounded-xl hover:bg-teal-700 transition-all inline-flex items-center gap-2">
+                    class="px-6 py-3 bg-teal-700 text-white font-medium rounded-xl hover:bg-teal-800 transition-all inline-flex items-center gap-2">
                     <x-icons name="star" class="w-4 h-4" />
                     Submit Review
                 </button>
@@ -337,7 +337,7 @@
                     <p class="mt-1 text-xs text-gray-500 dark:text-slate-400">Accepted formats: JPG, PNG, WebP. Max 5MB.</p>
                 </div>
                 <button type="submit"
-                    class="px-6 py-3 bg-teal-700 text-white font-medium rounded-xl hover:bg-teal-700 transition-all inline-flex items-center gap-2">
+                    class="px-6 py-3 bg-teal-700 text-white font-medium rounded-xl hover:bg-teal-800 transition-all inline-flex items-center gap-2">
                     <x-icons name="photo" class="w-4 h-4" />
                     Upload Payment Proof
                 </button>

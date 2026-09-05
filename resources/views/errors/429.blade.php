@@ -14,7 +14,7 @@
         </p>
         <div class="flex flex-col sm:flex-row items-center justify-center gap-3">
             <a href="{{ route('home') }}"
-               class="inline-block bg-teal-700 hover:bg-teal-700 text-white font-semibold px-8 py-3 rounded-lg transition-colors">
+               class="inline-block bg-teal-700 hover:bg-teal-800 text-white font-semibold px-8 py-3 rounded-lg transition-colors">
                 Back to Home
             </a>
             <a href="#" onclick="history.back(); return false;"

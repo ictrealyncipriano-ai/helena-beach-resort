@@ -22,7 +22,7 @@
                 </div>
                 <h2 class="text-xl font-semibold text-gray-600 dark:text-slate-300">No posts yet</h2>
                 <p class="text-gray-500 dark:text-slate-400 mt-2">Check back soon for news and announcements.</p>
-                <a href="{{ route('contact') }}" class="inline-flex items-center gap-2 mt-6 px-6 py-3 bg-teal-700 text-white rounded-xl font-medium hover:bg-teal-700 transition-colors shadow-sm">
+                <a href="{{ route('contact') }}" class="inline-flex items-center gap-2 mt-6 px-6 py-3 bg-teal-700 text-white rounded-xl font-medium hover:bg-teal-800 transition-colors shadow-sm">
                     <x-icons name="email" class="w-5 h-5" />
                     Contact Us
                 </a>

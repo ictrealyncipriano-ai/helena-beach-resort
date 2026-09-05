@@ -25,7 +25,7 @@
                         @endphp
                         @if($href)
                         <a href="{{ $href }}" target="_blank" rel="noopener noreferrer" aria-label="{{ ucfirst($icon) }}"
-                           class="w-9 h-9 rounded-full bg-teal-800/50 flex items-center justify-center text-teal-300 hover:bg-teal-700 hover:text-white transition-all">
+                           class="min-w-[44px] min-h-[44px] rounded-full bg-teal-800/50 flex items-center justify-center text-teal-300 hover:bg-teal-800 hover:text-white transition-all">
                             <x-icons name="{{ $icon }}" class="w-4 h-4" />
                         </a>
                         @endif
@@ -36,7 +36,7 @@
             {{-- Quick Links --}}
             <div class="reveal reveal-delay-1">
                 <h3 class="font-semibold text-white mb-5 text-sm uppercase tracking-wider">Quick Links</h3>
-                <ul class="space-y-3 text-sm">
+                <ul class="grid grid-cols-2 gap-x-4 gap-y-3 text-sm md:grid-cols-1 lg:grid-cols-2 md:space-y-0">
                     <li><a href="{{ route('home') }}" class="text-teal-200/80 hover:text-white transition-colors inline-flex items-center gap-1.5 group"><x-icons name="chevron-right" class="w-3 h-3 text-teal-400 group-hover:translate-x-0.5 transition-transform" />Home</a></li>
                     <li><a href="{{ route('about') }}" class="text-teal-200/80 hover:text-white transition-colors inline-flex items-center gap-1.5 group"><x-icons name="chevron-right" class="w-3 h-3 text-teal-400 group-hover:translate-x-0.5 transition-transform" />About</a></li>
                     <li><a href="{{ route('cottages.index') }}" class="text-teal-200/80 hover:text-white transition-colors inline-flex items-center gap-1.5 group"><x-icons name="chevron-right" class="w-3 h-3 text-teal-400 group-hover:translate-x-0.5 transition-transform" />Cottages</a></li>

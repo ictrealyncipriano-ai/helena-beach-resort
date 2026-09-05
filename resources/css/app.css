@@ -9,32 +9,11 @@
 @source '../**/*.blade.php';
 @source '../**/*.js';
 
+@import './tokens.css';
+
 @theme {
     --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
         'Segoe UI Symbol', 'Noto Color Emoji';
-    --font-heading: 'Playfair Display', Georgia, 'Times New Roman', serif;
-
-    --color-beach-50: #f0fdfa;
-    --color-beach-100: #ccfbf1;
-    --color-beach-200: #99f6e4;
-    --color-beach-300: #5eead4;
-    --color-beach-400: #2dd4bf;
-    --color-beach-500: #14b8a6;
-    --color-beach-600: #0d9488;
-    --color-beach-700: #0f766e;
-    --color-beach-800: #115e59;
-    --color-beach-900: #134e4a;
-
-    --color-sand-50: #fffbeb;
-    --color-sand-100: #fef3c7;
-    --color-sand-200: #fde68a;
-    --color-sand-300: #fcd34d;
-    --color-sand-400: #fbbf24;
-    --color-sand-500: #f59e0b;
-    --color-sand-600: #d97706;
-    --color-sand-700: #b45309;
-    --color-sand-800: #92400e;
-    --color-sand-900: #78350f;
 }
 
 @keyframes fade-in-up {
@@ -111,22 +90,8 @@
     border-radius: 0.5rem;
 }
 
-.line-clamp-2 {
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-}
-
 [x-cloak] {
     display: none !important;
-}
-
-.line-clamp-3 {
-    display: -webkit-box;
-    -webkit-line-clamp: 3;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
 }
 
 @media (prefers-reduced-motion: reduce) {

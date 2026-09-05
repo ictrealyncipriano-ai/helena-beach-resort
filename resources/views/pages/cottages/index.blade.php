@@ -15,6 +15,10 @@
             </div>
             <h2 class="text-xl font-semibold text-gray-600 dark:text-slate-300">No cottages available at the moment</h2>
             <p class="text-gray-500 dark:text-slate-400 mt-2">Please check back soon or contact us for more information.</p>
+            <div class="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3">
+                <a href="{{ route('gallery.index') }}" class="inline-flex items-center px-6 py-3 min-h-[44px] border-2 border-teal-600 text-teal-700 font-medium rounded-full hover:bg-teal-50 transition-colors">Browse Gallery</a>
+                <a href="{{ route('contact') }}" class="inline-flex items-center px-6 py-3 min-h-[44px] bg-teal-700 text-white font-medium rounded-full hover:bg-teal-800 transition-colors">Contact Us</a>
+            </div>
         </div>
         @else
         <div class="mb-12 max-w-3xl mx-auto" x-data="availabilityWidget()" x-init="initWidget()">
@@ -76,17 +80,24 @@
                         </div>
                         <template x-if="result && !result.available">
                             <div class="mt-3 px-4 py-2.5 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-xl text-sm text-red-700 dark:text-red-300">
-                                <p class="font-medium mb-0.5">Blocked on: <span x-text="result.blocked_dates.join(', ')"></span></p>
-                                <p class="text-xs opacity-90">Try different dates or browse <a href="{{ route('cottages.index') }}" class="underline">other cottages</a>.</p>
+                                <p class="font-medium mb-0.5">Blocked on: <span x-text="(result.blocked_dates || []).join(', ')"></span></p>
+                                <p class="text-xs opacity-90">Try different dates or browse other cottages below.</p>
+                            </div>
+                        </template>
+                        <template x-if="error">
+                            <div class="mt-3 px-4 py-2.5 bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800 rounded-xl text-sm text-amber-800 dark:text-amber-300 flex items-center justify-between gap-3">
+                                <span x-text="error"></span>
+                                <button type="button" @click="check()" class="shrink-0 underline font-medium">Retry</button>
                             </div>
                         </template>
                     </div>
                 </div>
-                <a :href="bookUrl" :class="bookUrl ? 'pointer-events-auto opacity-100' : 'pointer-events-none opacity-40'"
-                    class="mt-5 w-full inline-flex items-center justify-center gap-2 px-6 py-3 bg-teal-700 text-white font-semibold rounded-xl hover:bg-teal-700 transition-colors active:scale-95">
+                <a :href="bookUrl" :aria-disabled="!bookUrl" :tabindex="bookUrl ? 0 : -1" :class="bookUrl ? 'pointer-events-auto opacity-100' : 'pointer-events-none opacity-40'"
+                    class="mt-5 w-full inline-flex items-center justify-center gap-2 px-6 py-3 min-h-[44px] bg-teal-700 text-white font-semibold rounded-xl hover:bg-teal-800 transition-colors active:scale-95">
                     Book This Cottage
                     <x-icons name="arrow-right" class="w-4 h-4" />
                 </a>
+                <p x-show="!bookUrl" class="mt-2 text-xs text-gray-500 dark:text-slate-400 text-center">Select a cottage + dates to continue — availability is checked live.</p>
             </div>
         </div>
 
@@ -142,18 +153,18 @@
             </div>
 
             {{-- Grid --}}
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8" id="results">
                 @foreach($cottages as $cottage)
-                <a href="{{ route('cottages.show', $cottage) }}"
+                <article
                    x-show="matches($el)"
                    x-transition
-                   class="group bg-white dark:bg-slate-800 rounded-2xl overflow-hidden shadow-sm hover:shadow-xl border border-gray-100 dark:border-slate-700 transition-all duration-300"
+                   class="group bg-white dark:bg-slate-800 rounded-2xl overflow-hidden shadow-sm hover:shadow-xl border border-gray-100 dark:border-slate-700 transition-all duration-300 flex flex-col"
                    x-bind:data-capacity="{{ $cottage->capacity }}"
                    x-bind:data-price="{{ $cottage->rate_daytour ?? 0 }}"
                    x-bind:data-name="{{ json_encode($cottage->name) }}"
                    x-bind:data-available="{{ json_encode($cottage->is_available) }}"
                    x-bind:data-sort="{{ $cottage->sort_order }}">
-                    <div class="aspect-[4/3] bg-teal-50 dark:bg-teal-900/30 overflow-hidden relative">
+                    <a href="{{ route('cottages.show', $cottage) }}" aria-label="View {{ $cottage->name }}" class="block aspect-[4/3] bg-teal-50 dark:bg-teal-900/30 overflow-hidden relative">
                         @if($cottage->primaryPhoto)
                         <img src="{{ Storage::url($cottage->primaryPhoto->photo_path) }}" alt="{{ $cottage->name }}" width="400" height="300" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" loading="lazy" decoding="async">
                         @else
@@ -161,16 +172,16 @@
                             <x-icons name="building" class="w-16 h-16" />
                         </div>
                         @endif
-                        <div class="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-5">
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity duration-300 flex items-end p-5">
                             <span class="text-white text-sm font-medium flex items-center gap-1">
                                 <x-icons name="arrow-right" class="w-4 h-4" />
                                 View Details
                             </span>
                         </div>
-                    </div>
-                    <div class="p-5">
+                    </a>
+                    <div class="p-5 flex flex-col flex-1">
                         <div class="flex items-center justify-between mb-2">
-                            <h3 class="text-lg font-semibold text-gray-900 dark:text-white group-hover:text-teal-700 dark:group-hover:text-teal-300 transition-colors">{{ $cottage->name }}</h3>
+                            <h3 class="text-lg font-semibold text-gray-900 dark:text-white group-hover:text-teal-700 dark:group-hover:text-teal-300 transition-colors"><a href="{{ route('cottages.show', $cottage) }}" class="hover:underline underline-offset-4">{{ $cottage->name }}</a></h3>
                             @if(!$cottage->is_available)
                             <span class="text-xs font-medium text-red-500 dark:text-red-400 bg-red-50 dark:bg-red-900/30 px-2 py-0.5 rounded-full">Unavailable</span>
                             @endif
@@ -192,12 +203,17 @@
                                 @endif
                             </div>
                         </div>
-                        <span class="mt-4 inline-flex items-center justify-center gap-1.5 w-full px-4 py-2.5 bg-teal-700 text-white text-sm font-medium rounded-xl group-hover:bg-teal-700 transition-colors">
-                            <x-icons name="arrow-right" class="w-4 h-4" />
-                            View Details
-                        </span>
+                        <div class="mt-4 grid grid-cols-2 gap-2">
+                            <a href="{{ route('cottages.show', $cottage) }}" class="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 min-h-[44px] border-2 border-teal-600 text-teal-700 text-sm font-medium rounded-xl hover:bg-teal-50 transition-colors">
+                                View Details
+                            </a>
+                            <a href="{{ route('book') }}?cottage_id={{ $cottage->id }}" class="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 min-h-[44px] bg-teal-700 text-white text-sm font-medium rounded-xl hover:bg-teal-800 transition-colors">
+                                <x-icons name="arrow-right" class="w-4 h-4" />
+                                Book
+                            </a>
+                        </div>
                     </div>
-                </a>
+                </article>
                 @endforeach
             </div>
         </div>
@@ -228,7 +244,7 @@ function cottageFilter() {
             return true;
         },
         filteredCount() {
-            const cards = document.querySelectorAll('a[data-capacity]');
+            const cards = document.querySelectorAll('[data-capacity]');
             return Array.from(cards).filter(el => this.matches(el)).length;
         },
         init() {
@@ -239,7 +255,7 @@ function cottageFilter() {
         },
         sortCards(sort) {
             const container = this.$el.querySelector('.grid');
-            const items = Array.from(container.querySelectorAll('a[data-capacity]'));
+            const items = Array.from(container.querySelectorAll('[data-capacity]'));
             items.sort((a, b) => {
                 switch (sort) {
                     case 'price_low': return parseInt(a.dataset.price) - parseInt(b.dataset.price);
@@ -271,10 +287,19 @@ function cottageFilter() {
                 checkOut: '',
                 result: null,
                 busy: false,
+                error: null,
 
                 get bookUrl() {
-                    if (!this.cottageId) return '';
-                    return @json(route('book')) + '?cottage_id=' + this.cottageId;
+                    if (!this.cottageId || !this.checkIn) return '';
+                    if (this.bookingType === 'overnight' && !this.checkOut) return '';
+                    if (!this.result || !this.result.available) return '';
+                    const params = new URLSearchParams({
+                        cottage_id: this.cottageId,
+                        booking_type: this.bookingType,
+                        check_in: this.checkIn,
+                    });
+                    if (this.bookingType === 'overnight' && this.checkOut) params.set('check_out', this.checkOut);
+                    return @json(route('book')) + '?' + params.toString();
                 },
 
                 initWidget() {
@@ -289,6 +314,7 @@ function cottageFilter() {
                                 onChange: function (selectedDates, dateStr) {
                                     self.checkIn = dateStr;
                                     self.result = null;
+                                    self.error = null;
                                     if (fpOut) fpOut.set('minDate', self.shiftDate(dateStr, 1));
                                     self.check();
                                 },
@@ -299,6 +325,7 @@ function cottageFilter() {
                                 onChange: function (selectedDates, dateStr) {
                                     self.checkOut = dateStr;
                                     self.result = null;
+                                    self.error = null;
                                     self.check();
                                 },
                             });
@@ -343,14 +370,17 @@ function cottageFilter() {
                     this.checkIn = '';
                     this.checkOut = '';
                     this.result = null;
+                    this.error = null;
                     if (fpIn) fpIn.clear();
                     if (fpOut) { fpOut.set('minDate', 'today'); fpOut.clear(); }
+                    this.loadBlockedDates();
                 },
 
                 onCottageChange() {
                     this.checkIn = '';
                     this.checkOut = '';
                     this.result = null;
+                    this.error = null;
                     if (fpIn) { fpIn.set('disable', []); fpIn.clear(); }
                     if (fpOut) { fpOut.set('disable', []); fpOut.set('minDate', 'today'); fpOut.clear(); }
                     this.loadBlockedDates();
@@ -362,18 +392,23 @@ function cottageFilter() {
                     if (!this.cottageId || !fpIn) return;
                     const params = new URLSearchParams({
                         cottage_id: this.cottageId,
-                        booking_type: 'day_tour',
+                        booking_type: this.bookingType,
                         check_in: this.todayStr(),
                         check_out: this.shiftDate(this.todayStr(), 180),
                     });
                     fetch(endpoint + '?' + params.toString(), { headers: { 'Accept': 'application/json' } })
-                        .then((res) => res.json())
+                        .then((res) => {
+                            if (!res.ok) throw new Error('availability failed');
+                            return res.json();
+                        })
                         .then((data) => {
                             const blocked = data.blocked_dates || [];
                             if (fpIn) fpIn.set('disable', blocked);
                             if (fpOut) fpOut.set('disable', blocked);
                         })
-                        .catch(() => {});
+                        .catch(() => {
+                            this.error = 'Could not load availability calendar — please try again.';
+                        });
                 },
 
                 check() {
@@ -396,9 +431,12 @@ function cottageFilter() {
                     if (this.checkOut) params.set('check_out', this.checkOut);
 
                     fetch(endpoint + '?' + params.toString(), { headers: { 'Accept': 'application/json' } })
-                        .then((res) => res.json())
-                        .then((data) => { this.result = data; })
-                        .catch(() => { this.result = null; })
+                        .then((res) => {
+                            if (!res.ok) throw new Error('availability failed');
+                            return res.json();
+                        })
+                        .then((data) => { this.result = data; this.error = null; })
+                        .catch(() => { this.result = null; this.error = 'Could not check availability — please try again.'; })
                         .finally(() => { this.busy = false; });
                 },
             };

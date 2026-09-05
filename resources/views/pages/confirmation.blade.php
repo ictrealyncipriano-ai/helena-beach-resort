@@ -133,7 +133,7 @@
         </div>
 
         <div class="mt-6 text-center reveal">
-            <a href="{{ route('booking.portal.lookup') }}" class="inline-flex items-center gap-2 px-6 py-3 bg-teal-700 text-white font-medium rounded-xl hover:bg-teal-700 transition-all shadow-sm hover:shadow-md">
+            <a href="{{ route('booking.portal.lookup') }}" class="inline-flex items-center gap-2 px-6 py-3 bg-teal-700 text-white font-medium rounded-xl hover:bg-teal-800 transition-all shadow-sm hover:shadow-md">
                 <x-icons name="search" class="w-4 h-4" />
                 View My Booking
             </a>

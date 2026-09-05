@@ -98,7 +98,7 @@
                         @error('message') <p id="message-error" class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                     </div>
 
-                    <button type="submit" class="w-full sm:w-auto px-8 py-3 bg-teal-700 text-white font-medium rounded-full hover:bg-teal-700 transition-all hover:shadow-lg hover:shadow-teal-600/20 active:scale-95 inline-flex items-center gap-2">
+                    <button type="submit" class="w-full sm:w-auto px-8 py-3 bg-teal-700 text-white font-medium rounded-full hover:bg-teal-800 transition-all hover:shadow-lg hover:shadow-teal-600/20 active:scale-95 inline-flex items-center gap-2">
                         <x-icons name="email" class="w-4 h-4" />
                         Send Inquiry
                     </button>

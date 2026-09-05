@@ -58,7 +58,7 @@
                         @endif
                     @endforeach
                     <a href="{{ route('book') }}"
-                       class="inline-flex items-center px-4 py-2 bg-teal-700 text-white text-sm font-medium rounded-full hover:bg-teal-700 transition-all hover:shadow-lg hover:shadow-teal-600/20 active:scale-95">
+                       class="inline-flex items-center px-4 py-2 bg-teal-700 text-white text-sm font-medium rounded-full hover:bg-teal-800 transition-all hover:shadow-lg hover:shadow-teal-600/20 active:scale-95">
                         Book Now
                     </a>
                 </div>
@@ -66,7 +66,7 @@
 
             {{-- Mobile Menu Button --}}
             <button type="button"
-                    class="md:hidden p-2 text-gray-600 hover:text-teal-700 rounded-lg hover:bg-gray-50 dark:text-slate-300 dark:hover:text-teal-300 dark:hover:bg-slate-700/50 transition-colors"
+                    class="md:hidden min-w-[44px] min-h-[44px] p-3 flex items-center justify-center text-gray-600 hover:text-teal-700 rounded-lg hover:bg-gray-50 dark:text-slate-300 dark:hover:text-teal-300 dark:hover:bg-slate-700/50 transition-colors"
                     aria-label="Toggle menu"
                     :aria-expanded="mobileMenu"
                     aria-controls="mobile-menu-drawer"
@@ -109,12 +109,13 @@
          role="dialog"
          aria-modal="true"
          aria-label="Menu"
-         class="md:hidden fixed top-0 right-0 bottom-0 z-50 w-72 bg-white shadow-2xl dark:bg-slate-800 dark:border-l dark:border-slate-700">
+         x-trap="mobileMenu"
+         class="md:hidden fixed top-0 right-0 bottom-0 z-50 w-[min(20rem,85vw)] bg-white shadow-2xl dark:bg-slate-800 dark:border-l dark:border-slate-700">
         <div class="flex items-center justify-between px-4 h-16 border-b border-gray-100 dark:border-slate-700">
             <span class="font-semibold text-teal-700 dark:text-teal-300">Menu</span>
             <div class="flex items-center gap-2">
                 <x-theme-toggle class="[&_.theme-items]:w-36 [&_.theme-items]:-right-3" />
-                <button type="button" class="p-2 text-gray-500 hover:text-gray-600 dark:text-slate-400 dark:hover:text-slate-200" @click="mobileMenu = false" aria-label="Close menu">
+                <button type="button" class="min-w-[44px] min-h-[44px] p-3 flex items-center justify-center text-gray-500 hover:text-gray-600 dark:text-slate-400 dark:hover:text-slate-200" @click="mobileMenu = false" aria-label="Close menu" x-ref="closeMenu">
                     <x-icons name="x" class="w-5 h-5" />
                 </button>
             </div>
@@ -122,7 +123,7 @@
         <div class="px-4 py-4 space-y-1 overflow-y-auto max-h-[calc(100vh-4rem)]">
             @foreach($routes as $route => $label)
             <a href="{{ route($route) }}"
-               class="block px-4 py-2.5 text-sm font-medium rounded-lg transition-colors
+               class="flex items-center px-4 min-h-[44px] text-sm font-medium rounded-lg transition-colors
                {{ $current === $route ? 'text-teal-700 bg-teal-50 dark:text-teal-300 dark:bg-teal-900/40' : 'text-gray-600 hover:text-teal-700 hover:bg-gray-50 dark:text-slate-300 dark:hover:text-teal-300 dark:hover:bg-slate-700/50' }}"
                @click="mobileMenu = false">
                 {{ $label }}
@@ -130,15 +131,15 @@
             @endforeach
             <hr class="my-3 border-gray-100 dark:border-slate-700">
             <a href="{{ route('booking.portal.lookup') }}"
-               class="block px-4 py-2.5 text-sm font-medium rounded-lg transition-colors {{ str_starts_with($current, 'booking.portal') ? 'text-teal-700 bg-teal-50 dark:text-teal-300 dark:bg-teal-900/40' : 'text-gray-600 hover:text-teal-700 hover:bg-gray-50 dark:text-slate-300 dark:hover:text-teal-300 dark:hover:bg-slate-700/50' }}"
+               class="flex items-center px-4 min-h-[44px] text-sm font-medium rounded-lg transition-colors {{ str_starts_with($current, 'booking.portal') ? 'text-teal-700 bg-teal-50 dark:text-teal-300 dark:bg-teal-900/40' : 'text-gray-600 hover:text-teal-700 hover:bg-gray-50 dark:text-slate-300 dark:hover:text-teal-300 dark:hover:bg-slate-700/50' }}"
                @click="mobileMenu = false">
                 My Booking
             </a>
-            <div class="flex items-center gap-5 px-4 py-3">
+            <div class="flex items-center gap-2 px-4 py-3">
                 @foreach($socialHrefs as $icon => $href)
                     @if($href)
                     <a href="{{ $href }}" target="_blank" rel="noopener noreferrer"
-                       class="text-gray-500 hover:text-teal-700 dark:text-slate-300 dark:hover:text-teal-300 transition-colors" aria-label="{{ ucfirst($icon) }}"
+                       class="min-w-[44px] min-h-[44px] flex items-center justify-center text-gray-500 hover:text-teal-700 dark:text-slate-300 dark:hover:text-teal-300 transition-colors" aria-label="{{ ucfirst($icon) }}"
                        @click="mobileMenu = false">
                         <x-icons name="{{ $icon }}" class="w-5 h-5" />
                     </a>
@@ -147,7 +148,7 @@
             </div>
             <div class="pt-3">
                 <a href="{{ route('book') }}"
-                   class="block text-center px-4 py-3 bg-teal-700 text-white text-sm font-medium rounded-full hover:bg-teal-700 transition-colors"
+                   class="flex items-center justify-center text-center px-4 py-3 min-h-[44px] bg-teal-700 text-white text-sm font-medium rounded-full hover:bg-teal-800 transition-colors"
                    @click="mobileMenu = false">
                     Book Now
                 </a>

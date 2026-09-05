@@ -1,0 +1,6 @@
+@theme {
+    /* Shared brand typography — single source of truth.
+       font-sans intentionally differs per bundle:
+       public (app.css) uses Instrument Sans, admin uses Inter. */
+    --font-heading: 'Playfair Display', Georgia, 'Times New Roman', serif;
+}

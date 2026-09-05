@@ -96,6 +96,7 @@
                             @error('check_out') <p id="check-out-error" class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                         </div>
                     </div>
+                    <p x-show="notice" x-text="notice" id="date-notice" role="status" x-cloak class="text-xs text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800 rounded-lg px-3 py-2"></p>
 
                     {{-- Pax --}}
                     <div>
@@ -109,7 +110,7 @@
 
                     <div class="flex flex-col sm:flex-row gap-3 pt-2">
                         <button type="submit" :disabled="submitting"
-                            :class="submitting ? 'opacity-60 cursor-not-allowed' : 'hover:bg-teal-700 transition-colors'"
+                            :class="submitting ? 'opacity-60 cursor-not-allowed' : 'hover:bg-teal-800 transition-colors'"
                             class="px-8 py-3 bg-teal-700 text-white font-medium rounded-full inline-flex items-center justify-center gap-2">
                             <span x-show="submitting" class="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" x-cloak></span>
                             <span x-text="submitting ? 'Saving…' : 'Save Changes'"></span>
@@ -180,6 +181,7 @@ function modifyForm() {
         fpIn: null,
         fpOut: null,
         submitting: false,
+        notice: '',
 
         get selectedCottageName() {
             return this.cottageId && rateData[this.cottageId] ? rateData[this.cottageId].name : '';
@@ -242,6 +244,15 @@ function modifyForm() {
             return `${y}-${m}-${day}`;
         },
 
+        isBlocked(dateStr) {
+            return !!dateStr && this.blockedDates.includes(dateStr);
+        },
+
+        refreshDisable() {
+            if (this.fpIn) this.fpIn.set('disable', this.blockedDates);
+            if (this.fpOut) this.fpOut.set('disable', this.blockedDates);
+        },
+
         initFlatpickr() {
             const self = this;
 
@@ -254,6 +265,7 @@ function modifyForm() {
                         allowInput: true,
                         disable: this.blockedDates,
                         onChange: function(selectedDates, dateStr) {
+                            self.notice = '';
                             self.checkIn = dateStr;
                             if (self.fpOut) {
                                 self.fpOut.set('minDate', self.addDays(dateStr, 1));
@@ -267,6 +279,7 @@ function modifyForm() {
                         allowInput: true,
                         disable: this.blockedDates,
                         onChange: function(selectedDates, dateStr) {
+                            self.notice = '';
                             self.checkOut = dateStr;
                         },
                     });
@@ -290,27 +303,49 @@ function modifyForm() {
 
         init() {
             this.$watch('cottageId', () => {
-                if (this.fpIn) {
-                    this.fpIn.set('disable', this.blockedDates);
-                    this.fpIn.clear();
-                    this.checkIn = '';
+                this.notice = '';
+                this.refreshDisable();
+                const name = this.selectedCottageName || 'this cottage';
+                if (this.checkIn) {
+                    if (this.isBlocked(this.checkIn)) {
+                        if (this.fpIn) this.fpIn.clear();
+                        this.checkIn = '';
+                        this.notice = `That check-in date is blocked for ${name} — please pick another. Your current schedule stays reserved until you save.`;
+                        if (this.$refs.checkIn) this.$refs.checkIn.focus();
+                    } else if (this.fpIn) {
+                        this.fpIn.setDate(this.checkIn, false);
+                    }
+                }
+                if (this.checkOut) {
+                    const invalidOut = this.isBlocked(this.checkOut)
+                        || (this.checkIn && this.checkOut <= this.checkIn);
+                    if (invalidOut) {
+                        if (this.fpOut) this.fpOut.clear();
+                        this.checkOut = '';
+                        if (!this.notice) this.notice = `That check-out date is not available for ${name} — please pick another.`;
+                    } else if (this.fpOut) {
+                        this.fpOut.setDate(this.checkOut, false);
+                    }
                 }
                 if (this.fpOut) {
-                    this.fpOut.set('disable', this.blockedDates);
-                    this.fpOut.set('minDate', 'today');
-                    this.fpOut.clear();
-                    this.checkOut = '';
+                    this.fpOut.set('minDate', this.checkIn ? this.addDays(this.checkIn, 1) : 'today');
                 }
             });
 
             this.$watch('bookingType', () => {
-                if (this.fpIn) this.fpIn.clear();
-                if (this.fpOut) {
-                    this.fpOut.set('minDate', 'today');
-                    this.fpOut.clear();
+                this.notice = '';
+                this.refreshDisable();
+                if (this.bookingType === 'day_tour') {
+                    if (this.fpOut) {
+                        this.fpOut.set('minDate', 'today');
+                        this.fpOut.clear();
+                    }
+                    this.checkOut = '';
+                } else if (this.checkOut && this.checkIn && this.checkOut <= this.checkIn) {
+                    if (this.fpOut) this.fpOut.clear();
+                    this.checkOut = '';
+                    this.notice = 'Please choose a check-out date after check-in for overnight stays.';
                 }
-                this.checkIn = '';
-                this.checkOut = '';
             });
         },
     };

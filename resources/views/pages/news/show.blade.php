@@ -70,7 +70,7 @@
         </div>
 
         <div class="mt-12 pt-8 border-t border-gray-100 dark:border-slate-700 text-center">
-            <a href="{{ route('book') }}" class="inline-flex items-center gap-2 px-8 py-3.5 bg-teal-700 text-white rounded-xl font-semibold hover:bg-teal-700 transition-all shadow-sm hover:shadow-md active:scale-95">
+            <a href="{{ route('book') }}" class="inline-flex items-center gap-2 px-8 py-3.5 bg-teal-700 text-white rounded-xl font-semibold hover:bg-teal-800 transition-all shadow-sm hover:shadow-md active:scale-95">
                 <x-icons name="calendar" class="w-5 h-5" />
                 Book Your Stay
             </a>
