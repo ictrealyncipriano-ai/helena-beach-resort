@@ -16,7 +16,7 @@
     <meta property="og:description" content="@yield('og_description', 'Experience paradise in Infanta, Quezon. Beachfront cottages, fresh seafood, and unforgettable memories.')" />
     <meta property="og:url" content="{{ url()->current() }}" />
     <meta property="og:type" content="@yield('og_type', 'website')" />
-    <meta property="og:image" content="@yield('og_image', \App\Models\SiteSetting::getValue('og_image', asset('images/logo.jpg')))" />
+    <meta property="og:image" content="@yield('og_image', $site['og_image'])" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
     <meta property="og:image:alt" content="@yield('og_image_alt', config('app.name'))" />
@@ -26,7 +26,7 @@
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="@yield('og_title', config('app.name'))" />
     <meta name="twitter:description" content="@yield('og_description', 'Experience paradise in Infanta, Quezon.')" />
-    <meta name="twitter:image" content="@yield('og_image', \App\Models\SiteSetting::getValue('og_image', asset('images/logo.jpg')))" />
+    <meta name="twitter:image" content="@yield('og_image', $site['og_image'])" />
 
     <link rel="preconnect" href="https://fonts.bunny.net">
     {{-- Load webfonts asynchronously so they never block first paint.
@@ -40,8 +40,8 @@
         <style>.reveal { opacity: 1 !important; transform: none !important; }</style>
     </noscript>
     @php
-        $ga4Id = trim((string) \App\Models\SiteSetting::getValue('analytics_ga4_id', ''));
-        $consentRequired = \App\Models\SiteSetting::getValue('analytics_consent_enabled', '1') === '1';
+        $ga4Id = $analytics['ga4_id'];
+        $consentRequired = $analytics['consent_required'];
     @endphp
     @if($ga4Id)
     <script>

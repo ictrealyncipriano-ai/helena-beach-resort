@@ -11,18 +11,7 @@
                     Experience the perfect getaway at Helena Beach Resort. Nestled along the pristine shores of Infanta, Quezon, we offer a peaceful retreat surrounded by nature.
                 </p>
                 <div class="flex items-center gap-3 mt-5">
-                    @php
-                        $socialLinks = [
-                            'facebook' => 'facebook_url',
-                            'instagram' => 'instagram_url',
-                            'tiktok' => 'tiktok_url',
-                        ];
-                    @endphp
-                    @foreach($socialLinks as $icon => $settingKey)
-                        @php
-                            $url = (string) App\Models\SiteSetting::getValue($settingKey, '');
-                            $href = \Illuminate\Support\Str::startsWith($url, ['http://', 'https://']) ? $url : '';
-                        @endphp
+                    @foreach($socials as $icon => $href)
                         @if($href)
                         <a href="{{ $href }}" target="_blank" rel="noopener noreferrer" aria-label="{{ ucfirst($icon) }}"
                            class="min-w-[44px] min-h-[44px] rounded-full bg-teal-800/50 flex items-center justify-center text-teal-300 hover:bg-teal-800 hover:text-white transition-all">
@@ -60,7 +49,7 @@
                         <span class="text-teal-200/80 pt-1.5">Purok Buyan, Brgy. Dinahican, Infanta, Quezon</span>
                     </li>
                     @php
-                        $contactPhone = trim((string) App\Models\SiteSetting::getValue('contact_phone', ''));
+                        $contactPhone = trim((string) ($site['contact_phone'] ?? ''));
                     @endphp
                     @if($contactPhone && $contactPhone !== 'N/A')
                     <li class="flex items-start gap-3">
@@ -74,7 +63,7 @@
                         <span class="shrink-0 w-9 h-9 rounded-full bg-teal-800/50 flex items-center justify-center text-teal-300">
                             <x-icons name="email" class="w-4 h-4" />
                         </span>
-                        <span class="text-teal-200/80 pt-1.5 break-all">{{ App\Models\SiteSetting::getValue('contact_email', 'ict.realyncipriano@gmail.com') }}</span>
+                        <span class="text-teal-200/80 pt-1.5 break-all">{{ $site['contact_email'] }}</span>
                     </li>
                 </ul>
             </div>

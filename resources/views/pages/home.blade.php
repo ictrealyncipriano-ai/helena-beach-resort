@@ -4,21 +4,21 @@
 @section('description', 'Helena Beach Resort — beachfront cottages, fresh seafood, and unforgettable stays in Infanta, Quezon. Book your day tour or overnight getaway today.')
 
 @push('head')
-@if(App\Models\SiteSetting::getValue('hero_background'))
-    <link rel="preload" as="image" href="{{ Storage::url(App\Models\SiteSetting::getValue('hero_background')) }}" fetchpriority="high">
+@if($sections['hero_background'])
+    <link rel="preload" as="image" href="{{ Storage::url($sections['hero_background']) }}" fetchpriority="high">
 @endif
 @php
     $homeSchema = [
         '@context' => 'https://schema.org',
         '@type' => 'LodgingBusiness',
-        'name' => App\Models\SiteSetting::getValue('site_name', 'Helena Beach Resort'),
-        'description' => App\Models\SiteSetting::getValue('site_description', 'Experience paradise in Infanta, Quezon.'),
+        'name' => $site['name'],
+        'description' => $site['description'],
         'url' => url('/'),
-        'telephone' => App\Models\SiteSetting::getValue('contact_phone', ''),
-        'email' => App\Models\SiteSetting::getValue('contact_email', ''),
+        'telephone' => $site['contact_phone'],
+        'email' => $site['contact_email'],
         'address' => [
             '@type' => 'PostalAddress',
-            'streetAddress' => App\Models\SiteSetting::getValue('address', ''),
+            'streetAddress' => $site['address'],
             'addressLocality' => 'Infanta',
             'addressRegion' => 'Quezon',
             'addressCountry' => 'PH',
@@ -42,7 +42,7 @@
 {{-- Hero --}}
 <section class="relative min-h-[90vh] flex items-center justify-center overflow-hidden">
     {{-- Background --}}
-    @php $heroBg = App\Models\SiteSetting::getValue('hero_background'); @endphp
+    @php $heroBg = $sections['hero_background']; @endphp
     <div class="absolute inset-0 bg-gradient-to-br from-teal-600 via-teal-700 to-cyan-800">
         @if($heroBg)
         <img src="{{ Storage::url($heroBg) }}" alt="" fetchpriority="high" width="1920" height="1080" class="absolute inset-0 w-full h-full object-cover opacity-25">
@@ -58,21 +58,21 @@
     <div class="relative z-10 text-center px-4 max-w-5xl mx-auto">
         <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 text-teal-100 text-sm font-medium mb-8 backdrop-blur-sm">
             <x-icons name="sparkles" class="w-4 h-4" />
-            {{ App\Models\SiteSetting::getValue('hero_tagline', 'Welcome to Paradise') }}
+            {{ $sections['hero_tagline'] }}
         </div>
         <h1 class="text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-bold text-white mb-6 leading-[1.1] font-heading">
-            <span class="text-amber-300">{{ App\Models\SiteSetting::getValue('hero_heading', 'Helena Beach Resort') }}</span>
+            <span class="text-amber-300">{{ $sections['hero_heading'] }}</span>
         </h1>
         <p class="text-lg sm:text-xl md:text-2xl text-teal-100/90 mb-10 max-w-3xl mx-auto leading-relaxed">
-            {{ App\Models\SiteSetting::getValue('hero_subtitle', 'Escape to paradise — unwind on pristine shores, enjoy beachfront cottages, and create unforgettable memories with family and friends in Infanta, Quezon.') }}
+            {{ $sections['hero_subtitle'] }}
         </p>
         <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
             <a href="{{ route('book') }}" class="inline-flex items-center px-8 py-4 bg-amber-400 text-amber-900 text-base font-semibold rounded-full hover:bg-amber-300 transition-all shadow-lg shadow-amber-400/30 hover:shadow-xl hover:shadow-amber-400/40 active:scale-95 group">
-                <span>{{ App\Models\SiteSetting::getValue('hero_secondary_btn_text', 'Book Now') }}</span>
+                <span>{{ $sections['hero_secondary_btn_text'] }}</span>
                 <x-icons name="arrow-right" class="ml-2 w-5 h-5 group-hover:translate-x-0.5 transition-transform" />
             </a>
             <a href="{{ route('cottages.index') }}" class="inline-flex items-center px-8 py-4 border-2 border-white/30 text-white text-base font-semibold rounded-full hover:bg-white/10 transition-all backdrop-blur-sm active:scale-95">
-                {{ App\Models\SiteSetting::getValue('hero_primary_btn_text', 'Explore Cottages') }}
+                {{ $sections['hero_primary_btn_text'] }}
             </a>
         </div>
     </div>
@@ -92,9 +92,9 @@
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="text-center mb-14 reveal">
             <span class="inline-block text-xs font-semibold tracking-widest uppercase text-teal-700 dark:text-teal-300 mb-3">Accommodations</span>
-            <h2 class="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 dark:text-white mb-4 font-heading">{{ App\Models\SiteSetting::getValue('section_cottages_heading', 'Our Cottages') }}</h2>
+            <h2 class="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 dark:text-white mb-4 font-heading">{{ $sections['section_cottages_heading'] }}</h2>
             <div class="w-16 h-1 bg-teal-500 rounded-full mx-auto mb-4"></div>
-            <p class="text-gray-600 dark:text-slate-300 max-w-2xl mx-auto text-lg">{{ App\Models\SiteSetting::getValue('section_cottages_subtitle', 'Comfortable beachfront cottages perfect for your stay.') }}</p>
+            <p class="text-gray-600 dark:text-slate-300 max-w-2xl mx-auto text-lg">{{ $sections['section_cottages_subtitle'] }}</p>
         </div>
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
             @foreach($cottages as $i => $cottage)
@@ -145,7 +145,7 @@
         </div>
         <div class="text-center mt-12 reveal">
             <a href="{{ route('cottages.index') }}" class="inline-flex items-center px-6 py-3 border-2 border-teal-600 dark:border-teal-400 text-teal-700 dark:text-teal-300 font-medium rounded-full hover:bg-teal-50 dark:hover:bg-teal-900/30 transition-colors group">
-                <span>{{ App\Models\SiteSetting::getValue('section_cottages_btn_text', 'View All Cottages') }}</span>
+                <span>{{ $sections['section_cottages_btn_text'] }}</span>
                 <x-icons name="arrow-right" class="ml-2 w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
             </a>
         </div>
@@ -162,9 +162,9 @@
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="text-center mb-14 reveal">
             <span class="inline-block text-xs font-semibold tracking-widest uppercase text-teal-700 dark:text-teal-300 mb-3">Moments</span>
-            <h2 class="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 dark:text-white mb-4 font-heading">{{ App\Models\SiteSetting::getValue('section_gallery_heading', 'Gallery') }}</h2>
+            <h2 class="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 dark:text-white mb-4 font-heading">{{ $sections['section_gallery_heading'] }}</h2>
             <div class="w-16 h-1 bg-teal-500 rounded-full mx-auto mb-4"></div>
-            <p class="text-gray-600 dark:text-slate-300 max-w-2xl mx-auto text-lg">{{ App\Models\SiteSetting::getValue('section_gallery_subtitle', 'A glimpse of the beauty that awaits you.') }}</p>
+            <p class="text-gray-600 dark:text-slate-300 max-w-2xl mx-auto text-lg">{{ $sections['section_gallery_subtitle'] }}</p>
         </div>
         <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
             @foreach($gallery->take(8) as $i => $item)
@@ -180,7 +180,7 @@
         </div>
         <div class="text-center mt-12 reveal">
             <a href="{{ route('gallery.index') }}" class="inline-flex items-center px-6 py-3 border-2 border-teal-600 dark:border-teal-400 text-teal-700 dark:text-teal-300 font-medium rounded-full hover:bg-teal-50 dark:hover:bg-teal-900/30 transition-colors group">
-                <span>{{ App\Models\SiteSetting::getValue('section_gallery_btn_text', 'View Full Gallery') }}</span>
+                <span>{{ $sections['section_gallery_btn_text'] }}</span>
                 <x-icons name="arrow-right" class="ml-2 w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
             </a>
         </div>
@@ -194,9 +194,9 @@
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="text-center mb-14 reveal">
             <span class="inline-block text-xs font-semibold tracking-widest uppercase text-teal-700 dark:text-teal-300 mb-3">Testimonials</span>
-            <h2 class="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 dark:text-white mb-4 font-heading">{{ App\Models\SiteSetting::getValue('section_reviews_heading', 'What Our Guests Say') }}</h2>
+            <h2 class="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 dark:text-white mb-4 font-heading">{{ $sections['section_reviews_heading'] }}</h2>
             <div class="w-16 h-1 bg-teal-500 rounded-full mx-auto mb-4"></div>
-            <p class="text-gray-600 dark:text-slate-300 max-w-2xl mx-auto text-lg">{{ App\Models\SiteSetting::getValue('section_reviews_subtitle', 'Read what our visitors have to say about their stay at Helena Beach Resort.') }}</p>
+            <p class="text-gray-600 dark:text-slate-300 max-w-2xl mx-auto text-lg">{{ $sections['section_reviews_subtitle'] }}</p>
         </div>
 
         @if($avgRating)
@@ -348,12 +348,12 @@ function testimonialCarousel() {
     </div>
     <div class="max-w-4xl mx-auto px-4 text-center relative z-10">
         <div class="reveal">
-            <h2 class="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-4 font-heading">{{ App\Models\SiteSetting::getValue('section_cta_heading', 'Ready for a Getaway?') }}</h2>
+            <h2 class="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-4 font-heading">{{ $sections['section_cta_heading'] }}</h2>
             <div class="w-16 h-1 bg-amber-400 rounded-full mx-auto mb-4"></div>
-            <p class="text-teal-100/90 text-lg sm:text-xl mb-10 max-w-2xl mx-auto">{{ App\Models\SiteSetting::getValue('section_cta_subtitle', 'Book direct — no payment now, free cancellation. Check live availability in seconds.') }}</p>
+            <p class="text-teal-100/90 text-lg sm:text-xl mb-10 max-w-2xl mx-auto">{{ $sections['section_cta_subtitle'] }}</p>
             <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
                 <a href="{{ route('book') }}" class="inline-flex items-center px-8 py-4 bg-amber-400 text-amber-900 text-base font-semibold rounded-full hover:bg-amber-300 transition-all shadow-lg shadow-amber-400/30 hover:shadow-xl hover:shadow-amber-400/40 active:scale-95 group">
-                    <span>{{ App\Models\SiteSetting::getValue('section_cta_btn_text', 'Book Now') }}</span>
+                    <span>{{ $sections['section_cta_btn_text'] }}</span>
                     <x-icons name="arrow-right" class="ml-2 w-5 h-5 group-hover:translate-x-0.5 transition-transform" />
                 </a>
                 <a href="{{ route('contact') }}" class="inline-flex items-center px-6 py-3 text-teal-100 text-sm font-medium hover:text-white transition-colors underline-offset-4 hover:underline">

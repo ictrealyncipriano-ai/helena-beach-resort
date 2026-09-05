@@ -11,16 +11,6 @@
         'contact' => 'Contact',
     ];
     $current = Route::currentRouteName();
-    $socialLinks = [
-        'facebook' => 'facebook_url',
-        'instagram' => 'instagram_url',
-        'tiktok' => 'tiktok_url',
-    ];
-    $socialHrefs = [];
-    foreach ($socialLinks as $icon => $settingKey) {
-        $url = (string) App\Models\SiteSetting::getValue($settingKey, '');
-        $socialHrefs[$icon] = \Illuminate\Support\Str::startsWith($url, ['http://', 'https://']) ? $url : '';
-    }
 @endphp
 
 <nav class="fixed top-0 left-0 right-0 z-50 transition-all duration-300"
@@ -49,7 +39,7 @@
                         My Booking
                     </a>
                     <x-theme-toggle />
-                    @foreach($socialHrefs as $icon => $href)
+                    @foreach($socials as $icon => $href)
                         @if($href)
                         <a href="{{ $href }}" target="_blank" rel="noopener noreferrer"
                            class="text-gray-500 hover:text-teal-700 dark:text-slate-400 dark:hover:text-teal-300 transition-colors" aria-label="{{ ucfirst($icon) }}">

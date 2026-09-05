@@ -125,7 +125,7 @@
                         <h3 class="font-semibold text-gray-900 dark:text-white">Contact</h3>
                     </div>
                     @php
-                        $contactPhone = trim((string) \App\Models\SiteSetting::getValue('contact_phone', ''));
+                        $contactPhone = trim((string) ($site['contact_phone'] ?? ''));
                     @endphp
                     @if($contactPhone && $contactPhone !== 'N/A')
                     <p class="text-sm text-gray-600 dark:text-slate-300">

@@ -32,9 +32,9 @@
             </div>
             <div class="aspect-video rounded-2xl overflow-hidden shadow-lg border border-gray-100 dark:border-slate-700">
                 @php
-                    $mapEmbed = App\Models\SiteSetting::getValue('map_embed_url', '');
-                    $mapLat = App\Models\SiteSetting::getValue('map_lat', '14.702052118071348');
-                    $mapLng = App\Models\SiteSetting::getValue('map_lng', '121.72756162841773');
+                    $mapEmbed = $sections['map_embed_url'];
+                    $mapLat = $sections['map_lat'];
+                    $mapLng = $sections['map_lng'];
                     $mapSrc = $mapEmbed ?: "https://maps.google.com/maps?q={$mapLat},{$mapLng}&z=16&output=embed";
                 @endphp
                 <iframe
@@ -72,7 +72,7 @@
                 </div>
                 <h3 class="font-semibold text-gray-900 dark:text-white mb-2">Contact</h3>
                 @php
-                    $contactPhone = trim((string) \App\Models\SiteSetting::getValue('contact_phone', ''));
+                    $contactPhone = trim((string) ($site['contact_phone'] ?? ''));
                 @endphp
                 @if($contactPhone && $contactPhone !== 'N/A')
                 <p class="text-sm text-gray-600 dark:text-slate-300 leading-relaxed">

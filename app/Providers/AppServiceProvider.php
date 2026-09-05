@@ -5,7 +5,9 @@ namespace App\Providers;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
+use App\View\Composers\SiteSettingsComposer;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -40,6 +42,21 @@ class AppServiceProvider extends ServiceProvider
         }
 
         $this->configureRateLimiters();
+
+        // Grouped site settings for public views (see SiteSettingsComposer).
+        // Emails, invoice PDFs and admin report layouts keep direct model
+        // access — they render off-request where shared view data hides bugs.
+        View::composer([
+            'layouts.app',
+            'components.navbar',
+            'components.footer',
+            'components.cookie-banner',
+            'pages.home',
+            'pages.about',
+            'pages.contact',
+            'pages.faq',
+            'pages.news.show',
+        ], SiteSettingsComposer::class);
     }
 
     /**

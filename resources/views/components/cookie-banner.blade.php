@@ -1,6 +1,6 @@
 @php
-    $ga4Id = trim((string) \App\Models\SiteSetting::getValue('analytics_ga4_id', ''));
-    $consentRequired = \App\Models\SiteSetting::getValue('analytics_consent_enabled', '1') === '1';
+    $ga4Id = $analytics['ga4_id'];
+    $consentRequired = $analytics['consent_required'];
 @endphp
 @if($ga4Id && $consentRequired)
 <div

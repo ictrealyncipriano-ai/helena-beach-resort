@@ -21,7 +21,7 @@
         'mainEntityOfPage' => route('news.show', $post),
         'publisher' => [
             '@type' => 'Organization',
-            'name' => App\Models\SiteSetting::getValue('site_name', 'Helena Beach Resort'),
+            'name' => $site['name'],
         ],
     ];
     if ($post->cover_image) {

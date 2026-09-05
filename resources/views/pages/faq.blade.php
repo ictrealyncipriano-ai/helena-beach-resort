@@ -122,7 +122,7 @@
             <p class="text-gray-500 dark:text-slate-400 text-lg mb-8 max-w-md mx-auto">Can't find the answer you're looking for? We're happy to help.</p>
             <div class="flex flex-col sm:flex-row gap-4 justify-center">
                 @php
-                    $contactPhone = trim((string) \App\Models\SiteSetting::getValue('contact_phone', ''));
+                    $contactPhone = trim((string) ($site['contact_phone'] ?? ''));
                 @endphp
                 <a
                     href="{{ route('contact') }}"
