@@ -14,6 +14,7 @@ use App\Support\PublicCache;
 use Carbon\CarbonInterface;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 
 /**
@@ -141,8 +142,11 @@ class PageController extends Controller
     public function sitemap(): Response
     {
         $xml = Cache::remember(PublicCache::SITEMAP, PublicCache::SITEMAP_TTL, function () {
-            $cottages = Cottage::where('is_available', true)->select('id', 'slug', 'updated_at')->get();
-            $posts = Post::active()->select('id', 'slug', 'updated_at')->get();
+            $cottages = Cottage::where('is_available', true)
+                ->with('primaryPhoto:cottage_id,photo_path')
+                ->select('id', 'slug', 'updated_at')
+                ->get();
+            $posts = Post::active()->select('id', 'slug', 'updated_at', 'cover_image')->get();
             $galleryLastmod = Gallery::where('is_active', true)->max('updated_at');
 
             $pages = [
@@ -167,6 +171,7 @@ class PageController extends Controller
                     'priority' => '0.8',
                     'changefreq' => 'weekly',
                     'lastmod' => $cottage->updated_at,
+                    'image' => $cottage->primaryPhoto ? url(Storage::url($cottage->primaryPhoto->photo_path)) : null,
                 ];
             }
 
@@ -176,11 +181,12 @@ class PageController extends Controller
                     'priority' => '0.6',
                     'changefreq' => 'monthly',
                     'lastmod' => $post->updated_at,
+                    'image' => $post->cover_image ? url(Storage::url($post->cover_image)) : null,
                 ];
             }
 
             $xml = '<?xml version="1.0" encoding="UTF-8"?>'."\n";
-            $xml .= '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'."\n";
+            $xml .= '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">'."\n";
 
             foreach ($pages as $page) {
                 $xml .= '  <url>'."\n";
@@ -188,6 +194,9 @@ class PageController extends Controller
                 if (! empty($page['lastmod'])) {
                     $lastmod = $page['lastmod'];
                     $xml .= '    <lastmod>'.($lastmod instanceof CarbonInterface ? $lastmod->toDateString() : date('Y-m-d', strtotime((string) $lastmod))).'</lastmod>'."\n";
+                }
+                if (! empty($page['image'])) {
+                    $xml .= '    <image:image><image:loc>'.e($page['image']).'</image:loc></image:image>'."\n";
                 }
                 $xml .= '    <priority>'.$page['priority'].'</priority>'."\n";
                 $xml .= '    <changefreq>'.$page['changefreq'].'</changefreq>'."\n";

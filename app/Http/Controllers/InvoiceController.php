@@ -7,7 +7,6 @@ use App\Models\Inquiry;
 use App\Services\PricingService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Response;
-use Illuminate\View\View;
 
 /**
  * Invoice display and PDF download for confirmed bookings.
@@ -17,16 +16,16 @@ class InvoiceController extends Controller
     use GuardsBookingAccess;
 
     /** Display invoice in-browser (HTML) */
-    public function show(Inquiry $inquiry, PricingService $pricing): View
+    public function show(Inquiry $inquiry, PricingService $pricing): Response
     {
         $this->authorizeBookingAccess($inquiry);
 
         abort_if($inquiry->status !== Inquiry::STATUS_CONFIRMED, 404);
 
-        return view('pages.invoice', [
+        return response()->view('pages.invoice', [
             'inquiry' => $inquiry,
             ...$this->buildLineItems($inquiry, $pricing),
-        ]);
+        ])->header('X-Robots-Tag', 'noindex, nofollow, noarchive');
     }
 
     /** Download invoice as PDF */
@@ -41,7 +40,8 @@ class InvoiceController extends Controller
             ...$this->buildLineItems($inquiry, $pricing),
         ]);
 
-        return $pdf->download("invoice-{$inquiry->reference_code}.pdf");
+        return $pdf->download("invoice-{$inquiry->reference_code}.pdf")
+            ->header('X-Robots-Tag', 'noindex, nofollow, noarchive');
     }
 
     /**
