@@ -152,14 +152,15 @@ Route::post('/paymongo/webhook', [PaymentController::class, 'webhook'])
     ->name('payment.webhook');
 
 /*
-|--------------------------------------------------------------------------
-| Cron Endpoints (triggered by scheduler / external POST)
-|--------------------------------------------------------------------------
+// Cron Endpoints (triggered by scheduler / Vercel Cron / external pinger)
+//--------------------------------------------------------------------------
 */
-// POST only: releasing reservations mutates state and must never run via GET.
-// The scheduler in routes/console.php is the primary trigger; this endpoint
-// exists only for manual/external POST triggers with CRON_SECRET bearer auth.
-Route::post('/cron/reservations', [CronController::class, 'releaseExpiredReservations'])
+// GET + POST: Vercel Cron invokes the path via GET, while manual/external
+// triggers use POST. Releasing reservations mutates state, so both verbs
+// require CRON_SECRET bearer auth (see CronController) plus throttle:cron.
+// The scheduler in routes/console.php remains the primary trigger on hosts
+// with a worker; this endpoint is the serverless trigger.
+Route::match(['GET', 'POST'], '/cron/reservations', [CronController::class, 'releaseExpiredReservations'])
     ->withoutMiddleware(VerifyCsrfToken::class)
     ->middleware('throttle:cron');
 

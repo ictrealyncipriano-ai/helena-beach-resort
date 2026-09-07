@@ -11,10 +11,12 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        // Only trust proxies listed in config/trustedproxy.php (from TRUSTED_PROXIES).
+        // Only trust proxies listed in TRUSTED_PROXIES env (see config/trustedproxy.php).
         // Empty by default = trust none, so spoofed X-Forwarded-* headers are
         // ignored unless explicitly configured. "*" trusts all proxies.
-        $trustedProxiesRaw = trim((string) (config('trustedproxy.proxies') ?: ''));
+        // NOTE: use env() here, not config() — config is not booted yet
+        // inside withMiddleware, so config() fatals with "Class config does not exist".
+        $trustedProxiesRaw = trim((string) (env('TRUSTED_PROXIES', '') ?: ''));
 
         if ($trustedProxiesRaw === '*') {
             $trustedProxies = '*';

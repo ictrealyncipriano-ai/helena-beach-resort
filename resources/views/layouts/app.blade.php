@@ -39,14 +39,14 @@
         $orgSameAs = array_values(array_filter($socials ?? []));
     @endphp
     <script type="application/ld+json">
-    @json([
+    {!! json_encode([
         '@context' => 'https://schema.org',
         '@type' => 'Organization',
         'name' => $site['name'] ?? config('app.name'),
         'url' => url('/'),
         'logo' => $site['og_image'] ?? asset('images/logo.jpg'),
         'sameAs' => $orgSameAs,
-    ])
+    ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}
     </script>
 
     <link rel="preconnect" href="https://fonts.bunny.net">
