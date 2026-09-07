@@ -335,8 +335,8 @@ class BookingModificationTest extends TestCase
             ->put(route('booking.portal.modify.update', $inquiry), $this->validModifyPayload())
             ->assertRedirect();
 
-        Mail::assertSent(BookingModified::class, fn ($mailable) => $mailable->hasTo($inquiry->email));
-        Mail::assertSent(BookingModified::class, fn ($mailable) => $mailable->hasTo('owner@example.com'));
+        Mail::assertQueued(BookingModified::class, fn ($mailable) => $mailable->hasTo($inquiry->email));
+        Mail::assertQueued(BookingModified::class, fn ($mailable) => $mailable->hasTo('owner@example.com'));
     }
 
     public function test_modify_records_activity_log_and_drops_dashboard_cache(): void

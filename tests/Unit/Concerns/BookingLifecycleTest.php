@@ -130,8 +130,8 @@ class BookingLifecycleTest extends TestCase
 
         $this->canceller()->email($inquiry);
 
-        Mail::assertSent(BookingCancelled::class, fn ($mail) => $mail->hasTo($inquiry->email));
-        Mail::assertSent(BookingCancelled::class, fn ($mail) => $mail->hasTo('owner@example.com'));
+        Mail::assertQueued(BookingCancelled::class, fn ($mail) => $mail->hasTo($inquiry->email));
+        Mail::assertQueued(BookingCancelled::class, fn ($mail) => $mail->hasTo('owner@example.com'));
     }
 
     public function test_send_cancellation_emails_tolerates_no_owner_email(): void
@@ -142,7 +142,7 @@ class BookingLifecycleTest extends TestCase
         // Must not throw when the owner email is absent.
         $this->canceller()->email($inquiry);
 
-        Mail::assertSent(BookingCancelled::class, fn ($mail) => $mail->hasTo($inquiry->email));
+        Mail::assertQueued(BookingCancelled::class, fn ($mail) => $mail->hasTo($inquiry->email));
     }
 
     public function test_mark_confirmed_increments_stay_and_sends_email(): void
@@ -156,7 +156,7 @@ class BookingLifecycleTest extends TestCase
 
         $this->assertSame(3, $guest->fresh()->total_stays);
         $this->assertNotNull($guest->fresh()->last_stay_at);
-        Mail::assertSent(BookingConfirmed::class, fn ($mail) => $mail->hasTo($inquiry->email));
+        Mail::assertQueued(BookingConfirmed::class, fn ($mail) => $mail->hasTo($inquiry->email));
     }
 
     public function test_mark_confirmed_skips_stay_when_no_guest(): void
@@ -166,6 +166,6 @@ class BookingLifecycleTest extends TestCase
         // Must not throw when there is no linked guest.
         $this->confirmer()->mark($inquiry);
 
-        Mail::assertSent(BookingConfirmed::class, fn ($mail) => $mail->hasTo($inquiry->email));
+        Mail::assertQueued(BookingConfirmed::class, fn ($mail) => $mail->hasTo($inquiry->email));
     }
 }

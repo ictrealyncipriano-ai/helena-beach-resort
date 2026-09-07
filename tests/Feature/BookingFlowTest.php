@@ -138,7 +138,7 @@ class BookingFlowTest extends TestCase
 
         $inquiry = Inquiry::where('email', 'ack@example.com')->first();
 
-        Mail::assertSent(InquiryAcknowledgment::class, function ($mailable) use ($inquiry) {
+        Mail::assertQueued(InquiryAcknowledgment::class, function ($mailable) use ($inquiry) {
             return $mailable->hasTo($inquiry->email)
                 && $mailable->inquiry->reference_code === $inquiry->reference_code;
         });
@@ -155,7 +155,7 @@ class BookingFlowTest extends TestCase
             ->post(route('admin.inquiries.confirm', $inquiry))
             ->assertRedirect();
 
-        Mail::assertSent(BookingConfirmed::class, fn ($mailable) => $mailable->hasTo($inquiry->email));
+        Mail::assertQueued(BookingConfirmed::class, fn ($mailable) => $mailable->hasTo($inquiry->email));
         $this->assertSame(1, $inquiry->guest->fresh()->total_stays);
     }
 
@@ -174,7 +174,7 @@ class BookingFlowTest extends TestCase
             ])
             ->assertRedirect();
 
-        Mail::assertSent(BookingConfirmed::class, fn ($mailable) => $mailable->hasTo($inquiry->email));
+        Mail::assertQueued(BookingConfirmed::class, fn ($mailable) => $mailable->hasTo($inquiry->email));
         $this->assertSame(1, $inquiry->guest->fresh()->total_stays);
     }
 
@@ -186,7 +186,7 @@ class BookingFlowTest extends TestCase
         $inquiry = Inquiry::where('email', 'first@example.com')->first();
 
         $this->actingAs($admin)->post(route('admin.inquiries.confirm', $inquiry))->assertRedirect();
-        Mail::assertSent(BookingConfirmed::class, 1);
+        Mail::assertQueued(BookingConfirmed::class, 1);
 
         $this->actingAs($admin)
             ->put(route('admin.inquiries.update', $inquiry), [
@@ -196,7 +196,7 @@ class BookingFlowTest extends TestCase
             ])
             ->assertRedirect();
 
-        Mail::assertSent(BookingConfirmed::class, 1);
+        Mail::assertQueued(BookingConfirmed::class, 1);
         $this->assertSame(1, $inquiry->guest->fresh()->total_stays);
     }
 
@@ -215,7 +215,7 @@ class BookingFlowTest extends TestCase
             ->post(route('admin.inquiries.confirm', $inquiry))
             ->assertRedirect();
 
-        Mail::assertSent(BookingConfirmed::class, fn ($mailable) => $mailable->hasTo($inquiry->email));
+        Mail::assertQueued(BookingConfirmed::class, fn ($mailable) => $mailable->hasTo($inquiry->email));
     }
 
     public function test_day_tour_edit_form_confirm_emails_guest_without_check_out(): void
@@ -237,7 +237,7 @@ class BookingFlowTest extends TestCase
             ])
             ->assertRedirect();
 
-        Mail::assertSent(BookingConfirmed::class, fn ($mailable) => $mailable->hasTo($inquiry->email));
+        Mail::assertQueued(BookingConfirmed::class, fn ($mailable) => $mailable->hasTo($inquiry->email));
     }
 
     public function test_booking_detail_shows_cancel_button_when_check_in_is_at_least_24h_away(): void

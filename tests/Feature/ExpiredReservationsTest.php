@@ -89,7 +89,7 @@ class ExpiredReservationsTest extends TestCase
         $this->artisan('reservations:release-expired --hours=48')
             ->assertExitCode(0);
 
-        \Illuminate\Support\Facades\Mail::assertSent(\App\Mail\BookingExpiringSoon::class, fn ($mail) => $mail->hasTo($inquiry->email));
+        \Illuminate\Support\Facades\Mail::assertQueued(\App\Mail\BookingExpiringSoon::class, fn ($mail) => $mail->hasTo($inquiry->email));
 
         $this->assertNotNull($inquiry->fresh()->expiry_warned_at);
         $this->assertSame('pending', $inquiry->fresh()->status);

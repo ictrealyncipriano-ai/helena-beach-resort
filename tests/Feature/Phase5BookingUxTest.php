@@ -376,11 +376,11 @@ class Phase5BookingUxTest extends TestCase
 
         $this->artisan('reservations:release-expired --hours=48')->assertExitCode(0);
 
-        Mail::assertSent(BookingExpiringSoon::class, fn ($mailable) => $mailable->hasTo('warned@example.com'));
+        Mail::assertQueued(BookingExpiringSoon::class, fn ($mailable) => $mailable->hasTo('warned@example.com'));
 
         // Second run must not re-warn.
         $this->artisan('reservations:release-expired --hours=48')->assertExitCode(0);
-        Mail::assertSent(BookingExpiringSoon::class, 1);
+        Mail::assertQueued(BookingExpiringSoon::class, 1);
 
         $this->assertDatabaseHas('inquiries', [
             'id' => $inquiry->id,
@@ -408,7 +408,7 @@ class Phase5BookingUxTest extends TestCase
 
         $this->artisan('reservations:release-expired --hours=48')->assertExitCode(0);
 
-        Mail::assertSent(BookingExpired::class, fn ($mailable) => $mailable->hasTo('expired@example.com'));
+        Mail::assertQueued(BookingExpired::class, fn ($mailable) => $mailable->hasTo('expired@example.com'));
         $this->assertSame('expired', $inquiry->refresh()->status);
     }
 

@@ -123,7 +123,7 @@ class AdminUserPageTest extends TestCase
             ->post(route('admin.users.store'), [
                 'name' => 'New SA',
                 'email' => 'new-sa@helena.com',
-                'password' => 'Password123',
+                'password' => 'Password123!x',
                 'role' => 'super_admin',
             ])
             ->assertSessionHasErrors('role');

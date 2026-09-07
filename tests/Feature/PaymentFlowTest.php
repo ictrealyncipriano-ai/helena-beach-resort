@@ -547,7 +547,7 @@ class PaymentFlowTest extends TestCase
             'date' => '2026-09-01',
         ]);
 
-        Mail::assertSent(RefundReceived::class, fn ($mailable) => $mailable->hasTo($inquiry->email));
+        Mail::assertQueued(RefundReceived::class, fn ($mailable) => $mailable->hasTo($inquiry->email));
     }
 
     public function test_admin_cannot_refund_unpaid_booking(): void
@@ -610,8 +610,8 @@ class PaymentFlowTest extends TestCase
         $this->assertNotNull($inquiry->refunded_at);
         $this->assertSame((float) $inquiry->total_amount, (float) $inquiry->refund_amount);
 
-        Mail::assertSent(RefundReceived::class, fn ($mailable) => $mailable->hasTo($inquiry->email));
-        Mail::assertSent(BookingCancelled::class, fn ($mailable) => $mailable->hasTo($inquiry->email));
+        Mail::assertQueued(RefundReceived::class, fn ($mailable) => $mailable->hasTo($inquiry->email));
+        Mail::assertQueued(BookingCancelled::class, fn ($mailable) => $mailable->hasTo($inquiry->email));
     }
 
     public function test_guest_cancel_paid_booking_refund_failure_still_cancels(): void

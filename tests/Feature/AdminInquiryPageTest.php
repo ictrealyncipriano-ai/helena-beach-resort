@@ -129,7 +129,7 @@ class AdminInquiryPageTest extends TestCase
         $block = CottageDateBlock::where('cottage_id', $cottage->id)->where('date', $date)->firstOrFail();
         $this->assertStringContainsString('Booked:', $block->reason);
 
-        Mail::assertSent(BookingConfirmed::class, fn ($mail) => $mail->hasTo('walkin@example.com'));
+        Mail::assertQueued(BookingConfirmed::class, fn ($mail) => $mail->hasTo('walkin@example.com'));
 
         $this->assertSame(1, $inquiry->guest->total_stays);
     }

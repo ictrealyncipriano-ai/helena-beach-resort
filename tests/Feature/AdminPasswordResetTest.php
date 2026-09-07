@@ -62,7 +62,7 @@ class AdminPasswordResetTest extends TestCase
             ->assertRedirect()
             ->assertSessionHas('status', self::GENERIC_MESSAGE);
 
-        Mail::assertSent(AdminPasswordReset::class, function (AdminPasswordReset $mail) use ($user) {
+        Mail::assertQueued(AdminPasswordReset::class, function (AdminPasswordReset $mail) use ($user) {
             $this->assertSame($user->name, $mail->name);
             $this->assertStringStartsWith(url('/admin/password/reset/'), $mail->resetUrl);
             $this->assertStringContainsString('email='.urlencode($user->email), $mail->resetUrl);
@@ -98,18 +98,18 @@ class AdminPasswordResetTest extends TestCase
         $this->post(route('admin.password.update'), [
             'token' => $token,
             'email' => $user->email,
-            'password' => 'newpassword1',
-            'password_confirmation' => 'newpassword1',
+            'password' => 'Hbr-Reset-9f2K!qxZ',
+            'password_confirmation' => 'Hbr-Reset-9f2K!qxZ',
         ])->assertRedirect(route('admin.login'))
             ->assertSessionHas('status');
 
-        $this->assertTrue(Hash::check('newpassword1', $user->fresh()->password));
+        $this->assertTrue(Hash::check('Hbr-Reset-9f2K!qxZ', $user->fresh()->password));
         $this->assertFalse(Hash::check('oldpassword1', $user->fresh()->password));
         $this->assertDatabaseMissing('password_reset_tokens', ['email' => $user->email]);
 
         $this->assertTrue(Auth::attempt([
             'email' => $user->email,
-            'password' => 'newpassword1',
+            'password' => 'Hbr-Reset-9f2K!qxZ',
         ]));
     }
 
@@ -120,8 +120,8 @@ class AdminPasswordResetTest extends TestCase
         $this->post(route('admin.password.update'), [
             'token' => 'invalid-token',
             'email' => $user->email,
-            'password' => 'newpassword1',
-            'password_confirmation' => 'newpassword1',
+            'password' => 'Hbr-Reset-9f2K!qxZ',
+            'password_confirmation' => 'Hbr-Reset-9f2K!qxZ',
         ])->assertSessionHasErrors('email');
 
         $this->assertTrue(Hash::check('oldpassword1', $user->fresh()->password));
@@ -150,7 +150,7 @@ class AdminPasswordResetTest extends TestCase
         $this->post(route('admin.password.update'), [
             'token' => $token,
             'email' => $user->email,
-            'password' => 'newpassword1',
+            'password' => 'Hbr-Reset-9f2K!qxZ',
             'password_confirmation' => 'different1',
         ])->assertSessionHasErrors('password');
 

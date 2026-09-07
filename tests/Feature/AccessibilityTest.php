@@ -114,9 +114,11 @@ class AccessibilityTest extends TestCase
         $response = $this->withSession($this->portalSession($inquiry))
             ->get(route('booking.portal.show', $inquiry));
         $response->assertOk();
+        // Native radio inputs inside the group carry implicit radio
+        // semantics; the group itself is labelled by "Your Rating".
         $response->assertSee('role="radiogroup"', false);
-        $response->assertSee('role="radio"', false);
-        $response->assertSee('aria-label="Rating"', false);
+        $response->assertSee('type="radio"', false);
+        $response->assertSee('aria-labelledby="rating-label"', false);
     }
 
     /*

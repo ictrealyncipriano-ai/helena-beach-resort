@@ -55,7 +55,8 @@ class PublicPageCacheTest extends TestCase
     {
         $this->get('/reviews')->assertOk();
 
-        $this->assertTrue(Cache::has(PublicCache::REVIEWS_ALL));
+        // Reviews are cached per page (paginated).
+        $this->assertTrue(Cache::has(PublicCache::REVIEWS_ALL.'.page.1'));
     }
 
     public function test_cottages_index_populates_cache(): void
@@ -69,7 +70,8 @@ class PublicPageCacheTest extends TestCase
     {
         $this->get('/gallery')->assertOk();
 
-        $this->assertTrue(Cache::has(PublicCache::GALLERY_ALL));
+        // Gallery items are cached per page (paginated); categories separately.
+        $this->assertTrue(Cache::has(PublicCache::GALLERY_ALL.'.page.1'));
         $this->assertTrue(Cache::has(PublicCache::GALLERY_CATEGORIES));
     }
 
@@ -161,16 +163,16 @@ class PublicPageCacheTest extends TestCase
         $this->get('/gallery')->assertOk();
     }
 
-    /** The public-content cache keys. */
+    /** The public-content cache keys (including per-page paginated keys). */
     private function contentKeys(): array
     {
         return [
             PublicCache::HOME,
             PublicCache::FAQS_ALL,
             PublicCache::SERVICES_ALL,
-            PublicCache::REVIEWS_ALL,
+            PublicCache::REVIEWS_ALL.'.page.1',
             PublicCache::COTTAGES_INDEX,
-            PublicCache::GALLERY_ALL,
+            PublicCache::GALLERY_ALL.'.page.1',
             PublicCache::GALLERY_CATEGORIES,
         ];
     }

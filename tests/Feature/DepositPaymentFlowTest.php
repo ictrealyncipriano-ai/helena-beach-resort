@@ -255,6 +255,6 @@ class DepositPaymentFlowTest extends TestCase
         $this->assertNull($inquiry->refunded_at);
         $this->assertNull($inquiry->refund_amount);
 
-        Mail::assertSent(ManualRefundRequired::class);
+        Mail::assertQueued(ManualRefundRequired::class);
     }
 }
