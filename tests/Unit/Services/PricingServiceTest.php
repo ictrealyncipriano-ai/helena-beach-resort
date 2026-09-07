@@ -67,11 +67,13 @@ class PricingServiceTest extends TestCase
 
     public function test_apply_discount_with_percent_promo(): void
     {
-        $promo = PromoCode::where('type', 'percent')->first();
-
-        if (! $promo) {
-            $this->markTestSkipped('No percent promo code seeded.');
-        }
+        $promo = PromoCode::where('type', 'percent')->first()
+            ?? PromoCode::create([
+                'code' => 'TEST10',
+                'type' => 'percent',
+                'value' => 10,
+                'is_active' => true,
+            ]);
 
         $result = $this->pricing->applyDiscount('10000.00', $promo);
 
