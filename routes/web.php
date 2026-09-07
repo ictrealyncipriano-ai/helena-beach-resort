@@ -99,7 +99,9 @@ Route::get('/contact', [InquiryController::class, 'create'])->name('contact');
 Route::post('/contact', [InquiryController::class, 'store'])
     ->middleware('throttle:contact')
     ->name('contact.store');
-Route::get('/booking/confirmation/{inquiry}', [InquiryController::class, 'show'])->name('booking.confirmation');
+Route::get('/booking/confirmation/{inquiry}', [InquiryController::class, 'show'])
+    ->middleware('throttle:lookup')
+    ->name('booking.confirmation');
 
 /*
 |--------------------------------------------------------------------------
@@ -111,7 +113,9 @@ Route::post('/booking/lookup', [BookingPortalController::class, 'lookup'])
     ->middleware('throttle:lookup')
     ->name('booking.portal.lookup.post');
 Route::get('/booking/{inquiry}', [BookingPortalController::class, 'show'])->middleware('throttle:lookup')->name('booking.portal.show');
-Route::get('/booking/{inquiry}/modify', [BookingPortalController::class, 'modifyForm'])->name('booking.portal.modify');
+Route::get('/booking/{inquiry}/modify', [BookingPortalController::class, 'modifyForm'])
+    ->middleware('throttle:lookup')
+    ->name('booking.portal.modify');
 Route::put('/booking/{inquiry}/modify', [BookingPortalController::class, 'modify'])
     ->middleware('throttle:modify')
     ->name('booking.portal.modify.update');
