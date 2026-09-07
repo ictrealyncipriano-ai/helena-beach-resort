@@ -17,6 +17,8 @@ class TestimonialController extends Controller
     use ManagesCloudflareFiles;
     public function index(Request $request): View
     {
+        $this->authorize('viewAny', Testimonial::class);
+
         $query = Testimonial::with('cottage');
 
         if ($search = $request->get('search')) {
@@ -61,6 +63,8 @@ class TestimonialController extends Controller
 
     public function create(): View
     {
+        $this->authorize('create', Testimonial::class);
+
         $cottages = Cottage::pluck('name', 'id');
 
         return view('admin.testimonials.form', ['testimonial' => new Testimonial, 'cottages' => $cottages]);
@@ -68,6 +72,8 @@ class TestimonialController extends Controller
 
     public function store(Request $request, ActivityLogger $logger): RedirectResponse
     {
+        $this->authorize('create', Testimonial::class);
+
         $data = $this->validated($request);
 
         if ($request->hasFile('guest_avatar')) {
@@ -86,6 +92,8 @@ class TestimonialController extends Controller
 
     public function edit(Testimonial $testimonial): View
     {
+        $this->authorize('view', $testimonial);
+
         $cottages = Cottage::pluck('name', 'id');
 
         return view('admin.testimonials.form', compact('testimonial', 'cottages'));
@@ -93,6 +101,8 @@ class TestimonialController extends Controller
 
     public function update(Request $request, Testimonial $testimonial, ActivityLogger $logger): RedirectResponse
     {
+        $this->authorize('update', $testimonial);
+
         $data = $this->validated($request);
 
         if ($request->hasFile('guest_avatar')) {
@@ -112,6 +122,8 @@ class TestimonialController extends Controller
 
     public function destroy(Testimonial $testimonial, ActivityLogger $logger): RedirectResponse
     {
+        $this->authorize('delete', $testimonial);
+
         $this->deleteFromCloudflare($testimonial->guest_avatar);
         $testimonial->delete();
 

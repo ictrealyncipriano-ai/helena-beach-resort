@@ -18,6 +18,8 @@ class CottageController extends Controller
     use ManagesCloudflareFiles;
     public function index(Request $request): View
     {
+        $this->authorize('viewAny', Cottage::class);
+
         $query = Cottage::withCount('inquiries')->with(['primaryPhoto', 'amenities', 'photos', 'dateBlocks']);
 
         if ($search = $request->get('search')) {
@@ -69,11 +71,15 @@ class CottageController extends Controller
 
     public function create(): View
     {
+        $this->authorize('create', Cottage::class);
+
         return view('admin.cottages.form', ['cottage' => new Cottage]);
     }
 
     public function store(Request $request, ActivityLogger $logger): RedirectResponse
     {
+        $this->authorize('create', Cottage::class);
+
         $data = $this->validated($request);
 
         $this->validatePeakPricing($request);
@@ -98,6 +104,8 @@ class CottageController extends Controller
 
     public function edit(Cottage $cottage): View
     {
+        $this->authorize('view', $cottage);
+
         $cottage->load(['amenities', 'photos', 'dateBlocks']);
 
         return view('admin.cottages.form', compact('cottage'));
@@ -105,6 +113,8 @@ class CottageController extends Controller
 
     public function update(Request $request, Cottage $cottage, ActivityLogger $logger): RedirectResponse
     {
+        $this->authorize('update', $cottage);
+
         $data = $this->validated($request, $cottage);
 
         $this->validatePeakPricing($request);
@@ -288,6 +298,8 @@ class CottageController extends Controller
 
     public function destroy(Cottage $cottage, ActivityLogger $logger): RedirectResponse
     {
+        $this->authorize('delete', $cottage);
+
         // Never delete a cottage that still holds dates for a live booking:
         // the cascade would silently destroy the date blocks (and the hold)
         // of pending/confirmed inquiries. Those must be cancelled first.

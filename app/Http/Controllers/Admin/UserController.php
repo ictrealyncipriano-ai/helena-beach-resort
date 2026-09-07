@@ -14,6 +14,8 @@ class UserController extends Controller
 {
     public function index(Request $request): View
     {
+        $this->authorize('viewAny', User::class);
+
         $query = User::query();
 
         if ($search = $request->get('search')) {
@@ -32,11 +34,15 @@ class UserController extends Controller
 
     public function create(): View
     {
+        $this->authorize('create', User::class);
+
         return view('admin.users.form', ['user' => new User]);
     }
 
     public function store(Request $request, ActivityLogger $logger): RedirectResponse
     {
+        $this->authorize('create', User::class);
+
         $data = $request->validate([
             'name' => 'required|max:255',
             'email' => 'required|email|max:255|unique:users',
@@ -65,11 +71,15 @@ class UserController extends Controller
 
     public function edit(User $user): View
     {
+        $this->authorize('view', $user);
+
         return view('admin.users.form', compact('user'));
     }
 
     public function update(Request $request, User $user, ActivityLogger $logger): RedirectResponse
     {
+        $this->authorize('update', $user);
+
         $data = $request->validate([
             'name' => 'required|max:255',
             'email' => 'required|email|max:255|unique:users,email,'.$user->id,
@@ -116,6 +126,8 @@ class UserController extends Controller
 
     public function destroy(User $user, ActivityLogger $logger): RedirectResponse
     {
+        $this->authorize('delete', $user);
+
         if ($user->id === auth()->id()) {
             return back()->with('error', 'You cannot delete your own account.');
         }

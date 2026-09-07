@@ -15,6 +15,8 @@ class PromoCodeController extends Controller
 {
     public function index(Request $request): View
     {
+        $this->authorize('viewAny', PromoCode::class);
+
         $query = PromoCode::query();
 
         if ($search = $request->get('search')) {
@@ -32,11 +34,15 @@ class PromoCodeController extends Controller
 
     public function create(): View
     {
+        $this->authorize('create', PromoCode::class);
+
         return view('admin.promo-codes.form', ['promo' => new PromoCode]);
     }
 
     public function store(Request $request, ActivityLogger $logger): RedirectResponse
     {
+        $this->authorize('create', PromoCode::class);
+
         $data = $this->validated($request);
 
         $promo = PromoCode::create($data);
@@ -52,11 +58,15 @@ class PromoCodeController extends Controller
 
     public function edit(PromoCode $promo): View
     {
+        $this->authorize('view', $promo);
+
         return view('admin.promo-codes.form', compact('promo'));
     }
 
     public function update(Request $request, PromoCode $promo, ActivityLogger $logger): RedirectResponse
     {
+        $this->authorize('update', $promo);
+
         $data = $this->validated($request, $promo);
 
         $promo->update($data);
@@ -72,6 +82,8 @@ class PromoCodeController extends Controller
 
     public function destroy(PromoCode $promo, ActivityLogger $logger): RedirectResponse
     {
+        $this->authorize('delete', $promo);
+
         $promo->delete();
 
         $logger->record('promo.deleted', $promo, "Promo code {$promo->code} deleted.");

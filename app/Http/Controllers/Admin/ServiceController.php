@@ -13,6 +13,8 @@ class ServiceController extends Controller
 {
     public function index(Request $request): View
     {
+        $this->authorize('viewAny', Service::class);
+
         $query = Service::query();
 
         if ($search = $request->get('search')) {
@@ -53,11 +55,15 @@ class ServiceController extends Controller
 
     public function create(): View
     {
+        $this->authorize('create', Service::class);
+
         return view('admin.services.form', ['service' => new Service]);
     }
 
     public function store(Request $request, ActivityLogger $logger): RedirectResponse
     {
+        $this->authorize('create', Service::class);
+
         $data = $this->validated($request);
         $service = Service::create($data);
 
@@ -71,11 +77,15 @@ class ServiceController extends Controller
 
     public function edit(Service $service): View
     {
+        $this->authorize('view', $service);
+
         return view('admin.services.form', compact('service'));
     }
 
     public function update(Request $request, Service $service, ActivityLogger $logger): RedirectResponse
     {
+        $this->authorize('update', $service);
+
         $data = $this->validated($request);
         $service->update($data);
 
@@ -89,6 +99,8 @@ class ServiceController extends Controller
 
     public function destroy(Service $service, ActivityLogger $logger): RedirectResponse
     {
+        $this->authorize('delete', $service);
+
         $service->delete();
 
         $logger->record('service.deleted', $service, "Service {$service->name} deleted.");

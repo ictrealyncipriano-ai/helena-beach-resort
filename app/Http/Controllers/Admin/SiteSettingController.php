@@ -17,6 +17,8 @@ class SiteSettingController extends Controller
 {
     public function index(Request $request): View
     {
+        $this->authorize('viewAny', SiteSetting::class);
+
         $settings = SiteSetting::cachedAll();
 
         if ($search = trim((string) $request->get('search'))) {
@@ -54,11 +56,15 @@ class SiteSettingController extends Controller
 
     public function create(): View
     {
+        $this->authorize('create', SiteSetting::class);
+
         return view('admin.site-settings.form', ['setting' => new SiteSetting]);
     }
 
     public function store(Request $request, ActivityLogger $logger): RedirectResponse
     {
+        $this->authorize('create', SiteSetting::class);
+
         $data = $this->validated($request);
 
         $setting = SiteSetting::create($data);
@@ -73,11 +79,15 @@ class SiteSettingController extends Controller
 
     public function edit(SiteSetting $siteSetting): View
     {
+        $this->authorize('view', $siteSetting);
+
         return view('admin.site-settings.form', ['setting' => $siteSetting]);
     }
 
     public function update(Request $request, SiteSetting $siteSetting, ActivityLogger $logger): RedirectResponse
     {
+        $this->authorize('update', $siteSetting);
+
         $data = $this->validated($request, $siteSetting);
 
         $siteSetting->update($data);
@@ -92,6 +102,8 @@ class SiteSettingController extends Controller
 
     public function destroy(SiteSetting $siteSetting, ActivityLogger $logger): RedirectResponse
     {
+        $this->authorize('delete', $siteSetting);
+
         $siteSetting->delete();
 
         $logger->record('setting.deleted', $siteSetting, "Site setting {$siteSetting->key} deleted.");

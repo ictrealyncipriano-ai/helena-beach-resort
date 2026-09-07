@@ -14,6 +14,8 @@ class FaqController extends Controller
 {
     public function index(Request $request): View
     {
+        $this->authorize('viewAny', Faq::class);
+
         $query = Faq::query();
 
         if ($search = $request->get('search')) {
@@ -44,11 +46,15 @@ class FaqController extends Controller
 
     public function create(): View
     {
+        $this->authorize('create', Faq::class);
+
         return view('admin.faqs.form', ['faq' => new Faq]);
     }
 
     public function store(Request $request, ActivityLogger $logger): RedirectResponse
     {
+        $this->authorize('create', Faq::class);
+
         $data = $this->validated($request);
         $faq = Faq::create($data);
 
@@ -60,11 +66,15 @@ class FaqController extends Controller
 
     public function edit(Faq $faq): View
     {
+        $this->authorize('view', $faq);
+
         return view('admin.faqs.form', compact('faq'));
     }
 
     public function update(Request $request, Faq $faq, ActivityLogger $logger): RedirectResponse
     {
+        $this->authorize('update', $faq);
+
         $data = $this->validated($request);
         $faq->update($data);
 
@@ -76,6 +86,8 @@ class FaqController extends Controller
 
     public function destroy(Faq $faq, ActivityLogger $logger): RedirectResponse
     {
+        $this->authorize('delete', $faq);
+
         $faq->delete();
 
         $logger->record('faq.deleted', $faq, "FAQ deleted: {$faq->question}");
@@ -86,6 +98,8 @@ class FaqController extends Controller
 
     public function activateAll(ActivityLogger $logger): RedirectResponse
     {
+        $this->authorize('activateAll', Faq::class);
+
         Faq::query()->update(['is_active' => true]);
         PublicCache::flush();
 

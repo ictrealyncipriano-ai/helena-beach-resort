@@ -16,6 +16,8 @@ class GalleryController extends Controller
     use ManagesCloudflareFiles;
     public function index(Request $request): View
     {
+        $this->authorize('viewAny', Gallery::class);
+
         $query = Gallery::query();
 
         if ($search = $request->get('search')) {
@@ -46,11 +48,15 @@ class GalleryController extends Controller
 
     public function create(): View
     {
+        $this->authorize('create', Gallery::class);
+
         return view('admin.gallery.form', ['gallery' => new Gallery]);
     }
 
     public function store(Request $request, ActivityLogger $logger): RedirectResponse
     {
+        $this->authorize('create', Gallery::class);
+
         $data = $this->validated($request);
         $data['photo_path'] = $request->file('photo_path')->store('gallery', 'cloudflare');
 
@@ -66,11 +72,15 @@ class GalleryController extends Controller
 
     public function edit(Gallery $gallery): View
     {
+        $this->authorize('view', $gallery);
+
         return view('admin.gallery.form', compact('gallery'));
     }
 
     public function update(Request $request, Gallery $gallery, ActivityLogger $logger): RedirectResponse
     {
+        $this->authorize('update', $gallery);
+
         $data = $this->validated($request, $gallery);
 
         if ($request->hasFile('photo_path')) {
@@ -90,6 +100,8 @@ class GalleryController extends Controller
 
     public function destroy(Gallery $gallery, ActivityLogger $logger): RedirectResponse
     {
+        $this->authorize('delete', $gallery);
+
         $this->deleteFromCloudflare($gallery->photo_path);
         $gallery->delete();
 

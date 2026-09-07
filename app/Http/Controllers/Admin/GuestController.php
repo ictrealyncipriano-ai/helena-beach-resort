@@ -14,6 +14,8 @@ class GuestController extends Controller
 {
     public function index(Request $request): View
     {
+        $this->authorize('viewAny', Guest::class);
+
         // Aggregate stats in SQL instead of hydrating every inquiry and its
         // cottage model for the page. The inquiry rows are still loaded (lean,
         // no cottage relation) for the booking-history modal, and cottage
@@ -88,6 +90,8 @@ class GuestController extends Controller
 
     public function show(Guest $guest): View
     {
+        $this->authorize('view', $guest);
+
         $guest->loadCount('inquiries');
         $guest->loadCount(['inquiries as paid_count' => fn ($q) => $q->where('amount_paid', '>', 0)]);
         $guest->loadCount(['inquiries as failed_count' => fn ($q) => $q->whereNotNull('payment_failed_at')]);
@@ -106,11 +110,15 @@ class GuestController extends Controller
 
     public function edit(Guest $guest): View
     {
+        $this->authorize('view', $guest);
+
         return view('admin.guests.form', compact('guest'));
     }
 
     public function update(Request $request, Guest $guest, ActivityLogger $logger): RedirectResponse
     {
+        $this->authorize('update', $guest);
+
         $data = $request->validate([
             'name' => 'required|max:255',
             'email' => 'required|email|max:255|unique:guests,email,'.$guest->id,
@@ -130,6 +138,8 @@ class GuestController extends Controller
 
     public function destroy(Guest $guest, ActivityLogger $logger): RedirectResponse
     {
+        $this->authorize('delete', $guest);
+
         $guest->delete();
 
         $logger->record('guest.deleted', $guest, "Guest {$guest->name} deleted.", [

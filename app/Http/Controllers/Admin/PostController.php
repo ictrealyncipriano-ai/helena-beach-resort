@@ -15,6 +15,8 @@ class PostController extends Controller
     use ManagesCloudflareFiles;
     public function index(Request $request): View
     {
+        $this->authorize('viewAny', Post::class);
+
         $query = Post::query();
 
         if ($search = $request->get('search')) {
@@ -36,11 +38,15 @@ class PostController extends Controller
 
     public function create(): View
     {
+        $this->authorize('create', Post::class);
+
         return view('admin.posts.form', ['post' => new Post]);
     }
 
     public function store(Request $request, ActivityLogger $logger): RedirectResponse
     {
+        $this->authorize('create', Post::class);
+
         $data = $this->validated($request);
 
         if ($request->hasFile('cover_image')) {
@@ -57,11 +63,15 @@ class PostController extends Controller
 
     public function edit(Post $post): View
     {
+        $this->authorize('view', $post);
+
         return view('admin.posts.form', compact('post'));
     }
 
     public function update(Request $request, Post $post, ActivityLogger $logger): RedirectResponse
     {
+        $this->authorize('update', $post);
+
         $data = $this->validated($request, $post);
 
         if ($request->hasFile('cover_image')) {
@@ -79,6 +89,8 @@ class PostController extends Controller
 
     public function destroy(Post $post, ActivityLogger $logger): RedirectResponse
     {
+        $this->authorize('delete', $post);
+
         $this->deleteFromCloudflare($post->cover_image);
         $post->delete();
 
