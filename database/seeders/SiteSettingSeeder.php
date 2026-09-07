@@ -16,9 +16,9 @@ class SiteSettingSeeder extends Seeder
         $settings = [
             ['key' => 'site_name', 'value' => 'Helena Beach Resort', 'type' => 'text'],
             ['key' => 'site_description', 'value' => 'Experience paradise in Infanta, Quezon. Beachfront cottages, fresh seafood, and unforgettable memories.', 'type' => 'textarea'],
-            ['key' => 'contact_email', 'value' => 'ict.realyncipriano@gmail.com', 'type' => 'text'],
-            // TODO(client): replace this placeholder with the resort's real phone number.
-            ['key' => 'contact_phone', 'value' => '0999 000 0000', 'type' => 'text'],
+            ['key' => 'contact_email', 'value' => 'info@helena.labcoop.online', 'type' => 'text'],
+            // NOTE(temp): replace with the resort's real inbox via the dashboard (super_admin) when available.
+            ['key' => 'contact_phone', 'value' => '0912 345 6789', 'type' => 'text'],
             ['key' => 'address', 'value' => 'Purok Buyan, Brgy. Dinahican, Infanta, Quezon', 'type' => 'textarea'],
             ['key' => 'operating_hours', 'value' => 'Monday - Sunday: 8:00 AM - 6:00 PM', 'type' => 'text'],
             // Hero section content
@@ -42,16 +42,16 @@ class SiteSettingSeeder extends Seeder
             // Analytics / cookie consent
             ['key' => 'analytics_ga4_id', 'value' => '', 'type' => 'text'],
             ['key' => 'analytics_consent_enabled', 'value' => '1', 'type' => 'text'],
-            ['key' => 'facebook_url', 'value' => '#', 'type' => 'text'],
+            ['key' => 'facebook_url', 'value' => '', 'type' => 'text'],
             ['key' => 'instagram_url', 'value' => 'https://www.instagram.com/helena_sa_infanta', 'type' => 'text'],
-            ['key' => 'tiktok_url', 'value' => '#', 'type' => 'text'],
+            ['key' => 'tiktok_url', 'value' => '', 'type' => 'text'],
             ['key' => 'map_lat', 'value' => '14.702052118071348', 'type' => 'text'],
             ['key' => 'map_lng', 'value' => '121.72756162841773', 'type' => 'text'],
             ['key' => 'map_embed_url', 'value' => 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3859.188516002515!2d121.72497447574254!3d14.701928774586516!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x33982fd7700a733b%3A0x160b9c22db388372!2sHelena%20beach%20resort!5e0!3m2!1sen!2ssg!4v1786175999279!5m2!1sen!2ssg', 'type' => 'text'],
-            // Legal / policy pages
-            ['key' => 'legal_privacy', 'value' => 'Privacy policy content.', 'type' => 'textarea'],
-            ['key' => 'legal_terms', 'value' => 'Terms and conditions content.', 'type' => 'textarea'],
-            ['key' => 'legal_booking_policy', 'value' => 'Booking policy content.', 'type' => 'textarea'],
+            // Legal / policy pages (NOTE(temp): draft copy — replace with final legal text via the dashboard).
+            ['key' => 'legal_privacy', 'value' => 'Draft — our privacy policy is being finalized. Contact us at info@helena.labcoop.online for questions about how we handle your information.', 'type' => 'textarea'],
+            ['key' => 'legal_terms', 'value' => 'Draft — our terms and conditions are being finalized. Contact us at info@helena.labcoop.online for questions about your stay.', 'type' => 'textarea'],
+            ['key' => 'legal_booking_policy', 'value' => 'Draft — our booking policy is being finalized. Contact us at info@helena.labcoop.online for questions about reservations, payments, and cancellations.', 'type' => 'textarea'],
         ];
 
         foreach ($settings as $setting) {

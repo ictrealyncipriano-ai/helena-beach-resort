@@ -155,7 +155,7 @@
     <div class="top-bar">
         <h1>{{ App\Models\SiteSetting::getValue('site_name', 'Helena Beach Resort') }}</h1>
         <p>{{ App\Models\SiteSetting::getValue('address', 'Purok Buyan, Brgy. Dinahican, Infanta, Quezon') }}</p>
-        <p>{{ App\Models\SiteSetting::getValue('contact_phone', '') }} &nbsp;|&nbsp; {{ App\Models\SiteSetting::getValue('contact_email', 'ict.realyncipriano@gmail.com') }}</p>
+        <p>{{ App\Models\SiteSetting::getValue('contact_phone', '') }} &nbsp;|&nbsp; {{ App\Models\SiteSetting::getValue('contact_email', 'info@helena.labcoop.online') }}</p>
     </div>
 
     <div class="invoice-title">

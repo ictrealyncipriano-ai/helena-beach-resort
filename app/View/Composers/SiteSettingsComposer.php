@@ -33,7 +33,7 @@ class SiteSettingsComposer
                 'description' => $get('site_description', 'Experience paradise in Infanta, Quezon.'),
                 'address' => $get('address', 'Purok Buyan, Brgy. Dinahican, Infanta, Quezon'),
                 'contact_phone' => $get('contact_phone', ''),
-                'contact_email' => $get('contact_email', 'ict.realyncipriano@gmail.com'),
+                'contact_email' => $get('contact_email', 'info@helena.labcoop.online'),
                 'og_image' => $get('og_image', asset('images/logo.jpg')),
             ],
             'socials' => $socials,

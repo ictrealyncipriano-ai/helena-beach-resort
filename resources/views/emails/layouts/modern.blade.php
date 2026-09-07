@@ -53,7 +53,7 @@
 Helena Beach Resort &bull; Purok Buyan, Brgy. Dinahican, Infanta, Quezon
 </p>
 <p class="footer-text" style="margin: 0 0 8px; font-size: 13px; color: #ccfbf1; line-height: 1.5;">
-{{ App\Models\SiteSetting::getValue('contact_email', 'ict.realyncipriano@gmail.com') }}
+{{ App\Models\SiteSetting::getValue('contact_email', 'info@helena.labcoop.online') }}
 @if(App\Models\SiteSetting::getValue('contact_phone')) &bull; {{ App\Models\SiteSetting::getValue('contact_phone') }} @endif
 </p>
 <p class="footer-text" style="margin: 0; font-size: 12px; color: #99f6e4;">
