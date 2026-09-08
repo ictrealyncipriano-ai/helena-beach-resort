@@ -75,8 +75,11 @@
             </button>
         </div>
     </div>
+</nav>
 
-    {{-- Mobile Drawer --}}
+    {{-- Mobile Drawer (sibling of the blurred <nav>, not its child:
+         backdrop-blur creates a containing block for fixed descendants,
+         which used to clip this panel to the nav bar over hero sections) --}}
     <div x-show="mobileMenu"
          x-cloak
          x-transition:enter="transition ease-out duration-200"
@@ -146,5 +149,4 @@
             </div>
         </div>
     </div>
-</nav>
 </header>
