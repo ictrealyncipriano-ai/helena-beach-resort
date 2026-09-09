@@ -15,9 +15,9 @@ class PostSeeder extends Seeder
     {
         $posts = [
             [
-                'title' => 'Welcome to Helena Beach Resort',
-                'excerpt' => 'We are thrilled to open our doors in Infanta, Quezon — a quiet stretch of beachfront perfect for your next getaway.',
-                'body' => "<p>Helena Beach Resort is now welcoming guests for day tours and overnight stays. Nestled along the pristine shores of Infanta, Quezon, we offer beachfront cottages, fresh seafood, and unforgettable memories.</p><h2>What to expect</h2><ul><li>Comfortable beachfront cottages</li><li>Fresh, locally sourced seafood</li><li>Safe, family-friendly beach</li></ul><p>Reserve your spot today — dates fill up quickly on weekends.</p>",
+                'title' => 'Welcome to Our Beach Resort',
+                'excerpt' => 'We are thrilled to open our doors — a quiet stretch of beachfront perfect for your next getaway.',
+                'body' => "<p>We are now welcoming guests for day tours and overnight stays. Nestled along pristine shores, we offer beachfront cottages, fresh seafood, and unforgettable memories.</p><h2>What to expect</h2><ul><li>Comfortable beachfront cottages</li><li>Fresh, locally sourced seafood</li><li>Safe, family-friendly beach</li></ul><p>Reserve your spot today — dates fill up quickly on weekends.</p>",
                 'is_active' => true,
                 'published_at' => now()->subDays(10),
             ],

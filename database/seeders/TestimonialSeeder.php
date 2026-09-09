@@ -12,7 +12,7 @@ class TestimonialSeeder extends Seeder
         $testimonials = [
             [
                 'guest_name' => 'Maria Santos',
-                'content' => 'We had an amazing time at Helena Beach Resort! The cottage was clean and comfortable, and the beachfront view was breathtaking. The staff were incredibly friendly and accommodating. Will definitely come back!',
+                'content' => 'We had an amazing time at the resort! The cottage was clean and comfortable, and the beachfront view was breathtaking. The staff were incredibly friendly and accommodating. Will definitely come back!',
                 'rating' => 5,
                 'sort_order' => 1,
             ],
