@@ -9,11 +9,21 @@ window.Alpine = Alpine;
 Alpine.plugin(focus);
 
 function cookieConsent() {
+    // Consent cookie namespace is resort-neutral. The legacy `helena_consent`
+    // cookie is still honored (dual-read) so returning visitors are never
+    // re-prompted; all new writes use `resort_consent` (single-write).
+    // TODO(Phase 2): drop the legacy read path below.
+    const CONSENT_COOKIE = 'resort_consent';
+    const LEGACY_CONSENT_COOKIE = 'helena_consent';
+    function readConsent() {
+        const match = document.cookie.match(new RegExp('(?:^|; )' + CONSENT_COOKIE + '=([^;]*)'))
+            || document.cookie.match(new RegExp('(?:^|; )' + LEGACY_CONSENT_COOKIE + '=([^;]*)'));
+        return match ? decodeURIComponent(match[1]) : null;
+    }
     return {
         show: false,
         init() {
-            const match = document.cookie.match(/(?:^|; )helena_consent=([^;]*)/);
-            if (!match) {
+            if (!readConsent()) {
                 this.show = true;
             }
         },
@@ -22,7 +32,7 @@ function cookieConsent() {
             document.cookie = name + '=' + encodeURIComponent(value) + ';path=/;max-age=' + maxAge + ';SameSite=Lax';
         },
         accept() {
-            this.setCookie('helena_consent', 'granted', 365);
+            this.setCookie(CONSENT_COOKIE, 'granted', 365);
             if (window.gtag) {
                 window.gtag('consent', 'update', {
                     'ad_storage': 'granted',
@@ -31,11 +41,11 @@ function cookieConsent() {
                     'ad_personalization': 'granted'
                 });
             }
-            if (window.loadHelenaGtm) window.loadHelenaGtm();
+            if (window.loadResortGtm) window.loadResortGtm();
             this.show = false;
         },
         decline() {
-            this.setCookie('helena_consent', 'denied', 365);
+            this.setCookie(CONSENT_COOKIE, 'denied', 365);
             if (window.gtag) {
                 window.gtag('consent', 'update', {
                     'ad_storage': 'denied',

@@ -13,6 +13,8 @@ function setup() {
 
     document.addEventListener('submit', handleSubmit, true);
 
+    window.addEventListener('resort:clear-validation', clearAllErrors);
+    // TODO(Phase 2): remove the legacy Helena event name below.
     window.addEventListener('helena:clear-validation', clearAllErrors);
 
     // Alpine's x-show hides elements by setting style.display = 'none'. When any

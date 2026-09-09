@@ -68,16 +68,21 @@
     <script>
     // Google Analytics 4 with consent mode v2. The gtag.js script is NOT
     // fetched until the visitor has granted consent (or consent is disabled
-    // in site settings); consent state is stored in the helena_consent cookie.
+    // in site settings); consent state is stored in the resort_consent cookie
+    // (the legacy helena_consent cookie is still honored for returning
+    // visitors — TODO(Phase 2): drop the legacy read path).
     (function () {
-        window.helenaGa4Id = @json($ga4Id);
-        window.helenaConsentRequired = {{ $consentRequired ? 'true' : 'false' }};
+        window.resortGa4Id = @json($ga4Id);
+        window.resortConsentRequired = {{ $consentRequired ? 'true' : 'false' }};
+        // TODO(Phase 2): remove these legacy Helena aliases.
+        window.helenaGa4Id = window.resortGa4Id;
+        window.helenaConsentRequired = window.resortConsentRequired;
 
-        window.loadHelenaGtm = function () {
-            if (window.helenaGtmLoaded) return;
-            var id = window.helenaGa4Id;
+        window.loadResortGtm = function () {
+            if (window.resortGtmLoaded) return;
+            var id = window.resortGa4Id;
             if (!id) return;
-            window.helenaGtmLoaded = true;
+            window.resortGtmLoaded = true;
 
             var s = document.createElement('script');
             s.async = true;
@@ -97,8 +102,9 @@
         window.dataLayer = window.dataLayer || [];
         window.gtag = function () { window.dataLayer.push(arguments); };
 
-        var match = document.cookie.match(/(?:^|; )helena_consent=([^;]*)/);
-        var granted = !window.helenaConsentRequired ||
+        var match = document.cookie.match(/(?:^|; )resort_consent=([^;]*)/)
+            || document.cookie.match(/(?:^|; )helena_consent=([^;]*)/);
+        var granted = !window.resortConsentRequired ||
             (match && decodeURIComponent(match[1]) === 'granted');
 
         window.gtag('consent', 'default', {
@@ -109,9 +115,11 @@
         });
 
         if (granted) {
-            window.loadHelenaGtm();
+            window.loadResortGtm();
         }
     })();
+    // TODO(Phase 2): remove this legacy Helena alias.
+    window.loadHelenaGtm = window.loadResortGtm;
     </script>
     @endif
     @vite(['resources/css/app.css', 'resources/js/app.js'])

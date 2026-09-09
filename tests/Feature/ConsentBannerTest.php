@@ -20,7 +20,7 @@ class ConsentBannerTest extends TestCase
     {
         $this->get('/')
             ->assertDontSee('googletagmanager.com/gtag/js')
-            ->assertDontSee('helenaGa4Id')
+            ->assertDontSee('resortGa4Id')
             ->assertDontSee('We value your privacy');
     }
 
@@ -30,9 +30,9 @@ class ConsentBannerTest extends TestCase
 
         $this->get('/')
             ->assertSee('googletagmanager.com/gtag/js', false)
-            ->assertSee('helenaGa4Id', false)
+            ->assertSee('resortGa4Id', false)
             ->assertSee('"G-ABC123XYZ"', false)
-            ->assertSee('helenaConsentRequired = true', false)
+            ->assertSee('resortConsentRequired = true', false)
             ->assertSee('We value your privacy')
             ->assertSee('Accept')
             ->assertSee('Decline')
@@ -46,7 +46,7 @@ class ConsentBannerTest extends TestCase
 
         $this->get('/')
             ->assertSee('googletagmanager.com/gtag/js', false)
-            ->assertSee('helenaConsentRequired = false', false)
+            ->assertSee('resortConsentRequired = false', false)
             ->assertDontSee('We value your privacy');
     }
 
