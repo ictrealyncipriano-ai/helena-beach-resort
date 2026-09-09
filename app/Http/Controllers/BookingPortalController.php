@@ -31,7 +31,7 @@ use Illuminate\View\View;
 
 /**
  * Guest-facing booking portal: lookup bookings by email + reference code,
- * view booking details, and self-cancel (with 24h cutoff).
+ * view booking details, and self-cancel (with a configurable cutoff).
  *
  * All portal routes are gated on a session-held booking token (see
  * GuardsBookingAccess) so guessing an auto-increment {inquiry} id alone is
@@ -41,8 +41,6 @@ class BookingPortalController extends Controller
 {
     use GuardsBookingAccess;
     use CancelsBookings;
-
-    private const CUTOFF_HOURS = 24;
 
     public function __construct(
         private ActivityLogger $logger,
@@ -307,7 +305,7 @@ class BookingPortalController extends Controller
         $this->authorizeBookingAccess($inquiry);
 
         if (! $this->eligibility->canCancel($inquiry)) {
-            return back()->with('error', 'This booking cannot be cancelled. Cancellations must be made at least ' . self::CUTOFF_HOURS . ' hours before check-in.');
+            return back()->with('error', 'This booking cannot be cancelled. Cancellations must be made at least ' . BookingEligibility::cutoffHours() . ' hours before check-in.');
         }
 
         $refundState = $this->cancellationService->processRefund($inquiry, $payMongo);

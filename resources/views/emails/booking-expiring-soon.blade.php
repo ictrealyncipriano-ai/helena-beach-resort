@@ -38,7 +38,7 @@
 
 <div style="background: #fffbeb; border-radius: 12px; padding: 16px 20px; margin-bottom: 24px; border: 1px solid #fde68a;">
 <p style="margin: 0; font-size: 13px; color: #92400e; line-height: 1.6;">
-Your request is held for <strong>48 hours</strong>. Once we confirm availability we'll email you, and only then is payment required. If the window passes before the request is confirmed, the dates will be released and the request expires — you can simply book again.
+Your request is held for <strong>{{ App\Models\SiteSetting::intValue('booking_hold_hours', 48, 1, 168) }} hours</strong>. Once we confirm availability we'll email you, and only then is payment required. If the window passes before the request is confirmed, the dates will be released and the request expires — you can simply book again.
 </p>
 </div>
 

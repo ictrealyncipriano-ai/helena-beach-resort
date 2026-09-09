@@ -38,7 +38,7 @@
 
 <div style="background: #fffbeb; border-radius: 12px; padding: 16px 20px; margin-bottom: 24px; border: 1px solid #fde68a;">
 <p style="margin: 0; font-size: 13px; color: #92400e; line-height: 1.6;">
-Because the request was not confirmed within the 48-hour hold window, the dates have been released. No payment was made and no charge has been applied. If you'd still like to stay with us, you're welcome to <strong>book again</strong> — the dates are open for new requests.
+Because the request was not confirmed within the {{ App\Models\SiteSetting::intValue('booking_hold_hours', 48, 1, 168) }}-hour hold window, the dates have been released. No payment was made and no charge has been applied. If you'd still like to stay with us, you're welcome to <strong>book again</strong> — the dates are open for new requests.
 </p>
 </div>
 

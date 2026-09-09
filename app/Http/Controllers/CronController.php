@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Console\Commands\ReleaseExpiredReservations;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Log;
@@ -37,11 +36,14 @@ class CronController extends Controller
             return response()->json(['error' => 'Unauthorized'], 401);
         }
 
-        $hours = (int) $request->input('hours', ReleaseExpiredReservations::DEFAULT_HOLD_HOURS);
-        $hours = max(1, min(168, $hours));
+        // Explicit ?hours= input always wins (clamped); otherwise the command
+        // falls back to the booking_hold_hours setting.
+        $params = $request->filled('hours')
+            ? ['--hours' => max(1, min(168, (int) $request->input('hours')))]
+            : [];
 
         try {
-            Artisan::call('reservations:release-expired', ['--hours' => $hours]);
+            Artisan::call('reservations:release-expired', $params);
 
             return response()->json(['ok' => true]);
         } catch (\Throwable $e) {

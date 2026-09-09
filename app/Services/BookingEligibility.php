@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Inquiry;
+use App\Models\SiteSetting;
 use App\Models\Testimonial;
 
 /**
@@ -21,6 +22,16 @@ class BookingEligibility
     /** @var array<string, mixed> */
     private array $memo = [];
 
+    /**
+     * Modification/cancellation cutoff in hours, from the
+     * booking_cutoff_hours setting (default 24). Single source so the
+     * guest portal, messages and tests never hardcode the window.
+     */
+    public static function cutoffHours(): int
+    {
+        return SiteSetting::intValue('booking_cutoff_hours', self::CUTOFF_HOURS, 1, 168);
+    }
+
     public function hasPayments(Inquiry $inquiry): bool
     {
         return $inquiry->hasPayments();
@@ -37,7 +48,7 @@ class BookingEligibility
                 return false;
             }
 
-            if (now()->diffInHours($inquiry->check_in) < self::CUTOFF_HOURS) {
+            if (now()->diffInHours($inquiry->check_in) < self::cutoffHours()) {
                 return false;
             }
 
@@ -63,8 +74,8 @@ class BookingEligibility
             return 'This booking can no longer be modified.';
         }
 
-        if (now()->diffInHours($inquiry->check_in) < self::CUTOFF_HOURS) {
-            return 'Modification is no longer available. This booking can be changed until 24 hours before check-in (cutoff: '
+        if (now()->diffInHours($inquiry->check_in) < self::cutoffHours()) {
+            return 'Modification is no longer available. This booking can be changed until '.self::cutoffHours().' hours before check-in (cutoff: '
                 .$inquiry->check_in->format('M d, Y').').';
         }
 
@@ -82,7 +93,7 @@ class BookingEligibility
                 return false;
             }
 
-            if (now()->diffInHours($inquiry->check_in) < self::CUTOFF_HOURS) {
+            if (now()->diffInHours($inquiry->check_in) < self::cutoffHours()) {
                 return false;
             }
 
@@ -100,8 +111,8 @@ class BookingEligibility
             return 'This booking can no longer be cancelled.';
         }
 
-        if (now()->diffInHours($inquiry->check_in) < self::CUTOFF_HOURS) {
-            return 'Cancellation is no longer available. This booking can be cancelled until 24 hours before check-in (cutoff: '
+        if (now()->diffInHours($inquiry->check_in) < self::cutoffHours()) {
+            return 'Cancellation is no longer available. This booking can be cancelled until '.self::cutoffHours().' hours before check-in (cutoff: '
                 .$inquiry->check_in->format('M d, Y').').';
         }
 

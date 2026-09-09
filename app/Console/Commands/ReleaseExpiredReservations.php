@@ -7,6 +7,7 @@ use App\Mail\BookingExpiringSoon;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Models\CottageDateBlock;
 use App\Models\Inquiry;
+use App\Models\SiteSetting;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
@@ -14,17 +15,22 @@ use Illuminate\Support\Facades\Mail;
 class ReleaseExpiredReservations extends Command
 {
     // Default hold window in hours. Artisan option defaults must be string
-    // literals, so the signature keeps 48 below and CronController references
-    // this constant when invoking the command.
+    // literals, so an empty --hours falls back to the booking_hold_hours
+    // setting here; CronController references this constant when invoking.
     public const DEFAULT_HOLD_HOURS = 48;
 
-    protected $signature = 'reservations:release-expired {--hours=48 : Minimum age in hours before a pending reservation expires}';
+    protected $signature = 'reservations:release-expired {--hours= : Minimum age in hours before a pending reservation expires (defaults to the booking_hold_hours setting)}';
 
     protected $description = 'Expire pending inquiries past the hold window, warn those expiring soon, and release their cottage date blocks';
 
     public function handle(): int
     {
-        $hours = (int) $this->option('hours');
+        // Explicit --hours always wins; otherwise the booking_hold_hours
+        // setting governs (default 48). Invalid values fail safe to 48.
+        $option = $this->option('hours');
+        $hours = ($option === null || $option === '')
+            ? SiteSetting::intValue('booking_hold_hours', self::DEFAULT_HOLD_HOURS, 1, 168)
+            : max(1, min(168, (int) $option));
         $cutoff = now()->subHours($hours);
 
         $count = 0;
