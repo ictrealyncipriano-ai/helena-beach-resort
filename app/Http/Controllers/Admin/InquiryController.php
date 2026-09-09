@@ -13,6 +13,7 @@ use App\Models\Guest;
 use App\Models\Inquiry;
 use App\Services\ActivityLogger;
 use App\Services\InquiryService;
+use App\Services\PaymentReconciliationService;
 use App\Services\PayMongoService;
 use App\Services\RefundService;
 use Illuminate\Http\RedirectResponse;
@@ -459,5 +460,33 @@ class InquiryController extends Controller
 
         return redirect()->route('admin.inquiries.show', $inquiry)
             ->with('success', "Payment for {$inquiry->reference_code} refunded and booking cancelled.");
+    }
+
+    /**
+     * WP-5: re-check this booking's payment state against PayMongo via the
+     * shared reconciliation service (same routine as the webhook and the
+     * scheduled command — no duplicate payment logic).
+     */
+    public function resyncPayment(Inquiry $inquiry, PaymentReconciliationService $reconciliation): RedirectResponse
+    {
+        $this->authorize('resync', $inquiry);
+
+        $result = $reconciliation->reconcileByInquiry($inquiry);
+        $outcome = $result['outcome'] ?? 'error';
+
+        $this->logger->record('payment.resynced', $inquiry, "Payment resync for {$inquiry->reference_code}: {$outcome}.", [
+            'outcome' => $outcome,
+        ]);
+
+        return match ($outcome) {
+            'recorded' => redirect()->route('admin.inquiries.show', $inquiry)
+                ->with('success', "Payment reconciled: the missing PayMongo payment was recorded for {$inquiry->reference_code}."),
+            'already_paid', 'duplicate_payment', 'matched' => redirect()->route('admin.inquiries.show', $inquiry)
+                ->with('success', "Already in sync: PayMongo and local records agree for {$inquiry->reference_code}."),
+            'not_paid', 'nothing_to_reconcile' => redirect()->route('admin.inquiries.show', $inquiry)
+                ->with('info', "No new payment found at PayMongo for {$inquiry->reference_code}. Local state unchanged."),
+            default => redirect()->route('admin.inquiries.show', $inquiry)
+                ->with('warning', "Resync needs review for {$inquiry->reference_code} (PayMongo said: {$outcome}). No money was recorded."),
+        };
     }
 }

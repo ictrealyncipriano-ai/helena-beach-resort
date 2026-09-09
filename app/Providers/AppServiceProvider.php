@@ -120,6 +120,9 @@ class AppServiceProvider extends ServiceProvider
         // Admin CSV exports run full-table queries + streaming writes. 5/min
         // bounds abuse while leaving ample room for normal reporting.
         RateLimiter::for('admin-export', fn (Request $request) => Limit::perMinute(5)->by($this->clientKey($request)));
+        // Admin payment resync hits the PayMongo API and may record money.
+        // 10/min bounds accidental double-clicks and abuse.
+        RateLimiter::for('resync', fn (Request $request) => Limit::perMinute(10)->by($this->clientKey($request)));
         // Cron endpoints are bearer-token gated but also throttled as
         // defense-in-depth so a leaked token cannot flood the scheduler.
         RateLimiter::for('cron', fn (Request $request) => Limit::perMinute(10)->by($this->clientKey($request)));

@@ -4,27 +4,26 @@ namespace App\Services;
 
 use App\Http\Controllers\Admin\DashboardController;
 use App\Mail\InquiryNotification;
-use App\Mail\PaymentReceived;
 use App\Models\Inquiry;
 use App\Models\SiteSetting;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 
 /**
  * PayMongo webhook processing: payload normalization, signature gating,
- * idempotent recording under a row lock, and post-commit notifications.
- *
- * Extracted verbatim from PaymentController@webhook so the controller only
- * verifies delivery and renders the JSON response. Response shapes are part
- * of the PayMongo delivery contract and must stay byte-identical.
+ * and response rendering. The locked money write lives in
+ * PaymentReconciliationService::creditFromCheckoutResource (shared with the
+ * reconcile command and admin Resync) so there is exactly one place that
+ * turns remote money into local rows. Response shapes are part of the
+ * PayMongo delivery contract and must stay byte-identical.
  */
 class PayMongoWebhookService
 {
     public function __construct(
         private PayMongoService $payMongo,
         private ActivityLogger $logger,
+        private PaymentReconciliationService $reconciliation,
     ) {
     }
 
@@ -160,132 +159,35 @@ class PayMongoWebhookService
             return [['error' => 'Inquiry not found', 'received' => $received], 404];
         }
 
-        $incomingPaymentId = $attributes['payments'][0]['id'] ?? null;
-        $payment = $attributes['payments'][0]['attributes'] ?? [];
-        $method = $payment['source']['type'] ?? null;
-
-        // Verify the paid amount/currency actually matches what this checkout
-        // session was created to collect (the pending amount set at pay()
-        // time — deposit or balance — falling back to the full total). A
-        // missing, mismatched, or non-PHP amount means the payment must not
-        // be trusted as settled — we log a warning and do NOT record anything.
-        $paidCentavos = isset($payment['amount']) ? (int) $payment['amount'] : null;
-        $currency = $payment['currency'] ?? $attributes['currency'] ?? 'PHP';
-
-        try {
-            // Every guard and the write itself run again inside a row lock:
-            // two concurrent deliveries of the same payment must be able to
-            // credit exactly once. The cheap pre-flight checks above only
-            // route obvious misses; the lock below is the real gatekeeper
-            // (backed by the unique index on paymongo_payment_id).
-            $payMongo = $this->payMongo;
-            $earlyExit = DB::transaction(function () use ($inquiry, $payMongo, $incomingPaymentId, $method, $paidCentavos, $currency, $attributes, $event) {
-                $locked = Inquiry::where('id', $inquiry->id)->lockForUpdate()->first();
-
-                // Idempotency: ignore repeats of the same payment. A booking is
-                // fully settled once paid_at is set; a partial (deposit) payment
-                // is matched by its PayMongo payment id so a re-delivered
-                // webhook can never credit the same money twice.
-                if ($locked->isPaid()) {
-                    Log::channel('stderr')->info('PAYMONGO branch already_paid', ['inquiry_id' => $locked->id]);
-
-                    return ['ok' => true, 'already_paid' => true];
-                }
-
-                if ($incomingPaymentId !== null && $locked->paymongo_payment_id === $incomingPaymentId) {
-                    Log::channel('stderr')->info('PAYMONGO branch duplicate_payment', [
-                        'inquiry_id' => $locked->id,
-                        'payment_id' => $incomingPaymentId,
-                    ]);
-
-                    return ['ok' => true, 'duplicate_payment' => true];
-                }
-
-                // A payment can land after the booking was cancelled or expired
-                // (e.g. the guest left the checkout open). Never record it against
-                // a non-confirmed booking — the guest is handled manually, so we
-                // only alert the owner and ignore the payment without refunding.
-                if ($locked->status !== Inquiry::STATUS_CONFIRMED) {
-                    Log::warning('PayMongo webhook: payment ignored, inquiry not confirmed', [
-                        'inquiry_id' => $locked->id,
-                        'reference_number' => $locked->reference_code,
-                        'status' => $locked->status,
-                    ]);
-
-                    return ['ok' => true, 'ignored' => true, 'reason' => 'inquiry_not_confirmed'];
-                }
-
-                $expectedCentavos = $payMongo->toCentavos($locked->payment_pending_amount ?? $locked->total_amount);
-
-                if ($paidCentavos === null || $paidCentavos !== $expectedCentavos || $currency !== 'PHP') {
-                    Log::warning('PayMongo webhook: amount/currency mismatch; payment NOT recorded', [
-                        'inquiry_id' => $locked->id,
-                        'reference_number' => $locked->reference_code,
-                        'expected_centavos' => $expectedCentavos,
-                        'received_centavos' => $paidCentavos,
-                        'currency' => $currency,
-                    ]);
-
-                    return ['error' => 'Payment amount mismatch'];
-                }
-
-                // The payment write and the receipt dispatch are transactional:
-                // the receipt is only sent after the write has committed, so a
-                // rolled-back record can never email a guest. The send itself is
-                // wrapped in its own try/catch so a transient mail failure can
-                // never turn a committed payment into an HTTP 500 (which would
-                // make PayMongo retry, hit the already_paid branch, and
-                // permanently drop the receipt).
-                $paidPesos = formatPrice($expectedCentavos / 100, 2, false);
-                $newAmountPaid = formatPrice(
-                    (float) ($locked->amount_paid ?? 0) + (float) $paidPesos,
-                    2, false
-                );
-
-                $fullyPaid = (float) $newAmountPaid >= (float) $locked->total_amount;
-                $depositCovered = $locked->hasDeposit()
-                    && (float) $newAmountPaid >= (float) $locked->deposit_amount;
-
-                $locked->update([
-                    'amount_paid' => $newAmountPaid,
-                    'payment_pending_amount' => null,
-                    'deposit_paid_at' => $depositCovered && ! $locked->isDepositPaid()
-                        ? now()
-                        : $locked->deposit_paid_at,
-                    'fully_paid_at' => $fullyPaid ? now() : $locked->fully_paid_at,
-                    'payment_method' => $method,
-                    'paymongo_payment_id' => $attributes['payments'][0]['id']
-                        ?? $locked->paymongo_payment_id,
-                    'paymongo_session_id' => $event['attributes']['data']['id']
-                        ?? $event['id']
-                        ?? $locked->paymongo_session_id,
-                ]);
-
-                DB::afterCommit(function () use ($locked) {
-                    try {
-                        Mail::to($locked->email)->queue(new PaymentReceived($locked));
-                    } catch (\Throwable $e) {
-                        Log::error('PayMongo webhook: payment recorded but receipt email failed', [
-                            'inquiry_id' => $locked->id,
-                            'error' => $e->getMessage(),
-                        ]);
-                    }
-                });
-
-                return null;
-            });
-        } catch (\Throwable $e) {
-            Log::error('PayMongo webhook: failed to record payment', [
-                'inquiry_id' => $inquiry->id,
-                'error' => $e->getMessage(),
-            ]);
-
-            return [['error' => 'Failed to record payment', 'received' => $received], 500];
-        }
+        // The locked money write lives in the shared reconciliation service
+        // (single place that turns remote money into local rows). Every guard
+        // and the write itself still run under a row lock there; the cheap
+        // pre-flight checks above only route obvious misses.
+        $sessionId = $event['attributes']['data']['id'] ?? $event['id'] ?? null;
+        $earlyExit = $this->reconciliation->creditFromCheckoutResource($inquiry, $attributes, $sessionId);
 
         // Early exits decided under lock: map them back onto the original
         // response contract PayMongo expects.
         if ($earlyExit !== null) {
+            // WP-6: a late payment was preserved in the ledger and an
+            // automatic refund attempted. Always alert the owner (success or
+            // failure) so unresolved money is visible even before WP-7 retry.
+            if (isset($earlyExit['late_payment'])) {
+                $ownerEmail = SiteSetting::getValue('contact_email');
+                if ($ownerEmail) {
+                    try {
+                        Mail::to($ownerEmail)->queue(new InquiryNotification($inquiry->refresh()));
+                    } catch (\Throwable $e) {
+                        Log::error('PayMongo webhook: late-payment alert email failed', [
+                            'inquiry_id' => $inquiry->id,
+                            'error' => $e->getMessage(),
+                        ]);
+                    }
+                }
+
+                return [$earlyExit + ['received' => $received], 200];
+            }
+
             if (($earlyExit['reason'] ?? null) === 'inquiry_not_confirmed') {
                 $ownerEmail = SiteSetting::getValue('contact_email');
                 if ($ownerEmail) {
@@ -298,6 +200,13 @@ class PayMongoWebhookService
                         ]);
                     }
                 }
+            }
+
+            // A committed payment that failed to persist must stay an HTTP 500
+            // so PayMongo retries (previously thrown; now surfaced as an
+            // error early-exit by the shared routine).
+            if (($earlyExit['error'] ?? null) === 'Failed to record payment') {
+                return [['error' => 'Failed to record payment', 'received' => $received], 500];
             }
 
             $status = isset($earlyExit['error']) ? 400 : 200;

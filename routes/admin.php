@@ -75,6 +75,9 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::post('{inquiry}/cancel', [BookingActionsController::class, 'cancel'])->name('cancel');
             Route::post('{inquiry}/mark-paid', [InquiryController::class, 'markPaid'])->name('mark-paid');
             Route::post('{inquiry}/refund', [InquiryController::class, 'refund'])->name('refund');
+            Route::post('{inquiry}/resync-payment', [InquiryController::class, 'resyncPayment'])
+                ->middleware('throttle:resync')
+                ->name('resync-payment');
             Route::post('{inquiry}/payment-proof/approve', [InquiryController::class, 'approvePaymentProof'])->name('payment-proof.approve');
             Route::post('{inquiry}/payment-proof/reject', [InquiryController::class, 'rejectPaymentProof'])->name('payment-proof.reject');
         });

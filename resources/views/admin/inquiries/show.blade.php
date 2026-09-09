@@ -123,6 +123,19 @@
                     @elseif($inquiry->hasFailedPayment())
                         <p class="mt-1 text-xs text-red-500 dark:text-red-400">Last attempt failed {{ $inquiry->payment_failed_at?->format('M d, Y \a\t h:i A') }}</p>
                     @endif
+                    @if($inquiry->payment_pending_amount)
+                        <p class="mt-1 text-xs text-amber-600 dark:text-amber-400">Checkout pending {{ formatPrice($inquiry->payment_pending_amount) }}{{ $inquiry->paymongo_session_id ? ' · '.Str::limit($inquiry->paymongo_session_id, 18) : '' }}</p>
+                    @endif
+                    @if(($inquiry->refund_status ?? 'none') === 'failed')
+                        <div class="mt-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-800 dark:bg-red-500/10 dark:border-red-500/30 dark:text-red-300">
+                            <p class="font-semibold">⚠ Refund requires attention — {{ formatPrice($inquiry->refundableAmount()) }} · {{ $inquiry->reference_code }}</p>
+                            <p class="mt-1">Last attempt failed{{ $inquiry->refund_last_error ? ': '.$inquiry->refund_last_error : '' }} ({{ $inquiry->refund_attempts }} attempt(s)). The retry job will try again automatically.</p>
+                            <form method="POST" action="{{ route('admin.inquiries.refund', $inquiry) }}" class="mt-2">
+                                @csrf
+                                <button type="submit" class="px-3 py-1.5 text-xs font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors">Retry Refund</button>
+                            </form>
+                        </div>
+                    @endif
                 </div>
             </div>
             <div class="flex items-center gap-3">
@@ -210,6 +223,12 @@
                     @@click="$dispatch('open-confirm-refund', { url: '{{ route('admin.inquiries.refund', $inquiry) }}' })"
                     class="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors shadow-sm">Refund</button>
             @endif
+            @can('resync', $inquiry)
+                <form method="POST" action="{{ route('admin.inquiries.resync-payment', $inquiry) }}" class="inline">
+                    @csrf
+                    <button type="submit" title="Re-check this booking against PayMongo and record any missing payment" class="px-4 py-2 text-sm font-medium text-teal-700 bg-teal-50 border border-teal-200 rounded-lg hover:bg-teal-100 transition-colors shadow-sm dark:bg-teal-500/10 dark:text-teal-300 dark:border-teal-500/30 dark:hover:bg-teal-500/20">Resync Payment</button>
+                </form>
+            @endcan
             @if($inquiry->status === 'pending')
                 <button type="button"
                     @@click="$dispatch('open-confirm-confirm', { url: '{{ route('admin.inquiries.confirm', $inquiry) }}' })"

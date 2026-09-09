@@ -53,6 +53,8 @@ class ActivityLog extends Model
             'payment_proof.approved' => 'Payment proof approved',
             'payment_proof.rejected' => 'Payment proof rejected',
             'payment.received' => 'Payment received',
+            'payment.resynced' => 'Payment resynced',
+            'payment.late_received' => 'Late payment received',
             'guest.cancelled' => 'Guest cancelled booking',
             'guest.modified' => 'Guest modified booking',
             'guest.updated' => 'Guest updated',

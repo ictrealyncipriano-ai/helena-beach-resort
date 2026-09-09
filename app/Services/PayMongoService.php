@@ -83,6 +83,54 @@ class PayMongoService
     }
 
     /**
+     * Retrieve a hosted checkout session by id (WP-2 reconciliation).
+     *
+     * @throws \RuntimeException when PayMongo returns an error.
+     */
+    public function retrieveCheckoutSession(string $sessionId): array
+    {
+        $response = Http::baseUrl(config('paymongo.base_url'))
+            ->withBasicAuth(config('paymongo.secret_key'), '')
+            ->acceptJson()
+            ->get('/v2/checkout_sessions/'.$sessionId);
+
+        if ($response->failed()) {
+            Log::warning('PayMongo checkout session retrieve failed', [
+                'session_id' => $sessionId,
+                'status' => $response->status(),
+            ]);
+
+            throw new \RuntimeException('Unable to retrieve the payment session.');
+        }
+
+        return $response->json('data') ?? [];
+    }
+
+    /**
+     * Retrieve a payment by id (WP-2 reconciliation).
+     *
+     * @throws \RuntimeException when PayMongo returns an error.
+     */
+    public function retrievePayment(string $paymentId): array
+    {
+        $response = Http::baseUrl(config('paymongo.base_url'))
+            ->withBasicAuth(config('paymongo.secret_key'), '')
+            ->acceptJson()
+            ->get('/v1/payments/'.$paymentId);
+
+        if ($response->failed()) {
+            Log::warning('PayMongo payment retrieve failed', [
+                'payment_id' => $paymentId,
+                'status' => $response->status(),
+            ]);
+
+            throw new \RuntimeException('Unable to retrieve the payment.');
+        }
+
+        return $response->json('data') ?? [];
+    }
+
+    /**
      * Verify that a webhook request genuinely came from PayMongo.
      *
      * The Paymongo-Signature header carries t (timestamp), te (test) and li
@@ -156,6 +204,17 @@ class PayMongoService
         // than a double refund.
         $idempotencyKey = 'refund-'.$inquiry->id.'-'.($inquiry->fully_paid_at?->getTimestamp() ?? $inquiry->deposit_paid_at?->getTimestamp() ?? $inquiry->id);
 
+        return $this->refundPayment($paymentId, $amount, $idempotencyKey);
+    }
+
+    /**
+     * Issue a refund for a single PayMongo payment id (WP-6 late payments).
+     * Shared by refund() above so normal and late refunds hit one API path.
+     *
+     * @throws \RuntimeException when PayMongo returns an error.
+     */
+    public function refundPayment(string $paymentId, int $centavos, string $idempotencyKey): array
+    {
         $response = Http::baseUrl(config('paymongo.base_url'))
             ->withBasicAuth(config('paymongo.secret_key'), '')
             ->withHeaders(['Idempotency-Key' => $idempotencyKey])
@@ -164,7 +223,7 @@ class PayMongoService
                 'data' => [
                     'attributes' => [
                         'payment_id' => $paymentId,
-                        'amount' => $amount,
+                        'amount' => $centavos,
                         'reason' => 'requested_by_customer',
                     ],
                 ],
@@ -172,7 +231,6 @@ class PayMongoService
 
         if ($response->failed()) {
             Log::error('PayMongo refund failed', [
-                'inquiry_id' => $inquiry->id,
                 'payment_id' => $paymentId,
                 'status' => $response->status(),
                 'body' => $response->json(),

@@ -12,7 +12,7 @@ use App\Models\User;
  * fragile route-name parsing can retire incrementally:
  *   - view (index/show/edit): super_admin, admin, staff
  *   - writes (store/update/destroy/confirm/cancel/markPaid/refund/
- *     approvePaymentProof/rejectPaymentProof): super_admin, admin
+ *     approvePaymentProof/rejectPaymentProof/resync): super_admin, admin
  * Staff keep read-only inquiry access; payment-proof approval is a write.
  */
 class InquiryPolicy
@@ -78,6 +78,16 @@ class InquiryPolicy
     }
 
     public function rejectPaymentProof(User $user, ?Inquiry $inquiry = null): bool
+    {
+        return $this->isManager($user);
+    }
+
+    /**
+     * Re-check a booking's payment state against PayMongo (WP-5 Resync).
+     * Touches money (may record a missing payment), so manager-only like
+     * markPaid/refund.
+     */
+    public function resync(User $user, ?Inquiry $inquiry = null): bool
     {
         return $this->isManager($user);
     }

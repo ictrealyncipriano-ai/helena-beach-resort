@@ -55,9 +55,9 @@ class Inquiry extends Model
         'booking_type', 'total_amount', 'promo_code_id', 'discount_amount',
         'payment_method', 'paymongo_session_id',
         'payment_failed_at', 'paymongo_payment_id', 'refunded_at',
-        'refund_amount', 'expiry_warned_at',
+        'refund_amount', 'refund_status', 'refund_attempts', 'refund_last_error', 'expiry_warned_at',
         'deposit_amount', 'amount_paid', 'deposit_paid_at',
-        'fully_paid_at', 'payment_pending_amount',
+        'fully_paid_at', 'payment_pending_amount', 'payment_pending_at',
         'payment_proof_path', 'payment_proof_status',
         'payment_proof_submitted_at', 'payment_proof_reviewed_at',
         'payment_proof_review_note',
@@ -158,9 +158,11 @@ class Inquiry extends Model
             'deposit_paid_at' => 'datetime',
             'fully_paid_at' => 'datetime',
             'payment_pending_amount' => 'decimal:2',
+            'payment_pending_at' => 'datetime',
             'payment_failed_at' => 'datetime',
             'refunded_at' => 'datetime',
             'refund_amount' => 'decimal:2',
+            'refund_attempts' => 'integer',
             'expiry_warned_at' => 'datetime',
             'payment_proof_submitted_at' => 'datetime',
             'payment_proof_reviewed_at' => 'datetime',
@@ -309,6 +311,7 @@ class Inquiry extends Model
      */
     public function recordManualPayment(string $amount, string $method = self::METHOD_MANUAL): bool
     {
+        $priorPaid = (float) ($this->amount_paid ?? 0);
         $newAmountPaid = formatPrice(
             (float) ($this->amount_paid ?? 0) + (float) $amount,
             2, false
@@ -325,6 +328,23 @@ class Inquiry extends Model
                 : $this->deposit_paid_at,
             'fully_paid_at' => $fullyPaid ? now() : $this->fully_paid_at,
             'payment_method' => $method,
+        ]);
+
+        // WP-1 dual-write: mirror the settlement into the ledger. Manual
+        // rows carry no provider id, so this is a plain create.
+        $type = $fullyPaid
+            ? ($priorPaid > 0 ? Payment::TYPE_BALANCE : Payment::TYPE_FULL)
+            : ($depositCovered && $this->hasDeposit() ? Payment::TYPE_DEPOSIT : Payment::TYPE_BALANCE);
+
+        Payment::create([
+            'inquiry_id' => $this->id,
+            'provider' => Payment::PROVIDER_MANUAL,
+            'method' => $method,
+            'type' => $type,
+            'amount' => formatPrice($amount, 2, false),
+            'currency' => 'PHP',
+            'status' => Payment::STATUS_PAID,
+            'paid_at' => now(),
         ]);
 
         return $fullyPaid;
@@ -362,6 +382,16 @@ class Inquiry extends Model
     public function dateBlocks(): HasMany
     {
         return $this->hasMany(CottageDateBlock::class);
+    }
+
+    /**
+     * WP-1: financial ledger rows for this booking. Additive — the
+     * inquiries.* summary columns remain the operational source of truth
+     * until later phases.
+     */
+    public function payments(): HasMany
+    {
+        return $this->hasMany(Payment::class);
     }
 
     public function testimonials(): HasMany

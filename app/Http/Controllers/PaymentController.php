@@ -71,6 +71,7 @@ class PaymentController extends Controller
         // value would become the next webhook's verification baseline.
         $inquiry->update([
             'payment_pending_amount' => $dueNow,
+            'payment_pending_at' => now(),
             'paymongo_session_id' => $session['session_id'],
         ]);
 
