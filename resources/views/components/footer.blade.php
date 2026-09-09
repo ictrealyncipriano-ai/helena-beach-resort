@@ -8,7 +8,7 @@
                     <span class="font-semibold text-xl text-white">{{ $site['name'] ?? config('app.name') }}</span>
                 </div>
                 <p class="text-teal-100 text-sm leading-relaxed max-w-xs">
-                    Experience the perfect getaway at Helena Beach Resort. Nestled along the pristine shores of Infanta, Quezon, we offer a peaceful retreat surrounded by nature.
+                    {{ $site['footer_tagline'] ?? '' }}
                 </p>
                 <div class="flex items-center gap-3 mt-5">
                     @foreach($socials as $icon => $href)
@@ -46,7 +46,7 @@
                         <span class="shrink-0 w-9 h-9 rounded-full bg-teal-800/50 flex items-center justify-center text-teal-300">
                             <x-icons name="location" class="w-4 h-4" />
                         </span>
-                        <span class="text-teal-100 pt-1.5">Purok Buyan, Brgy. Dinahican, Infanta, Quezon</span>
+                        <span class="text-teal-100 pt-1.5">{{ $site['address'] ?? '' }}</span>
                     </li>
                     @php
                         $contactPhone = trim((string) ($site['contact_phone'] ?? ''));

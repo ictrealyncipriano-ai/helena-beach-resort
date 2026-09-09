@@ -1,23 +1,21 @@
 @extends('layouts.app')
 
 @section('title', 'About Us')
-@section('description', 'Learn more about Helena Beach Resort in Infanta, Quezon.')
+@section('description', 'Learn more about '.($site['name'] ?? config('app.name')).'.')
 @section('canonical', route('about'))
 
 @section('content')
-<x-hero title="About Helena Beach Resort" subtitle="Discover your perfect beach getaway." />
+<x-hero :title="'About '.($site['name'] ?? config('app.name'))" subtitle="Discover your perfect beach getaway." />
 
 <section class="py-20 sm:py-28 bg-white dark:bg-slate-800">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center mb-20 reveal">
             <div>
                 <span class="inline-block text-xs font-semibold tracking-widest uppercase text-teal-700 dark:text-teal-300 mb-3">Our Story</span>
-                <h2 class="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white mb-6 font-heading">Welcome to Helena Beach Resort</h2>
+                <h2 class="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white mb-6 font-heading">Welcome to {{ $site['name'] ?? config('app.name') }}</h2>
                 <div class="w-12 h-1 bg-teal-500 rounded-full mb-6"></div>
                 <div class="prose prose-teal max-w-none text-gray-600 dark:text-slate-300 space-y-4 leading-relaxed">
-                    <p>Nestled along the pristine shores of Purok Buyan in Brgy. Dinahican, Infanta, Quezon, Helena Beach Resort offers a peaceful retreat surrounded by nature's beauty. Our resort is the perfect destination for families, couples, and groups looking to escape the hustle and bustle of city life.</p>
-                    <p>With comfortable beachfront cottages, crystal-clear waters, and breathtaking sunsets, we provide an unforgettable tropical experience. Whether you're here for a day tour or an overnight stay, our dedicated team ensures your comfort and enjoyment.</p>
-                    <p>At Helena Beach Resort, we take pride in offering genuine Filipino hospitality. From our friendly staff to our well-maintained facilities, every detail is designed to make your stay memorable.</p>
+                    {!! $aboutBody !!}
                 </div>
             </div>
             <div class="aspect-[4/3] rounded-2xl overflow-hidden bg-gradient-to-br from-teal-100 to-teal-50 dark:from-teal-900/50 dark:to-teal-900/30 flex items-center justify-center text-teal-300/50">
@@ -50,7 +48,7 @@
                 </iframe>
                 <p class="mt-2 text-sm text-gray-600 dark:text-slate-300">
                     <a href="https://maps.google.com/?q={{ $mapLat }},{{ $mapLng }}" target="_blank" rel="noopener" class="underline underline-offset-2">Get directions on Google Maps</a>
-                    — Purok Buyan, Brgy. Dinahican, Infanta, Quezon.
+                    — {{ $site['address'] ?? '' }}
                 </p>
             </div>
         </div>
@@ -61,14 +59,14 @@
                     <x-icons name="location" class="w-6 h-6" />
                 </div>
                 <h3 class="font-semibold text-gray-900 dark:text-white mb-2">Address</h3>
-                <p class="text-sm text-gray-600 dark:text-slate-300 leading-relaxed">Purok Buyan, Brgy. Dinahican, Infanta, Quezon</p>
+                <p class="text-sm text-gray-600 dark:text-slate-300 leading-relaxed">{{ $site['address'] ?? '' }}</p>
             </div>
             <div class="bg-gradient-to-br from-teal-50 to-teal-50/50 dark:from-teal-900/30 dark:to-teal-900/20 rounded-2xl p-8 text-center border border-teal-100/50 dark:border-teal-900/30 hover:shadow-md transition-shadow">
                 <div class="w-12 h-12 bg-teal-100 dark:bg-teal-900/40 rounded-xl flex items-center justify-center mx-auto mb-4 text-teal-700 dark:text-teal-300">
                     <x-icons name="clock" class="w-6 h-6" />
                 </div>
                 <h3 class="font-semibold text-gray-900 dark:text-white mb-2">Operating Hours</h3>
-                <p class="text-sm text-gray-600 dark:text-slate-300">Monday - Sunday: 8:00 AM - 6:00 PM</p>
+                <p class="text-sm text-gray-600 dark:text-slate-300">{{ $site['operating_hours'] ?? '' }}</p>
                 <p class="text-xs text-gray-500 dark:text-slate-400 mt-1">Overnight stays available upon reservation</p>
             </div>
             <div class="bg-gradient-to-br from-teal-50 to-teal-50/50 dark:from-teal-900/30 dark:to-teal-900/20 rounded-2xl p-8 text-center border border-teal-100/50 dark:border-teal-900/30 hover:shadow-md transition-shadow">

@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
 @section('title', 'Contact Us')
-@section('description', 'Contact Helena Beach Resort to book your stay or ask any questions.')
+@section('description', 'Contact '.($site['name'] ?? config('app.name')).' to book your stay or ask any questions.')
 @section('canonical', route('contact'))
 
 @section('content')
@@ -115,7 +115,7 @@
                         </div>
                         <h3 class="font-semibold text-gray-900 dark:text-white">Location</h3>
                     </div>
-                    <p class="text-sm text-gray-600 dark:text-slate-300 leading-relaxed">Purok Buyan, Brgy. Dinahican, Infanta, Quezon</p>
+                    <p class="text-sm text-gray-600 dark:text-slate-300 leading-relaxed">{{ $site['address'] ?? '' }}</p>
                 </div>
 
                 <div class="bg-gradient-to-br from-teal-50 to-teal-50/50 dark:from-teal-900/30 dark:to-teal-900/20 rounded-2xl p-6 border border-teal-100/50 dark:border-teal-900/30">
@@ -143,7 +143,7 @@
                         <h3 class="font-semibold text-gray-900 dark:text-white">Operating Hours</h3>
                     </div>
                     <div class="space-y-1 text-sm text-gray-600 dark:text-slate-300">
-                        <p>Monday - Sunday: 8:00 AM - 6:00 PM</p>
+                        <p>{{ $site['operating_hours'] ?? '' }}</p>
                         <p class="text-xs text-gray-500 dark:text-slate-400 mt-2">Overnight stays available upon reservation</p>
                     </div>
                 </div>

@@ -49,10 +49,13 @@ class PageController extends Controller
         return view('pages.home', compact('cottages', 'gallery', 'testimonials', 'avgRating', 'testimonialCount', 'posts'));
     }
 
-    /** Static about page */
-    public function about(): View
+    /** Static about page (story body editable via the about_body setting) */
+    public function about(HtmlSanitizer $sanitizer): View
     {
-        return view('pages.about');
+        $aboutBody = $sanitizer
+            ->sanitize((string) SiteSetting::getValue('about_body', ''));
+
+        return view('pages.about', compact('aboutBody'));
     }
 
     public function faq(): View
