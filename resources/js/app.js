@@ -9,16 +9,14 @@ window.Alpine = Alpine;
 Alpine.plugin(focus);
 
 function cookieConsent() {
-    // Consent cookie namespace is resort-neutral. The legacy `helena_consent`
-    // cookie is still honored (dual-read) so returning visitors are never
-    // re-prompted; all new writes use `resort_consent` (single-write).
-    // TODO(Phase 2): drop the legacy read path below.
+    // Consent state lives in the resort-neutral `resort_consent` cookie.
+    // Malformed values are treated as absent (banner shown) rather than
+    // throwing inside the Alpine component.
     const CONSENT_COOKIE = 'resort_consent';
-    const LEGACY_CONSENT_COOKIE = 'helena_consent';
     function readConsent() {
-        const match = document.cookie.match(new RegExp('(?:^|; )' + CONSENT_COOKIE + '=([^;]*)'))
-            || document.cookie.match(new RegExp('(?:^|; )' + LEGACY_CONSENT_COOKIE + '=([^;]*)'));
-        return match ? decodeURIComponent(match[1]) : null;
+        const match = document.cookie.match(new RegExp('(?:^|; )' + CONSENT_COOKIE + '=([^;]*)'));
+        if (!match) return null;
+        try { return decodeURIComponent(match[1]); } catch (e) { return null; }
     }
     return {
         show: false,
