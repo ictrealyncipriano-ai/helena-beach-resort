@@ -53,7 +53,7 @@
 {{ App\Models\SiteSetting::getValue('site_name', config('app.name')) }} &bull; {{ App\Models\SiteSetting::getValue('address', '') }}
 </p>
 <p class="footer-text" style="margin: 0 0 8px; font-size: 13px; color: #ccfbf1; line-height: 1.5;">
-{{ App\Models\SiteSetting::getValue('contact_email', 'info@helena.labcoop.online') }}
+{{ App\Models\SiteSetting::getValue('contact_email', config('mail.from.address')) }}
 @if(App\Models\SiteSetting::getValue('contact_phone')) &bull; {{ App\Models\SiteSetting::getValue('contact_phone') }} @endif
 </p>
 <p class="footer-text" style="margin: 0; font-size: 12px; color: #99f6e4;">

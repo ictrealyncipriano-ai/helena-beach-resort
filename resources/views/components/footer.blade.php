@@ -76,7 +76,7 @@
                 <li><a href="{{ route('terms') }}" class="hover:text-white transition-colors">Terms &amp; Conditions</a></li>
                 <li><a href="{{ route('booking-policy') }}" class="hover:text-white transition-colors">Booking Policy</a></li>
             </ul>
-            <p class="text-teal-200/70 text-xs">Made with <x-icons name="heart" class="w-3 h-3 inline text-teal-400" /> in Infanta, Quezon</p>
+            <p class="text-teal-200/70 text-xs">Made with <x-icons name="heart" class="w-3 h-3 inline text-teal-400" />@if(!empty($site['geo_placename'] ?? '')) in {{ $site['geo_placename'] }}@endif</p>
         </div>
     </div>
 </footer>
