@@ -4,7 +4,7 @@
             {{-- Brand --}}
             <div class="reveal">
                 <div class="flex items-center gap-2 mb-4">
-                    <img src="{{ asset('images/logo.jpg') }}" alt="{{ $site['name'] ?? config('app.name') }}" class="h-8 w-auto rounded">
+                    <img src="{{ $site['logo'] ?? asset('images/logo.jpg') }}" alt="{{ $site['name'] ?? config('app.name') }}" class="h-8 w-auto rounded">
                     <span class="font-semibold text-xl text-white">{{ $site['name'] ?? config('app.name') }}</span>
                 </div>
                 <p class="text-teal-100 text-sm leading-relaxed max-w-xs">

@@ -5,13 +5,13 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <link rel="icon" href="{{ asset('favicon.ico') }}" sizes="any">
-    <link rel="apple-touch-icon" href="{{ asset('apple-touch-icon.png') }}">
+    <link rel="icon" href="{{ $site['favicon'] ?? asset('favicon.ico') }}" sizes="any">
+    <link rel="apple-touch-icon" href="{{ $site['apple_touch_icon'] ?? asset('apple-touch-icon.png') }}">
     <title>@php $pageTitle = trim($__env->yieldContent('title', config('app.name'))); echo e($pageTitle) . (str_contains($pageTitle, config('app.name')) ? '' : ' — ' . config('app.name')); @endphp</title>
-    <meta name="description" content="@yield('description', 'Helena Beach Resort — Experience paradise in Infanta, Quezon. Beachfront cottages, fresh seafood, and unforgettable memories.')">
-    <meta name="theme-color" content="#0f766e">
-    <meta name="geo.region" content="PH-QUE">
-    <meta name="geo.placename" content="Infanta, Quezon">
+    <meta name="description" content="@yield('description', $site['description'] ?? config('app.name'))">
+    <meta name="theme-color" content="{{ $site['theme_color'] ?? '#0f766e' }}">
+    <meta name="geo.region" content="{{ $site['geo_region'] ?? 'PH-QUE' }}">
+    <meta name="geo.placename" content="{{ $site['geo_placename'] ?? '' }}">
     @if(!empty($sections['map_lat'] ?? null) && !empty($sections['map_lng'] ?? null))
     <meta name="ICBM" content="{{ $sections['map_lat'] }}, {{ $sections['map_lng'] }}">
     @endif
@@ -21,7 +21,7 @@
     @endif
 
     <meta property="og:title" content="@yield('og_title', config('app.name'))" />
-    <meta property="og:description" content="@yield('og_description', 'Experience paradise in Infanta, Quezon. Beachfront cottages, fresh seafood, and unforgettable memories.')" />
+    <meta property="og:description" content="@yield('og_description', $site['description'] ?? config('app.name'))" />
     <meta property="og:url" content="{{ url()->current() }}" />
     <meta property="og:type" content="@yield('og_type', 'website')" />
     <meta property="og:image" content="@yield('og_image', $site['og_image'])" />
@@ -33,7 +33,7 @@
 
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="@yield('og_title', config('app.name'))" />
-    <meta name="twitter:description" content="@yield('og_description', 'Experience paradise in Infanta, Quezon.')" />
+    <meta name="twitter:description" content="@yield('og_description', $site['description'] ?? config('app.name'))" />
     <meta name="twitter:image" content="@yield('og_image', $site['og_image'])" />
     @php
         $orgSameAs = array_values(array_filter($socials ?? []));
@@ -68,15 +68,10 @@
     <script>
     // Google Analytics 4 with consent mode v2. The gtag.js script is NOT
     // fetched until the visitor has granted consent (or consent is disabled
-    // in site settings); consent state is stored in the resort_consent cookie
-    // (the legacy helena_consent cookie is still honored for returning
-    // visitors — TODO(Phase 2): drop the legacy read path).
+    // in site settings); consent state is stored in the resort_consent cookie.
     (function () {
         window.resortGa4Id = @json($ga4Id);
         window.resortConsentRequired = {{ $consentRequired ? 'true' : 'false' }};
-        // TODO(Phase 2): remove these legacy Helena aliases.
-        window.helenaGa4Id = window.resortGa4Id;
-        window.helenaConsentRequired = window.resortConsentRequired;
 
         window.loadResortGtm = function () {
             if (window.resortGtmLoaded) return;
@@ -102,10 +97,13 @@
         window.dataLayer = window.dataLayer || [];
         window.gtag = function () { window.dataLayer.push(arguments); };
 
-        var match = document.cookie.match(/(?:^|; )resort_consent=([^;]*)/)
-            || document.cookie.match(/(?:^|; )helena_consent=([^;]*)/);
+        function consentValue(m) {
+            try { return decodeURIComponent(m[1]); } catch (e) { return null; }
+        }
+
+        var match = document.cookie.match(/(?:^|; )resort_consent=([^;]*)/);
         var granted = !window.resortConsentRequired ||
-            (match && decodeURIComponent(match[1]) === 'granted');
+            (match && consentValue(match) === 'granted');
 
         window.gtag('consent', 'default', {
             'ad_storage': granted ? 'granted' : 'denied',
@@ -118,8 +116,6 @@
             window.loadResortGtm();
         }
     })();
-    // TODO(Phase 2): remove this legacy Helena alias.
-    window.loadHelenaGtm = window.loadResortGtm;
     </script>
     @endif
     @vite(['resources/css/app.css', 'resources/js/app.js'])

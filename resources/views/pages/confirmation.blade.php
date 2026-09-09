@@ -15,7 +15,7 @@
             <x-icons name="check" class="w-8 h-8 text-green-300" />
         </div>
         <h1 class="text-4xl sm:text-5xl lg:text-6xl font-bold text-white mb-4 font-heading">Inquiry Received!</h1>
-        <p class="text-teal-100/90 text-lg sm:text-xl max-w-2xl mx-auto">Thank you for your interest in Helena Beach Resort. Your request is held for <strong class="text-white">48 hours</strong> — we'll email you to confirm availability, and payment is only required after your booking is confirmed.</p>
+        <p class="text-teal-100/90 text-lg sm:text-xl max-w-2xl mx-auto">Thank you for your interest in {{ $site['name'] ?? config('app.name') }}. Your request is held for <strong class="text-white">{{ $rules['hold_hours'] ?? 48 }} hours</strong> — we'll email you to confirm availability, and payment is only required after your booking is confirmed.</p>
     </div>
     <div class="absolute bottom-0 left-0 right-0">
         <svg viewBox="0 0 1440 60" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-full h-auto">

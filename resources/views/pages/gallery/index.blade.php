@@ -30,7 +30,7 @@
                  aria-label="View photo{{ $item->title ? ': ' . $item->title : '' }}">
                 {{-- Intrinsic dimensions are stored on upload (see CompressesImages);
                      older rows without dims fall back to no attributes. --}}
-                <img src="{{ Storage::url($item->photo_path) }}" alt="{{ $item->title ?: 'Helena Beach Resort — gallery photo' }}"
+                <img src="{{ Storage::url($item->photo_path) }}" alt="{{ $item->title ?: config('app.name').' — gallery photo' }}"
                      @if(!empty($item->width) && !empty($item->height)) width="{{ $item->width }}" height="{{ $item->height }}" style="aspect-ratio: {{ $item->width }} / {{ $item->height }}" @endif
                      class="w-full h-auto object-cover group-hover:scale-105 transition-transform duration-700" loading="lazy" decoding="async">
                 <span class="absolute inset-0 bg-black/0 group-hover:bg-black/30 group-focus-visible:bg-black/30 group-focus-within:bg-black/30 transition-all duration-300 flex flex-col items-center justify-center">

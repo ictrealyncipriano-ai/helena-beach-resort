@@ -6,8 +6,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta name="robots" content="noindex, nofollow">
-    <link rel="icon" href="{{ asset('favicon.ico') }}" sizes="any">
-    <link rel="apple-touch-icon" href="{{ asset('apple-touch-icon.png') }}">
+    <link rel="icon" href="{{ App\Models\SiteSetting::faviconUrl() }}" sizes="any">
+    <link rel="apple-touch-icon" href="{{ App\Models\SiteSetting::appleTouchIconUrl() }}">
     <title>@yield('title', 'Sign in') — {{ config('app.name') }}</title>
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=inter:400,500,600,700|playfair-display:400,600,700&display=swap" rel="stylesheet">
@@ -22,7 +22,7 @@
 
     <div class="auth-card">
         <div class="auth-brand">
-            <img src="{{ asset('images/logo.jpg') }}" alt="{{ config('app.name') }}">
+            <img src="{{ App\Models\SiteSetting::logoUrl() }}" alt="{{ config('app.name') }}">
             <span>{{ config('app.name') }}</span>
         </div>
 

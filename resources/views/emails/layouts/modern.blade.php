@@ -33,9 +33,9 @@
 <!-- Header: brand gradient + logo -->
 <tr>
 <td style="background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%); border-radius: 16px 16px 0 0; padding: 32px 40px 24px; text-align: center;">
-<img src="{{ asset('images/logo.jpg') }}" alt="{{ config('app.name') }}" class="header-logo" style="height: 48px; width: auto; border-radius: 8px; margin-bottom: 8px;">
+<img src="{{ App\Models\SiteSetting::logoUrl() }}" alt="{{ config('app.name') }}" class="header-logo" style="height: 48px; width: auto; border-radius: 8px; margin-bottom: 8px;">
 <h1 style="margin: 8px 0 0; font-size: 20px; font-weight: 700; color: #ffffff; letter-spacing: -0.02em;">{{ config('app.name') }}</h1>
-<p style="margin: 4px 0 0; font-size: 13px; color: #ccfbf1; opacity: 0.9;">Infanta, Quezon — Beachfront Paradise</p>
+<p style="margin: 4px 0 0; font-size: 13px; color: #ccfbf1; opacity: 0.9;">{{ App\Models\SiteSetting::getValue('geo_placename', '') }}</p>
 </td>
 </tr>
 
@@ -50,7 +50,7 @@
 <tr>
 <td style="background: linear-gradient(135deg, #0f766e 0%, #0d9488 100%); border-radius: 0 0 16px 16px; padding: 24px 40px; text-align: center;">
 <p class="footer-text" style="margin: 0 0 8px; font-size: 13px; color: #ccfbf1; line-height: 1.5;">
-Helena Beach Resort &bull; Purok Buyan, Brgy. Dinahican, Infanta, Quezon
+{{ App\Models\SiteSetting::getValue('site_name', config('app.name')) }} &bull; {{ App\Models\SiteSetting::getValue('address', '') }}
 </p>
 <p class="footer-text" style="margin: 0 0 8px; font-size: 13px; color: #ccfbf1; line-height: 1.5;">
 {{ App\Models\SiteSetting::getValue('contact_email', 'info@helena.labcoop.online') }}

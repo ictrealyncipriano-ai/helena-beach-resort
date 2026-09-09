@@ -20,9 +20,9 @@
         'address' => [
             '@type' => 'PostalAddress',
             'streetAddress' => $site['address'],
-            'addressLocality' => 'Infanta',
-            'addressRegion' => 'Quezon',
-            'addressCountry' => 'PH',
+            'addressLocality' => $site['address_locality'] ?? 'Infanta',
+            'addressRegion' => $site['address_region'] ?? 'Quezon',
+            'addressCountry' => $site['address_country'] ?? 'PH',
         ],
     ];
     if ($avgRating) {
@@ -170,7 +170,7 @@
         <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
             @foreach($gallery->take(8) as $i => $item)
             <figure class="relative group aspect-square rounded-xl overflow-hidden bg-gray-100 dark:bg-slate-800 reveal {{ $i > 0 ? 'reveal-delay-' . min($i % 4 + 1, 4) : '' }}">
-                <img src="{{ Storage::url($item->photo_path) }}" alt="{{ $item->title ?: 'Helena Beach Resort — gallery photo' }}" width="400" height="400" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" loading="lazy" decoding="async">
+                <img src="{{ Storage::url($item->photo_path) }}" alt="{{ $item->title ?: config('app.name').' — gallery photo' }}" width="400" height="400" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" loading="lazy" decoding="async">
                 @if($item->title)
                 <figcaption class="absolute inset-0 bg-black/30 md:bg-black/0 md:group-hover:bg-black/30 md:focus-within:bg-black/30 transition-colors flex items-end p-3 opacity-100 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100">
                     <p class="text-white text-xs font-medium">{{ $item->title }}</p>

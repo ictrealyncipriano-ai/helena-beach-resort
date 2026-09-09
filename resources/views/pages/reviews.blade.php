@@ -11,7 +11,7 @@
     $reviewsSchema = [
         '@context' => 'https://schema.org',
         '@type' => 'LodgingBusiness',
-        'name' => 'Helena Beach Resort',
+        'name' => config('app.name'),
         'url' => route('reviews'),
         'aggregateRating' => [
             '@type' => 'AggregateRating',

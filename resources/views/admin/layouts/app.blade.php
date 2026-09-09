@@ -6,8 +6,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta name="robots" content="noindex, nofollow">
-    <link rel="icon" href="{{ asset('favicon.ico') }}" sizes="any">
-    <link rel="apple-touch-icon" href="{{ asset('apple-touch-icon.png') }}">
+    <link rel="icon" href="{{ App\Models\SiteSetting::faviconUrl() }}" sizes="any">
+    <link rel="apple-touch-icon" href="{{ App\Models\SiteSetting::appleTouchIconUrl() }}">
     <title>@yield('title') — {{ config('app.name') }} Admin</title>
     <link rel="preconnect" href="https://fonts.bunny.net">
     {{-- Load webfonts asynchronously so they never block first paint.

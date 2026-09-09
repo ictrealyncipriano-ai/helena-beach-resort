@@ -220,7 +220,7 @@
     <div class="sheet">
         <div class="report-header">
             <div class="brand">
-                <img src="{{ asset('images/logo.jpg') }}" alt="{{ App\Models\SiteSetting::getValue('site_name', config('app.name')) }}">
+                <img src="{{ App\Models\SiteSetting::logoUrl() }}" alt="{{ App\Models\SiteSetting::getValue('site_name', config('app.name')) }}">
                 <div>
                     <h1>{{ App\Models\SiteSetting::getValue('site_name', config('app.name')) }}</h1>
                     <p>{{ App\Models\SiteSetting::getValue('address', '') }}</p>

@@ -46,7 +46,7 @@
                     allowfullscreen=""
                     loading="lazy"
                     referrerpolicy="no-referrer-when-downgrade"
-                    title="Helena Beach Resort Location">
+                    title="{{ ($site['name'] ?? config('app.name')).' Location' }}">
                 </iframe>
                 <p class="mt-2 text-sm text-gray-600 dark:text-slate-300">
                     <a href="https://maps.google.com/?q={{ $mapLat }},{{ $mapLng }}" target="_blank" rel="noopener" class="underline underline-offset-2">Get directions on Google Maps</a>
