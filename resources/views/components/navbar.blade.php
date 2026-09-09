@@ -21,8 +21,8 @@
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex items-center justify-between h-16 sm:h-20">
             <a href="{{ route('home') }}" class="flex items-center gap-2 group">
-                <img src="{{ asset('images/logo.jpg') }}" alt="Helena Beach" class="h-8 w-auto rounded transition-transform group-hover:scale-105">
-                <span class="font-semibold text-xl text-teal-700 dark:text-teal-300">Helena Beach</span>
+                <img src="{{ asset('images/logo.jpg') }}" alt="{{ $site['name'] ?? config('app.name') }}" class="h-8 w-auto rounded transition-transform group-hover:scale-105">
+                <span class="font-semibold text-xl text-teal-700 dark:text-teal-300">{{ $site['name'] ?? config('app.name') }}</span>
             </a>
 
             {{-- Desktop Navigation --}}

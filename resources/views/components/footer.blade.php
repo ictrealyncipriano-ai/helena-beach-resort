@@ -4,8 +4,8 @@
             {{-- Brand --}}
             <div class="reveal">
                 <div class="flex items-center gap-2 mb-4">
-                    <img src="{{ asset('images/logo.jpg') }}" alt="Helena Beach Resort" class="h-8 w-auto rounded">
-                    <span class="font-semibold text-xl text-white">Helena Beach Resort</span>
+                    <img src="{{ asset('images/logo.jpg') }}" alt="{{ $site['name'] ?? config('app.name') }}" class="h-8 w-auto rounded">
+                    <span class="font-semibold text-xl text-white">{{ $site['name'] ?? config('app.name') }}</span>
                 </div>
                 <p class="text-teal-100 text-sm leading-relaxed max-w-xs">
                     Experience the perfect getaway at Helena Beach Resort. Nestled along the pristine shores of Infanta, Quezon, we offer a peaceful retreat surrounded by nature.
@@ -70,7 +70,7 @@
         </div>
 
         <div class="border-t border-teal-800/60 mt-12 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-teal-200">
-            <p>&copy; {{ date('Y') }} Helena Beach Resort. All rights reserved.</p>
+            <p>&copy; {{ date('Y') }} {{ $site['name'] ?? config('app.name') }}. All rights reserved.</p>
             <ul class="flex flex-wrap items-center justify-center gap-x-5 gap-y-2">
                 <li><a href="{{ route('privacy') }}" class="hover:text-white transition-colors">Privacy Policy</a></li>
                 <li><a href="{{ route('terms') }}" class="hover:text-white transition-colors">Terms &amp; Conditions</a></li>

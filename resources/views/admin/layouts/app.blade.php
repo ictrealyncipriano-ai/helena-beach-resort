@@ -8,7 +8,7 @@
     <meta name="robots" content="noindex, nofollow">
     <link rel="icon" href="{{ asset('favicon.ico') }}" sizes="any">
     <link rel="apple-touch-icon" href="{{ asset('apple-touch-icon.png') }}">
-    <title>@yield('title') — Helena Beach Admin</title>
+    <title>@yield('title') — {{ config('app.name') }} Admin</title>
     <link rel="preconnect" href="https://fonts.bunny.net">
     {{-- Load webfonts asynchronously so they never block first paint.
          font-display: swap (already in the URL) shows fallback text until
@@ -61,7 +61,7 @@
             </main>
 
             <footer class="border-t border-gray-100 bg-white px-6 py-3 text-xs text-gray-500 text-center dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400">
-                &copy; {{ date('Y') }} Helena Beach Resort. All rights reserved.
+                &copy; {{ date('Y') }} {{ config('app.name') }}. All rights reserved.
             </footer>
         </div>
     </div>

@@ -8,7 +8,7 @@
     <meta name="robots" content="noindex, nofollow">
     <link rel="icon" href="{{ asset('favicon.ico') }}" sizes="any">
     <link rel="apple-touch-icon" href="{{ asset('apple-touch-icon.png') }}">
-    <title>@yield('title', 'Sign in') — Helena Beach Resort</title>
+    <title>@yield('title', 'Sign in') — {{ config('app.name') }}</title>
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=inter:400,500,600,700|playfair-display:400,600,700&display=swap" rel="stylesheet">
     @vite(['resources/css/admin.css', 'resources/css/admin-auth.css'])
@@ -22,8 +22,8 @@
 
     <div class="auth-card">
         <div class="auth-brand">
-            <img src="{{ asset('images/logo.jpg') }}" alt="Helena Beach">
-            <span>Helena Beach</span>
+            <img src="{{ asset('images/logo.jpg') }}" alt="{{ config('app.name') }}">
+            <span>{{ config('app.name') }}</span>
         </div>
 
         <h1 class="auth-heading">@yield('heading')</h1>
@@ -35,7 +35,7 @@
 
         <div class="auth-footer">
             @yield('footer-link')
-            <div class="copyright">&copy; {{ date('Y') }} Helena Beach Resort</div>
+            <div class="copyright">&copy; {{ date('Y') }} {{ config('app.name') }}</div>
         </div>
     </div>
 
