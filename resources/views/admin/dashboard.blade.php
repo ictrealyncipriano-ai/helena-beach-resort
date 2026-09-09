@@ -11,6 +11,13 @@
 </script>
 <div class="space-y-6 sm:space-y-8">
 
+    @if(!empty($legalDraftPages))
+    <div class="bg-amber-50 border border-amber-200 rounded-xl px-5 py-4 text-sm text-amber-800 leading-relaxed dark:bg-amber-900/30 dark:border-amber-800 dark:text-amber-200" role="alert">
+        <p class="font-semibold mb-1">Legal pages need final copy</p>
+        <p>The following pages still contain draft copy: {{ implode(', ', $legalDraftPages) }}. Update them in <a href="{{ route('admin.site-settings.index') }}" class="underline font-medium hover:no-underline">Site Settings</a> before launch.</p>
+    </div>
+    @endif
+
     {{-- Stat Cards --}}
     <div
         x-data="{

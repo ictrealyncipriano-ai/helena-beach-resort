@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Cottage;
 use App\Models\Inquiry;
+use App\Models\SiteSetting;
 use App\Traits\QueriesByMonth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -87,8 +88,25 @@ class DashboardController extends Controller
             ->take(5)
             ->get();
 
+        // Non-blocking launch check: legal pages seeded with "Draft" copy
+        // must be replaced with final text. Warning only — never blocks.
+        // Matches on the leading word (after stripping tags) so the check
+        // never depends on exact dash characters in the seeded marker. A
+        // missing key counts as draft: an empty legal page is equally
+        // unlaunchable. (Note: fresh migrate+seed installs carry final copy
+        // from the migration; drafts only surface via the seeder fallback.)
+        $legalDraftPages = collect([
+            'legal_privacy' => 'Privacy Policy',
+            'legal_terms' => 'Terms & Conditions',
+            'legal_booking_policy' => 'Booking Policy',
+        ])->filter(function ($label, $key) {
+            $text = trim(strip_tags((string) SiteSetting::getValue($key, '')));
+
+            return $text === '' || str_starts_with($text, 'Draft');
+        })->values()->all();
+
         return view('admin.dashboard', $stats + compact(
-            'upcomingCheckIns', 'recentInquiries', 'popularCottages'
+            'upcomingCheckIns', 'recentInquiries', 'popularCottages', 'legalDraftPages'
         ));
     }
 }
