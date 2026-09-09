@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Cottage;
 use App\Models\CottageDateBlock;
+use App\Models\SiteSetting;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -99,8 +100,10 @@ class PublicPageTest extends TestCase
 
     public function test_home_page_has_keyword_rich_title_and_jsonld(): void
     {
+        $expectedTitle = SiteSetting::getValue('site_name').' | Beachfront Cottages in '.SiteSetting::getValue('geo_placename');
+
         $this->get('/')
-            ->assertSee('Helena Beach Resort | Beachfront Cottages in Infanta, Quezon')
+            ->assertSee($expectedTitle)
             ->assertSee('LodgingBusiness')
             ->assertSee('aggregateRating');
     }

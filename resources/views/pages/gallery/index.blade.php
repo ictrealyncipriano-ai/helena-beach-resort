@@ -1,11 +1,11 @@
 @extends('layouts.app')
 
 @section('title', 'Gallery')
-@section('description', 'Browse photos of Helena Beach Resort in Infanta, Quezon.')
+@section('description', 'Browse photos of '.config('app.name').' in '.App\Models\SiteSetting::getValue('geo_placename', '').'.')
 @section('canonical', $galleries->currentPage() > 1 ? route('gallery.index', ['page' => $galleries->currentPage()]) : route('gallery.index'))
 
 @section('content')
-<x-hero title="Gallery" subtitle="Explore the beauty of Helena Beach Resort through photos." />
+<x-hero title="Gallery" :subtitle="'Explore the beauty of '.config('app.name').' through photos.'" />
 
 {{-- Gallery Grid --}}
 <section class="py-20 sm:py-28 bg-white dark:bg-slate-800">

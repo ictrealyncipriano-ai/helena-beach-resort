@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
 @section('title', 'Find My Booking')
-@section('description', 'Look up your booking at Helena Beach Resort using your email and reference code.')
+@section('description', 'Look up your booking at '.config('app.name').' using your email and reference code.')
 @section('robots', 'noindex, nofollow')
 
 @section('content')

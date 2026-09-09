@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
 @section('title', 'Guest Reviews')
-@section('description', 'Read what our guests say about their stay at Helena Beach Resort in Infanta, Quezon.')
+@section('description', 'Read what our guests say about their stay at '.config('app.name').' in '.App\Models\SiteSetting::getValue('geo_placename', '').'.')
 @section('canonical', $testimonials->currentPage() > 1 ? route('reviews', ['page' => $testimonials->currentPage()]) : route('reviews'))
 
 @push('head')

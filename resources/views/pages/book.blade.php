@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
 @section('title', 'Book Your Stay')
-@section('description', 'Book your stay at Helena Beach Resort in Infanta, Quezon.')
+@section('description', 'Book your stay at '.config('app.name').' in '.App\Models\SiteSetting::getValue('geo_placename', '').'.')
 @section('canonical', route('book'))
 
 @section('content')

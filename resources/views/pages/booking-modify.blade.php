@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
 @section('title', 'Modify Booking')
-@section('description', 'Change the dates, cottage, or schedule of your booking at Helena Beach Resort.')
+@section('description', 'Change the dates, cottage, or schedule of your booking at '.config('app.name').'.')
 @section('robots', 'noindex, nofollow')
 
 @section('content')

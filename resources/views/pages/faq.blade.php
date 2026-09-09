@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
 @section('title', 'Frequently Asked Questions')
-@section('description', 'Find answers to common questions about Helena Beach Resort — reservations, rates, amenities, policies, and more.')
+@section('description', 'Find answers to common questions about '.($site['name'] ?? config('app.name')).' — reservations, rates, amenities, policies, and more.')
 @section('canonical', route('faq'))
 
 @push('head')
@@ -29,7 +29,7 @@
 
 @section('content')
 <x-hero title="Frequently Asked Questions"
-         subtitle="Everything you need to know about your stay at Helena Beach Resort.">
+         :subtitle="'Everything you need to know about your stay at '.($site['name'] ?? config('app.name')).'.'">
     <x-slot:badge>
         <x-icons name="question" class="w-4 h-4" />
         Got questions? We've got answers.

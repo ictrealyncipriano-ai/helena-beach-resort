@@ -55,6 +55,7 @@ class AppServiceProvider extends ServiceProvider
             'pages.about',
             'pages.contact',
             'pages.confirmation',
+            'pages.legal',
             'pages.faq',
             'pages.news.show',
         ], SiteSettingsComposer::class);

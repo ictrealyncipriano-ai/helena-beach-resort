@@ -1,12 +1,12 @@
 @extends('layouts.app')
 
 @section('title', 'News & Updates')
-@section('description', 'News, announcements, and promotions from Helena Beach Resort in Infanta, Quezon.')
+@section('description', 'News, announcements, and promotions from '.config('app.name').' in '.App\Models\SiteSetting::getValue('geo_placename', '').'.')
 @section('canonical', $posts->currentPage() > 1 ? route('news.index', ['page' => $posts->currentPage()]) : route('news.index'))
 
 @section('content')
 <x-hero title="News &amp; Updates"
-         subtitle="Announcements, tips, and promos from Helena Beach Resort.">
+         :subtitle="'Announcements, tips, and promos from '.config('app.name').'.'">
     <x-slot:badge>
         <x-icons name="sparkles" class="w-4 h-4" />
         Stay in the loop

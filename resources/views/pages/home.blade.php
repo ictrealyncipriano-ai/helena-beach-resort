@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
-@section('title', 'Helena Beach Resort | Beachfront Cottages in Infanta, Quezon')
-@section('description', 'Helena Beach Resort — beachfront cottages, fresh seafood, and unforgettable stays in Infanta, Quezon. Book your day tour or overnight getaway today.')
+@section('title', ($site['name'] ?? config('app.name')).' | Beachfront Cottages in '.($site['geo_placename'] ?? ''))
+@section('description', ($site['name'] ?? config('app.name')).' — beachfront cottages, fresh seafood, and unforgettable stays in '.($site['geo_placename'] ?? '').'. Book your day tour or overnight getaway today.')
 @section('canonical', route('home'))
 
 @push('head')
