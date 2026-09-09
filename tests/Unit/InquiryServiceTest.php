@@ -22,8 +22,9 @@ class InquiryServiceTest extends TestCase
         ]);
 
         $this->assertNotNull($inquiry->reference_code);
-        $this->assertStringStartsWith('HB-', $inquiry->reference_code);
-        $this->assertMatchesRegularExpression('/^HB-[A-F0-9]{10}$/', $inquiry->reference_code);
+        $prefix = config('booking.reference_prefix', 'HB-');
+        $this->assertStringStartsWith($prefix, $inquiry->reference_code);
+        $this->assertMatchesRegularExpression('/^[A-Z]{1,4}-[A-F0-9]{10}$/', $inquiry->reference_code);
     }
 
     public function test_create_sets_source_to_website(): void
@@ -75,7 +76,7 @@ class InquiryServiceTest extends TestCase
         $this->assertSame(25, count(array_unique($codes)));
 
         foreach ($codes as $code) {
-            $this->assertMatchesRegularExpression('/^HB-[A-F0-9]{10}$/', $code);
+            $this->assertMatchesRegularExpression('/^[A-Z]{1,4}-[A-F0-9]{10}$/', $code);
         }
     }
 

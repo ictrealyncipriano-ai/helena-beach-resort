@@ -69,7 +69,7 @@ class Inquiry extends Model
 
     /**
      * Boot events: auto-generates a non-enumerable booking token and a
-     * collision-resistant reference code (HB-XXXXXX) on creation.
+     * collision-resistant reference code (PREFIX-XXXXXXXXXX) on creation.
      *
      * The token is intentionally NOT in $fillable so it can never be
      * mass-assigned from request input; it is only set here.
@@ -124,12 +124,26 @@ class Inquiry extends Model
     }
 
     /**
-     * Human-readable, collision-resistant reference code (HB- + 10 hex chars).
+     * Per-resort booking reference prefix (BOOKING_REF_PREFIX, default HB-).
+     * Centralized here so Admin\CottageController's date-block guards track
+     * the same prefix new bookings are generated with. Only affects newly
+     * generated codes — existing references keep working unchanged.
+     */
+    public static function referencePrefix(): string
+    {
+        $prefix = (string) config('booking.reference_prefix', 'HB-');
+
+        return preg_match('/^[A-Z]{1,4}-$/', $prefix) ? $prefix : 'HB-';
+    }
+
+    /**
+     * Human-readable, collision-resistant reference code
+     * (prefix + 10 hex chars, e.g. HB-XXXXXXXXXX).
      * Unique-violation retries are handled by the callers (see InquiryService).
      */
     public static function generateReferenceCode(): string
     {
-        return 'HB-'.strtoupper(bin2hex(random_bytes(5)));
+        return static::referencePrefix().strtoupper(bin2hex(random_bytes(5)));
     }
 
     protected function casts(): array

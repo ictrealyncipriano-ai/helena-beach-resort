@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Cottage;
 use App\Models\CottagePhoto;
+use App\Models\Inquiry;
 use App\Services\ActivityLogger;
 use App\Traits\ManagesCloudflareFiles;
 use Illuminate\Http\RedirectResponse;
@@ -157,7 +158,8 @@ class CottageController extends Controller
     /**
      * Apply the submitted date blocks. On update the existing non-inquiry
      * blocks are deleted first, and with $protectInquiryBlocks a block held
-     * by a live inquiry (reason contains "HB-") is never touched.
+     * by a live inquiry (reason contains the booking reference prefix) is
+     * never touched.
      */
     private function syncDateBlocks(Cottage $cottage, Request $request, bool $protectInquiryBlocks = false): void
     {
@@ -167,11 +169,12 @@ class CottageController extends Controller
 
         if ($protectInquiryBlocks) {
             // Delete only non-inquiry date blocks. Blocks whose reason contains
-            // "HB-" are held by live inquiries (Pending:/Booked:) and must never
-            // be wiped by a cottage edit — otherwise a confirmed guest's dates
-            // could be silently freed.
+            // the booking reference prefix are held by live inquiries
+            // (Pending:/Booked:) and must never be wiped by a cottage edit —
+            // otherwise a confirmed guest's dates could be silently freed.
+            $like = '%'.addcslashes(Inquiry::referencePrefix(), '\\%_').'%';
             $cottage->dateBlocks()
-                ->where(fn ($q) => $q->whereNull('reason')->orWhere('reason', 'not like', '%HB-%'))
+                ->where(fn ($q) => $q->whereNull('reason')->orWhere('reason', 'not like', $like))
                 ->delete();
         }
 
@@ -183,7 +186,7 @@ class CottageController extends Controller
             if ($protectInquiryBlocks) {
                 // Defense in depth: never touch a block that an inquiry holds.
                 $existing = $cottage->dateBlocks()->where('date', $block['date'])->first();
-                if ($existing && str_contains((string) $existing->reason, 'HB-')) {
+                if ($existing && str_contains((string) $existing->reason, Inquiry::referencePrefix())) {
                     continue;
                 }
 
