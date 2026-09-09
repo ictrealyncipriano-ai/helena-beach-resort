@@ -1,8 +1,0 @@
-User-agent: *
-Allow: /
-Disallow: /admin
-
-# NOTE: Keep the Sitemap line in sync with config('app.url') (the canonical
-# production domain). A dynamic /robots.txt route also serves this file from
-# config('app.url') so it can never drift — see routes/web.php.
-Sitemap: https://helena-beach-resort.onrender.com/sitemap.xml

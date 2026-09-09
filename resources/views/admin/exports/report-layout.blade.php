@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>{{ $title }} — {{ App\Models\SiteSetting::getValue('site_name', 'Helena Beach Resort') }}</title>
+    <title>{{ $title }} — {{ App\Models\SiteSetting::getValue('site_name', config('app.name')) }}</title>
     <style>
         @page { size: A4; margin: 14mm 16mm; }
         * { box-sizing: border-box; }
@@ -220,11 +220,11 @@
     <div class="sheet">
         <div class="report-header">
             <div class="brand">
-                <img src="{{ asset('images/logo.jpg') }}" alt="{{ App\Models\SiteSetting::getValue('site_name', 'Helena Beach Resort') }}">
+                <img src="{{ asset('images/logo.jpg') }}" alt="{{ App\Models\SiteSetting::getValue('site_name', config('app.name')) }}">
                 <div>
-                    <h1>{{ App\Models\SiteSetting::getValue('site_name', 'Helena Beach Resort') }}</h1>
-                    <p>{{ App\Models\SiteSetting::getValue('address', 'Purok Buyan, Brgy. Dinahican, Infanta, Quezon') }}</p>
-                    <p>{{ App\Models\SiteSetting::getValue('contact_phone', '') }}{{ App\Models\SiteSetting::getValue('contact_phone', '') && App\Models\SiteSetting::getValue('contact_email', '') ? ' | ' : '' }}{{ App\Models\SiteSetting::getValue('contact_email', 'info@helena.labcoop.online') }}</p>
+                    <h1>{{ App\Models\SiteSetting::getValue('site_name', config('app.name')) }}</h1>
+                    <p>{{ App\Models\SiteSetting::getValue('address', '') }}</p>
+                    <p>{{ App\Models\SiteSetting::getValue('contact_phone', '') }}{{ App\Models\SiteSetting::getValue('contact_phone', '') && App\Models\SiteSetting::getValue('contact_email', '') ? ' | ' : '' }}{{ App\Models\SiteSetting::getValue('contact_email', config('mail.from.address')) }}</p>
                 </div>
             </div>
             <div class="meta">
@@ -250,7 +250,7 @@
         @yield('report-content')
 
         <div class="report-footer">
-            <strong>{{ App\Models\SiteSetting::getValue('site_name', 'Helena Beach Resort') }}</strong>
+            <strong>{{ App\Models\SiteSetting::getValue('site_name', config('app.name')) }}</strong>
             &nbsp;&middot;&nbsp; Internal management report &nbsp;&middot;&nbsp; {{ now()->format('Y') }}
         </div>
     </div>

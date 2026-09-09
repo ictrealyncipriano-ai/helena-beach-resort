@@ -24,9 +24,10 @@ Route::get('/health', [PageController::class, 'health'])->name('health');
 
 /*
 |--------------------------------------------------------------------------
-| robots.txt (served dynamically so the Sitemap host can never drift from
-| config('app.url')). A static public/robots.txt also exists as a fallback
-| for hosts that serve static files before reaching Laravel.
+| robots.txt is served dynamically by RobotsController; its Sitemap URL is
+| derived from config('app.url') so it can never drift. (No static
+| public/robots.txt fallback — deleted in Phase 1 so the dynamic route is
+| authoritative.)
 |--------------------------------------------------------------------------
 */
 Route::get('/robots.txt', RobotsController::class);

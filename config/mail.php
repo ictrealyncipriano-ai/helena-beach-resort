@@ -112,7 +112,9 @@ return [
     */
 
     'from' => [
-        'address' => env('MAIL_FROM_ADDRESS', 'noreply@helena.labcoop.online'),
+        // Neutral fallback derives the domain from APP_URL so a deployment
+        // missing MAIL_FROM_ADDRESS never sends from another resort's domain.
+        'address' => env('MAIL_FROM_ADDRESS', 'noreply@'.(parse_url((string) env('APP_URL', 'http://localhost'), PHP_URL_HOST) ?: 'localhost')),
         'name' => env('MAIL_FROM_NAME', env('APP_NAME', 'Laravel')),
     ],
 
