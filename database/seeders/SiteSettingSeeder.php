@@ -52,6 +52,19 @@ class SiteSettingSeeder extends Seeder
             ['key' => 'legal_privacy', 'value' => 'Draft — our privacy policy is being finalized. Contact us at info@helena.labcoop.online for questions about how we handle your information.', 'type' => 'textarea'],
             ['key' => 'legal_terms', 'value' => 'Draft — our terms and conditions are being finalized. Contact us at info@helena.labcoop.online for questions about your stay.', 'type' => 'textarea'],
             ['key' => 'legal_booking_policy', 'value' => 'Draft — our booking policy is being finalized. Contact us at info@helena.labcoop.online for questions about reservations, payments, and cancellations.', 'type' => 'textarea'],
+            // Brand assets (Storage paths; empty = fall back to shipped files).
+            ['key' => 'site_logo', 'value' => '', 'type' => 'image'],
+            ['key' => 'site_favicon', 'value' => '', 'type' => 'image'],
+            ['key' => 'theme_color', 'value' => '#0f766e', 'type' => 'text'],
+            // Geo / structured-data identity.
+            ['key' => 'geo_region', 'value' => 'PH-QUE', 'type' => 'text'],
+            ['key' => 'geo_placename', 'value' => 'Infanta, Quezon', 'type' => 'text'],
+            ['key' => 'address_locality', 'value' => 'Infanta', 'type' => 'text'],
+            ['key' => 'address_region', 'value' => 'Quezon', 'type' => 'text'],
+            ['key' => 'address_country', 'value' => 'PH', 'type' => 'text'],
+            // Booking rules (hours; invalid values fall back to 24 / 48).
+            ['key' => 'booking_cutoff_hours', 'value' => '24', 'type' => 'text'],
+            ['key' => 'booking_hold_hours', 'value' => '48', 'type' => 'text'],
         ];
 
         foreach ($settings as $setting) {

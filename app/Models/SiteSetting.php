@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Database\Eloquent\Model;
 
 class SiteSetting extends Model
@@ -51,6 +52,56 @@ class SiteSetting extends Model
         }
 
         return static::$memo[$key] ?? $default;
+    }
+
+    /**
+     * Retrieve a setting as a positive integer within bounds, for rule-type
+     * settings (booking cutoff/hold hours). Anything missing, non-numeric,
+     * or out of range falls back to the default so bad DB values fail
+     * safely into today's behavior instead of surprising rules.
+     */
+    public static function intValue(string $key, int $default, int $min = 1, int $max = PHP_INT_MAX): int
+    {
+        $raw = trim((string) static::getValue($key, ''));
+
+        if (! ctype_digit($raw)) {
+            return $default;
+        }
+
+        $value = (int) $raw;
+
+        if ($value < $min || $value > $max) {
+            return $default;
+        }
+
+        return $value;
+    }
+
+    /**
+     * Resolve an image-type setting (Storage path) to a public URL, falling
+     * back to a shipped asset when unconfigured. Single source for brand
+     * assets so web views, emails and PDFs never hardcode logo paths.
+     */
+    public static function assetUrl(string $key, string $fallbackAsset): string
+    {
+        $path = trim((string) static::getValue($key, ''));
+
+        return $path !== '' ? Storage::url($path) : asset($fallbackAsset);
+    }
+
+    public static function logoUrl(): string
+    {
+        return static::assetUrl('site_logo', 'images/logo.jpg');
+    }
+
+    public static function faviconUrl(): string
+    {
+        return static::assetUrl('site_favicon', 'favicon.ico');
+    }
+
+    public static function appleTouchIconUrl(): string
+    {
+        return static::assetUrl('site_favicon', 'apple-touch-icon.png');
     }
 
     /**
