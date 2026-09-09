@@ -79,6 +79,6 @@ Use the "View My Booking" button above to open your booking and pay from there.
 <p style="margin: 0 0 8px; font-size: 14px; color: #64748b; line-height: 1.6;">
 If you have any questions, feel free to reply to this email or contact us directly. We look forward to hosting you!
 </p>
-<p style="margin: 0; font-size: 14px; color: #1e293b; font-weight: 500;">Warm regards,<br><strong style="color: #0d9488;">Helena Beach Resort Team</strong></p>
+<p style="margin: 0; font-size: 14px; color: #1e293b; font-weight: 500;">Warm regards,<br><strong style="color: #0d9488;">{{ config('app.name') }} Team</strong></p>
 </div>
 @endsection

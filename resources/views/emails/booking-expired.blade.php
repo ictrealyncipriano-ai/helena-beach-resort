@@ -4,7 +4,7 @@
 <div style="text-align: center; margin-bottom: 28px;">
 <div style="display: inline-block; width: 60px; height: 60px; background: #fef2f2; border-radius: 50%; line-height: 60px; font-size: 28px; color: #dc2626;">⏰</div>
 <h2 style="margin: 12px 0 4px; font-size: 22px; font-weight: 700; color: #dc2626; letter-spacing: -0.02em;">Your Booking Request Has Expired</h2>
-<p style="margin: 0; font-size: 14px; color: #64748b;">Hi <strong style="color: #1e293b;">{{ $inquiry->name }}</strong>, your booking request at Helena Beach Resort has expired.</p>
+<p style="margin: 0; font-size: 14px; color: #64748b;">Hi <strong style="color: #1e293b;">{{ $inquiry->name }}</strong>, your booking request at {{ config('app.name') }} has expired.</p>
 </div>
 
 <div style="background: #f8fafc; border-radius: 12px; padding: 20px 24px; margin-bottom: 24px; border: 1px solid #e2e8f0;">
@@ -53,6 +53,6 @@ Because the request was not confirmed within the 48-hour hold window, the dates 
 </div>
 
 <div style="border-top: 1px solid #e2e8f0; padding-top: 20px;">
-<p style="margin: 0; font-size: 14px; color: #1e293b; font-weight: 500;">Warm regards,<br><strong style="color: #0d9488;">Helena Beach Resort Team</strong></p>
+<p style="margin: 0; font-size: 14px; color: #1e293b; font-weight: 500;">Warm regards,<br><strong style="color: #0d9488;">{{ config('app.name') }} Team</strong></p>
 </div>
 @endsection

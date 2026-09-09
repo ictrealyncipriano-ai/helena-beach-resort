@@ -46,6 +46,6 @@
 <p style="margin: 0 0 8px; font-size: 14px; color: #64748b; line-height: 1.6;">
 This booking was settled manually (cash or bank transfer), so it cannot be refunded automatically through PayMongo. Please return ₱{{ $inquiry->collectedAmount() }} to the guest through your original collection channel and record it in the admin panel.
 </p>
-<p style="margin: 0; font-size: 14px; color: #1e293b; font-weight: 500;">Helena Beach Resort Booking System</p>
+<p style="margin: 0; font-size: 14px; color: #1e293b; font-weight: 500;">{{ config('app.name') }} Booking System</p>
 </div>
 @endsection

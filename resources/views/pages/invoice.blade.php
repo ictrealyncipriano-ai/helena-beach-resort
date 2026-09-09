@@ -153,9 +153,9 @@
     <div class="watermark">{{ $inquiry->isPaid() ? 'PAID' : 'UNPAID' }}</div>
 
     <div class="top-bar">
-        <h1>{{ App\Models\SiteSetting::getValue('site_name', 'Helena Beach Resort') }}</h1>
-        <p>{{ App\Models\SiteSetting::getValue('address', 'Purok Buyan, Brgy. Dinahican, Infanta, Quezon') }}</p>
-        <p>{{ App\Models\SiteSetting::getValue('contact_phone', '') }} &nbsp;|&nbsp; {{ App\Models\SiteSetting::getValue('contact_email', 'info@helena.labcoop.online') }}</p>
+        <h1>{{ App\Models\SiteSetting::getValue('site_name', config('app.name')) }}</h1>
+        <p>{{ App\Models\SiteSetting::getValue('address', '') }}</p>
+        <p>{{ App\Models\SiteSetting::getValue('contact_phone', '') }} &nbsp;|&nbsp; {{ App\Models\SiteSetting::getValue('contact_email', config('mail.from.address')) }}</p>
     </div>
 
     <div class="invoice-title">
@@ -262,7 +262,7 @@
     </div>
 
     <div class="footer">
-        <strong>Thank you for choosing Helena Beach Resort!</strong><br>
+        <strong>Thank you for choosing {{ App\Models\SiteSetting::getValue('site_name', config('app.name')) }}!</strong><br>
         Invoice INV-{{ $inquiry->reference_code }} &nbsp;|&nbsp; Generated on {{ now()->format('M d, Y \a\t h:i A') }}
     </div>
 

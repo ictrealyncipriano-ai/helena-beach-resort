@@ -41,6 +41,6 @@ If you have any questions or would like to make a new booking, please don't hesi
 </div>
 
 <div style="border-top: 1px solid #e2e8f0; padding-top: 20px;">
-<p style="margin: 0; font-size: 14px; color: #1e293b; font-weight: 500;">Best regards,<br><strong style="color: #0d9488;">Helena Beach Resort Team</strong></p>
+<p style="margin: 0; font-size: 14px; color: #1e293b; font-weight: 500;">Best regards,<br><strong style="color: #0d9488;">{{ config('app.name') }} Team</strong></p>
 </div>
 @endsection

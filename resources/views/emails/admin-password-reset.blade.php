@@ -4,7 +4,7 @@
 <div style="text-align: center; margin-bottom: 28px;">
 <div style="display: inline-block; width: 60px; height: 60px; background: #ecfdf5; border-radius: 50%; line-height: 60px; font-size: 28px; color: #059669;">🔑</div>
 <h2 style="margin: 12px 0 4px; font-size: 22px; font-weight: 700; color: #059669; letter-spacing: -0.02em;">Reset Your Password</h2>
-<p style="margin: 0; font-size: 14px; color: #64748b;">Hi <strong style="color: #1e293b;">{{ $name }}</strong>, we received a request to reset your Helena Beach Resort account password.</p>
+<p style="margin: 0; font-size: 14px; color: #64748b;">Hi <strong style="color: #1e293b;">{{ $name }}</strong>, we received a request to reset your {{ config('app.name') }} account password.</p>
 </div>
 
 <div style="text-align: center; margin-bottom: 24px;">

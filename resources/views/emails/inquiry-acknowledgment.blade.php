@@ -4,7 +4,7 @@
 <div style="text-align: center; margin-bottom: 28px;">
 <div style="display: inline-block; width: 60px; height: 60px; background: #ecfdf5; border-radius: 50%; line-height: 60px; font-size: 28px; color: #059669;">✓</div>
 <h2 style="margin: 12px 0 4px; font-size: 22px; font-weight: 700; color: #059669; letter-spacing: -0.02em;">Inquiry Received!</h2>
-<p style="margin: 0; font-size: 14px; color: #64748b;">Hi <strong style="color: #1e293b;">{{ $inquiry->name }}</strong>, thank you for your booking request at Helena Beach Resort. We'll get back to you within 24 hours.</p>
+<p style="margin: 0; font-size: 14px; color: #64748b;">Hi <strong style="color: #1e293b;">{{ $inquiry->name }}</strong>, thank you for your booking request at {{ config('app.name') }}. We'll get back to you within 24 hours.</p>
 </div>
 
 <div style="background: #fffbeb; border-radius: 12px; padding: 20px 24px; margin-bottom: 24px; border: 1px solid #fde68a; text-align: center;">
@@ -95,6 +95,6 @@
 <p style="margin: 0 0 8px; font-size: 14px; color: #64748b; line-height: 1.6;">
 Your request is currently <strong>pending</strong>. Once your booking is confirmed, you'll receive a confirmation email from us.
 </p>
-<p style="margin: 0; font-size: 14px; color: #1e293b; font-weight: 500;">Warm regards,<br><strong style="color: #0d9488;">Helena Beach Resort Team</strong></p>
+<p style="margin: 0; font-size: 14px; color: #1e293b; font-weight: 500;">Warm regards,<br><strong style="color: #0d9488;">{{ config('app.name') }} Team</strong></p>
 </div>
 @endsection

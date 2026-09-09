@@ -46,6 +46,6 @@
 <p style="margin: 0 0 8px; font-size: 14px; color: #64748b; line-height: 1.6;">
 Your refund has been initiated and the amount will be returned to your original payment method within 1–3 business days, depending on your bank.
 </p>
-<p style="margin: 0; font-size: 14px; color: #1e293b; font-weight: 500;">Warm regards,<br><strong style="color: #0d9488;">Helena Beach Resort Team</strong></p>
+<p style="margin: 0; font-size: 14px; color: #1e293b; font-weight: 500;">Warm regards,<br><strong style="color: #0d9488;">{{ config('app.name') }} Team</strong></p>
 </div>
 @endsection
