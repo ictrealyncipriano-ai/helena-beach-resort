@@ -48,6 +48,8 @@ class SiteSettingSeeder extends Seeder
             ['key' => 'map_lat', 'value' => '14.702052118071348', 'type' => 'text'],
             ['key' => 'map_lng', 'value' => '121.72756162841773', 'type' => 'text'],
             ['key' => 'map_embed_url', 'value' => 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3859.188516002515!2d121.72497447574254!3d14.701928774586516!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x33982fd7700a733b%3A0x160b9c22db388372!2sHelena%20beach%20resort!5e0!3m2!1sen!2ssg!4v1786175999279!5m2!1sen!2ssg', 'type' => 'text'],
+            // Social share image (Storage path; empty = falls back to the site logo).
+            ['key' => 'og_image', 'value' => '', 'type' => 'image'],
             // Legal / policy pages (NOTE(temp): draft copy — replace with final legal text via the dashboard).
             ['key' => 'legal_privacy', 'value' => 'Draft — our privacy policy is being finalized. Contact us at info@helena.labcoop.online for questions about how we handle your information.', 'type' => 'textarea'],
             ['key' => 'legal_terms', 'value' => 'Draft — our terms and conditions are being finalized. Contact us at info@helena.labcoop.online for questions about your stay.', 'type' => 'textarea'],
