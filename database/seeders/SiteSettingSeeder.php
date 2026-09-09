@@ -65,6 +65,10 @@ class SiteSettingSeeder extends Seeder
             // Booking rules (hours; invalid values fall back to 24 / 48).
             ['key' => 'booking_cutoff_hours', 'value' => '24', 'type' => 'text'],
             ['key' => 'booking_hold_hours', 'value' => '48', 'type' => 'text'],
+            // About page story (rendered as sanitized HTML).
+            ['key' => 'about_body', 'value' => '<p>Nestled along the pristine shores of Purok Buyan in Brgy. Dinahican, Infanta, Quezon, Helena Beach Resort offers a peaceful retreat surrounded by nature\'s beauty. Our resort is the perfect destination for families, couples, and groups looking to escape the hustle and bustle of city life.</p><p>With comfortable beachfront cottages, crystal-clear waters, and breathtaking sunsets, we provide an unforgettable tropical experience. Whether you are here for a day tour or an overnight stay, our dedicated team ensures your comfort and enjoyment.</p><p>At Helena Beach Resort, we take pride in offering genuine Filipino hospitality. From our friendly staff to our well-maintained facilities, every detail is designed to make your stay memorable.</p>', 'type' => 'textarea'],
+            // Footer marketing line.
+            ['key' => 'footer_tagline', 'value' => 'Experience the perfect getaway at Helena Beach Resort. Nestled along the pristine shores of Infanta, Quezon, we offer a peaceful retreat surrounded by nature.', 'type' => 'textarea'],
         ];
 
         foreach ($settings as $setting) {

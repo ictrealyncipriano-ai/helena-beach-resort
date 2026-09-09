@@ -34,6 +34,8 @@ class SiteSettingsComposer
                 'address' => $get('address', ''),
                 'contact_phone' => $get('contact_phone', ''),
                 'contact_email' => $get('contact_email', 'info@example.com'),
+                'operating_hours' => $get('operating_hours', ''),
+                'footer_tagline' => $get('footer_tagline', 'A peaceful beachfront retreat.'),
                 'og_image' => $get('og_image', SiteSetting::logoUrl()),
                 'logo' => SiteSetting::logoUrl(),
                 'favicon' => SiteSetting::faviconUrl(),
