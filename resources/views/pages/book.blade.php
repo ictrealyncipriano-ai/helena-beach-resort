@@ -159,7 +159,7 @@
                         <span x-show="submitting" class="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" x-cloak></span>
                         <span x-text="submitting ? 'Submitting…' : 'Submit Booking Request'"></span>
                     </button>
-                    <p class="text-xs text-gray-500 dark:text-slate-400">No payment now · We confirm within 24h · 48h hold · Free cancellation · <a href="{{ route('contact') }}" class="underline underline-offset-2 hover:text-teal-700">Questions? Contact us</a> · <a href="{{ route('booking-policy') }}" class="underline underline-offset-2 hover:text-teal-700">Booking Policy</a></p>
+                    <p class="text-xs text-gray-500 dark:text-slate-400">No payment now · We confirm within 24h · 48h hold · Tiered cancellation (100%/50%/0%) · <a href="{{ route('contact') }}" class="underline underline-offset-2 hover:text-teal-700">Questions? Contact us</a> · <a href="{{ route('booking-policy') }}" class="underline underline-offset-2 hover:text-teal-700">Booking Policy</a></p>
                 </form>
             </div>
 

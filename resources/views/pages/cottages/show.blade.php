@@ -175,7 +175,7 @@
                            class="block w-full text-center px-6 py-3.5 min-h-[44px] flex items-center justify-center bg-teal-700 text-white font-semibold rounded-full hover:bg-teal-800 transition-all hover:shadow-lg hover:shadow-teal-600/20 active:scale-[0.98]">
                             Book This Cottage
                         </a>
-                        <p class="text-xs text-gray-500 dark:text-slate-400 text-center">No payment now · Free cancellation · <a href="{{ route('booking-policy') }}" class="underline underline-offset-2 hover:text-teal-700">Booking Policy</a> · <a href="{{ route('contact') }}" class="underline underline-offset-2 hover:text-teal-700">Questions? Contact us</a></p>
+                        <p class="text-xs text-gray-500 dark:text-slate-400 text-center">No payment now · Tiered cancellation · <a href="{{ route('booking-policy') }}" class="underline underline-offset-2 hover:text-teal-700">Booking Policy</a> · <a href="{{ route('contact') }}" class="underline underline-offset-2 hover:text-teal-700">Questions? Contact us</a></p>
                         @else
                         <p class="block w-full text-center px-6 py-3.5 min-h-[44px] flex items-center justify-center bg-gray-400 opacity-60 text-white font-semibold rounded-full cursor-not-allowed" aria-disabled="true">
                             Currently Unavailable

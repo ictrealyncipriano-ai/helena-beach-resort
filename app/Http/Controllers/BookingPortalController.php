@@ -310,12 +310,15 @@ class BookingPortalController extends Controller
 
         $refundState = $this->cancellationService->processRefund($inquiry, $payMongo);
 
-        $this->cancellationService->finalizeCancellation($inquiry, $refundState['wasConfirmed']);
+        $this->cancellationService->finalizeCancellation($inquiry, $refundState['wasConfirmed'], $refundState);
         $this->cancellationService->sendGuestCancellationEmails($inquiry, $refundState);
         $this->logger->record('guest.cancelled', $inquiry, "Guest cancelled booking {$inquiry->reference_code}.", [
             'refunded' => $refundState['refunded'],
             'refund_failed' => $refundState['refundFailed'],
             'manual_refund_required' => $refundState['manualRefundRequired'],
+            'policy_pct' => $refundState['quote']['pct'] ?? null,
+            'policy_refund' => $refundState['quote']['refund_amount'] ?? null,
+            'policy_forfeit' => $refundState['quote']['forfeit_amount'] ?? null,
         ]);
 
         return redirect()->route('booking.portal.show', $inquiry)

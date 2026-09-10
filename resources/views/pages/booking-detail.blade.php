@@ -254,7 +254,7 @@
             <div class="flex items-start gap-2">
                 <x-icons name="info" class="w-4 h-4 shrink-0 mt-0.5 text-teal-700 dark:text-teal-300" />
                 <div class="space-y-1">
-                    <p><strong>Cancellation &amp; refunds:</strong> bookings can be cancelled for free up to {{ App\Models\SiteSetting::intValue('booking_cutoff_hours', 24, 1, 168) }} hours before check-in (and while the request is still pending or confirmed). Paid bookings cancelled before that cutoff are refunded in full automatically.</p>
+                    <p><strong>Cancellation &amp; refunds:</strong> bookings can be cancelled up to {{ App\Models\SiteSetting::intValue('booking_cutoff_hours', 24, 1, 168) }} hours before check-in (and while the request is still pending or confirmed). Refunds follow the tiered policy of the collected amount: 100% when 7+ days out, 50% when 3–7 days out, 0% within 24 hours. See <a href="{{ route('booking-policy') }}" class="underline text-teal-700 dark:text-teal-300 hover:text-teal-700">Booking Policy</a> for details.</p>
                     <p class="text-xs">Questions? See our <a href="{{ route('faq') }}" class="underline text-teal-700 dark:text-teal-300 hover:text-teal-700">FAQ</a> or <a href="{{ route('contact') }}" class="underline text-teal-700 dark:text-teal-300 hover:text-teal-700">contact the resort</a>.</p>
                 </div>
             </div>

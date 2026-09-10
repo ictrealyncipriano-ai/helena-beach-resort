@@ -39,11 +39,15 @@ class RefundService
     /**
      * Atomically claim the refund slot and process it via PayMongo.
      *
+     * P1.1: $amount overrides the default full-collected refund (tiered
+     * cancellation quote or admin override). Null = legacy full refund of
+     * whatever was collected, so existing callers are unaffected.
+     *
      * @return string  self::CLAIMED | self::ALREADY_CLAIMED
      *
      * @throws \RuntimeException  When the PayMongo refund API call fails.
      */
-    public function claimAndProcess(Inquiry $inquiry, PayMongoService $payMongo): string
+    public function claimAndProcess(Inquiry $inquiry, PayMongoService $payMongo, ?string $amount = null): string
     {
         // Manual settlements never enter the online-refund lifecycle (no
         // provider payment to reverse): the claim only guards concurrency,
@@ -68,7 +72,7 @@ class RefundService
         }
 
         try {
-            $result = $payMongo->refund($inquiry);
+            $result = $payMongo->refund($inquiry, $amount);
         } catch (\RuntimeException $e) {
             // Roll the claim back so the caller can retry.
             // A model-level update() would skip the column: the in-memory
@@ -90,10 +94,12 @@ class RefundService
         }
 
         // WP-1 dual-write: record the refund in the ledger and mark the
-        // settled paid rows as refunded (current policy is full-only refunds
-        // of whatever was collected). Idempotent: a re-run on an
-        // already-refunded booking is rejected by the claim guard above, and
-        // the refund row itself deduplicates on provider_refund_id.
+        // settled paid rows as refunded (P1.1: $amount = tiered quote or
+        // admin override; null = legacy full refund of collected).
+        // Idempotent: a re-run on an already-refunded booking is rejected
+        // by the claim guard above, and the refund row itself deduplicates
+        // on provider_refund_id.
+        $refundAmount = $amount ?? $inquiry->refundableAmount();
         $refundId = is_array($result) ? ($result['id'] ?? null) : null;
         $refundQuery = Payment::where('inquiry_id', $inquiry->id)
             ->where('type', '!=', Payment::TYPE_REFUND)
@@ -109,7 +115,7 @@ class RefundService
                     'provider_refund_id' => $refundId,
                     'method' => $inquiry->payment_method,
                     'type' => Payment::TYPE_REFUND,
-                    'amount' => $inquiry->refundableAmount(),
+                    'amount' => $refundAmount,
                     'currency' => 'PHP',
                     'status' => Payment::STATUS_REFUNDED,
                     'refunded_at' => now(),
@@ -119,7 +125,7 @@ class RefundService
         } else {
             $exists = Payment::where('inquiry_id', $inquiry->id)
                 ->where('type', Payment::TYPE_REFUND)
-                ->where('amount', $inquiry->refundableAmount())
+                ->where('amount', $refundAmount)
                 ->exists();
             if (! $exists) {
                 Payment::create([
@@ -128,7 +134,7 @@ class RefundService
                     'provider_payment_id' => null,
                     'method' => $inquiry->payment_method,
                     'type' => Payment::TYPE_REFUND,
-                    'amount' => $inquiry->refundableAmount(),
+                    'amount' => $refundAmount,
                     'currency' => 'PHP',
                     'status' => Payment::STATUS_REFUNDED,
                     'refunded_at' => now(),

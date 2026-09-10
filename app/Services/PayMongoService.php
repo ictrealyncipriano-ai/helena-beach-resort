@@ -176,16 +176,17 @@ class PayMongoService
     /**
      * Issue a refund for a booking via PayMongo's Refunds API.
      *
-     * The refund is always exactly what was collected (refundableAmount()):
-     * a deposit-only settlement is refunded the deposit, never the full
-     * total. Requires an online PayMongo payment — manually-collected
+     * P1.1: defaults to exactly what was collected (refundableAmount()); a
+     * deposit-only settlement is refunded the deposit, never the full
+     * total. Pass $amount to refund a tiered/override share instead.
+     * Requires an online PayMongo payment — manually-collected
      * money must be refunded offline by the resort.
      *
      * @throws \RuntimeException when the inquiry has no recorded PayMongo
      *         payment (or nothing refundable), or when PayMongo returns
      *         an error.
      */
-    public function refund(Inquiry $inquiry): array
+    public function refund(Inquiry $inquiry, ?string $amount = null): array
     {
         $paymentId = $inquiry->paymongo_payment_id;
 
@@ -193,7 +194,7 @@ class PayMongoService
             throw new \RuntimeException('This booking has no PayMongo payment reference, so it cannot be refunded online.');
         }
 
-        $amount = $this->toCentavos($inquiry->refundableAmount());
+        $amount = $this->toCentavos($amount ?? $inquiry->refundableAmount());
 
         if ($amount <= 0) {
             throw new \RuntimeException('This booking has no refundable amount.');

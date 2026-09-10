@@ -453,6 +453,6 @@ class Phase5BookingUxTest extends TestCase
             ->assertOk()
             ->assertSee('Cancellation &amp; refunds:', false)
             ->assertSee('24 hours before check-in', false)
-            ->assertSee('refunded in full automatically', false);
+            ->assertSee('100% when 7+ days out', false);
     }
 }

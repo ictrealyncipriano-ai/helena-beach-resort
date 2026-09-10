@@ -406,11 +406,12 @@ class InquiryController extends Controller
 
     /**
      * Refund a booking with collected money via PayMongo and cancel it.
-     * Refunds exactly what was collected (deposit included), not the full
-     * total; manually-collected money has no PayMongo reference and must be
+     * P1.1: defaults to the tiered CancellationPolicy quote (share of
+     * collected); pass amount+reason to override with an audit trail.
+     * Manually-collected money has no PayMongo reference and must be
      * returned offline.
      */
-    public function refund(Inquiry $inquiry, PayMongoService $payMongo): RedirectResponse
+    public function refund(Request $request, Inquiry $inquiry, PayMongoService $payMongo): RedirectResponse
     {
         $this->authorize('refund', $inquiry);
 
@@ -419,8 +420,31 @@ class InquiryController extends Controller
                 ->with('error', 'This booking has no payment to refund.');
         }
 
+        $quote = \App\Services\CancellationPolicy::quote($inquiry);
+        $collected = (float) ($inquiry->amount_paid ?? 0);
+
+        $validated = $request->validate([
+            'amount' => ['nullable', 'numeric', 'min:0.01', 'max:'.$collected],
+            'reason' => ['nullable', 'string', 'max:500'],
+        ]);
+
+        $refundAmount = isset($validated['amount'])
+            ? number_format((float) $validated['amount'], 2, '.', '')
+            : $quote['refund_amount'];
+        $isOverride = $refundAmount !== $quote['refund_amount'];
+
+        if ($isOverride && trim((string) ($validated['reason'] ?? '')) === '') {
+            return redirect()->route('admin.inquiries.show', $inquiry)
+                ->with('error', 'An override reason is required when the refund differs from the policy quote.');
+        }
+
+        if ((float) $refundAmount <= 0) {
+            return redirect()->route('admin.inquiries.show', $inquiry)
+                ->with('error', 'The policy quote refunds ₱0 for this booking — no online refund to process.');
+        }
+
         try {
-            $claimed = $this->refundService->claimAndProcess($inquiry, $payMongo);
+            $claimed = $this->refundService->claimAndProcess($inquiry, $payMongo, $refundAmount);
         } catch (\RuntimeException $e) {
             return redirect()->route('admin.inquiries.show', $inquiry)
                 ->with('error', $e->getMessage());
@@ -437,7 +461,7 @@ class InquiryController extends Controller
         $inquiry->update([
             'status' => Inquiry::STATUS_CANCELLED,
             'refunded_at' => now(),
-            'refund_amount' => $inquiry->refundableAmount(),
+            'refund_amount' => $refundAmount,
         ]);
         $inquiry->releaseBlocks();
 
@@ -447,7 +471,19 @@ class InquiryController extends Controller
 
         DashboardController::forgetCache();
 
-        $this->logger->record('inquiry.refunded', $inquiry, "Payment for {$inquiry->reference_code} refunded and booking cancelled.");
+        $auditProps = [
+            'policy_pct' => $quote['pct'],
+            'policy_refund' => $quote['refund_amount'],
+            'refunded_amount' => $refundAmount,
+            'override' => $isOverride,
+            'reason' => $validated['reason'] ?? null,
+        ];
+
+        if ($isOverride) {
+            $this->logger->record('refund.override', $inquiry, "Refund override for {$inquiry->reference_code}: ₱{$refundAmount} (policy {$quote['pct']}% → ₱{$quote['refund_amount']}). Reason: ".($validated['reason'] ?? '—'), $auditProps);
+        }
+
+        $this->logger->record('inquiry.refunded', $inquiry, "Payment for {$inquiry->reference_code} refunded ₱{$refundAmount} and booking cancelled.", $auditProps);
 
         try {
             Mail::to($inquiry->email)->queue(new RefundReceived($inquiry));
@@ -459,7 +495,7 @@ class InquiryController extends Controller
         }
 
         return redirect()->route('admin.inquiries.show', $inquiry)
-            ->with('success', "Payment for {$inquiry->reference_code} refunded and booking cancelled.");
+            ->with('success', "Payment for {$inquiry->reference_code} refunded ₱{$refundAmount} and booking cancelled.");
     }
 
     /**

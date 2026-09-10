@@ -25,7 +25,11 @@ class BookingCancellationService
     }
 
     /**
-     * @return array{refunded: bool, refundFailed: bool, refundAlreadyProcessed: bool, manualRefundRequired: bool, wasConfirmed: bool}
+     * P1.1: refunds the tiered CancellationPolicy quote (share of collected),
+     * not always the full amount. Manual money still flags offline handling
+     * with the quoted share attached.
+     *
+     * @return array{refunded: bool, refundFailed: bool, refundAlreadyProcessed: bool, manualRefundRequired: bool, wasConfirmed: bool, quote: array{pct: int, hours_before: int, collected: string, refund_amount: string, forfeit_amount: string}}
      */
     public function processRefund(Inquiry $inquiry, PayMongoService $payMongo): array
     {
@@ -33,15 +37,18 @@ class BookingCancellationService
         $refundFailed = false;
         $refundAlreadyProcessed = false;
         $manualRefundRequired = false;
+        $quote = CancellationPolicy::quote($inquiry);
 
-        if ($inquiry->hasPayments()) {
+        if ($inquiry->hasPayments() && (float) $quote['refund_amount'] > 0) {
             if ($inquiry->paymongo_payment_id) {
                 try {
-                    $refunded = $this->refundService->claimAndProcess($inquiry, $payMongo) === RefundService::CLAIMED;
+                    $refunded = $this->refundService->claimAndProcess($inquiry, $payMongo, $quote['refund_amount']) === RefundService::CLAIMED;
                 } catch (\RuntimeException $e) {
                     Log::warning('Auto-refund failed on guest cancellation', [
                         'inquiry_id' => $inquiry->id,
                         'error' => $e->getMessage(),
+                        'quote_pct' => $quote['pct'],
+                        'quote_refund' => $quote['refund_amount'],
                     ]);
                     $refundFailed = true;
                 }
@@ -60,6 +67,8 @@ class BookingCancellationService
                     'inquiry_id' => $inquiry->id,
                     'reference_code' => $inquiry->reference_code,
                     'collected_amount' => $inquiry->collectedAmount(),
+                    'quote_pct' => $quote['pct'],
+                    'quote_refund' => $quote['refund_amount'],
                 ]);
             }
         }
@@ -70,6 +79,7 @@ class BookingCancellationService
             'refundAlreadyProcessed' => $refundAlreadyProcessed,
             'manualRefundRequired' => $manualRefundRequired,
             'wasConfirmed' => $inquiry->status === Inquiry::STATUS_CONFIRMED,
+            'quote' => $quote,
         ];
     }
 
@@ -78,16 +88,24 @@ class BookingCancellationService
      * refund claim so refunded_at/refund_amount reflect whatever state the
      * database holds (a concurrent writer may have set them).
      *
-     * @param  array{refunded: bool, wasConfirmed: bool}  $refundState
+     * P1.1: when a tiered refund just succeeded, persist the quoted share
+     * (not the full collected amount).
+     *
+     * @param  array{refunded: bool, wasConfirmed: bool, quote?: array{refund_amount: string}}  $refundState
      */
-    public function finalizeCancellation(Inquiry $inquiry, bool $wasConfirmed): void
+    public function finalizeCancellation(Inquiry $inquiry, bool $wasConfirmed, ?array $refundState = null): void
     {
         $inquiry->refresh();
+
+        $quotedRefund = $refundState['quote']['refund_amount'] ?? null;
+        $refundAmount = ($inquiry->refunded_at && ($refundState['refunded'] ?? false) && $quotedRefund !== null)
+            ? $quotedRefund
+            : ($inquiry->refunded_at ? $inquiry->refundableAmount() : $inquiry->refund_amount);
 
         $inquiry->update([
             'status' => Inquiry::STATUS_CANCELLED,
             'refunded_at' => $inquiry->refunded_at,
-            'refund_amount' => $inquiry->refunded_at ? $inquiry->refundableAmount() : $inquiry->refund_amount,
+            'refund_amount' => $refundAmount,
         ]);
         $inquiry->releaseBlocks();
 
@@ -142,7 +160,7 @@ class BookingCancellationService
     }
 
     /**
-     * @param  array{refunded: bool, refundFailed: bool, refundAlreadyProcessed: bool, manualRefundRequired: bool}  $refundState
+     * @param  array{refunded: bool, refundFailed: bool, refundAlreadyProcessed: bool, manualRefundRequired: bool, quote?: array{pct: int, refund_amount: string, forfeit_amount: string}}  $refundState
      */
     public function cancellationFlashMessage(Inquiry $inquiry, array $refundState): string
     {
@@ -151,11 +169,20 @@ class BookingCancellationService
         }
 
         if ($refundState['refunded']) {
+            $quote = $refundState['quote'] ?? null;
+
+            if ($quote && (int) $quote['pct'] < 100) {
+                return 'Your booking has been cancelled and ₱'.$quote['refund_amount'].' has been refunded per the cancellation policy ('.$quote['pct'].'% refundable).';
+            }
+
             return 'Your booking has been cancelled and your payment has been refunded.';
         }
 
         if ($refundState['manualRefundRequired']) {
-            return 'Your booking has been cancelled. Your payment of ₱'.$inquiry->collectedAmount().' will be refunded directly by the resort.';
+            $quote = $refundState['quote'] ?? null;
+            $due = $quote ? $quote['refund_amount'] : $inquiry->collectedAmount();
+
+            return 'Your booking has been cancelled. Your refundable amount of ₱'.$due.' will be refunded directly by the resort.';
         }
 
         if ($refundState['refundAlreadyProcessed']) {
