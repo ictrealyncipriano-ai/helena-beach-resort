@@ -12,15 +12,13 @@ use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 /**
- * Phase 6 WP-0 characterization: locks CURRENT deposit semantics before any
- * policy work. No behavior change here — these tests document the baseline
- * that WP-1+ will intentionally change:
+ * P1.2 deposit policy: hardened semantics (was Phase 6 WP-0 baseline).
  *
- * - deposits are admin-only free-form (no policy, no % rule, no max vs total)
- * - confirmation has no financial gate
+ * - deposit capped at total (request validation)
+ * - confirmation requires a covered deposit (financial gate)
  * - amountDueNow() is deposit-first; isDepositPaid() is timestamp OR coverage
- * - raising deposit_amount post-payment does NOT clear deposit_paid_at
- * - any collected peso (even below deposit) blocks guest self-modify
+ * - raising deposit_amount above collected clears deposit_paid_at
+ * - guest self-modify blocked at deposit-paid, not first peso
  */
 class DepositPolicyCharacterizationTest extends TestCase
 {
@@ -78,7 +76,7 @@ class DepositPolicyCharacterizationTest extends TestCase
         $this->assertSame((string) $inquiry->total_amount, $inquiry->amountDueNow());
     }
 
-    public function test_admin_walk_in_accepts_arbitrary_deposit_including_above_total(): void
+    public function test_admin_walk_in_rejects_deposit_above_total(): void
     {
         $this->actingAs($this->admin())
             ->post(route('admin.inquiries.store'), [
@@ -90,18 +88,16 @@ class DepositPolicyCharacterizationTest extends TestCase
                 'pax' => 2,
                 'cottage_id' => Cottage::first()->id,
                 'total_amount' => '5000.00',
-                // No policy: any non-negative value is accepted, even above total.
+                // P1.2: capped at total.
                 'deposit_amount' => '6000.00',
                 'status' => 'pending',
             ])
-            ->assertRedirect(route('admin.inquiries.index'));
+            ->assertSessionHasErrors('deposit_amount');
 
-        $inquiry = Inquiry::where('email', 'bigdeposit@example.com')->firstOrFail();
-        $this->assertSame('6000.00', (string) $inquiry->deposit_amount);
-        $this->assertTrue($inquiry->hasDeposit());
+        $this->assertNull(Inquiry::where('email', 'bigdeposit@example.com')->first());
     }
 
-    public function test_confirmation_has_no_financial_gate(): void
+    public function test_confirmation_requires_covered_deposit(): void
     {
         $inquiry = $this->makeBooking([
             'status' => Inquiry::STATUS_PENDING,
@@ -111,21 +107,29 @@ class DepositPolicyCharacterizationTest extends TestCase
 
         $this->actingAs($this->admin())
             ->post(route('admin.inquiries.confirm', $inquiry))
+            ->assertSessionHas('error');
+
+        $this->assertSame(Inquiry::STATUS_PENDING, $inquiry->refresh()->status);
+        $this->assertFalse($inquiry->refresh()->isDepositPaid());
+
+        // Covered deposit confirms fine.
+        $inquiry->recordManualPayment('1500.00');
+
+        $this->actingAs($this->admin())
+            ->post(route('admin.inquiries.confirm', $inquiry))
             ->assertRedirect();
 
         $this->assertSame(Inquiry::STATUS_CONFIRMED, $inquiry->refresh()->status);
-        $this->assertFalse($inquiry->refresh()->isDepositPaid());
     }
 
-    public function test_raising_deposit_after_payment_keeps_stale_paid_timestamp(): void
+    public function test_raising_deposit_above_collected_clears_paid_timestamp(): void
     {
         $inquiry = $this->makeBooking(['deposit_amount' => '1500.00']);
         $inquiry->recordManualPayment('1500.00');
         $this->assertNotNull($inquiry->refresh()->deposit_paid_at);
 
         // Admin raises the required deposit above what was collected.
-        // Current behavior: the timestamp persists, so the booking still
-        // reads as deposit-paid (coverage says otherwise). Locked as-is.
+        // P1.2: the stale timestamp clears so coverage decides again.
         $this->actingAs($this->admin())
             ->put(route('admin.inquiries.update', $inquiry), [
                 'name' => $inquiry->name,
@@ -137,9 +141,9 @@ class DepositPolicyCharacterizationTest extends TestCase
 
         $inquiry->refresh();
         $this->assertSame('2000.00', (string) $inquiry->deposit_amount);
-        $this->assertNotNull($inquiry->deposit_paid_at);
-        $this->assertTrue($inquiry->isDepositPaid());
-        $this->assertSame('3500.00', $inquiry->balanceDue());
+        $this->assertNull($inquiry->deposit_paid_at);
+        $this->assertFalse($inquiry->isDepositPaid());
+        $this->assertSame('500.00', $inquiry->amountDueNow());
     }
 
     public function test_clearing_deposit_restores_balance_due(): void
@@ -234,17 +238,21 @@ class DepositPolicyCharacterizationTest extends TestCase
         $this->assertTrue($inquiry->isPaid());
     }
 
-    public function test_any_payment_blocks_guest_self_modify(): void
+    public function test_only_deposit_paid_blocks_guest_self_modify(): void
     {
         $eligibility = app(BookingEligibility::class);
 
         $unpaid = $this->makeBooking();
         $this->assertTrue($eligibility->canModify($unpaid));
 
-        // Even ₱1 — far below any deposit — moves modification to
-        // "contact the resort".
-        $paid = $this->makeBooking();
-        $paid->update(['amount_paid' => '1.00']);
+        // P1.2: a partial payment below the deposit still allows self-modify.
+        $partial = $this->makeBooking(['deposit_amount' => '1500.00']);
+        $partial->update(['amount_paid' => '500.00']);
+        $this->assertTrue($eligibility->canModify($partial->refresh()));
+
+        // Covered deposit moves modification to "contact the resort".
+        $paid = $this->makeBooking(['deposit_amount' => '1500.00']);
+        $paid->update(['amount_paid' => '1500.00']);
 
         $this->assertFalse($eligibility->canModify($paid->refresh()));
         $this->assertSame(

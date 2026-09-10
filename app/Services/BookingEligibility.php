@@ -37,6 +37,20 @@ class BookingEligibility
         return $inquiry->hasPayments();
     }
 
+    /**
+     * P1.2: modification is blocked once the booking is financially
+     * committed — deposit-paid when a deposit is required, any payment
+     * otherwise. Partial payments below the deposit still allow self-modify.
+     */
+    public function isFinanciallyCommitted(Inquiry $inquiry): bool
+    {
+        if ($inquiry->hasDeposit()) {
+            return $inquiry->isDepositPaid();
+        }
+
+        return $this->hasPayments($inquiry);
+    }
+
     public function canModify(Inquiry $inquiry): bool
     {
         return $this->remember("modify.{$inquiry->id}", function () use ($inquiry) {
@@ -52,7 +66,7 @@ class BookingEligibility
                 return false;
             }
 
-            if ($this->hasPayments($inquiry)) {
+            if ($this->isFinanciallyCommitted($inquiry)) {
                 return false;
             }
 
@@ -66,7 +80,7 @@ class BookingEligibility
             return 'This booking can no longer be modified.';
         }
 
-        if ($this->hasPayments($inquiry)) {
+        if ($this->isFinanciallyCommitted($inquiry)) {
             return 'To change the dates or cottage of a paid booking, please contact the resort.';
         }
 

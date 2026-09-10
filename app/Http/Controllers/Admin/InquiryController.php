@@ -91,6 +91,13 @@ class InquiryController extends Controller
             $totalAmount = $inquiryService->calculateTotal($data);
         }
 
+        // P1.2: cap deposit at the resolved total (covers auto-calculated
+        // totals where the lte:total_amount rule has no input to compare).
+        if (isset($data['deposit_amount']) && $data['deposit_amount'] !== null && $data['deposit_amount'] !== ''
+            && (float) $data['deposit_amount'] > (float) $totalAmount) {
+            return back()->withErrors(['deposit_amount' => 'Deposit cannot exceed the total amount.'])->withInput();
+        }
+
         $inquiry = Inquiry::forceCreate([
             'name' => $data['name'],
             'email' => $data['email'],
@@ -207,6 +214,21 @@ class InquiryController extends Controller
 
         $data = $request->validated();
 
+        // P1.2: cap deposit at the effective total on update as well.
+        $effectiveTotal = $data['total_amount'] ?? $inquiry->total_amount;
+        if (isset($data['deposit_amount']) && $data['deposit_amount'] !== null && $data['deposit_amount'] !== ''
+            && (float) $data['deposit_amount'] > (float) $effectiveTotal) {
+            return back()->withErrors(['deposit_amount' => 'Deposit cannot exceed the total amount.'])->withInput();
+        }
+
+        // P1.2: raising the required deposit above what was collected clears
+        // the stale paid stamp so the booking no longer reads deposit-paid.
+        if (array_key_exists('deposit_amount', $data) && $data['deposit_amount'] !== null && $data['deposit_amount'] !== ''
+            && $inquiry->deposit_paid_at !== null
+            && (float) ($inquiry->amount_paid ?? 0) < (float) $data['deposit_amount']) {
+            $data['deposit_paid_at'] = null;
+        }
+
         $original = [
             'cottage_id' => $inquiry->cottage_id,
             'check_in' => $inquiry->check_in?->format('Y-m-d'),
@@ -214,6 +236,17 @@ class InquiryController extends Controller
         ];
 
         $wasConfirmed = $inquiry->status === Inquiry::STATUS_CONFIRMED;
+
+        // P1.2: same financial gate as BookingActionsController::confirm —
+        // moving into confirmed requires a covered deposit.
+        if (! $wasConfirmed && ($data['status'] ?? null) === Inquiry::STATUS_CONFIRMED) {
+            $newDeposit = array_key_exists('deposit_amount', $data) ? $data['deposit_amount'] : $inquiry->deposit_amount;
+            $paid = (float) ($inquiry->amount_paid ?? 0);
+
+            if ($newDeposit !== null && $newDeposit !== '' && (float) $newDeposit > 0 && $paid < (float) $newDeposit) {
+                return back()->with('error', 'Deposit of ₱'.$newDeposit.' must be collected before confirming this booking.')->withInput();
+            }
+        }
 
         // Release the blocks held for the original schedule, then re-hold
         // for the new schedule so stale blocks never linger. All changes are

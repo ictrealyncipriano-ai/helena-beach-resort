@@ -30,6 +30,9 @@ class InquiryRequest extends FormRequest
             'check_out' => 'nullable|date|after_or_equal:check_in',
             'pax' => 'nullable|integer|min:1|max:50',
             'total_amount' => 'nullable|numeric|min:0',
+            // P1.2 cap (deposit <= total) is enforced in the controller
+            // against the resolved/effective total, since total may be
+            // auto-calculated or omitted on update.
             'deposit_amount' => 'nullable|numeric|min:0',
             'cottage_id' => 'nullable|exists:cottages,id',
             'status' => 'required|in:pending,confirmed,cancelled,expired',

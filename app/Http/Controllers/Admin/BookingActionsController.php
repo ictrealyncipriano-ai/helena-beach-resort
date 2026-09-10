@@ -33,6 +33,12 @@ class BookingActionsController extends Controller
             return back()->with('error', 'Only pending inquiries can be confirmed.');
         }
 
+        // P1.2: confirmation is a financial gate — a booking with a required
+        // deposit cannot be confirmed until the deposit is covered.
+        if ($inquiry->hasDeposit() && ! $inquiry->isDepositPaid()) {
+            return back()->with('error', 'Deposit of ₱'.$inquiry->deposit_amount.' must be collected before confirming this booking.');
+        }
+
         try {
             DB::transaction(function () use ($inquiry) {
                 $inquiry->update(['status' => Inquiry::STATUS_CONFIRMED]);
