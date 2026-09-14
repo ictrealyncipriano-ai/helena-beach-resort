@@ -6,6 +6,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <link rel="icon" href="{{ $site['favicon'] ?? asset('favicon.ico') }}" sizes="any">
+    @if(empty($faviconCustom ?? true))
+    <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}">
+    @endif
     <link rel="apple-touch-icon" href="{{ $site['apple_touch_icon'] ?? asset('apple-touch-icon.png') }}">
     <title>@php $pageTitle = trim($__env->yieldContent('title', config('app.name'))); echo e($pageTitle) . (str_contains($pageTitle, config('app.name')) ? '' : ' — ' . config('app.name')); @endphp</title>
     <meta name="description" content="@yield('description', $site['description'] ?? config('app.name'))">

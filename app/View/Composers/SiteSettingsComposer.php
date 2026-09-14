@@ -47,6 +47,10 @@ class SiteSettingsComposer
                 'address_region' => $get('address_region', ''),
                 'address_country' => $get('address_country', ''),
             ],
+            // Whether the admin uploaded a custom favicon. The layout uses this
+            // to keep rendering exactly the custom icon in that case, and the
+            // shipped branded set (SVG + .ico fallback) otherwise.
+            'faviconCustom' => trim((string) $get('site_favicon', '')) !== '',
             // Organization JSON-LD, built in PHP so Blade never sees a literal
             // '@context' string (which it would compile as a directive inside
             // echo tags). Rendered with @json() like the other schemas.
