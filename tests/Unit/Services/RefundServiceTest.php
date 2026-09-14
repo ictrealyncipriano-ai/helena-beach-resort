@@ -4,6 +4,7 @@ namespace Tests\Unit\Services;
 
 use App\Models\Cottage;
 use App\Models\Inquiry;
+use App\Models\Payment;
 use App\Services\PayMongoService;
 use App\Services\RefundService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -136,5 +137,50 @@ class RefundServiceTest extends TestCase
         // The rollback frees the claim, so a retry can succeed.
         $this->assertSame(RefundService::CLAIMED, $service->claimAndProcess($inquiry, $payMongo));
         $this->assertNotNull($inquiry->refresh()->refunded_at);
+    }
+
+    public function test_partial_refund_marks_partially_refunded_and_cannot_double_refund(): void
+    {
+        $this->fakeRefundEndpoint();
+        $inquiry = $this->paidBooking('partial@example.com');
+        Payment::recordPaid($inquiry->refresh(), (string) $inquiry->total_amount, 'qrph', 'pay_123', 'cs_partial', Payment::TYPE_FULL);
+
+        $half = number_format((float) $inquiry->total_amount / 2, 2, '.', '');
+
+        $result = app(RefundService::class)->claimAndProcess($inquiry, app(PayMongoService::class), $half);
+
+        $this->assertSame(RefundService::CLAIMED, $result);
+        $this->assertSame(
+            Payment::STATUS_PARTIALLY_REFUNDED,
+            Payment::where('provider_payment_id', 'pay_123')->first()->status
+        );
+
+        $refundRow = Payment::where('inquiry_id', $inquiry->id)->where('type', Payment::TYPE_REFUND)->first();
+        $this->assertNotNull($refundRow);
+        $this->assertSame($half, $refundRow->amount);
+        $this->assertSame(RefundService::STATUS_COMPLETED, $inquiry->refresh()->refund_status);
+
+        // The claim guard blocks any retry: no second provider call, no
+        // second refund row — the remainder can never double-refund.
+        $this->assertSame(
+            RefundService::ALREADY_CLAIMED,
+            app(RefundService::class)->claimAndProcess($inquiry->refresh(), app(PayMongoService::class), $half)
+        );
+        Http::assertSentCount(1);
+        $this->assertSame(1, Payment::where('inquiry_id', $inquiry->id)->where('type', Payment::TYPE_REFUND)->count());
+    }
+
+    public function test_full_refund_still_marks_paid_rows_refunded(): void
+    {
+        $this->fakeRefundEndpoint();
+        $inquiry = $this->paidBooking('fullmark@example.com');
+        Payment::recordPaid($inquiry->refresh(), (string) $inquiry->total_amount, 'qrph', 'pay_123', 'cs_full', Payment::TYPE_FULL);
+
+        $this->assertSame(RefundService::CLAIMED, app(RefundService::class)->claimAndProcess($inquiry, app(PayMongoService::class)));
+
+        $this->assertSame(
+            Payment::STATUS_REFUNDED,
+            Payment::where('provider_payment_id', 'pay_123')->first()->status
+        );
     }
 }

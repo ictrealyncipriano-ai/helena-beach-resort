@@ -261,6 +261,49 @@ class PaymentReconciliationTest extends TestCase
         $this->assertSame($inquiry->id, $result['inquiry_id']);
     }
 
+    public function test_reconcile_records_balance_payment_after_pending_sweep(): void
+    {
+        // Deposit leg paid, then the pending baseline was swept (cleared):
+        // the balance checkout must verify against the outstanding balance,
+        // not the full total — and credit exactly the delivered amount.
+        $inquiry = Inquiry::create([
+            'reference_code' => Inquiry::generateReferenceCode(),
+            'name' => 'Guest',
+            'email' => 'sweepbalance@example.com',
+            'phone' => '09170000000',
+            'booking_type' => 'overnight',
+            'cottage_id' => Cottage::first()->id,
+            'check_in' => '2026-09-01',
+            'check_out' => '2026-09-03',
+            'pax' => 2,
+            'status' => Inquiry::STATUS_CONFIRMED,
+            'source' => 'website',
+            'total_amount' => '5000.00',
+            'deposit_amount' => '1000.00',
+            'amount_paid' => '1000.00',
+            'deposit_paid_at' => now(),
+            'payment_pending_amount' => null,
+            'paymongo_session_id' => null,
+        ]);
+        Payment::recordPaid($inquiry, '1000.00', 'qrph', 'pay_sweep_dep', 'cs_sweep_dep', Payment::TYPE_DEPOSIT);
+
+        Http::fake([
+            'api.paymongo.com/v2/checkout_sessions/*' => Http::response([
+                'data' => $this->checkoutSessionResponse($inquiry, 'cs_sweep_bal', 'pay_sweep_bal', 400000),
+            ], 200),
+        ]);
+
+        $result = app(PaymentReconciliationService::class)->reconcileByCheckoutId('cs_sweep_bal');
+
+        $this->assertSame('recorded', $result['outcome']);
+        $inquiry->refresh();
+        $this->assertSame('5000.00', $inquiry->amount_paid);
+        $this->assertNotNull($inquiry->fully_paid_at);
+        $this->assertSame('pay_sweep_bal', $inquiry->paymongo_payment_id);
+        $this->assertSame(2, Payment::where('inquiry_id', $inquiry->id)->count());
+        $this->assertSame('4000.00', Payment::where('provider_payment_id', 'pay_sweep_bal')->first()->amount);
+    }
+
     public function test_reconcile_by_payment_id_without_local_row_is_unmatched_and_never_writes(): void
     {
         Http::fake([

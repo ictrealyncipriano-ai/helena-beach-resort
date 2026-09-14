@@ -98,9 +98,13 @@ class BookingCancellationService
         $inquiry->refresh();
 
         $quotedRefund = $refundState['quote']['refund_amount'] ?? null;
+        // The P1.1 quoted share is authoritative on a fresh success. On any
+        // later retry path (refundFailed / refundAlreadyProcessed) a
+        // persisted refund_amount must win over refundableAmount() so the
+        // quoted share is never overwritten with the full collected amount.
         $refundAmount = ($inquiry->refunded_at && ($refundState['refunded'] ?? false) && $quotedRefund !== null)
             ? $quotedRefund
-            : ($inquiry->refunded_at ? $inquiry->refundableAmount() : $inquiry->refund_amount);
+            : ($inquiry->refund_amount ?? ($inquiry->refunded_at ? $inquiry->refundableAmount() : $inquiry->refund_amount));
 
         $inquiry->update([
             'status' => Inquiry::STATUS_CANCELLED,

@@ -349,9 +349,22 @@ class PaymentReconciliationService
                     return ['ok' => true, 'ignored' => true, 'reason' => 'inquiry_not_confirmed'];
                 }
 
+                // Deposit→balance/full splits: the pending baseline may have been
+                // swept (cleared) after the first leg paid, so a balance
+                // payment can no longer match it. Accept any exact known
+                // baseline — pending, outstanding balance, amount due now, or
+                // total — and credit exactly what the provider delivered.
                 $expectedCentavos = $payMongo->toCentavos($locked->payment_pending_amount ?? $locked->total_amount);
+                $acceptedCentavos = array_values(array_unique(array_filter([
+                    $locked->payment_pending_amount !== null
+                        ? $payMongo->toCentavos($locked->payment_pending_amount)
+                        : null,
+                    $payMongo->toCentavos($locked->outstandingBalance()),
+                    $payMongo->toCentavos($locked->amountDueNow()),
+                    $payMongo->toCentavos($locked->total_amount),
+                ], fn ($v) => $v !== null && $v > 0)));
 
-                if ($paidCentavos === null || $paidCentavos !== $expectedCentavos || $currency !== 'PHP') {
+                if ($paidCentavos === null || ! in_array($paidCentavos, $acceptedCentavos, true) || $currency !== 'PHP') {
                     Log::warning('PayMongo webhook: amount/currency mismatch; payment NOT recorded', [
                         'inquiry_id' => $locked->id,
                         'reference_number' => $locked->reference_code,
@@ -363,7 +376,7 @@ class PaymentReconciliationService
                     return ['error' => 'Payment amount mismatch'];
                 }
 
-                $paidPesos = formatPrice($expectedCentavos / 100, 2, false);
+                $paidPesos = formatPrice($paidCentavos / 100, 2, false);
                 $newAmountPaid = formatPrice(
                     (float) ($locked->amount_paid ?? 0) + (float) $paidPesos,
                     2, false

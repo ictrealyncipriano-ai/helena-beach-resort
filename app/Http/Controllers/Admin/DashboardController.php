@@ -46,21 +46,35 @@ class DashboardController extends Controller
                 ->whereBetween('created_at', [$monthStart, $monthEnd])
                 ->count();
             $paidThisMonth = Inquiry::where('amount_paid', '>', 0)
-                ->whereBetween('deposit_paid_at', [$monthStart, $monthEnd])
+                ->where(function ($query) use ($monthStart, $monthEnd) {
+                    // A fully-paid booking without a deposit never sets
+                    // deposit_paid_at: match either settlement timestamp so
+                    // it is still counted. One row matches once, so
+                    // deposit+balance legs can never double-count.
+                    $query->whereBetween('deposit_paid_at', [$monthStart, $monthEnd])
+                        ->orWhereBetween('fully_paid_at', [$monthStart, $monthEnd]);
+                })
                 ->count();
             $revenueThisMonth = Inquiry::where('status', Inquiry::STATUS_CONFIRMED)
                 ->where('amount_paid', '>', 0)
-                ->whereBetween('deposit_paid_at', [$monthStart, $monthEnd])
+                ->where(function ($query) use ($monthStart, $monthEnd) {
+                    $query->whereBetween('deposit_paid_at', [$monthStart, $monthEnd])
+                        ->orWhereBetween('fully_paid_at', [$monthStart, $monthEnd]);
+                })
                 ->sum('amount_paid');
 
             $bookingTypeData = Inquiry::select('booking_type', DB::raw('count(*) as count'))
                 ->groupBy('booking_type')
                 ->pluck('count', 'booking_type');
 
+            // Attribute revenue to the booking's settlement date (fully-paid
+            // when set, else deposit-paid) so fully-paid non-deposit bookings
+            // appear and each booking lands in exactly one month bucket.
+            $settlementMonth = $this->monthExpression('COALESCE(fully_paid_at, deposit_paid_at)');
             $revenueData = Inquiry::where('status', Inquiry::STATUS_CONFIRMED)
                 ->where('amount_paid', '>', 0)
-                ->where('deposit_paid_at', '>=', now()->subMonths(6)->startOfMonth())
-                ->select(DB::raw("{$this->monthExpression('deposit_paid_at')} as month"), DB::raw('sum(amount_paid) as total'))
+                ->whereRaw('COALESCE(fully_paid_at, deposit_paid_at) >= ?', [now()->subMonths(6)->startOfMonth()->toDateTimeString()])
+                ->select(DB::raw("{$settlementMonth} as month"), DB::raw('sum(amount_paid) as total'))
                 ->groupBy('month')
                 ->orderBy('month')
                 ->pluck('total', 'month');

@@ -143,7 +143,16 @@ class RefundService
             }
         }
 
-        $refundQuery->update(['status' => Payment::STATUS_REFUNDED, 'refunded_at' => now()]);
+        // P1.1 tiered quotes refund only a share of what was collected: mark
+        // the settled rows partially refunded (not refunded) so the
+        // refundable remainder stays visible and a retry — still blocked by
+        // the claim guard above — can never double-refund it.
+        $isPartialRefund = (float) $refundAmount < (float) $inquiry->refundableAmount();
+
+        $refundQuery->update([
+            'status' => $isPartialRefund ? Payment::STATUS_PARTIALLY_REFUNDED : Payment::STATUS_REFUNDED,
+            'refunded_at' => now(),
+        ]);
 
         Inquiry::where('id', $inquiry->id)->update([
             'refund_status' => self::STATUS_COMPLETED,
