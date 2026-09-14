@@ -21,6 +21,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 class InquiryController extends Controller
@@ -334,16 +335,20 @@ class InquiryController extends Controller
 
         $validated = $request->validate([
             'amount' => ['nullable', 'numeric', 'min:0.01', 'max:'.$balance],
+            'idempotency_key' => ['nullable', 'string', 'max:64'],
         ], [
             'amount.max' => 'The amount exceeds the outstanding balance of '.formatPrice($balance).'.',
         ]);
 
         // No explicit amount (e.g. the one-click list action) settles the
-        // whole outstanding balance.
+        // whole outstanding balance. The balance/overpayment check is
+        // re-applied on the locked row inside recordManualPayment (this
+        // validate() stays for UX); a locked re-read failure surfaces as a
+        // ValidationException and never marks anything paid.
         $amount = isset($validated['amount'])
             ? formatPrice($validated['amount'], 2, false)
             : $balance;
-        $fullyPaid = $inquiry->recordManualPayment($amount);
+        $fullyPaid = $inquiry->recordManualPayment($amount, Inquiry::METHOD_MANUAL, $validated['idempotency_key'] ?? null);
 
         DashboardController::forgetCache();
 
@@ -376,27 +381,51 @@ class InquiryController extends Controller
         $validated = $request->validate([
             'note' => 'nullable|string|max:500',
             'amount' => ['nullable', 'numeric', 'min:0.01', 'max:'.$balance],
+            'idempotency_key' => ['nullable', 'string', 'max:64'],
         ], [
             'amount.max' => 'The amount exceeds the outstanding balance of '.formatPrice($balance).'.',
         ]);
 
-        $inquiry->update([
-            'payment_proof_status' => Inquiry::PROOF_APPROVED,
-            'payment_proof_reviewed_at' => now(),
-            'payment_proof_review_note' => $validated['note'] ?? null,
-        ]);
+        // The proof-status flip and the money write share one transaction:
+        // when recordManualPayment throws (e.g. the locked re-read finds
+        // the amount no longer fits the balance), the APPROVED flag rolls
+        // back too, so a proof can never read APPROVED with no ledger row.
+        // recordManualPayment nests its own transaction (savepoint) and
+        // re-checks the balance on the locked row; the validate() above
+        // stays for UX only.
+        $fullyPaid = false;
+        $amount = null;
 
-        if (! $inquiry->isPaid()) {
-            // Default to what the guest was asked to pay at this point
-            // (deposit when unpaid, otherwise the remaining balance).
-            $amount = isset($validated['amount'])
-                ? formatPrice($validated['amount'], 2, false)
-                : $inquiry->amountDueNow();
+        DB::transaction(function () use ($inquiry, $validated, &$fullyPaid, &$amount) {
+            $locked = Inquiry::whereKey($inquiry->id)->lockForUpdate()->firstOrFail();
 
-            $fullyPaid = (float) $amount > 0 && $inquiry->recordManualPayment($amount);
-        } else {
-            $fullyPaid = true;
-        }
+            if (! $locked->hasPendingPaymentProof()) {
+                throw ValidationException::withMessages([
+                    'payment_proof' => 'This booking has no payment proof awaiting review.',
+                ]);
+            }
+
+            $locked->update([
+                'payment_proof_status' => Inquiry::PROOF_APPROVED,
+                'payment_proof_reviewed_at' => now(),
+                'payment_proof_review_note' => $validated['note'] ?? null,
+            ]);
+
+            if (! $locked->isPaid()) {
+                // Default to what the guest was asked to pay at this point
+                // (deposit when unpaid, otherwise the remaining balance).
+                $amount = isset($validated['amount'])
+                    ? formatPrice($validated['amount'], 2, false)
+                    : $locked->amountDueNow();
+
+                $fullyPaid = (float) $amount > 0
+                    && $locked->recordManualPayment($amount, Inquiry::METHOD_MANUAL, $validated['idempotency_key'] ?? null);
+            } else {
+                $fullyPaid = true;
+            }
+
+            $inquiry->setRawAttributes($locked->refresh()->getAttributes(), true);
+        });
 
         DashboardController::forgetCache();
 

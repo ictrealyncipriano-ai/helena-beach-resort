@@ -8,6 +8,7 @@ use App\Mail\ManualRefundRequired;
 use App\Mail\RefundReceived;
 use App\Models\Inquiry;
 use App\Models\SiteSetting;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 
@@ -91,38 +92,84 @@ class BookingCancellationService
      * P1.1: when a tiered refund just succeeded, persist the quoted share
      * (not the full collected amount).
      *
+     * One DB::transaction covers the status/refund update + block release +
+     * stay reversal, so a failure at any point rolls the whole cancellation
+     * back. The block release uses an explicit snapshot taken from the
+     * locked row — never the caller's possibly-mutated attributes (e.g. an
+     * overnight→day-tour type switch held in memory) — with the exclusive
+     * [check_in, check_out) semantics from b37a7e4.
+     *
+     * Already-cancelled rows are a no-op (double cancel releases blocks and
+     * decrements the stay exactly once). Dashboard cache invalidation stays
+     * after commit.
+     *
+     * NOTE (scope): the sibling sequences in Admin\InquiryController::refund
+     * (status/refund fields + releaseBlocks + reverseStay), destroy
+     * (releaseBlocks + delete), and the CancelsBookings::cancelBooking trait
+     * duplicate these steps on purpose and are intentionally NOT unified
+     * here — different guards/contracts per path. Keep them in sync by hand.
+     *
      * @param  array{refunded: bool, wasConfirmed: bool, quote?: array{refund_amount: string}}  $refundState
      */
     public function finalizeCancellation(Inquiry $inquiry, bool $wasConfirmed, ?array $refundState = null): void
     {
-        $inquiry->refresh();
+        DB::transaction(function () use ($inquiry, $wasConfirmed, $refundState) {
+            $locked = Inquiry::whereKey($inquiry->id)->lockForUpdate()->firstOrFail();
 
-        $quotedRefund = $refundState['quote']['refund_amount'] ?? null;
-        // The P1.1 quoted share is authoritative on a fresh success. On any
-        // later retry path (refundFailed / refundAlreadyProcessed) a
-        // persisted refund_amount must win over refundableAmount() so the
-        // quoted share is never overwritten with the full collected amount.
-        $refundAmount = ($inquiry->refunded_at && ($refundState['refunded'] ?? false) && $quotedRefund !== null)
-            ? $quotedRefund
-            : ($inquiry->refund_amount ?? ($inquiry->refunded_at ? $inquiry->refundableAmount() : $inquiry->refund_amount));
+            if ($locked->status === Inquiry::STATUS_CANCELLED) {
+                $inquiry->setRawAttributes($locked->getAttributes(), true);
 
-        $inquiry->update([
-            'status' => Inquiry::STATUS_CANCELLED,
-            'refunded_at' => $inquiry->refunded_at,
-            'refund_amount' => $refundAmount,
-        ]);
-        $inquiry->releaseBlocks();
+                return;
+            }
 
-        // Only decrement a recorded stay when this was a confirmed booking
-        // (markConfirmed() increments it); never let a cancel push a pending
-        // booking's count below zero.
-        if ($wasConfirmed) {
-            $inquiry->reverseStay();
-        }
+            $quotedRefund = $refundState['quote']['refund_amount'] ?? null;
+            // The P1.1 quoted share is authoritative on a fresh success. On any
+            // later retry path (refundFailed / refundAlreadyProcessed) a
+            // persisted refund_amount must win over refundableAmount() so the
+            // quoted share is never overwritten with the full collected amount.
+            $refundAmount = ($locked->refunded_at && ($refundState['refunded'] ?? false) && $quotedRefund !== null)
+                ? $quotedRefund
+                : ($locked->refund_amount ?? ($locked->refunded_at ? $locked->refundableAmount() : $locked->refund_amount));
+
+            $original = [
+                'cottage_id' => $locked->cottage_id,
+                'check_in' => $locked->check_in?->format('Y-m-d'),
+                'check_out' => $locked->check_out?->format('Y-m-d'),
+                'booking_type' => $locked->booking_type,
+            ];
+
+            $locked->update([
+                'status' => Inquiry::STATUS_CANCELLED,
+                'refunded_at' => $locked->refunded_at,
+                'refund_amount' => $refundAmount,
+            ]);
+            $this->releaseInquiryBlocks($locked, $original);
+
+            // Only decrement a recorded stay when this was a confirmed booking
+            // (markConfirmed() increments it); never let a cancel push a pending
+            // booking's count below zero.
+            if ($wasConfirmed) {
+                $locked->reverseStay();
+            }
+
+            $inquiry->setRawAttributes($locked->refresh()->getAttributes(), true);
+        });
 
         // Guest cancellations change the same dashboard aggregates as admin
         // ones (pending/confirmed counts, revenue), so drop the cached stats.
         DashboardController::forgetCache();
+    }
+
+    /**
+     * Single seam for the block release inside finalizeCancellation's
+     * transaction. Exists so tests can force a release failure (subclass
+     * override) and assert the whole cancellation rolls back.
+     *
+     * @param  array{cottage_id: ?int, check_in: ?string, check_out: ?string, booking_type?: ?string}  $original
+     */
+    protected function releaseInquiryBlocks(Inquiry $locked, array $original): void
+    {
+        $locked->releaseBlocks($original);
     }
 
     /**

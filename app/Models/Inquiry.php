@@ -8,6 +8,8 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class Inquiry extends Model
 {
@@ -307,47 +309,105 @@ class Inquiry extends Model
      * timestamps from coverage — never assumes the booking was settled in
      * full unless the running total actually covers total_amount.
      *
+     * Concurrency-safe: the whole read-modify-write (balance re-check,
+     * summary update, ledger insert) runs inside one DB::transaction under
+     * a row lock, so two serialized submissions can never lose an update
+     * or drift the summary away from the ledger sum. The over-balance
+     * check is re-applied on the locked row (the controller's validate()
+     * stays for UX only) and throws a ValidationException when the amount
+     * no longer fits the outstanding balance.
+     *
+     * Idempotency (no ledger redesign): pass the same $idempotencyKey for
+     * retries of one logical payment and only the first attempt writes —
+     * the key is carried in the ledger row's metadata (existing nullable
+     * json column). Without a key every call records: two serialized
+     * legitimate payments both land and summary == ledger sum.
+     *
      * @return bool whether this payment completed the booking's full total
      */
-    public function recordManualPayment(string $amount, string $method = self::METHOD_MANUAL): bool
+    public function recordManualPayment(string $amount, string $method = self::METHOD_MANUAL, ?string $idempotencyKey = null): bool
     {
-        $priorPaid = (float) ($this->amount_paid ?? 0);
-        $newAmountPaid = formatPrice(
-            (float) ($this->amount_paid ?? 0) + (float) $amount,
-            2, false
-        );
+        return DB::transaction(function () use ($amount, $method, $idempotencyKey) {
+            $locked = static::whereKey($this->id)->lockForUpdate()->firstOrFail();
 
-        $fullyPaid = (float) $newAmountPaid >= (float) $this->total_amount;
-        $depositCovered = $this->hasDeposit()
-            && (float) $newAmountPaid >= (float) $this->deposit_amount;
+            $paymentAmount = (float) $amount;
 
-        $this->update([
-            'amount_paid' => $newAmountPaid,
-            'deposit_paid_at' => $depositCovered && ! $this->isDepositPaid()
-                ? now()
-                : $this->deposit_paid_at,
-            'fully_paid_at' => $fullyPaid ? now() : $this->fully_paid_at,
-            'payment_method' => $method,
-        ]);
+            if ($paymentAmount <= 0) {
+                throw ValidationException::withMessages([
+                    'amount' => 'The amount must be greater than zero.',
+                ]);
+            }
 
-        // WP-1 dual-write: mirror the settlement into the ledger. Manual
-        // rows carry no provider id, so this is a plain create.
-        $type = $fullyPaid
-            ? ($priorPaid > 0 ? Payment::TYPE_BALANCE : Payment::TYPE_FULL)
-            : ($depositCovered && $this->hasDeposit() ? Payment::TYPE_DEPOSIT : Payment::TYPE_BALANCE);
+            $total = (float) $locked->total_amount;
+            $priorPaid = (float) ($locked->amount_paid ?? 0);
+            $balance = $total - $priorPaid;
 
-        Payment::create([
-            'inquiry_id' => $this->id,
-            'provider' => Payment::PROVIDER_MANUAL,
-            'method' => $method,
-            'type' => $type,
-            'amount' => formatPrice($amount, 2, false),
-            'currency' => 'PHP',
-            'status' => Payment::STATUS_PAID,
-            'paid_at' => now(),
-        ]);
+            // Idempotent retry first: a repeated submission of one logical
+            // payment returns the stored outcome even when the balance no
+            // longer fits the amount (e.g. retrying a full settlement shows
+            // balance 0). Checked inside the lock so a serialized retry sees
+            // the first attempt's committed ledger row.
+            if ($idempotencyKey !== null && $idempotencyKey !== '') {
+                $duplicate = Payment::where('inquiry_id', $locked->id)
+                    ->where('provider', Payment::PROVIDER_MANUAL)
+                    ->orderByDesc('id')
+                    ->limit(25)
+                    ->get()
+                    ->firstWhere(fn (Payment $row) => ($row->metadata['idempotency_key'] ?? null) === $idempotencyKey);
 
-        return $fullyPaid;
+                if ($duplicate) {
+                    $this->refresh();
+
+                    return (float) ($locked->amount_paid ?? 0) >= (float) $locked->total_amount;
+                }
+            }
+
+            if ($paymentAmount - max($balance, 0) > 0.005) {
+                throw ValidationException::withMessages([
+                    'amount' => 'The amount exceeds the outstanding balance of '.formatPrice(max($balance, 0)).'.',
+                ]);
+            }
+
+            $newAmountPaid = formatPrice($priorPaid + $paymentAmount, 2, false);
+
+            $fullyPaid = (float) $newAmountPaid >= $total;
+            $depositCovered = $locked->hasDeposit()
+                && (float) $newAmountPaid >= (float) $locked->deposit_amount;
+
+            // Classify from the pre-write locked state (priorPaid > 0 means
+            // this leg settles a balance, not a first full payment).
+            $type = Payment::classifyType($locked, $fullyPaid, $depositCovered);
+
+            $locked->update([
+                'amount_paid' => $newAmountPaid,
+                'deposit_paid_at' => $depositCovered && ! $locked->isDepositPaid()
+                    ? now()
+                    : $locked->deposit_paid_at,
+                'fully_paid_at' => $fullyPaid ? now() : $locked->fully_paid_at,
+                'payment_method' => $method,
+            ]);
+
+            // WP-1 dual-write: mirror the settlement into the ledger inside
+            // the same locked transaction. Manual rows carry no provider id,
+            // so this is a plain create.
+            Payment::create([
+                'inquiry_id' => $locked->id,
+                'provider' => Payment::PROVIDER_MANUAL,
+                'method' => $method,
+                'type' => $type,
+                'amount' => formatPrice($amount, 2, false),
+                'currency' => 'PHP',
+                'status' => Payment::STATUS_PAID,
+                'paid_at' => now(),
+                'metadata' => $idempotencyKey !== null && $idempotencyKey !== ''
+                    ? ['idempotency_key' => $idempotencyKey]
+                    : null,
+            ]);
+
+            $this->refresh();
+
+            return $fullyPaid;
+        });
     }
 
     /**
