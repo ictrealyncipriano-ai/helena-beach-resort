@@ -1,14 +1,14 @@
 @php
     $routes = [
-        'home' => ['label' => 'Home', 'icon' => 'home'],
-        'about' => ['label' => 'About', 'icon' => 'info'],
-        'cottages.index' => ['label' => 'Cottages', 'icon' => 'home-modern'],
-        'gallery.index' => ['label' => 'Gallery', 'icon' => 'photo'],
-        'services' => ['label' => 'Services', 'icon' => 'sparkles'],
-        'faq' => ['label' => 'FAQ', 'icon' => 'question-mark-circle'],
-        'reviews' => ['label' => 'Reviews', 'icon' => 'chat-bubble-left'],
-        'news.index' => ['label' => 'News', 'icon' => 'document-text'],
-        'contact' => ['label' => 'Contact', 'icon' => 'email'],
+        'home' => 'Home',
+        'about' => 'About',
+        'cottages.index' => 'Cottages',
+        'gallery.index' => 'Gallery',
+        'services' => 'Services',
+        'faq' => 'FAQ',
+        'reviews' => 'Reviews',
+        'news.index' => 'News',
+        'contact' => 'Contact',
     ];
     $current = Route::currentRouteName();
 @endphp
@@ -27,21 +27,17 @@
 
             {{-- Desktop Navigation --}}
             <div class="hidden md:flex items-center gap-1">
-                @foreach($routes as $route => $item)
+                @foreach($routes as $route => $label)
                 <a href="{{ route($route) }}"
-                   class="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-lg transition-colors
+                   class="px-3 py-2 text-sm font-medium rounded-lg transition-colors
                    {{ $current === $route ? 'text-teal-700 bg-teal-50 dark:text-teal-300 dark:bg-teal-900/40' : 'text-gray-600 hover:text-teal-700 hover:bg-gray-50 dark:text-slate-300 dark:hover:text-teal-300 dark:hover:bg-slate-700/50' }}">
-                    {{-- Link icons appear from xl up, where the container has room;
-                         below xl the links stay text-only exactly as before. --}}
-                    <x-icons name="{{ $item['icon'] }}" class="w-4 h-4 shrink-0 hidden xl:inline-flex" />
-                    <span>{{ $item['label'] }}</span>
+                    {{ $label }}
                 </a>
                 @endforeach
                 <div class="flex items-center gap-3 ml-3 pl-3 border-l border-gray-200 dark:border-slate-700">
                     <a href="{{ route('booking.portal.lookup') }}"
-                       class="inline-flex items-center gap-1.5 text-sm font-medium transition-colors {{ $current === 'booking.portal.lookup' || str_starts_with($current, 'booking.portal') ? 'text-teal-700 dark:text-teal-300' : 'text-gray-500 hover:text-teal-700 dark:text-slate-400 dark:hover:text-teal-300' }}">
-                        <x-icons name="user" class="w-4 h-4 shrink-0 hidden xl:inline-flex" />
-                        <span>My Booking</span>
+                       class="text-sm font-medium transition-colors {{ $current === 'booking.portal.lookup' || str_starts_with($current, 'booking.portal') ? 'text-teal-700 dark:text-teal-300' : 'text-gray-500 hover:text-teal-700 dark:text-slate-400 dark:hover:text-teal-300' }}">
+                        My Booking
                     </a>
                     <x-theme-toggle />
                     @foreach($socials as $icon => $href)
@@ -119,21 +115,19 @@
             </div>
         </div>
         <div class="px-4 py-4 space-y-1 overflow-y-auto max-h-[calc(100vh-4rem)]">
-            @foreach($routes as $route => $item)
+            @foreach($routes as $route => $label)
             <a href="{{ route($route) }}"
-               class="flex items-center gap-3 px-4 min-h-[44px] text-sm font-medium rounded-lg transition-colors
+               class="flex items-center px-4 min-h-[44px] text-sm font-medium rounded-lg transition-colors
                {{ $current === $route ? 'text-teal-700 bg-teal-50 dark:text-teal-300 dark:bg-teal-900/40' : 'text-gray-600 hover:text-teal-700 hover:bg-gray-50 dark:text-slate-300 dark:hover:text-teal-300 dark:hover:bg-slate-700/50' }}"
                @click="mobileMenu = false">
-                <x-icons name="{{ $item['icon'] }}" class="w-5 h-5 shrink-0" />
-                <span>{{ $item['label'] }}</span>
+                {{ $label }}
             </a>
             @endforeach
             <hr class="my-3 border-gray-100 dark:border-slate-700">
             <a href="{{ route('booking.portal.lookup') }}"
-               class="flex items-center gap-3 px-4 min-h-[44px] text-sm font-medium rounded-lg transition-colors {{ str_starts_with($current, 'booking.portal') ? 'text-teal-700 bg-teal-50 dark:text-teal-300 dark:bg-teal-900/40' : 'text-gray-600 hover:text-teal-700 hover:bg-gray-50 dark:text-slate-300 dark:hover:text-teal-300 dark:hover:bg-slate-700/50' }}"
+               class="flex items-center px-4 min-h-[44px] text-sm font-medium rounded-lg transition-colors {{ str_starts_with($current, 'booking.portal') ? 'text-teal-700 bg-teal-50 dark:text-teal-300 dark:bg-teal-900/40' : 'text-gray-600 hover:text-teal-700 hover:bg-gray-50 dark:text-slate-300 dark:hover:text-teal-300 dark:hover:bg-slate-700/50' }}"
                @click="mobileMenu = false">
-                <x-icons name="user" class="w-5 h-5 shrink-0" />
-                <span>My Booking</span>
+                My Booking
             </a>
             <div class="flex items-center gap-2 px-4 py-3">
                 @foreach($socials as $icon => $href)
