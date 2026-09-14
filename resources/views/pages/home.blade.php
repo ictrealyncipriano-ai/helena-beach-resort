@@ -274,7 +274,7 @@
 </section>
 
 @push('scripts')
-<script>
+<script nonce="{{ $cspNonce ?? '' }}">
 function testimonialCarousel() {
     return {
         current: 0,

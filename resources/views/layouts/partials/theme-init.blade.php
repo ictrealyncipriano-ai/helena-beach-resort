@@ -1,4 +1,4 @@
-<script>
+<script nonce="{{ $cspNonce ?? '' }}">
     // Apply light/dark before first paint to avoid a flash.
     (function () {
         var mode = localStorage.getItem('theme') || 'system';

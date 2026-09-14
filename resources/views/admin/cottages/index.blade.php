@@ -142,7 +142,7 @@ if ($editingId) {
 @endsection
 
 @push('scripts')
-<script>
+<script nonce="{{ $cspNonce ?? '' }}">
 document.addEventListener('alpine:init', () => {
     Alpine.$store('confirmDelete', {
         open: false,

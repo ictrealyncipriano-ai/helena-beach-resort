@@ -50,7 +50,7 @@ $usersData = $users->map(fn ($u) => [
 <x-admin.confirm-dialog name="delete" title="Delete User?" message="Are you sure you want to delete this user? This action cannot be undone." />
 @endsection
 
-<script>
+<script nonce="{{ $cspNonce ?? '' }}">
 window.userForm = function() {
     return {
         allUsers: @js($usersData),

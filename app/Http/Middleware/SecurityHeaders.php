@@ -4,17 +4,27 @@ namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\View;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
  * Adds baseline security headers to every response: MIME-sniffing guard,
  * clickjacking frame denial, and a strict referrer policy. HSTS is only sent
  * over HTTPS in production so local http:// development is never affected.
+ *
+ * A cryptographically secure per-request CSP nonce is generated before the
+ * request is handled and shared with all Blade views as $cspNonce, so inline
+ * scripts can opt in with nonce="{{ $cspNonce ?? '' }}" without ever falling
+ * back to 'unsafe-inline'. Views rendered off-request (queued mail, PDFs)
+ * see an empty nonce via the null-coalescing default.
  */
 class SecurityHeaders
 {
     public function handle(Request $request, Closure $next): Response
     {
+        $nonce = base64_encode(random_bytes(16));
+        View::share('cspNonce', $nonce);
+
         $response = $next($request);
 
         $response->headers->set('X-Content-Type-Options', 'nosniff');
@@ -23,9 +33,11 @@ class SecurityHeaders
         $response->headers->set('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), payment=()');
         $response->headers->set(
             'Content-Security-Policy',
-            "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.bunny.net; "
-            ."font-src 'self' https://fonts.bunny.net; img-src 'self' data: https:; object-src 'none'; "
-            ."base-uri 'self'; frame-ancestors 'none'"
+            "default-src 'self'; script-src 'self' 'nonce-{$nonce}' https://www.googletagmanager.com; "
+            ."style-src 'self' 'unsafe-inline' https://fonts.bunny.net; "
+            ."font-src 'self' https://fonts.bunny.net; img-src 'self' data: https:; "
+            ."connect-src 'self' https://www.googletagmanager.com https://www.google-analytics.com; "
+            ."object-src 'none'; base-uri 'self'; frame-ancestors 'none'"
         );
         $response->headers->set('Cross-Origin-Opener-Policy', 'same-origin');
 

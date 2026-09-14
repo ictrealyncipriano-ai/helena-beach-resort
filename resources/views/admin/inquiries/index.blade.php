@@ -263,7 +263,7 @@ if ($editingId) {
 <x-admin.confirm-dialog name="refund" title="Refund Payment?" message="Refund the collected amount via PayMongo and cancel this booking? The guest will be notified by email." confirmText="Refund & Cancel" confirmClass="bg-red-600 hover:bg-red-700 text-white" />
 @endsection
 
-<script>
+<script nonce="{{ $cspNonce ?? '' }}">
 window.inquiryModal = function() {
     return {
         inquiries: @js($inquiriesData),

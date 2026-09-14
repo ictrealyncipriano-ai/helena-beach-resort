@@ -2,11 +2,16 @@ import Alpine from 'alpinejs';
 import focus from '@alpinejs/focus';
 import flatpickr from 'flatpickr';
 import 'flatpickr/dist/flatpickr.min.css';
+import Chart from 'chart.js/auto';
 import './form-validation';
 import { themeToggle } from './theme-toggle';
 
 window.Alpine = Alpine;
 window.flatpickr = flatpickr;
+// Self-hosted via Vite (replaces the former jsDelivr CDN tag) so the admin
+// dashboard charts stay under script-src 'self'. Used by Alpine x-init
+// chart expressions in the dashboard view.
+window.Chart = Chart;
 
 Alpine.plugin(focus);
 

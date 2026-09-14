@@ -224,7 +224,7 @@
 </section>
 
 @push('scripts')
-<script>
+<script nonce="{{ $cspNonce ?? '' }}">
 function cottageFilter() {
     return {
         filters: {
@@ -275,7 +275,7 @@ function cottageFilter() {
 
         @push('scripts')
         @vite('resources/js/flatpickr.js')
-        <script>
+        <script nonce="{{ $cspNonce ?? '' }}">
         function availabilityWidget() {
             const endpoint = @json(route('availability.check'));
             let fpIn = null;

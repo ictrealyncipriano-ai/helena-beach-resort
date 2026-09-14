@@ -66,7 +66,7 @@
         </div>
     </div>
 
-    <script>
+    <script nonce="{{ $cspNonce ?? '' }}">
         function adminLayout() {
             return {
                 sidebarOpen: false,

@@ -262,7 +262,7 @@
 
 @push('scripts')
 @vite('resources/js/lightbox.js')
-<script>
+<script nonce="{{ $cspNonce ?? '' }}">
     function calendar(blockedData) {
         // The Blade js directive now passes a real array literal; older
         // JSON-string payloads are still accepted so both render paths

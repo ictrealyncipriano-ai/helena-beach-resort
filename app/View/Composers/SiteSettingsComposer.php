@@ -47,6 +47,17 @@ class SiteSettingsComposer
                 'address_region' => $get('address_region', ''),
                 'address_country' => $get('address_country', ''),
             ],
+            // Organization JSON-LD, built in PHP so Blade never sees a literal
+            // '@context' string (which it would compile as a directive inside
+            // echo tags). Rendered with @json() like the other schemas.
+            'organizationSchema' => [
+                '@context' => 'https://schema.org',
+                '@type' => 'Organization',
+                'name' => $get('site_name', config('app.name')),
+                'url' => url('/'),
+                'logo' => $get('og_image', SiteSetting::logoUrl()),
+                'sameAs' => array_values(array_filter($socials)),
+            ],
             'socials' => $socials,
             'analytics' => [
                 'ga4_id' => trim((string) $get('analytics_ga4_id', '')),

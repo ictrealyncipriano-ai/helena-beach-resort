@@ -135,7 +135,7 @@ if ($editingId) {
 <x-admin.confirm-dialog name="delete" title="Delete Image?" message="Are you sure? This cannot be undone." />
 @endsection
 
-<script>
+<script nonce="{{ $cspNonce ?? '' }}">
 window.galleryModal = function() {
     return {
         galleries: @js($galleriesData),

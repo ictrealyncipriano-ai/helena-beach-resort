@@ -81,7 +81,7 @@ if ($editingId) {
 @endsection
 
 @push('scripts')
-<script>
+<script nonce="{{ $cspNonce ?? '' }}">
 function siteSettingModal() {
     return {
         settings: @js($settingsData),

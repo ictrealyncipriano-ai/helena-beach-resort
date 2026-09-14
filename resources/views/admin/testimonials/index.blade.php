@@ -150,7 +150,7 @@ if ($editingId) {
 @endsection
 
 @push('scripts')
-<script>
+<script nonce="{{ $cspNonce ?? '' }}">
 function testimonialModal() {
     return {
         testimonials: @js($testimonialsData),

@@ -125,7 +125,7 @@ if ($editingId) {
 <x-admin.confirm-dialog name="delete" title="Delete Guest?" message="Are you sure? This cannot be undone." />
 @endsection
 
-<script>
+<script nonce="{{ $cspNonce ?? '' }}">
 window.guestModal = function() {
     return {
         guests: @js($guestsData),

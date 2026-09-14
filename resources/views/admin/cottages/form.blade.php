@@ -203,7 +203,7 @@
 @endsection
 
 @push('scripts')
-<script>
+<script nonce="{{ $cspNonce ?? '' }}">
 function cottageForm() {
     return {
         slug: '{{ old('slug', $cottage->slug ?? '') }}',

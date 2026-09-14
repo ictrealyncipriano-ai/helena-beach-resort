@@ -152,7 +152,7 @@
     </div>
 </section>
 @push('scripts')
-<script>
+<script nonce="{{ $cspNonce ?? '' }}">
     function showAvailability() {
         const select = document.getElementById('cottage_id');
         const info = document.getElementById('availability-info');

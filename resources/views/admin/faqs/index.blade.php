@@ -131,7 +131,7 @@ if ($editingId) {
 @endsection
 
 @push('scripts')
-<script>
+<script nonce="{{ $cspNonce ?? '' }}">
 function faqModal() {
     return {
         faqs: @js($faqsData),

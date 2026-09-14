@@ -35,18 +35,11 @@
     <meta name="twitter:title" content="@yield('og_title', config('app.name'))" />
     <meta name="twitter:description" content="@yield('og_description', $site['description'] ?? config('app.name'))" />
     <meta name="twitter:image" content="@yield('og_image', $site['og_image'])" />
-    @php
-        $orgSameAs = array_values(array_filter($socials ?? []));
-    @endphp
+    {{-- Organization schema is built in SiteSettingsComposer and rendered with
+         @json so Blade never sees the literal schema-context key inside an
+         echo tag (it would compile it as a directive). --}}
     <script type="application/ld+json">
-    {!! json_encode([
-        '@context' => 'https://schema.org',
-        '@type' => 'Organization',
-        'name' => $site['name'] ?? config('app.name'),
-        'url' => url('/'),
-        'logo' => $site['og_image'] ?? asset('images/logo.jpg'),
-        'sameAs' => $orgSameAs,
-    ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}
+    @json($organizationSchema)
     </script>
 
     <link rel="preconnect" href="https://fonts.bunny.net">
@@ -65,7 +58,7 @@
         $consentRequired = $analytics['consent_required'];
     @endphp
     @if($ga4Id)
-    <script>
+    <script nonce="{{ $cspNonce ?? '' }}">
     // Google Analytics 4 with consent mode v2. The gtag.js script is NOT
     // fetched until the visitor has granted consent (or consent is disabled
     // in site settings); consent state is stored in the resort_consent cookie.
@@ -136,8 +129,17 @@
     <x-cookie-banner />
 
     {{-- Scroll reveal observer --}}
-    <script>
+    <script nonce="{{ $cspNonce ?? '' }}">
     document.addEventListener('DOMContentLoaded', function() {
+        // Progressive enhancement: without IntersectionObserver (or when this
+        // script cannot run) every .reveal element must still become visible,
+        // so reveal everything immediately instead of leaving it at opacity 0.
+        if (!('IntersectionObserver' in window)) {
+            document.querySelectorAll('.reveal').forEach(function (el) {
+                el.classList.add('revealed');
+            });
+            return;
+        }
         const observer = new IntersectionObserver((entries) => {
             entries.forEach(entry => {
                 if (entry.isIntersecting) {

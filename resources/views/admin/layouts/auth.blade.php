@@ -39,7 +39,7 @@
         </div>
     </div>
 
-    <script>
+    <script nonce="{{ $cspNonce ?? '' }}">
         // Generic password toggles (data-target) + submit spinner for all auth forms.
         (function () {
             document.querySelectorAll('.toggle-pw').forEach(function (btn) {

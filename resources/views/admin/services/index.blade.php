@@ -88,7 +88,7 @@ if ($editingId) {
 @endsection
 
 @push('scripts')
-<script>
+<script nonce="{{ $cspNonce ?? '' }}">
 function serviceModal() {
     return {
         services: @js($servicesData),

@@ -233,7 +233,7 @@
 
 @push('scripts')
 @vite('resources/js/flatpickr.js')
-<script>
+<script nonce="{{ $cspNonce ?? '' }}">
 function bookingForm() {
     const blockedData = @js($blockedByCottage);
     const rateData = @js($rates);

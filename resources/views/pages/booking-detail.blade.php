@@ -402,7 +402,7 @@
 
 @push('scripts')
 @if(request('result') === 'success' && ! $inquiry->isPaid())
-<script>
+<script nonce="{{ $cspNonce ?? '' }}">
     // Poll the session-gated status endpoint while the PayMongo webhook is
     // catching up, then update the page in place once paid_at is set.
     (function () {

@@ -4,7 +4,7 @@
 @section('description', 'Overview of your resort operations')
 
 @section('content')
-<script>
+<script nonce="{{ $cspNonce ?? '' }}">
     window.siteThemeColor = function() {
         return getComputedStyle(document.documentElement).getPropertyValue('--color-teal-600').trim() || '#0d9488';
     };
@@ -536,7 +536,4 @@ class="relative bg-white rounded-2xl shadow-sm border border-gray-100 p-5 overfl
     </div>
 </div>
 @endsection
-
-@push('scripts')
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-@endpush
+{{-- Chart.js is bundled via Vite (see resources/js/admin.js), no CDN needed. --}}
