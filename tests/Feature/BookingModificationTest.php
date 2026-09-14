@@ -129,14 +129,20 @@ class BookingModificationTest extends TestCase
             'date' => now()->addDays(2)->toDateString(),
         ]);
 
-        // …and the new one is held across the full range.
-        foreach ([$newCheckIn, now()->addDays(7)->toDateString(), $newCheckOut] as $date) {
+        // …and the new one is held across [check_in, check_out).
+        foreach ([$newCheckIn, now()->addDays(7)->toDateString()] as $date) {
             $this->assertDatabaseHas('cottage_date_blocks', [
                 'cottage_id' => $newCottage->id,
                 'date' => $date,
                 'reason' => "Pending: {$original->reference_code}",
             ]);
         }
+
+        $this->assertDatabaseMissing('cottage_date_blocks', [
+            'cottage_id' => $newCottage->id,
+            'date' => $newCheckOut,
+            'reason' => "Pending: {$original->reference_code}",
+        ]);
     }
 
     public function test_modify_keeps_own_dates_without_conflict(): void

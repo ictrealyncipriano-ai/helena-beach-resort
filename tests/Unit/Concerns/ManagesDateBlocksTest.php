@@ -28,7 +28,7 @@ class ManagesDateBlocksTest extends TestCase
         return Cottage::first();
     }
 
-    private function inquiry(string $reference, int $cottageId, string $checkIn, ?string $checkOut = null): Inquiry
+    private function inquiry(string $reference, int $cottageId, string $checkIn, ?string $checkOut = null, string $bookingType = Inquiry::TYPE_OVERNIGHT): Inquiry
     {
         return Inquiry::create([
             'reference_code' => $reference,
@@ -37,12 +37,13 @@ class ManagesDateBlocksTest extends TestCase
             'cottage_id' => $cottageId,
             'check_in' => $checkIn,
             'check_out' => $checkOut,
+            'booking_type' => $bookingType,
             'source' => Inquiry::SOURCE_WEBSITE,
             'status' => Inquiry::STATUS_PENDING,
         ]);
     }
 
-    public function test_reserve_blocks_creates_one_row_per_date_inclusive(): void
+    public function test_reserve_blocks_creates_one_row_per_date_exclusive(): void
     {
         $cottage = $this->cottage();
         $inquiry = $this->inquiry('HB-RES1', $cottage->id, '2026-09-10', '2026-09-13');
@@ -52,14 +53,15 @@ class ManagesDateBlocksTest extends TestCase
         $dates = CottageDateBlock::where('inquiry_id', $inquiry->id)->pluck('date')
             ->map(fn ($d) => $d->format('Y-m-d'))->sort()->values()->all();
 
-        $this->assertSame(['2026-09-10', '2026-09-11', '2026-09-12', '2026-09-13'], $dates);
+        // Overnight is [check_in, check_out): check-out stays available.
+        $this->assertSame(['2026-09-10', '2026-09-11', '2026-09-12'], $dates);
         $this->assertSame("Pending: {$inquiry->reference_code}", CottageDateBlock::first()->reason);
     }
 
     public function test_reserve_blocks_day_tour_single_date(): void
     {
         $cottage = $this->cottage();
-        $inquiry = $this->inquiry('HB-DAY', $cottage->id, '2026-09-20');
+        $inquiry = $this->inquiry('HB-DAY', $cottage->id, '2026-09-20', null, Inquiry::TYPE_DAY_TOUR);
 
         $inquiry->reserveBlocks();
 
@@ -84,11 +86,23 @@ class ManagesDateBlocksTest extends TestCase
     public function test_reserve_blocks_throws_when_date_already_held(): void
     {
         $cottage = $this->cottage();
-        $this->inquiry('HB-HOLDER', $cottage->id, '2026-10-01', '2026-10-02')->reserveBlocks();
-        $competitor = $this->inquiry('HB-RIVAL', $cottage->id, '2026-10-02', '2026-10-03');
+        $this->inquiry('HB-HOLDER', $cottage->id, '2026-10-01', '2026-10-03')->reserveBlocks();
+        $competitor = $this->inquiry('HB-RIVAL', $cottage->id, '2026-10-02', '2026-10-04');
 
         $this->expectException(BookingConflictException::class);
         $competitor->reserveBlocks();
+    }
+
+    public function test_reserve_blocks_allows_back_to_back_checkout_equals_checkin(): void
+    {
+        $cottage = $this->cottage();
+        $this->inquiry('HB-HOLDER', $cottage->id, '2026-10-01', '2026-10-02')->reserveBlocks();
+        $competitor = $this->inquiry('HB-RIVAL', $cottage->id, '2026-10-02', '2026-10-03');
+
+        // Back-to-back: B's check-in == A's check-out must not conflict.
+        $competitor->reserveBlocks();
+
+        $this->assertTrue(true);
     }
 
     public function test_book_blocks_promotes_pending_to_booked_in_place(): void
@@ -103,17 +117,29 @@ class ManagesDateBlocksTest extends TestCase
             'Booked: HB-PROMO',
             CottageDateBlock::where('inquiry_id', $inquiry->id)->first()->reason
         );
-        $this->assertCount(2, CottageDateBlock::where('inquiry_id', $inquiry->id)->get(), 'Self-owned blocks are promoted, not duplicated.');
+        $this->assertCount(1, CottageDateBlock::where('inquiry_id', $inquiry->id)->get(), 'Self-owned blocks are promoted, not duplicated.');
     }
 
     public function test_book_blocks_throws_when_date_held_by_another_inquiry(): void
     {
         $cottage = $this->cottage();
-        $this->inquiry('HB-OTHER', $cottage->id, '2026-12-01', '2026-12-02')->bookBlocks();
-        $competitor = $this->inquiry('HB-COMP', $cottage->id, '2026-12-02', '2026-12-03');
+        $this->inquiry('HB-OTHER', $cottage->id, '2026-12-01', '2026-12-03')->bookBlocks();
+        $competitor = $this->inquiry('HB-COMP', $cottage->id, '2026-12-02', '2026-12-04');
 
         $this->expectException(BookingConflictException::class);
         $competitor->bookBlocks();
+    }
+
+    public function test_book_blocks_allows_back_to_back_checkout_equals_checkin(): void
+    {
+        $cottage = $this->cottage();
+        $this->inquiry('HB-OTHER', $cottage->id, '2026-12-01', '2026-12-02')->bookBlocks();
+        $competitor = $this->inquiry('HB-COMP', $cottage->id, '2026-12-02', '2026-12-03');
+
+        // Back-to-back: B's check-in == A's check-out must not conflict.
+        $competitor->bookBlocks();
+
+        $this->assertTrue(true);
     }
 
     public function test_release_blocks_deletes_this_inquiry_rows(): void
@@ -157,5 +183,46 @@ class ManagesDateBlocksTest extends TestCase
         $inquiry->releaseBlocks();
 
         $this->assertCount(0, CottageDateBlock::whereDate('date', '>=', '2026-09-01')->whereDate('date', '<=', '2026-09-02')->where('cottage_id', $cottage->id)->get());
+    }
+
+    public function test_back_to_back_overnight_stays_share_checkout_day(): void
+    {
+        $cottage = $this->cottage();
+        $stayA = $this->inquiry('HB-B2B-A', $cottage->id, '2026-09-10', '2026-09-12');
+        $stayB = $this->inquiry('HB-B2B-B', $cottage->id, '2026-09-12', '2026-09-14');
+
+        // Both reserve successfully on the same cottage: B's check-in is
+        // A's check-out, which stays available ([check_in, check_out)).
+        $stayA->reserveBlocks();
+        $stayB->reserveBlocks();
+
+        $datesA = CottageDateBlock::where('inquiry_id', $stayA->id)->pluck('date')
+            ->map(fn ($d) => $d->format('Y-m-d'))->sort()->values()->all();
+        $datesB = CottageDateBlock::where('inquiry_id', $stayB->id)->pluck('date')
+            ->map(fn ($d) => $d->format('Y-m-d'))->sort()->values()->all();
+
+        $this->assertSame(['2026-09-10', '2026-09-11'], $datesA);
+        $this->assertSame(['2026-09-12', '2026-09-13'], $datesB);
+
+        // number_of_nights == number_of_blocked_dates for each stay.
+        $this->assertCount(2, $datesA);
+        $this->assertCount(2, $datesB);
+
+        // Availability check for B's check-in (== A's check-out) is available.
+        $rule = new \App\Rules\CottageAvailability(
+            $cottage->id,
+            'b2b@example.com',
+            Inquiry::TYPE_OVERNIGHT,
+            '2026-09-14',
+            false,
+            $stayB->id
+        );
+
+        $failed = false;
+        $rule->validate('check_in', '2026-09-12', function () use (&$failed) {
+            $failed = true;
+        });
+
+        $this->assertFalse($failed, "B's check-in (A's check-out) must validate as available.");
     }
 }

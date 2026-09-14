@@ -4,6 +4,7 @@ namespace App\Rules;
 
 use App\Models\Cottage;
 use App\Models\Inquiry;
+use App\Support\StayDates;
 use Closure;
 use Illuminate\Contracts\Validation\ValidationRule;
 
@@ -63,11 +64,19 @@ class CottageAvailability implements ValidationRule
             return;
         }
 
-        $checkOut = $this->checkOut ?? $value;
+        // Overnight covers [check_in, check_out): the check-out day stays
+        // available for the next booking. Day tours cover only check-in.
+        // The dateBlocks relation still returns legacy NULL-FK rows, so
+        // callers relying on that BlockedDates fallback keep working.
+        $dates = StayDates::blockedDates($value, $this->checkOut ?? null, $this->bookingType ?? null);
+
+        if ($dates === []) {
+            return;
+        }
 
         $blocked = $cottage->dateBlocks()
             ->when($this->excludeInquiryId, fn ($q) => $q->where('inquiry_id', '!=', $this->excludeInquiryId))
-            ->whereBetween('date', [$value, $checkOut])
+            ->whereIn('date', $dates)
             ->pluck('date')
             ->map(fn ($d) => $d->format('M d, Y'));
 

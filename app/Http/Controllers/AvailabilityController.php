@@ -7,6 +7,7 @@ use App\Models\CottageDateBlock;
 use App\Models\Inquiry;
 use App\Services\PricingService;
 use App\Support\PublicCache;
+use App\Support\StayDates;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -48,7 +49,7 @@ class AvailabilityController extends Controller
             return response()->json(['message' => 'Date range too long (max 62 nights).'], 422);
         }
 
-        $range = $this->dateRange($checkIn, $checkOut);
+        $range = $this->dateRange($checkIn, $checkOut, $validated['booking_type']);
 
         $blocked = CottageDateBlock::where('cottage_id', $cottage->id)
             ->whereIn('date', $range)
@@ -72,23 +73,14 @@ class AvailabilityController extends Controller
     }
 
     /**
-     * Every calendar date in the range, inclusive of check-in and check-out
-     * (a day tour without a check-out covers only its check-in day).
+     * Every calendar date blocked by the range: [check_in, check_out) for
+     * overnight (check-out stays available), [check_in] for a day tour.
      *
      * @return string[]
      */
-    private function dateRange(Carbon $checkIn, ?Carbon $checkOut): array
+    private function dateRange(Carbon $checkIn, ?Carbon $checkOut, string $bookingType): array
     {
-        $dates = [];
-        $cursor = $checkIn->copy();
-        $end = $checkOut ?? $checkIn->copy();
-
-        while ($cursor->lte($end)) {
-            $dates[] = $cursor->format('Y-m-d');
-            $cursor->addDay();
-        }
-
-        return $dates;
+        return StayDates::blockedDates($checkIn, $checkOut, $bookingType);
     }
 
     /**

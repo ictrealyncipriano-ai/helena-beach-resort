@@ -49,7 +49,7 @@ class DatabaseHardeningTest extends TestCase
 
         $inquiry->reserveBlocks();
 
-        foreach (['2026-09-01', '2026-09-02', '2026-09-03'] as $date) {
+        foreach (['2026-09-01', '2026-09-02'] as $date) {
             $this->assertDatabaseHas('cottage_date_blocks', [
                 'cottage_id' => $cottage->id,
                 'date' => $date,
@@ -57,6 +57,12 @@ class DatabaseHardeningTest extends TestCase
                 'reason' => "Pending: {$inquiry->reference_code}",
             ]);
         }
+
+        $this->assertDatabaseMissing('cottage_date_blocks', [
+            'cottage_id' => $cottage->id,
+            'date' => '2026-09-03',
+            'inquiry_id' => $inquiry->id,
+        ]);
     }
 
     public function test_book_blocks_carry_inquiry_id(): void
@@ -66,7 +72,7 @@ class DatabaseHardeningTest extends TestCase
 
         $inquiry->bookBlocks();
 
-        foreach (['2026-09-01', '2026-09-02', '2026-09-03'] as $date) {
+        foreach (['2026-09-01', '2026-09-02'] as $date) {
             $this->assertDatabaseHas('cottage_date_blocks', [
                 'cottage_id' => $cottage->id,
                 'date' => $date,
@@ -74,6 +80,12 @@ class DatabaseHardeningTest extends TestCase
                 'reason' => "Booked: {$inquiry->reference_code}",
             ]);
         }
+
+        $this->assertDatabaseMissing('cottage_date_blocks', [
+            'cottage_id' => $cottage->id,
+            'date' => '2026-09-03',
+            'inquiry_id' => $inquiry->id,
+        ]);
     }
 
     public function test_upsert_creates_all_nights_in_one_stay(): void
@@ -84,13 +96,13 @@ class DatabaseHardeningTest extends TestCase
         $inquiry->reserveBlocks();
         $inquiry->bookBlocks();
 
-        $this->assertSame(3, CottageDateBlock::where('cottage_id', $cottage->id)
+        $this->assertSame(2, CottageDateBlock::where('cottage_id', $cottage->id)
             ->where('inquiry_id', $inquiry->id)
             ->count());
 
         // No stray rows outside the stay range, and the pending hold was
         // promoted in place rather than duplicated.
-        $this->assertSame(3, CottageDateBlock::where('cottage_id', $cottage->id)->count());
+        $this->assertSame(2, CottageDateBlock::where('cottage_id', $cottage->id)->count());
         $this->assertDatabaseMissing('cottage_date_blocks', [
             'cottage_id' => $cottage->id,
             'date' => '2026-09-04',

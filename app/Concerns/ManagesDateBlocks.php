@@ -4,6 +4,7 @@ namespace App\Concerns;
 
 use App\Exceptions\BookingConflictException;
 use App\Models\CottageDateBlock;
+use App\Support\StayDates;
 
 /**
  * Reservation-block management for an inquiry. Encapsulates how an inquiry
@@ -154,20 +155,42 @@ trait ManagesDateBlocks
     /**
      * Remove all blocks held by this inquiry (pending or booked).
      *
-     * @param  array{cottage_id: ?int, check_in: ?string, check_out: ?string}|null  $original
+     * @param  array{cottage_id: ?int, check_in: ?string, check_out: ?string, booking_type?: ?string}|null  $original
      */
     public function releaseBlocks(?array $original = null): void
     {
-        $cottageId = $original['cottage_id'] ?? $this->cottage_id;
-        $checkIn = $original['check_in'] ?? $this->check_in?->format('Y-m-d');
-        $checkOut = $original['check_out'] ?? ($this->check_out ?? $this->check_in)?->format('Y-m-d');
+        if ($original !== null) {
+            $cottageId = $original['cottage_id'] ?? $this->cottage_id;
+            $checkIn = $original['check_in'] ?? null;
+            $checkOut = $original['check_out'] ?? null;
+            // The model already carries the NEW booking_type after fill/update,
+            // so an explicit original type is required to release a switched
+            // stay correctly. Fall back to overnight (the superset) rather
+            // than the new type so a day_tour switch never orphans the old
+            // second night.
+            $bookingType = $original['booking_type'] ?? \App\Models\Inquiry::TYPE_OVERNIGHT;
+        } else {
+            $cottageId = $this->cottage_id;
+            $checkIn = $this->check_in;
+            $checkOut = $this->check_out ?? null;
+            $bookingType = $this->booking_type ?? null;
+        }
 
         if (! $cottageId || ! $checkIn) {
             return;
         }
 
+        // Same exclusive range as reserve/book: [check_in, check_out) for
+        // overnight so a release never deletes the check-out day that the
+        // next back-to-back booking already owns.
+        $dates = StayDates::blockedDates($checkIn, $checkOut, $bookingType);
+
+        if ($dates === []) {
+            return;
+        }
+
         $query = CottageDateBlock::where('cottage_id', $cottageId)
-            ->whereBetween('date', [$checkIn, $checkOut]);
+            ->whereIn('date', $dates);
 
         // Blocks written before the inquiry_id column existed still carry the
         // reference-code reason, so match either the FK or the legacy reason.
@@ -217,8 +240,9 @@ trait ManagesDateBlocks
     }
 
     /**
-     * Every calendar date covered by the stay, inclusive of check-in and
-     * check-out (a day tour without a check-out covers only check-in).
+     * Every calendar date blocked by the stay: [check_in, check_out) for
+     * overnight (check-out stays available for the next booking), or
+     * [check_in] for a day tour.
      *
      * @return string[]
      */
@@ -228,15 +252,10 @@ trait ManagesDateBlocks
             return [];
         }
 
-        $dates = [];
-        $cursor = $this->check_in->copy();
-        $end = $this->check_out ?? $this->check_in->copy();
-
-        while ($cursor->lte($end)) {
-            $dates[] = $cursor->format('Y-m-d');
-            $cursor->addDay();
-        }
-
-        return $dates;
+        return StayDates::blockedDates(
+            $this->check_in,
+            $this->check_out ?? null,
+            $this->booking_type ?? null
+        );
     }
 }

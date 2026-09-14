@@ -51,13 +51,20 @@ class BookingFlowTest extends TestCase
 
         $inquiry = Inquiry::where('email', 'juan@example.com')->first();
 
-        foreach (['2026-09-01', '2026-09-02', '2026-09-03'] as $date) {
+        // Overnight is [check_in, check_out): 09-01 -> 09-03 blocks 01 + 02.
+        foreach (['2026-09-01', '2026-09-02'] as $date) {
             $this->assertDatabaseHas('cottage_date_blocks', [
                 'cottage_id' => $cottage->id,
                 'date' => $date,
                 'reason' => "Pending: {$inquiry->reference_code}",
             ]);
         }
+
+        $this->assertDatabaseMissing('cottage_date_blocks', [
+            'cottage_id' => $cottage->id,
+            'date' => '2026-09-03',
+            'reason' => "Pending: {$inquiry->reference_code}",
+        ]);
     }
 
     public function test_day_tour_blocks_only_check_in_date(): void
@@ -91,6 +98,30 @@ class BookingFlowTest extends TestCase
 
         $response->assertSessionHasErrors(['check_in']);
         $this->assertDatabaseMissing('inquiries', ['email' => 'second@example.com']);
+    }
+
+    public function test_back_to_back_bookings_sharing_checkout_day_both_succeed(): void
+    {
+        $cottageId = Cottage::first()->id;
+
+        // Overnight is [check_in, check_out): B's check-in == A's check-out.
+        $this->book('b2b-first@example.com', [
+            'cottage_id' => $cottageId,
+            'check_in' => '2026-09-10',
+            'check_out' => '2026-09-12',
+        ])->assertSessionHasNoErrors();
+
+        $this->book('b2b-second@example.com', [
+            'cottage_id' => $cottageId,
+            'check_in' => '2026-09-12',
+            'check_out' => '2026-09-14',
+        ])->assertSessionHasNoErrors();
+
+        $this->assertDatabaseHas('inquiries', ['email' => 'b2b-first@example.com']);
+        $this->assertDatabaseHas('inquiries', ['email' => 'b2b-second@example.com']);
+
+        // number_of_nights == number_of_blocked_dates for each stay.
+        $this->assertDatabaseCount('cottage_date_blocks', 4);
     }
 
     public function test_admin_confirm_promotes_blocks_to_booked(): void

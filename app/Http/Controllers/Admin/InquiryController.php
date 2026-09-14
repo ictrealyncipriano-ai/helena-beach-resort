@@ -233,6 +233,7 @@ class InquiryController extends Controller
             'cottage_id' => $inquiry->cottage_id,
             'check_in' => $inquiry->check_in?->format('Y-m-d'),
             'check_out' => $inquiry->check_out?->format('Y-m-d'),
+            'booking_type' => $inquiry->booking_type,
         ];
 
         $wasConfirmed = $inquiry->status === Inquiry::STATUS_CONFIRMED;

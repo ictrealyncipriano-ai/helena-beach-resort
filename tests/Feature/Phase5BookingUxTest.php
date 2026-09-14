@@ -280,7 +280,7 @@ class Phase5BookingUxTest extends TestCase
             ->assertOk()
             ->assertSee('2026-09-10')
             ->assertSee('2026-09-11')
-            ->assertSee('2026-09-12');
+            ->assertDontSee('2026-09-12');
     }
 
     public function test_cottage_show_blocked_dates_are_y_m_d(): void
@@ -301,7 +301,7 @@ class Phase5BookingUxTest extends TestCase
             ->assertOk()
             ->assertSee('2026-09-15')
             ->assertSee('2026-09-16')
-            ->assertSee('2026-09-17');
+            ->assertDontSee('2026-09-17');
     }
 
     /*

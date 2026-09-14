@@ -210,7 +210,7 @@ class InquiryServiceConflictTest extends TestCase
 
         $inquiry->bookBlocks(); // must not throw
 
-        $this->assertSame(3, CottageDateBlock::where('cottage_id', $cottage->id)
+        $this->assertSame(2, CottageDateBlock::where('cottage_id', $cottage->id)
             ->where('inquiry_id', $inquiry->id)
             ->count());
         $this->assertDatabaseHas('cottage_date_blocks', [

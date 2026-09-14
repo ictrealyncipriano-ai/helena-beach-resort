@@ -140,13 +140,20 @@ class InquiryTest extends TestCase
 
         $inquiry = Inquiry::where('email', 'blocked@example.com')->first();
 
-        foreach (['2026-08-10', '2026-08-11', '2026-08-12'] as $date) {
+        // Overnight is [check_in, check_out): check-out stays available.
+        foreach (['2026-08-10', '2026-08-11'] as $date) {
             $this->assertDatabaseHas('cottage_date_blocks', [
                 'cottage_id' => $cottage->id,
                 'date' => $date,
                 'reason' => "Pending: {$inquiry->reference_code}",
             ]);
         }
+
+        $this->assertDatabaseMissing('cottage_date_blocks', [
+            'cottage_id' => $cottage->id,
+            'date' => '2026-08-12',
+            'reason' => "Pending: {$inquiry->reference_code}",
+        ]);
     }
 
     public function test_releasing_blocks_does_not_touch_other_bookings(): void

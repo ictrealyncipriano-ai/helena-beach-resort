@@ -60,7 +60,8 @@ class CottageUpdatePreservesBlocksTest extends TestCase
             ->assertRedirect();
 
         // The pending hold on the inquiry's dates survives the cottage update.
-        foreach (['2026-09-01', '2026-09-02', '2026-09-03'] as $date) {
+        // Overnight is [check_in, check_out): 09-03 stays available.
+        foreach (['2026-09-01', '2026-09-02'] as $date) {
             $this->assertDatabaseHas('cottage_date_blocks', [
                 'cottage_id' => $cottage->id,
                 'date' => $date,
