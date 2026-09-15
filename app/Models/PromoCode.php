@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Support\Money;
 use Illuminate\Support\Str;
 
 class PromoCode extends Model
@@ -99,16 +100,28 @@ class PromoCode extends Model
 
     /**
      * Discount for the given subtotal, never exceeding the amount payable.
+     *
+     * Money Migration — Phase 4: exact string math. Percent discounts route
+     * through Money::mulPct(), fixed discounts through Money::from(), and
+     * the min() cap through Money::cmp(). The max(0, ...) subtotal clamp is
+     * preserved; no new lower clamp on the discount itself.
      */
     public function discountFor(mixed $subtotal): string
     {
-        $subtotal = max(0, (float) $subtotal);
+        $base = Money::from($subtotal);
+        if (Money::cmp($base, '0.00') < 0) {
+            $base = '0.00';
+        }
 
         $discount = $this->isPercent()
-            ? $subtotal * ((float) $this->value / 100)
-            : (float) $this->value;
+            ? Money::mulPct($base, $this->value ?? 0)
+            : Money::from($this->value);
 
-        return formatPrice(min($discount, $subtotal), 2, false);
+        if (Money::cmp($discount, $base) > 0) {
+            $discount = $base;
+        }
+
+        return $discount;
     }
 
     /**
