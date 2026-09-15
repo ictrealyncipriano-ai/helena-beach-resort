@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Concerns\ManagesDateBlocks;
+use App\Support\Money;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -200,13 +201,18 @@ class Inquiry extends Model
 
     /**
      * The amount still owed after everything received so far.
+     *
+     * Money migration: exact string subtraction (no binary float),
+     * clamped at zero, '0.00'-form string contract preserved.
      */
     public function balanceDue(): string
     {
-        $total = (float) $this->total_amount;
-        $paid = (float) ($this->amount_paid ?? 0);
+        $diff = Money::sub(
+            (string) ($this->total_amount ?? '0.00'),
+            (string) ($this->amount_paid ?? '0.00')
+        );
 
-        return formatPrice(max($total - $paid, 0), 2, false);
+        return Money::cmp($diff, '0.00') < 0 ? '0.00' : $diff;
     }
 
     /**
@@ -217,10 +223,12 @@ class Inquiry extends Model
     public function amountDueNow(): string
     {
         if ($this->hasDeposit() && ! $this->isDepositPaid()) {
-            $deposit = (float) $this->deposit_amount;
-            $paid = (float) ($this->amount_paid ?? 0);
+            $diff = Money::sub(
+                (string) ($this->deposit_amount ?? '0.00'),
+                (string) ($this->amount_paid ?? '0.00')
+            );
 
-            return formatPrice(max($deposit - $paid, 0), 2, false);
+            return Money::cmp($diff, '0.00') < 0 ? '0.00' : $diff;
         }
 
         return $this->balanceDue();
@@ -260,9 +268,8 @@ class Inquiry extends Model
      */
     public function collectedAmount(): string
     {
-        $collected = (float) ($this->amount_paid ?? 0);
-
-        return formatPrice($collected, 2, false);
+        // Unclamped by contract: negatives/overpayments pass through verbatim.
+        return Money::from($this->amount_paid ?? '0.00');
     }
 
     /**
@@ -275,12 +282,18 @@ class Inquiry extends Model
 
     /**
      * Remaining balance: total minus collected, never negative.
+     *
+     * Kept structurally independent from balanceDue(): this path goes via
+     * collectedAmount(), now with exact string math on each leg.
      */
     public function outstandingBalance(): string
     {
-        $balance = (float) ($this->total_amount ?? 0) - (float) $this->collectedAmount();
+        $diff = Money::sub(
+            (string) ($this->total_amount ?? '0.00'),
+            $this->collectedAmount()
+        );
 
-        return formatPrice(max(0, $balance), 2, false);
+        return Money::cmp($diff, '0.00') < 0 ? '0.00' : $diff;
     }
 
     /**
