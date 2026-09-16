@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Inquiry;
+use App\Support\Money;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -41,8 +42,13 @@ class BookingModificationService
             ]);
 
             if ($newTotal !== null) {
-                $discount = (float) ($inquiry->discount_amount ?? 0);
-                $inquiry->total_amount = number_format(max(0, (float) $newTotal - $discount), 2, '.', '');
+                // Money Migration: exact string recompute over the already-exact
+                // Money total, keeping the discount and the non-negative clamp
+                // (same style as PricingService::applyDiscount()). Null totals
+                // still skip the recompute; transaction and blocks unchanged.
+                $base = Money::from($newTotal);
+                $discount = Money::from($inquiry->discount_amount ?? '0.00');
+                $inquiry->total_amount = Money::cmp($base, $discount) < 0 ? '0.00' : Money::sub($base, $discount);
             }
 
             $inquiry->save();
