@@ -6,6 +6,7 @@ use App\Models\Inquiry;
 use App\Models\Payment;
 use App\Services\PayMongoService;
 use App\Services\RefundService;
+use App\Support\Money;
 use Illuminate\Console\Command;
 
 /**
@@ -74,7 +75,10 @@ class RetryRefunds extends Command
                     continue;
                 }
 
-                if ((float) $inquiry->refundableAmount() <= 0) {
+                // Money Migration: exact string comparison over the already-exact
+                // Money refundableAmount(), never binary float. Skip decision
+                // only; backoff, attempts, stats, and ledger handling unchanged.
+                if (Money::cmp($inquiry->refundableAmount(), '0.00') <= 0) {
                     continue;
                 }
 
