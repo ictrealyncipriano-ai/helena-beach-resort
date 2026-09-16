@@ -355,17 +355,21 @@ class Inquiry extends Model
         return DB::transaction(function () use ($amount, $method, $idempotencyKey) {
             $locked = static::whereKey($this->id)->lockForUpdate()->firstOrFail();
 
-            $paymentAmount = (float) $amount;
+            // Money migration: exact string math from here on. $paymentAmount
+            // is the normalized '0.00'-form string; the 0.005 over-balance
+            // gate below is preserved structurally (see note there).
+            $paymentAmount = Money::from($amount);
 
-            if ($paymentAmount <= 0) {
+            if (Money::cmp($paymentAmount, '0.00') <= 0) {
                 throw ValidationException::withMessages([
                     'amount' => 'The amount must be greater than zero.',
                 ]);
             }
 
-            $total = (float) $locked->total_amount;
-            $priorPaid = (float) ($locked->amount_paid ?? 0);
-            $balance = $total - $priorPaid;
+            $total = (string) $locked->total_amount;
+            $priorPaid = (string) ($locked->amount_paid ?? '0.00');
+            $balance = Money::sub($total, $priorPaid);
+            $flooredBalance = Money::cmp($balance, '0.00') < 0 ? '0.00' : $balance;
 
             // Idempotent retry first: a repeated submission of one logical
             // payment returns the stored outcome even when the balance no
@@ -383,21 +387,25 @@ class Inquiry extends Model
                 if ($duplicate) {
                     $this->refresh();
 
-                    return (float) ($locked->amount_paid ?? 0) >= (float) $locked->total_amount;
+                    return Money::cmp((string) ($locked->amount_paid ?? '0.00'), (string) $locked->total_amount) >= 0;
                 }
             }
 
-            if ($paymentAmount - max($balance, 0) > 0.005) {
+            // Preserved 0.005 gate: operands are 2-decimal strings so their
+            // exact difference is a whole cent value, making `> 0` identical
+            // to the legacy `> 0.005` float comparison. Only the tolerance
+            // representation changed, never the accept/reject boundary.
+            if (Money::cmp(Money::sub($paymentAmount, $flooredBalance), '0.00') > 0) {
                 throw ValidationException::withMessages([
-                    'amount' => 'The amount exceeds the outstanding balance of '.formatPrice(max($balance, 0)).'.',
+                    'amount' => 'The amount exceeds the outstanding balance of '.formatPrice($flooredBalance).'.',
                 ]);
             }
 
-            $newAmountPaid = formatPrice($priorPaid + $paymentAmount, 2, false);
+            $newAmountPaid = Money::add($priorPaid, $paymentAmount);
 
-            $fullyPaid = (float) $newAmountPaid >= $total;
+            $fullyPaid = Money::cmp($newAmountPaid, $total) >= 0;
             $depositCovered = $locked->hasDeposit()
-                && (float) $newAmountPaid >= (float) $locked->deposit_amount;
+                && Money::cmp($newAmountPaid, (string) $locked->deposit_amount) >= 0;
 
             // Classify from the pre-write locked state (priorPaid > 0 means
             // this leg settles a balance, not a first full payment).
@@ -420,7 +428,7 @@ class Inquiry extends Model
                 'provider' => Payment::PROVIDER_MANUAL,
                 'method' => $method,
                 'type' => $type,
-                'amount' => formatPrice($amount, 2, false),
+                'amount' => Money::from($amount),
                 'currency' => 'PHP',
                 'status' => Payment::STATUS_PAID,
                 'paid_at' => now(),
