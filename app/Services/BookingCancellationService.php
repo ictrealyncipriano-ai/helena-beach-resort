@@ -8,6 +8,7 @@ use App\Mail\ManualRefundRequired;
 use App\Mail\RefundReceived;
 use App\Models\Inquiry;
 use App\Models\SiteSetting;
+use App\Support\Money;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
@@ -40,7 +41,10 @@ class BookingCancellationService
         $manualRefundRequired = false;
         $quote = CancellationPolicy::quote($inquiry);
 
-        if ($inquiry->hasPayments() && (float) $quote['refund_amount'] > 0) {
+        // Money Migration: exact string comparison over the already-exact
+        // Money quote (Phase 7.5), never binary float. Gate decision only;
+        // branch bodies, logging, and finalization are unchanged.
+        if ($inquiry->hasPayments() && Money::cmp($quote['refund_amount'], '0.00') > 0) {
             if ($inquiry->paymongo_payment_id) {
                 try {
                     $refunded = $this->refundService->claimAndProcess($inquiry, $payMongo, $quote['refund_amount']) === RefundService::CLAIMED;
