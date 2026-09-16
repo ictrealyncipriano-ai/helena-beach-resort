@@ -91,7 +91,10 @@ class PromoCode extends Model
             return null;
         }
 
-        if ($subtotal !== null && $promo->min_amount !== null && (float) $subtotal < (float) $promo->min_amount) {
+        // Money Migration: exact string comparison over decimal:2 legs,
+        // never binary float. Eligibility decision only; validity checks
+        // and discountFor() math are unchanged.
+        if ($subtotal !== null && $promo->min_amount !== null && Money::cmp((string) $subtotal, (string) $promo->min_amount) < 0) {
             return null;
         }
 
