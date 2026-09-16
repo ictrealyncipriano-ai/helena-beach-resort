@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\DashboardController;
 use App\Mail\PaymentReceived;
 use App\Models\Inquiry;
 use App\Models\Payment;
+use App\Support\Money;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
@@ -376,15 +377,20 @@ class PaymentReconciliationService
                     return ['error' => 'Payment amount mismatch'];
                 }
 
-                $paidPesos = formatPrice($paidCentavos / 100, 2, false);
-                $newAmountPaid = formatPrice(
-                    (float) ($locked->amount_paid ?? 0) + (float) $paidPesos,
-                    2, false
+                // Money migration (Phase 7.1): exact string math. bcdiv /100
+                // terminates so the centavo→peso conversion is byte-identical
+                // to the old float division; add/cmp match float behavior on
+                // the 2-decimal domain. Acceptance gates above (exact centavo
+                // sets, PHP-only) and branch ordering below are unchanged.
+                $paidPesos = Money::from(bcdiv((string) $paidCentavos, '100', 2));
+                $newAmountPaid = Money::add(
+                    (string) ($locked->amount_paid ?? '0.00'),
+                    $paidPesos
                 );
 
-                $fullyPaid = (float) $newAmountPaid >= (float) $locked->total_amount;
+                $fullyPaid = Money::cmp($newAmountPaid, (string) $locked->total_amount) >= 0;
                 $depositCovered = $locked->hasDeposit()
-                    && (float) $newAmountPaid >= (float) $locked->deposit_amount;
+                    && Money::cmp($newAmountPaid, (string) $locked->deposit_amount) >= 0;
 
                 $locked->update([
                     'amount_paid' => $newAmountPaid,
@@ -465,11 +471,14 @@ class PaymentReconciliationService
             return ['error' => 'Payment amount mismatch'];
         }
 
-        $latePesos = formatPrice($paidCentavos / 100, 2, false);
-        $hypotheticalPaid = formatPrice((float) ($locked->amount_paid ?? 0) + (float) $latePesos, 2, false);
-        $fullyPaid = (float) $hypotheticalPaid >= (float) $locked->total_amount;
+        // Money migration (Phase 7.1): same exact-math conversion as the
+        // credit path. Classification here stays pre-write (unlike the
+        // credit path's post-update classifyType call) — preserved as is.
+        $latePesos = Money::from(bcdiv((string) $paidCentavos, '100', 2));
+        $hypotheticalPaid = Money::add((string) ($locked->amount_paid ?? '0.00'), $latePesos);
+        $fullyPaid = Money::cmp($hypotheticalPaid, (string) $locked->total_amount) >= 0;
         $depositCovered = $locked->hasDeposit()
-            && (float) $hypotheticalPaid >= (float) $locked->deposit_amount;
+            && Money::cmp($hypotheticalPaid, (string) $locked->deposit_amount) >= 0;
 
         $ledger = Payment::firstOrCreate(
             ['provider_payment_id' => $incomingPaymentId],
