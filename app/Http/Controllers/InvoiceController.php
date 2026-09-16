@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Controllers\Concerns\GuardsBookingAccess;
 use App\Models\Inquiry;
 use App\Services\PricingService;
+use App\Support\Money;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Response;
 
@@ -49,6 +50,11 @@ class InvoiceController extends Controller
      * peak-aware per-night/day rate exactly like the booking flow priced it
      * (Cottage::rateFor), so the invoice can never disagree with the charged
      * total. Both the HTML view and the PDF consume this.
+     *
+     * Money Migration: subtotal is exact string accumulation via
+     * Money::add() (same style as PricingService::nightlyTotal()), never
+     * binary float. Per-line totals stay exact via formatPrice(); the
+     * fallback passthrough shape is unchanged.
      *
      * @return array{items: array<int, array{desc:string, qty:int, rate:string|int|float|null, total:string}>, subtotal:string}
      */
@@ -96,7 +102,11 @@ class InvoiceController extends Controller
             ];
         }
 
-        $subtotal = formatPrice(array_sum(array_map(fn ($item) => (float) $item['total'], $items)), 2, false);
+        $subtotal = '0.00';
+
+        foreach ($items as $item) {
+            $subtotal = Money::add($subtotal, $item['total']);
+        }
 
         return ['items' => $items, 'subtotal' => $subtotal];
     }
