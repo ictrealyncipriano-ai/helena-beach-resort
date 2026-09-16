@@ -7,6 +7,7 @@ use App\Models\Inquiry;
 use App\Services\ActivityLogger;
 use App\Services\PayMongoService;
 use App\Services\PayMongoWebhookService;
+use App\Support\Money;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -39,13 +40,16 @@ class PaymentController extends Controller
                 ->with('success', 'This booking has already been paid.');
         }
 
-        if (! $inquiry->total_amount || (float) $inquiry->total_amount < 1) {
+        // Money Migration: exact string comparisons against the ₱1.00
+        // checkout minimum, never binary float. Falsy guard, guard order,
+        // messages, and pending-write shape are unchanged.
+        if (! $inquiry->total_amount || Money::cmp((string) $inquiry->total_amount, '1.00') < 0) {
             return redirect()->route('booking.portal.show', $inquiry)
                 ->with('error', 'This booking has no payable amount set yet. Please contact the resort.');
         }
 
         $dueNow = $inquiry->amountDueNow();
-        if ((float) $dueNow < 1) {
+        if (Money::cmp($dueNow, '1.00') < 0) {
             return redirect()->route('booking.portal.show', $inquiry)
                 ->with('error', 'This booking has no outstanding balance.');
         }
