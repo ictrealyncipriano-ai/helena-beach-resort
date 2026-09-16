@@ -235,9 +235,18 @@
             </tr>
             @endif
             @php
-                $adjustment = round((float) ($inquiry->total_amount ?? 0) - ((float) $subtotal - (float) ($inquiry->discount_amount ?? 0)), 2);
+                // Money Migration: exact string reconciliation of the printed
+                // totals (Subtotal − Discount + Adjustment = Total Due), never
+                // binary float. Display only; persisted totals untouched.
+                $adjustment = \App\Support\Money::sub(
+                    (string) ($inquiry->total_amount ?? '0.00'),
+                    \App\Support\Money::sub(
+                        (string) $subtotal,
+                        (string) ($inquiry->discount_amount ?? '0.00')
+                    )
+                );
             @endphp
-            @if(abs($adjustment) >= 0.01)
+            @if(\App\Support\Money::cmp($adjustment, '0.00') !== 0)
             <tr>
                 <td colspan="4" style="font-size:9px;color:#6b7280;">Adjustment</td>
                 <td>{{ formatPrice($adjustment) }}</td>
