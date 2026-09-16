@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Inquiry;
+use App\Support\Money;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -251,33 +252,14 @@ class PayMongoService
     /**
      * Convert a decimal amount (pesos) to centavos as an integer.
      *
-     * Uses exact integer/string math (never `(float)`), so float precision
-     * can never corrupt the centavo conversion for normal 2-decimal amounts.
+     * Money migration (Phase 7.2): delegates to App\Support\Money::toCentavos()
+     * (exact string half-up to cents, no binary float arithmetic), so all
+     * eight production call sites share one conversion contract — including
+     * the 10.005 → 1001 anchor. Null and '' yield 0, as before.
      */
     public function toCentavos(mixed $amount): int
     {
-        if ($amount === null || $amount === '') {
-            return 0;
-        }
-
-        $amount = trim((string) $amount);
-        $sign = 1;
-        if (str_starts_with($amount, '-')) {
-            $sign = -1;
-            $amount = substr($amount, 1);
-        } elseif (str_starts_with($amount, '+')) {
-            $amount = substr($amount, 1);
-        }
-
-        // Round to 2 decimals first so 10.005 -> 10.01, never truncate.
-        $rounded = round((float) $amount, 2);
-        $parts = explode('.', number_format($rounded, 2, '.', ''));
-        $whole = (int) $parts[0];
-        $fraction = isset($parts[1])
-            ? str_pad(substr($parts[1], 0, 2), 2, '0')
-            : '00';
-
-        return $sign * ($whole * 100 + (int) $fraction);
+        return Money::toCentavos($amount);
     }
 
     private function lineItemName(Inquiry $inquiry): string
