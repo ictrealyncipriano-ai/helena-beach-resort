@@ -179,15 +179,21 @@ class Inquiry extends Model
 
     /**
      * Whether a deposit is configured for this booking.
+     *
+     * Money migration (Phase 7.3): exact comparison; null guard and
+     * positive-amount semantics preserved.
      */
     public function hasDeposit(): bool
     {
-        return $this->deposit_amount !== null && (float) $this->deposit_amount > 0;
+        return $this->deposit_amount !== null && Money::cmp((string) $this->deposit_amount, '0.00') > 0;
     }
 
     /**
      * Whether the configured deposit has been settled (in full). A booking
      * without a configured deposit is never "deposit paid".
+     *
+     * Money migration (Phase 7.3): exact comparison; hasDeposit() gate and
+     * timestamp short-circuit order preserved.
      */
     public function isDepositPaid(): bool
     {
@@ -196,7 +202,10 @@ class Inquiry extends Model
         }
 
         return $this->deposit_paid_at !== null
-            || (float) ($this->amount_paid ?? 0) >= (float) $this->deposit_amount;
+            || Money::cmp(
+                (string) ($this->amount_paid ?? '0.00'),
+                (string) $this->deposit_amount
+            ) >= 0;
     }
 
     /**
@@ -274,10 +283,13 @@ class Inquiry extends Model
 
     /**
      * Whether any money has been collected at all (deposit included).
+     *
+     * Money migration (Phase 7.3): exact comparison over the already
+     * Money-normalized collectedAmount(); no change to its calculation.
      */
     public function hasPayments(): bool
     {
-        return (float) $this->collectedAmount() > 0;
+        return Money::cmp($this->collectedAmount(), '0.00') > 0;
     }
 
     /**
