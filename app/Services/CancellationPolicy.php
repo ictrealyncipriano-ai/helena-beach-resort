@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Inquiry;
 use App\Models\SiteSetting;
+use App\Support\Money;
 use Illuminate\Support\Carbon;
 
 /**
@@ -77,13 +78,17 @@ class CancellationPolicy
 
     /**
      * @return array{pct: int, hours_before: int, collected: string, refund_amount: string, forfeit_amount: string}
+     *
+     * Money migration: $collected is the exact Money-normalized string and
+     * the share math is string half-up (mulPct/sub), never binary float.
+     * Tier selection, hour math, and return shape are unchanged.
      */
     public static function quote(Inquiry $inquiry, ?Carbon $now = null): array
     {
         $now = $now ?? now();
-        $collected = (float) ($inquiry->amount_paid ?? 0);
+        $collected = Money::from($inquiry->amount_paid ?? '0.00');
 
-        if ($collected <= 0 || ! $inquiry->check_in) {
+        if (Money::cmp($collected, '0.00') <= 0 || ! $inquiry->check_in) {
             return self::result(0, 0, $collected);
         }
 
@@ -105,17 +110,17 @@ class CancellationPolicy
     }
 
     /** @return array{pct: int, hours_before: int, collected: string, refund_amount: string, forfeit_amount: string} */
-    private static function result(int $pct, int $hoursBefore, float $collected): array
+    private static function result(int $pct, int $hoursBefore, string $collected): array
     {
-        $refund = round($collected * $pct / 100, 2);
-        $forfeit = round($collected - $refund, 2);
+        $refund = Money::mulPct($collected, $pct);
+        $forfeit = Money::sub($collected, $refund);
 
         return [
             'pct' => $pct,
             'hours_before' => $hoursBefore,
-            'collected' => number_format($collected, 2, '.', ''),
-            'refund_amount' => number_format($refund, 2, '.', ''),
-            'forfeit_amount' => number_format($forfeit, 2, '.', ''),
+            'collected' => $collected,
+            'refund_amount' => $refund,
+            'forfeit_amount' => $forfeit,
         ];
     }
 }
