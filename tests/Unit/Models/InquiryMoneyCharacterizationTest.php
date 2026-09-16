@@ -10,12 +10,18 @@ use Tests\TestCase;
 /**
  * Locked slice characterization: Inquiry monetary methods.
  *
- * In scope (migrate): balanceDue(), amountDueNow(), collectedAmount(), outstandingBalance().
- * Pinned only: hasDeposit(), isDepositPaid(), hasPayments(), refundableAmount(), recordManualPayment().
+ * In scope (migrate): balanceDue(), amountDueNow(), collectedAmount(),
+ * outstandingBalance() — plus Phase 7.3 deposit predicates: hasDeposit(),
+ * isDepositPaid(), hasPayments().
+ * Pinned only: refundableAmount(), recordManualPayment().
  *
  * All amounts are 2-decimal domain (DB decimal 10,2). 3-decimal in-memory
  * subtraction is intentionally out of scope: old code subtracted in binary
  * float then normalized, Money::sub() normalizes operands first (exact).
+ * Likewise, in-memory sub-cent deposit dust (e.g. deposit_amount '0.001',
+ * unrepresentable in decimal:2 columns) is unpinned: legacy float sees it
+ * as configured while Money normalizes it to zero. No production path
+ * persists or decides on such values.
  */
 class InquiryMoneyCharacterizationTest extends TestCase
 {
@@ -177,5 +183,50 @@ class InquiryMoneyCharacterizationTest extends TestCase
                 "paid={$paid}"
             );
         }
+    }
+
+    /**
+     * Phase 7.3 goldens: deposit predicates on the 2-decimal domain.
+     * Captured from the legacy float implementation; must stay green
+     * through the Money::cmp migration.
+     */
+    public function test_has_deposit_predicate(): void
+    {
+        $this->assertFalse($this->makeInquiry(['deposit_amount' => null])->hasDeposit());
+        $this->assertFalse($this->makeInquiry(['deposit_amount' => '0.00'])->hasDeposit());
+        $this->assertTrue($this->makeInquiry(['deposit_amount' => '0.01'])->hasDeposit());
+        $this->assertTrue($this->makeInquiry(['deposit_amount' => '1500.00'])->hasDeposit());
+    }
+
+    public function test_is_deposit_paid_predicate(): void
+    {
+        // No configured deposit is never "deposit paid", even when paid.
+        $this->assertFalse($this->makeInquiry(['deposit_amount' => null, 'amount_paid' => '5000.00'])->isDepositPaid());
+        $this->assertFalse($this->makeInquiry(['deposit_amount' => '0.00', 'amount_paid' => '5000.00'])->isDepositPaid());
+
+        // Below / at / above the deposit line, without a timestamp.
+        $this->assertFalse($this->makeInquiry(['deposit_amount' => '1500.00', 'amount_paid' => '0.00'])->isDepositPaid());
+        $this->assertFalse($this->makeInquiry(['deposit_amount' => '1500.00', 'amount_paid' => '1499.99'])->isDepositPaid());
+        $this->assertTrue($this->makeInquiry(['deposit_amount' => '1500.00', 'amount_paid' => '1500.00'])->isDepositPaid());
+        $this->assertTrue($this->makeInquiry(['deposit_amount' => '1500.00', 'amount_paid' => '2000.00'])->isDepositPaid());
+
+        // Timestamp satisfies the deposit with nothing paid.
+        $stamped = $this->makeInquiry([
+            'deposit_amount' => '1500.00',
+            'amount_paid' => '0.00',
+            'deposit_paid_at' => now(),
+        ]);
+        $this->assertTrue($stamped->isDepositPaid());
+    }
+
+    public function test_has_payments_predicate(): void
+    {
+        $this->assertFalse($this->makeInquiry(['amount_paid' => '0.00'])->hasPayments());
+        $this->assertTrue($this->makeInquiry(['amount_paid' => '0.01'])->hasPayments());
+        $this->assertTrue($this->makeInquiry(['amount_paid' => '100.00'])->hasPayments());
+        $this->assertFalse($this->makeInquiry(['amount_paid' => '-50.00'])->hasPayments());
+
+        $memory = new Inquiry(['amount_paid' => null]);
+        $this->assertFalse($memory->hasPayments());
     }
 }
