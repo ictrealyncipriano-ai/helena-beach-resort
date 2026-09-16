@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Inquiry;
 use App\Models\Payment;
+use App\Support\Money;
 
 /**
  * Atomically claim and process a PayMongo refund for an inquiry.
@@ -147,7 +148,11 @@ class RefundService
         // the settled rows partially refunded (not refunded) so the
         // refundable remainder stays visible and a retry — still blocked by
         // the claim guard above — can never double-refund it.
-        $isPartialRefund = (float) $refundAmount < (float) $inquiry->refundableAmount();
+        //
+        // Money Migration: exact string comparison via Money::cmp(), never
+        // binary float. Both legs are already exact 2-decimal strings, so
+        // this preserves the boundary while removing float sensitivity.
+        $isPartialRefund = Money::cmp((string) $refundAmount, $inquiry->refundableAmount()) < 0;
 
         $refundQuery->update([
             'status' => $isPartialRefund ? Payment::STATUS_PARTIALLY_REFUNDED : Payment::STATUS_REFUNDED,
