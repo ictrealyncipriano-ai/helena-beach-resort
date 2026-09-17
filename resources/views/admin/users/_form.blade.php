@@ -28,7 +28,7 @@
                 <div>
                     <div class="mt-2 h-1.5 w-full bg-gray-100 rounded-full overflow-hidden dark:bg-slate-700">
                         {{-- No Math.* here: the CSP expression parser exposes no globals, so the 100% cap is a plain ternary (identical result for lengths >= 0). --}}
-                        <div class="h-full rounded-full transition-all duration-300" x-bind:style="'width: ' + (form.password.length >= 12 ? 100 : form.password.length / 12 * 100) + '%; background: ' + (form.password.length >= 12 ? '#10b981' : form.password.length >= 8 ? '#f59e0b' : '#d1d5db')"></div>
+                        <div class="h-full rounded-full transition-all duration-300" x-bind:style="'width: ' + (form.password.length >= 8 ? 100 : form.password.length / 8 * 100) + '%; background: ' + (form.password.length >= 8 ? '#10b981' : form.password.length >= 4 ? '#f59e0b' : '#d1d5db')"></div>
                     </div>
                     <p class="mt-1 text-xs text-gray-500 dark:text-slate-400">Min 8 characters. Longer passwords are stronger.</p>
                 </div>
