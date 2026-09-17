@@ -87,11 +87,27 @@ class PaymentController extends Controller
         // Written only after the session exists: persisting earlier would
         // leave a stale expected-amount behind on failure, and that stale
         // value would become the next webhook's verification baseline.
-        $inquiry->update([
-            'payment_pending_amount' => $dueNow,
-            'payment_pending_at' => now(),
-            'paymongo_session_id' => $session['session_id'],
-        ]);
+        // A persistence failure here (e.g. schema drift on a stale database)
+        // must degrade to a friendly error, never a bare 500 — the PayMongo
+        // session already exists at this point, so record it for
+        // reconciliation instead of dropping the guest on an error page.
+        try {
+            $inquiry->update([
+                'payment_pending_amount' => $dueNow,
+                'payment_pending_at' => now(),
+                'paymongo_session_id' => $session['session_id'],
+            ]);
+        } catch (\Throwable $e) {
+            Log::critical('PayMongo session created but pending-amount write failed', [
+                'inquiry_id' => $inquiry->id,
+                'paymongo_session_id' => $session['session_id'] ?? null,
+                'exception' => get_class($e),
+                'message' => $e->getMessage(),
+            ]);
+
+            return redirect()->route('booking.portal.show', $inquiry)
+                ->with('error', 'We could not record your payment session. Please try again or contact the resort.');
+        }
 
         return redirect()->away($session['checkout_url']);
     }

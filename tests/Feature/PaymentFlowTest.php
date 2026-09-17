@@ -11,6 +11,7 @@ use App\Services\PayMongoService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Mail;
 use Tests\TestCase;
 
@@ -129,6 +130,34 @@ class PaymentFlowTest extends TestCase
             'paymongo_session_id' => null,
             'payment_pending_amount' => null,
         ]);
+    }
+
+    public function test_pay_when_pending_write_fails_redirects_with_error(): void
+    {
+        // Simulates production schema drift (e.g. missing payment_pending_*
+        // columns): the PayMongo session is created, then the pending-amount
+        // write throws. The guest must get a redirect with an error — never
+        // a bare 500 — while the created session id is logged server-side
+        // for reconciliation.
+        $inquiry = $this->confirmedBooking('drift@example.com');
+
+        Schema::table('inquiries', function ($table) {
+            $table->dropColumn(['payment_pending_amount', 'payment_pending_at', 'paymongo_session_id']);
+        });
+
+        Http::fake([
+            'api.paymongo.com/v2/checkout_sessions' => Http::response([
+                'data' => [
+                    'id' => 'cs_test_orphan',
+                    'attributes' => ['checkout_url' => 'https://checkout.paymongo.com/orphan'],
+                ],
+            ], 200),
+        ]);
+
+        $this->withSession($this->portalSession($inquiry))
+            ->post(route('payment.pay', $inquiry))
+            ->assertRedirect(route('booking.portal.show', $inquiry))
+            ->assertSessionHas('error', 'We could not record your payment session. Please try again or contact the resort.');
     }
 
     public function test_pay_with_zero_amount_redirects_without_calling_api(): void
