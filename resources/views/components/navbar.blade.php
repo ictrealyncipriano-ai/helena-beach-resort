@@ -1,3 +1,4 @@
+@props(['solid' => false])
 @php
     $routes = [
         'home' => 'Home',
@@ -11,39 +12,56 @@
         'contact' => 'Contact',
     ];
     $current = Route::currentRouteName();
+    // Server-rendered solid state for light-top pages (no-JS fallback) and
+    // pages that opt out of the transparent-over-hero treatment.
+    $solidNav = (bool) $solid;
+    $solidBg = 'bg-white shadow-sm border-b border-teal-100 dark:bg-slate-900 dark:border-slate-700';
 @endphp
 
 <header>
-<nav aria-label="Primary" class="fixed top-0 left-0 right-0 z-50 transition-all duration-300"
-     x-data="{ scrolled: false }"
+<nav aria-label="Primary" class="fixed top-0 left-0 right-0 z-50 transition-all duration-300 {{ $solidNav ? $solidBg : 'bg-transparent border-b border-transparent' }}"
+     x-data="{ scrolled: false, solid: {{ $solidNav ? 'true' : 'false' }} }"
+     x-init="scrolled = window.scrollY > 20"
      x-on:scroll.window="scrolled = window.scrollY > 20"
-     :class="scrolled ? 'bg-white shadow-sm border-b border-teal-100 dark:bg-slate-900 dark:border-slate-700' : 'bg-white/80 backdrop-blur-md border-b border-transparent dark:bg-slate-900/80'">
+     :class="(scrolled || solid) ? '{{ $solidBg }}' : 'bg-transparent border-b border-transparent'">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex items-center justify-between h-16 sm:h-20">
             <a href="{{ route('home') }}" class="flex items-center gap-2 group">
                 <img src="{{ $site['logo'] ?? asset('images/logo.jpg') }}" alt="{{ $site['name'] ?? config('app.name') }}" class="h-8 w-auto rounded transition-transform group-hover:scale-105">
-                <span class="font-semibold text-xl text-teal-700 dark:text-teal-300">{{ $site['name'] ?? config('app.name') }}</span>
+                <span class="font-semibold text-xl transition-colors {{ $solidNav ? 'text-teal-700 dark:text-teal-300' : 'text-white' }}"
+                      :class="(scrolled || solid) ? 'text-teal-700 dark:text-teal-300' : 'text-white'">{{ $site['name'] ?? config('app.name') }}</span>
             </a>
 
             {{-- Desktop Navigation --}}
             <div class="hidden md:flex items-center gap-1">
                 @foreach($routes as $route => $label)
                 <a href="{{ route($route) }}"
-                   class="px-3 py-2 text-sm font-medium rounded-lg transition-colors
-                   {{ $current === $route ? 'text-teal-700 bg-teal-50 dark:text-teal-300 dark:bg-teal-900/40' : 'text-gray-600 hover:text-teal-700 hover:bg-gray-50 dark:text-slate-300 dark:hover:text-teal-300 dark:hover:bg-slate-700/50' }}">
+                   class="px-3 py-2 text-sm font-medium rounded-lg transition-colors"
+                   @if($current === $route)
+                   :class="(scrolled || solid) ? 'text-teal-700 bg-teal-50 dark:text-teal-300 dark:bg-teal-900/40' : 'text-white bg-white/15'"
+                   @else
+                   :class="(scrolled || solid) ? 'text-gray-600 hover:text-teal-700 hover:bg-gray-50 dark:text-slate-300 dark:hover:text-teal-300 dark:hover:bg-slate-700/50' : 'text-white/90 hover:text-white hover:bg-white/10'"
+                   @endif>
                     {{ $label }}
                 </a>
                 @endforeach
-                <div class="flex items-center gap-3 ml-3 pl-3 border-l border-gray-200 dark:border-slate-700">
+                <div class="flex items-center gap-3 ml-3 pl-3 border-l transition-colors {{ $solidNav ? 'border-gray-200 dark:border-slate-700' : 'border-white/20' }}"
+                     :class="(scrolled || solid) ? 'border-gray-200 dark:border-slate-700' : 'border-white/20'">
                     <a href="{{ route('booking.portal.lookup') }}"
-                       class="text-sm font-medium transition-colors {{ $current === 'booking.portal.lookup' || str_starts_with($current, 'booking.portal') ? 'text-teal-700 dark:text-teal-300' : 'text-gray-500 hover:text-teal-700 dark:text-slate-400 dark:hover:text-teal-300' }}">
+                       class="text-sm font-medium transition-colors"
+                       @if($current === 'booking.portal.lookup' || str_starts_with((string) $current, 'booking.portal'))
+                       :class="(scrolled || solid) ? 'text-teal-700 dark:text-teal-300' : 'text-white'"
+                       @else
+                       :class="(scrolled || solid) ? 'text-gray-500 hover:text-teal-700 dark:text-slate-400 dark:hover:text-teal-300' : 'text-white/80 hover:text-white'"
+                       @endif>
                         My Booking
                     </a>
                     <x-theme-toggle />
                     @foreach($socials as $icon => $href)
                         @if($href)
                         <a href="{{ $href }}" target="_blank" rel="noopener noreferrer"
-                           class="text-gray-500 hover:text-teal-700 dark:text-slate-400 dark:hover:text-teal-300 transition-colors" aria-label="{{ ucfirst($icon) }}">
+                           class="transition-colors"
+                           :class="(scrolled || solid) ? 'text-gray-500 hover:text-teal-700 dark:text-slate-400 dark:hover:text-teal-300' : 'text-white/80 hover:text-white'" aria-label="{{ ucfirst($icon) }}">
                             <x-icons name="{{ $icon }}" class="w-5 h-5" />
                         </a>
                         @endif
@@ -57,7 +75,8 @@
 
             {{-- Mobile Menu Button --}}
             <button type="button"
-                    class="md:hidden min-w-[44px] min-h-[44px] p-3 flex items-center justify-center text-gray-600 hover:text-teal-700 rounded-lg hover:bg-gray-50 dark:text-slate-300 dark:hover:text-teal-300 dark:hover:bg-slate-700/50 transition-colors"
+                    class="md:hidden min-w-[44px] min-h-[44px] p-3 flex items-center justify-center rounded-lg transition-colors {{ $solidNav ? 'text-gray-600 hover:text-teal-700 hover:bg-gray-50 dark:text-slate-300 dark:hover:text-teal-300 dark:hover:bg-slate-700/50' : 'text-white hover:bg-white/10' }}"
+                    :class="(scrolled || solid) ? 'text-gray-600 hover:text-teal-700 hover:bg-gray-50 dark:text-slate-300 dark:hover:text-teal-300 dark:hover:bg-slate-700/50' : 'text-white hover:bg-white/10'"
                     aria-label="Toggle menu"
                     :aria-expanded="mobileMenu"
                     aria-controls="mobile-menu-drawer"

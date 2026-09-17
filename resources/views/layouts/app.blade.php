@@ -121,7 +121,7 @@
 <body class="font-sans antialiased text-gray-800 bg-white dark:bg-slate-900 dark:text-slate-100" x-data="{ mobileMenu: false }" x-on:keydown.escape="mobileMenu = false">
     <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:px-4 focus:py-2 focus:bg-teal-700 focus:text-white focus:rounded-lg focus:font-medium focus:text-sm">Skip to main content</a>
 
-    <x-navbar />
+    <x-navbar :solid="$__env->hasSection('solidNav')" />
 
     <main id="main-content">
         @yield('content')

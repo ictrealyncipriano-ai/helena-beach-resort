@@ -3,6 +3,10 @@
 @section('title', 'My Booking')
 @section('description', 'View your booking details at '.config('app.name').'.')
 @section('robots', 'noindex, nofollow')
+{{-- Light-top page: white breadcrumb strip sits directly under the fixed nav,
+     so force the solid navbar for readability (transparent + white text
+     would be white-on-white here). --}}
+@section('solidNav', 'solid')
 
 @section('content')
 @section('og_title', 'My Booking — ' . $inquiry->reference_code)
