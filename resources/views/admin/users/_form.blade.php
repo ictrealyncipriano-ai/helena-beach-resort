@@ -24,13 +24,28 @@
                 @error('password') aria-invalid="true" aria-describedby="password-field-error" @enderror
                 class="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-600 focus:border-teal-500 transition-all @error('password') border-red-300 @enderror dark:bg-slate-800 dark:border-slate-600 dark:text-white dark:placeholder-slate-400 dark:focus:border-teal-500 dark:focus:ring-teal-500/40">
             @error('password') <p id="password-field-error" class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
-            <template x-if="!isEditing">
+            <template x-if="!isEditing || form.password.length > 0">
                 <div>
                     <div class="mt-2 h-1.5 w-full bg-gray-100 rounded-full overflow-hidden dark:bg-slate-700">
                         {{-- No Math.* here: the CSP expression parser exposes no globals, so the 100% cap is a plain ternary (identical result for lengths >= 0). --}}
                         <div class="h-full rounded-full transition-all duration-300" x-bind:style="'width: ' + (form.password.length >= 8 ? 100 : form.password.length / 8 * 100) + '%; background: ' + (form.password.length >= 8 ? '#10b981' : form.password.length >= 4 ? '#f59e0b' : '#d1d5db')"></div>
                     </div>
                     <p class="mt-1 text-xs text-gray-500 dark:text-slate-400">Min 8 characters. Longer passwords are stronger.</p>
+                    {{-- Live requirement checklist: green dot/text when met, gray otherwise. Bound to Alpine getters (no regex in expressions: CSP-safe). --}}
+                    <ul aria-live="polite" class="mt-2 space-y-1">
+                        <li class="flex items-center gap-2 text-xs">
+                            <span aria-hidden="true" class="inline-block w-2 h-2 rounded-full flex-shrink-0" x-bind:style="'background:' + (pwHasMin ? '#10b981' : '#d1d5db')"></span>
+                            <span x-bind:style="'color:' + (pwHasMin ? '#047857' : '#6b7280')">At least 8 characters</span>
+                        </li>
+                        <li class="flex items-center gap-2 text-xs">
+                            <span aria-hidden="true" class="inline-block w-2 h-2 rounded-full flex-shrink-0" x-bind:style="'background:' + (pwHasLetter ? '#10b981' : '#d1d5db')"></span>
+                            <span x-bind:style="'color:' + (pwHasLetter ? '#047857' : '#6b7280')">Contains a letter (A–Z / a–z)</span>
+                        </li>
+                        <li class="flex items-center gap-2 text-xs">
+                            <span aria-hidden="true" class="inline-block w-2 h-2 rounded-full flex-shrink-0" x-bind:style="'background:' + (pwHasNumber ? '#10b981' : '#d1d5db')"></span>
+                            <span x-bind:style="'color:' + (pwHasNumber ? '#047857' : '#6b7280')">Contains a number (0–9)</span>
+                        </li>
+                    </ul>
                 </div>
             </template>
         </div>

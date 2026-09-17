@@ -7,7 +7,12 @@
 @section('alerts')
     @if ($errors->any())
         <div class="alert" role="alert">
-            {{ $errors->first('password') ?? $errors->first('email') }}
+            @foreach ($errors->get('password') as $error)
+                <div>{{ $error }}</div>
+            @endforeach
+            @if ($errors->has('email'))
+                <div>{{ $errors->first('email') }}</div>
+            @endif
         </div>
     @endif
 @endsection
@@ -45,6 +50,20 @@
                 </button>
             </div>
             <span class="form-hint">At least 8 characters, with letters and numbers.</span>
+            <ul id="pw-checklist" aria-live="polite" style="list-style:none;margin:.5rem 0 0;padding:0;display:grid;gap:.25rem;">
+                <li data-check="min" style="display:flex;align-items:center;gap:.5rem;font-size:.75rem;color:#6b7280;">
+                    <span class="pw-dot" aria-hidden="true" style="width:.5rem;height:.5rem;border-radius:9999px;background:#d1d5db;display:inline-block;flex-shrink:0;"></span>
+                    <span class="pw-text">At least 8 characters</span>
+                </li>
+                <li data-check="letter" style="display:flex;align-items:center;gap:.5rem;font-size:.75rem;color:#6b7280;">
+                    <span class="pw-dot" aria-hidden="true" style="width:.5rem;height:.5rem;border-radius:9999px;background:#d1d5db;display:inline-block;flex-shrink:0;"></span>
+                    <span class="pw-text">Contains a letter (A–Z / a–z)</span>
+                </li>
+                <li data-check="number" style="display:flex;align-items:center;gap:.5rem;font-size:.75rem;color:#6b7280;">
+                    <span class="pw-dot" aria-hidden="true" style="width:.5rem;height:.5rem;border-radius:9999px;background:#d1d5db;display:inline-block;flex-shrink:0;"></span>
+                    <span class="pw-text">Contains a number (0–9)</span>
+                </li>
+            </ul>
         </div>
 
         <div class="form-group">
@@ -71,6 +90,35 @@
             <span class="spinner"></span>
         </button>
     </form>
+    <script nonce="{{ $cspNonce ?? '' }}">
+        // Live password-requirement checklist (hint only; server validation is authoritative).
+        (function () {
+            var input = document.getElementById('password');
+            var list = document.getElementById('pw-checklist');
+            if (!input || !list) return;
+            var items = {
+                min: list.querySelector('[data-check="min"]'),
+                letter: list.querySelector('[data-check="letter"]'),
+                number: list.querySelector('[data-check="number"]')
+            };
+            function setState(li, met) {
+                if (!li) return;
+                var dot = li.querySelector('.pw-dot');
+                var text = li.querySelector('.pw-text');
+                if (dot) dot.style.background = met ? '#10b981' : '#d1d5db';
+                if (text) text.style.color = met ? '#047857' : '#6b7280';
+                li.setAttribute('data-met', met ? 'true' : 'false');
+            }
+            function update() {
+                var value = input.value || '';
+                setState(items.min, value.length >= 8);
+                setState(items.letter, /[A-Za-z]/.test(value));
+                setState(items.number, /[0-9]/.test(value));
+            }
+            input.addEventListener('input', update);
+            update();
+        })();
+    </script>
 @endsection
 
 @section('footer-link')

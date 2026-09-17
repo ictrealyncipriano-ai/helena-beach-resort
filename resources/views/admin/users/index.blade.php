@@ -84,6 +84,18 @@ window.userForm = function() {
             return this.filteredUsers.filter(u => u.role === 'staff').length;
         },
 
+        get pwHasMin() {
+            return (this.form.password || '').length >= 8;
+        },
+
+        get pwHasLetter() {
+            return /[A-Za-z]/.test(this.form.password || '');
+        },
+
+        get pwHasNumber() {
+            return /[0-9]/.test(this.form.password || '');
+        },
+
         initials(name) {
             const parts = String(name || '').trim().split(/\s+/);
             const a = (parts[0] || '')[0] || '';
