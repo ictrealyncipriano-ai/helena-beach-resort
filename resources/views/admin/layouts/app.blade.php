@@ -10,10 +10,9 @@
     <link rel="apple-touch-icon" href="{{ App\Models\SiteSetting::appleTouchIconUrl() }}">
     <title>@yield('title') — {{ config('app.name') }} Admin</title>
     <link rel="preconnect" href="https://fonts.bunny.net">
-    {{-- Load webfonts asynchronously so they never block first paint.
-         font-display: swap (already in the URL) shows fallback text until
-         the fonts arrive. --}}
-    <link href="https://fonts.bunny.net/css?family=inter:400,500,600,700|playfair-display:400,600,700&display=swap" rel="stylesheet" media="print" onload="this.media='all'" />
+    {{-- Plain stylesheet (see public layout note): the media/onload async swap
+         is an inline event handler blocked by script-src. --}}
+    <link href="https://fonts.bunny.net/css?family=inter:400,500,600,700|playfair-display:400,600,700&display=swap" rel="stylesheet" />
     <noscript>
         <link href="https://fonts.bunny.net/css?family=inter:400,500,600,700|playfair-display:400,600,700&display=swap" rel="stylesheet" />
     </noscript>

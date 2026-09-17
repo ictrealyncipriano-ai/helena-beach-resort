@@ -249,16 +249,16 @@
 
             {{-- Carousel Controls --}}
             <div class="flex items-center justify-center gap-4 mt-8">
-                <button @click="prev" aria-label="Previous testimonials" class="min-w-[44px] min-h-[44px] p-3 rounded-full border border-gray-200 dark:border-slate-700 flex items-center justify-center text-gray-500 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-700/50 hover:text-teal-700 dark:hover:text-teal-300 transition-colors" :disabled="current === 0">
+                <button @click="prev()" aria-label="Previous testimonials" class="min-w-[44px] min-h-[44px] p-3 rounded-full border border-gray-200 dark:border-slate-700 flex items-center justify-center text-gray-500 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-700/50 hover:text-teal-700 dark:hover:text-teal-300 transition-colors" :disabled="current === 0">
                     <x-icons name="chevron-left" class="w-5 h-5" />
                 </button>
                 <div class="flex items-center gap-1">
-                    <template x-for="(_, i) in Array.from({length: totalPages})" :key="i">
-                        <button @click="goTo(i)" :aria-label="'Go to slide ' + (i + 1)" :aria-current="i === current ? 'true' : 'false'" class="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full transition-all duration-300"
-                                :class="i === current ? 'text-teal-700' : 'text-gray-400 hover:text-gray-500'"><span class="block rounded-full transition-all duration-300" :class="i === current ? 'bg-teal-700 w-6 h-2' : 'bg-gray-400 w-2 h-2'"></span></button>
+                    <template x-for="page in pages" :key="page">
+                        <button @click="goTo(page)" :aria-label="'Go to slide ' + (page + 1)" :aria-current="page === current ? 'true' : 'false'" class="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full transition-all duration-300"
+                                :class="page === current ? 'text-teal-700' : 'text-gray-400 hover:text-gray-500'"><span class="block rounded-full transition-all duration-300" :class="page === current ? 'bg-teal-700 w-6 h-2' : 'bg-gray-400 w-2 h-2'"></span></button>
                     </template>
                 </div>
-                <button @click="next" aria-label="Next testimonials" class="min-w-[44px] min-h-[44px] p-3 rounded-full border border-gray-200 dark:border-slate-700 flex items-center justify-center text-gray-500 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-700/50 hover:text-teal-700 dark:hover:text-teal-300 transition-colors" :disabled="current >= totalPages - 1">
+                <button @click="next()" aria-label="Next testimonials" class="min-w-[44px] min-h-[44px] p-3 rounded-full border border-gray-200 dark:border-slate-700 flex items-center justify-center text-gray-500 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-700/50 hover:text-teal-700 dark:hover:text-teal-300 transition-colors" :disabled="current >= totalPages - 1">
                     <x-icons name="chevron-right" class="w-5 h-5" />
                 </button>
             </div>
@@ -294,6 +294,13 @@ function testimonialCarousel() {
         next() { if (this.current < this.totalPages) this.current++; },
         prev() { if (this.current > 0) this.current--; },
         goTo(i) { this.current = i; },
+        // Page indexes for the dot navigation. Computed in plain JS because
+        // the CSP expression parser has no access to globals like Array.
+        get pages() {
+            const pages = [];
+            for (let i = 0; i < this.totalPages; i++) pages.push(i);
+            return pages;
+        },
     };
 }
 </script>

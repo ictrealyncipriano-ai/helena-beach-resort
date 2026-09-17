@@ -22,7 +22,7 @@ export default defineConfig({
         rollupOptions: {
             output: {
                 manualChunks: {
-                    'vendor-alpine': ['alpinejs', '@alpinejs/focus'],
+                    'vendor-alpine': ['@alpinejs/csp', '@alpinejs/focus'],
                     'vendor-flatpickr': ['flatpickr'],
                 },
             },

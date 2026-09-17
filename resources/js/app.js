@@ -1,12 +1,34 @@
 import './bootstrap';
 import './form-validation';
-import Alpine from 'alpinejs';
+// CSP build: evaluates x-* attribute expressions with an AST interpreter
+// instead of new Function, so the strict script-src (no 'unsafe-eval') stays
+// intact. Component factories below are registered via Alpine.data() because
+// the CSP evaluator resolves names from registrations, never from window.
+import Alpine from '@alpinejs/csp';
 import focus from '@alpinejs/focus';
 import { themeToggle } from './theme-toggle';
 
 window.Alpine = Alpine;
 
 Alpine.plugin(focus);
+
+Alpine.data('themeToggle', themeToggle);
+
+Alpine.data('navbar', () => ({
+    scrolled: false,
+    solid: false,
+    init() {
+        // `solid` is rendered server-side for light-top pages (see navbar
+        // blade data-solid); `window` access lives here in plain JS because
+        // the CSP expression parser allows no globals in x-* attributes.
+        this.solid = this.$el.dataset.solid === '1';
+        this.update();
+        window.addEventListener('scroll', () => this.update(), { passive: true });
+    },
+    update() {
+        this.scrolled = window.scrollY > 20;
+    },
+}));
 
 function cookieConsent() {
     // Consent state lives in the resort-neutral `resort_consent` cookie.
@@ -57,9 +79,15 @@ function cookieConsent() {
     };
 }
 
-// Expose to global scope so Alpine can resolve x-data="themeToggle()"
-// (module-scoped functions are tree-shaken out of the production bundle).
-window.themeToggle = themeToggle;
-window.cookieConsent = cookieConsent;
+// Page-level factories live in Blade nonce scripts (they need
+// server-rendered data). Register whichever globals exist on this page so
+// the CSP evaluator can resolve x-data="name()" references.
+for (const name of ['bookingForm', 'modifyForm', 'testimonialCarousel', 'availabilityWidget', 'cottageFilter', 'calendar', 'bookingCancel']) {
+    if (typeof window[name] === 'function') Alpine.data(name, window[name]);
+}
+
+// Registered directly (module scope): the CSP evaluator resolves the
+// x-data="cookieConsent()" reference from Alpine.data registrations.
+Alpine.data('cookieConsent', cookieConsent);
 
 Alpine.start();

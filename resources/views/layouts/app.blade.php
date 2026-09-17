@@ -46,10 +46,12 @@
     </script>
 
     <link rel="preconnect" href="https://fonts.bunny.net">
-    {{-- Load webfonts asynchronously so they never block first paint.
-         font-display: swap (already in the URL) shows fallback text until
-         the fonts arrive. --}}
-    <link href="https://fonts.bunny.net/css?family=instrument-sans:400,500,600,700|playfair-display:400,600,700&display=swap" rel="stylesheet" media="print" onload="this.media='all'" />
+    {{-- Webfonts load as a plain stylesheet: the previous media="print" +
+         onload swap was an inline event handler, which script-src blocks
+         (nonces do not apply to on* attributes), leaving fonts silently
+         unapplied. font-display: swap (in the URL) still avoids invisible
+         text while the font loads. --}}
+    <link href="https://fonts.bunny.net/css?family=instrument-sans:400,500,600,700|playfair-display:400,600,700&display=swap" rel="stylesheet" />
     <noscript>
         <link href="https://fonts.bunny.net/css?family=instrument-sans:400,500,600,700|playfair-display:400,600,700&display=swap" rel="stylesheet" />
     </noscript>

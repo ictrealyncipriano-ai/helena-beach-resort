@@ -57,7 +57,25 @@ class AccessibilityTest extends TestCase
 
         $response = $this->get('/admin/cottages');
         $response->assertStatus(200);
-        $response->assertSee('_previousFocus', false);
+
+        // Wiring: the modal/confirm markup delegates to the registered
+        // Alpine.data components (CSP build forbids inline method bodies).
+        $response->assertSee('resortModal()', false);
+        $response->assertSee('resortConfirm()', false);
+        $response->assertSee('handleEscape()', false);
+
+        // Mechanism: the shipped admin bundle must still capture and restore
+        // the previously focused element around modal use.
+        $manifest = json_decode(
+            file_get_contents(public_path('build/manifest.json')),
+            true
+        );
+        $bundle = $manifest['resources/js/admin.js']['file'] ?? null;
+        $this->assertNotNull($bundle, 'Admin bundle missing from Vite manifest');
+        $this->assertStringContainsString(
+            '_previousFocus',
+            file_get_contents(public_path('build/' . $bundle))
+        );
     }
 
     /*

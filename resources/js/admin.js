@@ -1,4 +1,6 @@
-import Alpine from 'alpinejs';
+// CSP build (see resources/js/app.js): no new Function, so the strict
+// script-src without 'unsafe-eval' keeps working with Alpine.
+import Alpine from '@alpinejs/csp';
 import focus from '@alpinejs/focus';
 import flatpickr from 'flatpickr';
 import 'flatpickr/dist/flatpickr.min.css';
@@ -9,8 +11,9 @@ import { themeToggle } from './theme-toggle';
 window.Alpine = Alpine;
 window.flatpickr = flatpickr;
 // Self-hosted via Vite (replaces the former jsDelivr CDN tag) so the admin
-// dashboard charts stay under script-src 'self'. Used by Alpine x-init
-// chart expressions in the dashboard view.
+// dashboard charts stay under script-src 'self'. Consumed by the vanilla
+// dashboard-charts nonce script (charts cannot init from x-* attributes
+// under the CSP expression parser).
 window.Chart = Chart;
 
 Alpine.plugin(focus);
@@ -147,9 +150,102 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
-// Expose to global scope so Alpine can resolve x-data="themeToggle()"
-// (module-scoped functions are tree-shaken out of the production bundle).
-window.themeToggle = themeToggle;
-window.liveSearchState = liveSearchState;
+Alpine.data('themeToggle', themeToggle);
+
+// Generic modal + confirm dialog (x-admin.modal / x-admin.confirm-dialog).
+// Methods live here in plain JS because the CSP expression parser supports
+// no statements, globals, or `new` inside x-* attributes.
+Alpine.data('resortModal', () => ({
+    isOpen: false,
+    title: '',
+    data: {},
+    _previousFocus: null,
+    init() {
+        this.title = this.$el.dataset.title || '';
+    },
+    open() {
+        this._previousFocus = document.activeElement;
+        this.isOpen = true;
+    },
+    close() {
+        this.isOpen = false;
+        this.data = {};
+        window.dispatchEvent(new CustomEvent('resort:clear-validation'));
+        if (this._previousFocus) {
+            this._previousFocus.focus();
+            this._previousFocus = null;
+        }
+    },
+    handleOpen(e) {
+        const detail = (e && e.detail) || {};
+        this.open();
+        this.title = detail.title || this.$el.dataset.title || '';
+        this.data = detail.data || {};
+        window.dispatchEvent(new CustomEvent('resort:clear-validation'));
+    },
+    handleEscape() {
+        if (this.isOpen) this.close();
+    },
+}));
+
+Alpine.data('resortConfirm', () => ({
+    open: false,
+    actionUrl: '',
+    actionMethod: 'POST',
+    _previousFocus: null,
+    handleOpen(e) {
+        const detail = (e && e.detail) || {};
+        this._previousFocus = document.activeElement;
+        this.open = true;
+        this.actionUrl = detail.url || '';
+        this.actionMethod = detail.method || 'POST';
+    },
+    handleEscape() {
+        if (!this.open) return;
+        this.open = false;
+        if (this._previousFocus) {
+            this._previousFocus.focus();
+            this._previousFocus = null;
+        }
+    },
+}));
+
+// Dashboard stat cards: one self-observing counter per card (replaces the
+// former parent-visibility + inline animate() x-data, which the CSP parser
+// cannot evaluate). Each card animates when it scrolls into view —
+// visually equivalent to the old shared-observer behaviour.
+Alpine.data('statCounter', () => ({
+    count: 0,
+    target: 0,
+    init() {
+        this.target = parseInt(this.$el.dataset.target || '0', 10) || 0;
+        const observer = new IntersectionObserver((entries) => {
+            if (entries[0] && entries[0].isIntersecting) {
+                this.animate();
+                observer.disconnect();
+            }
+        }, { threshold: 0.1 });
+        observer.observe(this.$el);
+    },
+    animate() {
+        let current = 0;
+        const step = Math.max(1, Math.floor(this.target / 30));
+        const timer = setInterval(() => {
+            current += step;
+            if (current >= this.target) {
+                current = this.target;
+                clearInterval(timer);
+            }
+            this.count = current;
+        }, 30);
+    },
+}));
+
+// Page-level factories live in Blade nonce scripts (they need
+// server-rendered data). Register whichever globals exist on this page so
+// the CSP evaluator can resolve x-data="name()" references.
+for (const name of ['liveSearchState', 'adminLayout', 'cottageModal', 'userForm', 'guestModal', 'galleryModal', 'siteSettingModal', 'faqModal', 'inquiryModal', 'testimonialModal', 'serviceModal', 'cottageForm']) {
+    if (typeof window[name] === 'function') Alpine.data(name, window[name]);
+}
 
 Alpine.start();

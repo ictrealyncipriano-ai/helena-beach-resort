@@ -9,23 +9,11 @@ $sizes = [
 ];
 @endphp
 
-<div x-data="{
-    isOpen: false,
-    title: '{{ $title }}',
-    data: {},
-    _previousFocus: null,
-    open() {
-        this._previousFocus = document.activeElement;
-        this.isOpen = true;
-    },
-    close() {
-        this.isOpen = false;
-        this.data = {};
-        window.dispatchEvent(new CustomEvent('resort:clear-validation'));
-        if (this._previousFocus) { this._previousFocus.focus(); this._previousFocus = null; }
-    },
-}"
-     x-on:open-modal-{{ $name }}.window="open(); title = $event.detail?.title || '{{ $title }}'; data = $event.detail?.data || {}; window.dispatchEvent(new CustomEvent('resort:clear-validation'))"
+{{-- State + focus handling live in Alpine.data('resortModal') (admin.js): the CSP
+     expression parser supports no statements, globals, `new`, or `?.` inside
+     x-* attributes. The default title travels via data-title. --}}
+<div x-data="resortModal()" data-title="{{ $title }}"
+     x-on:open-modal-{{ $name }}.window="handleOpen($event)"
      x-on:close-modal-{{ $name }}.window="close()"
      x-on:keydown.escape.window="isOpen && close()"
      x-show="isOpen"

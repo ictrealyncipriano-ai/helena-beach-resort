@@ -23,7 +23,7 @@
             @foreach($galleries as $i => $item)
             <button type="button"
                  class="block w-full break-inside-avoid rounded-xl overflow-hidden bg-gray-100 dark:bg-slate-800 group cursor-pointer relative text-left reveal {{ $i > 0 ? 'reveal-delay-' . min($i % 4 + 1, 4) : '' }}"
-                 onclick="openModal(this)"
+                 data-lightbox-open
                  data-src="{{ Storage::url($item->photo_path) }}"
                  data-title="{{ $item->title ?? '' }}"
                  aria-haspopup="dialog"
@@ -52,16 +52,16 @@
 </section>
 
 {{-- Lightbox Modal --}}
-<div id="lightbox" role="dialog" aria-modal="true" aria-labelledby="lightbox-caption" tabindex="-1" class="fixed inset-0 z-50 bg-black/95 hidden items-center justify-center p-4" onclick="closeModal(event)">
-    <button onclick="closeModal(event)" class="absolute top-4 right-4 w-12 h-12 flex items-center justify-center text-white/60 hover:text-white rounded-full hover:bg-white/10 transition-all z-30" aria-label="Close photo viewer">
+<div id="lightbox" role="dialog" aria-modal="true" aria-labelledby="lightbox-caption" tabindex="-1" class="fixed inset-0 z-50 bg-black/95 hidden items-center justify-center p-4" data-lightbox="close">
+    <button data-lightbox="close" class="absolute top-4 right-4 w-12 h-12 flex items-center justify-center text-white/60 hover:text-white rounded-full hover:bg-white/10 transition-all z-30" aria-label="Close photo viewer">
         <x-icons name="x" class="w-6 h-6" />
     </button>
 
-    <button onclick="prevImage(event)" class="absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 flex items-center justify-center text-white/60 hover:text-white rounded-full hover:bg-white/10 transition-all z-30" aria-label="Show previous photo">
+    <button data-lightbox="prev" class="absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 flex items-center justify-center text-white/60 hover:text-white rounded-full hover:bg-white/10 transition-all z-30" aria-label="Show previous photo">
         <x-icons name="chevron-left" class="w-8 h-8" />
     </button>
 
-    <button onclick="nextImage(event)" class="absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 flex items-center justify-center text-white/60 hover:text-white rounded-full hover:bg-white/10 transition-all z-30" aria-label="Show next photo">
+    <button data-lightbox="next" class="absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 flex items-center justify-center text-white/60 hover:text-white rounded-full hover:bg-white/10 transition-all z-30" aria-label="Show next photo">
         <x-icons name="chevron-right" class="w-8 h-8" />
     </button>
 

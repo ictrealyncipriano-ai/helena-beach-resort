@@ -24,7 +24,7 @@
 </x-hero>
 
 <section class="py-20 bg-white dark:bg-slate-800">
-    <div class="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8" x-data="{ showCancelModal: false, _cancelPreviousFocus: null }" @keydown.escape.window="if (showCancelModal) { showCancelModal = false; if (_cancelPreviousFocus) { _cancelPreviousFocus.focus(); _cancelPreviousFocus = null; } }">
+    <div class="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8" x-data="bookingCancel()" @keydown.escape.window="handleEscape()">
         @if(request('result') === 'success')
         <div class="mb-6 p-4 bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800 rounded-xl text-sm text-green-700 dark:text-green-300 flex items-start gap-2 reveal">
             <x-icons name="check" class="w-5 h-5 shrink-0 mt-0.5" />
@@ -240,7 +240,7 @@
                 @endif
 
                 @if($canCancel)
-                <button type="button" @click="_cancelPreviousFocus = $el; showCancelModal = true"
+                <button type="button" @click="openFrom($el)"
                     class="w-full px-6 py-3 bg-white dark:bg-slate-800 text-red-600 dark:text-red-400 font-medium rounded-xl border border-red-200 dark:border-slate-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all inline-flex items-center justify-center gap-2">
                     <x-icons name="x" class="w-4 h-4" />
                     Cancel Booking
@@ -379,7 +379,7 @@
                     <p class="text-sm text-gray-500 dark:text-slate-400 mb-6">This will cancel your booking and it cannot be undone.</p>
                 </div>
                 <div class="flex items-center justify-center gap-3">
-                    <button type="button" @click="showCancelModal = false; if (_cancelPreviousFocus) { _cancelPreviousFocus.focus(); _cancelPreviousFocus = null; }"
+                    <button type="button" @click="close()"
                         class="px-5 py-2.5 text-sm font-medium text-gray-700 dark:text-slate-200 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-600 rounded-xl hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors">
                         Keep Booking
                     </button>
@@ -405,6 +405,32 @@
 </section>
 
 @push('scripts')
+<script nonce="{{ $cspNonce ?? '' }}">
+    // Registered (not inlined) so the CSP expression evaluator can resolve
+    // x-data="bookingCancel()"; focus handling needs `document`, which is
+    // unavailable inside x-* attributes under the strict policy.
+    function bookingCancel() {
+        return {
+            showCancelModal: false,
+            _cancelPreviousFocus: null,
+            openFrom(el) {
+                this._cancelPreviousFocus = el;
+                this.showCancelModal = true;
+            },
+            close() {
+                this.showCancelModal = false;
+                if (this._cancelPreviousFocus) {
+                    this._cancelPreviousFocus.focus();
+                    this._cancelPreviousFocus = null;
+                }
+            },
+            handleEscape() {
+                if (this.showCancelModal) this.close();
+            },
+        };
+    }
+    document.addEventListener('alpine:init', () => Alpine.data('bookingCancel', bookingCancel));
+</script>
 @if(request('result') === 'success' && ! $inquiry->isPaid())
 <script nonce="{{ $cspNonce ?? '' }}">
     // Poll the session-gated status endpoint while the PayMongo webhook is

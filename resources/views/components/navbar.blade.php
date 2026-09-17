@@ -19,10 +19,11 @@
 @endphp
 
 <header>
+{{-- Scroll state lives in the Alpine.data('navbar') component (app.js): the CSP
+     expression parser allows no `window` access inside x-* attributes, so the
+     scroll listener is attached with plain JS in init(). --}}
 <nav aria-label="Primary" class="fixed top-0 left-0 right-0 z-50 transition-all duration-300 {{ $solidNav ? $solidBg : 'bg-transparent border-b border-transparent' }}"
-     x-data="{ scrolled: false, solid: {{ $solidNav ? 'true' : 'false' }} }"
-     x-init="scrolled = window.scrollY > 20"
-     x-on:scroll.window="scrolled = window.scrollY > 20"
+     x-data="navbar()" data-solid="{{ $solidNav ? '1' : '' }}"
      :class="(scrolled || solid) ? '{{ $solidBg }}' : 'bg-transparent border-b border-transparent'">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex items-center justify-between h-16 sm:h-20">

@@ -19,22 +19,16 @@
     @endif
 
     {{-- Stat Cards --}}
+    {{-- Counters below self-observe via Alpine.data('statCounter') (admin.js):
+         the old shared parent observer + inline animate() cannot run under
+         the CSP expression parser. Each card animates on its own
+         intersection, which is visually equivalent in this grid. --}}
     <div
-        x-data="{
-            visible: false,
-            init() {
-                const observer = new IntersectionObserver(([entry]) => {
-                    if (entry.isIntersecting) { this.visible = true; observer.disconnect(); }
-                }, { threshold: 0.1 });
-                observer.observe(this.$el);
-            }
-        }"
         class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6"
     >
         {{-- Total Cottages --}}
         <div
-            x-data="{ count: 0, target: {{ $totalCottages }}, animate() { let t=0; const s=Math.max(1,Math.floor(this.target/30)); const i=setInterval(() => { t+=s; if(t>=this.target){ t=this.target; clearInterval(i); } this.count=t; }, 30); } }"
-            x-init="$watch('$parent.visible', v => { if(v) animate() })"
+            x-data="statCounter()" data-target="{{ $totalCottages }}"
             class="relative bg-white rounded-2xl shadow-sm border border-gray-100 p-5 overflow-hidden transition-all duration-300 stat-card-glow dark:bg-slate-800 dark:border-slate-700"
         >
             <div class="absolute inset-x-0 top-0 h-0.5 gradient-accent-teal"></div>
@@ -50,8 +44,7 @@
 
         {{-- Pending Inquiries --}}
         <div
-            x-data="{ count: 0, target: {{ $pendingInquiries }}, animate() { let t=0; const s=Math.max(1,Math.floor(this.target/30)); const i=setInterval(() => { t+=s; if(t>=this.target){ t=this.target; clearInterval(i); } this.count=t; }, 30); } }"
-            x-init="$watch('$parent.visible', v => { if(v) animate() })"
+            x-data="statCounter()" data-target="{{ $pendingInquiries }}"
             class="relative bg-white rounded-2xl shadow-sm border border-gray-100 p-5 overflow-hidden transition-all duration-300 stat-card-amber dark:bg-slate-800 dark:border-slate-700"
         >
             <div class="absolute inset-x-0 top-0 h-0.5 gradient-accent-amber"></div>
@@ -66,8 +59,7 @@
 
         {{-- Confirmed This Month --}}
         <div
-            x-data="{ count: 0, target: {{ $confirmedThisMonth }}, animate() { let t=0; const s=Math.max(1,Math.floor(this.target/30)); const i=setInterval(() => { t+=s; if(t>=this.target){ t=this.target; clearInterval(i); } this.count=t; }, 30); } }"
-            x-init="$watch('$parent.visible', v => { if(v) animate() })"
+            x-data="statCounter()" data-target="{{ $confirmedThisMonth }}"
 class="relative bg-white rounded-2xl shadow-sm border border-gray-100 p-5 overflow-hidden transition-all duration-300 stat-card-emerald dark:bg-slate-800 dark:border-slate-700"
         >
             <div class="absolute inset-x-0 top-0 h-0.5 gradient-accent-emerald"></div>
@@ -88,8 +80,7 @@ class="relative bg-white rounded-2xl shadow-sm border border-gray-100 p-5 overfl
 
         {{-- Upcoming Check-Ins --}}
         <div
-            x-data="{ count: 0, target: {{ $upcomingCheckIns->count() }}, animate() { let t=0; const s=Math.max(1,Math.floor(this.target/30)); const i=setInterval(() => { t+=s; if(t>=this.target){ t=this.target; clearInterval(i); } this.count=t; }, 30); } }"
-            x-init="$watch('$parent.visible', v => { if(v) animate() })"
+            x-data="statCounter()" data-target="{{ $upcomingCheckIns->count() }}"
             class="relative bg-white rounded-2xl shadow-sm border border-gray-100 p-5 overflow-hidden transition-all duration-300 stat-card-gray dark:bg-slate-800 dark:border-slate-700"
         >
             <div class="absolute inset-x-0 top-0 h-0.5 gradient-accent-gray"></div>
@@ -281,13 +272,22 @@ class="relative bg-white rounded-2xl shadow-sm border border-gray-100 p-5 overfl
                 <span class="text-xs text-gray-500 font-medium dark:text-slate-400">{{ $bookingTypeData->sum() }} total</span>
             </div>
             <div class="relative chart-container flex justify-center" style="max-height: 280px;">
-                <canvas id="bookingTypeChart" role="img" aria-label="Booking type distribution doughnut chart" x-data x-init="
-                    new Chart($el, {
+                {{-- Rendered by the dashboard-charts script below (plain JS): the old
+                     x-data/x-init config used `new`, globals, and function
+                     expressions, which the CSP parser cannot evaluate. --}}
+                <canvas id="bookingTypeChart" role="img" aria-label="Booking type distribution doughnut chart"></canvas>
+                @push('scripts')
+                <script nonce="{{ $cspNonce ?? '' }}">
+                document.addEventListener('DOMContentLoaded', function () {
+                    if (typeof Chart === 'undefined') return;
+                    var el = document.getElementById('bookingTypeChart');
+                    if (!el) return;
+                    new Chart(el, {
                         type: 'doughnut',
                         data: {
                             labels: ['Day Tour', 'Overnight', 'Unspecified'],
                             datasets: [{
-                                data: [{{ $bookingTypeData['day_tour'] ?? 0 }}, {{ $bookingTypeData['overnight'] ?? 0 }}, {{ $bookingTypeData[null] ?? 0 }}],
+                                data: @js([$bookingTypeData['day_tour'] ?? 0, $bookingTypeData['overnight'] ?? 0, $bookingTypeData[null] ?? 0]),
                                 backgroundColor: [window.siteThemeColor(), '#f59e0b', '#e5e7eb'],
                                 borderWidth: 0,
                                 hoverOffset: 8,
@@ -313,8 +313,8 @@ class="relative bg-white rounded-2xl shadow-sm border border-gray-100 p-5 overfl
                                     boxPadding: 4,
                                     callbacks: {
                                         label: function(ctx) {
-                                            let total = ctx.dataset.data.reduce((a, b) => a + b, 0);
-                                            let pct = total > 0 ? Math.round((ctx.parsed / total) * 100) : 0;
+                                            var total = ctx.dataset.data.reduce(function(a, b) { return a + b; }, 0);
+                                            var pct = total > 0 ? Math.round((ctx.parsed / total) * 100) : 0;
                                             return ctx.label + ': ' + ctx.parsed + ' (' + pct + '%)';
                                         }
                                     }
@@ -323,23 +323,29 @@ class="relative bg-white rounded-2xl shadow-sm border border-gray-100 p-5 overfl
                         },
                         plugins: [{
                             id: 'centerText',
-                            beforeDraw(chart) {
-                                const { width, height, ctx } = chart;
+                            beforeDraw: function(chart) {
+                                var data = chart.data.datasets[0].data;
+                                var total = data.reduce(function(a, b) { return a + b; }, 0);
+                                var ctx = chart.ctx;
+                                var area = chart.chartArea || { left: 0, right: chart.width, top: 0, bottom: chart.height };
+                                var x = (area.left + area.right) / 2;
+                                var y = (area.top + area.bottom) / 2;
                                 ctx.save();
-                                const total = chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
                                 ctx.font = '700 28px Inter, sans-serif';
                                 ctx.fillStyle = '#111827';
                                 ctx.textAlign = 'center';
                                 ctx.textBaseline = 'middle';
-                                ctx.fillText(total, width / 2, height / 2 - 6);
+                                ctx.fillText(total, x, y - 6);
                                 ctx.font = '11px Inter, sans-serif';
                                 ctx.fillStyle = '#9ca3af';
-                                ctx.fillText('Total', width / 2, height / 2 + 18);
+                                ctx.fillText('Total', x, y + 18);
                                 ctx.restore();
                             }
                         }]
-                    })
-                "></canvas>
+                    });
+                });
+                </script>
+                @endpush
             </div>
         </div>
 
@@ -352,8 +358,17 @@ class="relative bg-white rounded-2xl shadow-sm border border-gray-100 p-5 overfl
                 <span class="text-xs text-gray-500 font-medium dark:text-slate-400">{{ formatPrice($revenueData->sum()) }} total</span>
             </div>
             <div class="relative chart-container" style="max-height: 300px;">
-                <canvas id="revenueChart" role="img" aria-label="Revenue over the last 6 months line chart" x-data x-init="
-                    new Chart($el, {
+                <canvas id="revenueChart" role="img" aria-label="Revenue over the last 6 months line chart"></canvas>
+                {{-- Chart config moved verbatim from the old x-data/x-init attribute
+                     into this plain script: `new`, globals, and function
+                     expressions are not evaluable by the CSP parser. --}}
+                @push('scripts')
+                <script nonce="{{ $cspNonce ?? '' }}">
+                document.addEventListener('DOMContentLoaded', function () {
+                    if (typeof Chart === 'undefined') return;
+                    var el = document.getElementById('revenueChart');
+                    if (!el) return;
+                    new Chart(el, {
                         type: 'line',
                         data: {
                             labels: [@foreach($revenueData as $month => $total)'{{ \Carbon\Carbon::createFromFormat('Y-m', $month)->format('M Y') }}',@endforeach],
@@ -419,8 +434,10 @@ class="relative bg-white rounded-2xl shadow-sm border border-gray-100 p-5 overfl
                                 }
                             }
                         }
-                    })
-                "></canvas>
+                    });
+                });
+                </script>
+                @endpush
             </div>
         </div>
     </div>

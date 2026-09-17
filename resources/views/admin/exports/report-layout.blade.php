@@ -207,7 +207,7 @@
 <body>
 
     <div class="toolbar">
-        <button type="button" onclick="window.print()">
+        <button type="button" data-print>
             <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
             Print / Save as PDF
         </button>
@@ -255,5 +255,11 @@
         </div>
     </div>
 
+<script nonce="{{ $cspNonce ?? '' }}">
+    // Inline onclick is blocked by script-src; bind the print toolbar here.
+    document.querySelector('[data-print]').addEventListener('click', function () {
+        window.print();
+    });
+</script>
 </body>
 </html>

@@ -1,7 +1,8 @@
 // Shared lightbox for the gallery grid + cottage photo viewer.
 // Page-specific entry loaded only where a lightbox exists (via
-// @vite('resources/js/lightbox.js')). Exposed globally so inline
-// onclick handlers (openModal, closeModal, ...) keep working.
+// @vite('resources/js/lightbox.js')). Triggers are data attributes consumed
+// by the delegated listener below — inline onclick handlers are blocked by
+// script-src, so markup must never use them.
 let currentImages = [];
 let currentTitles = [];
 let currentIndex = 0;
@@ -54,13 +55,11 @@ function prevImage(e) {
     showImage(prev);
 }
 
-function closeModal(e) {
-    if (e.target === e.currentTarget || e.target.closest('button')) {
-        document.getElementById('lightbox').classList.add('hidden');
-        document.getElementById('lightbox').classList.remove('flex');
-        document.body.style.overflow = '';
-        if (lastTrigger) lastTrigger.focus({ preventScroll: true });
-    }
+function closeModal() {
+    document.getElementById('lightbox').classList.add('hidden');
+    document.getElementById('lightbox').classList.remove('flex');
+    document.body.style.overflow = '';
+    if (lastTrigger) lastTrigger.focus({ preventScroll: true });
 }
 
 function openPhotoLightbox(el, src, alt) {
@@ -76,14 +75,46 @@ function openPhotoLightbox(el, src, alt) {
     lb.focus({ preventScroll: true });
 }
 
-function closePhotoLightbox(e) {
-    if (e.target === e.currentTarget || e.target.closest('button')) {
-        document.getElementById('photo-lightbox').classList.add('hidden');
-        document.getElementById('photo-lightbox').classList.remove('flex');
-        document.body.style.overflow = '';
-        if (lastPhotoTrigger) lastPhotoTrigger.focus({ preventScroll: true });
-    }
+function closePhotoLightbox() {
+    document.getElementById('photo-lightbox').classList.add('hidden');
+    document.getElementById('photo-lightbox').classList.remove('flex');
+    document.body.style.overflow = '';
+    if (lastPhotoTrigger) lastPhotoTrigger.focus({ preventScroll: true });
 }
+
+// Delegated triggers (see header note). Overlay clicks close only when the
+// click lands on the overlay itself or a control button — clicking the photo
+// does nothing, matching the previous inline-handler behaviour.
+document.addEventListener('click', function (e) {
+    const opener = e.target.closest('[data-lightbox-open]');
+    if (opener) {
+        openModal(opener);
+        return;
+    }
+    const photoOpener = e.target.closest('[data-photo-open]');
+    if (photoOpener) {
+        openPhotoLightbox(photoOpener, photoOpener.dataset.photoSrc || '', photoOpener.dataset.photoAlt || '');
+        return;
+    }
+    const control = e.target.closest('[data-lightbox]');
+    if (control) {
+        const kind = control.dataset.lightbox;
+        if (kind === 'prev') {
+            prevImage(e);
+            return;
+        }
+        if (kind === 'next') {
+            nextImage(e);
+            return;
+        }
+        if (e.target === control || e.target.closest('button')) closeModal();
+        return;
+    }
+    const photoControl = e.target.closest('[data-photo-lightbox]');
+    if (photoControl && (e.target === photoControl || e.target.closest('button'))) {
+        closePhotoLightbox();
+    }
+});
 
 document.addEventListener('keydown', function(e) {
     const lb = document.getElementById('lightbox');
@@ -107,10 +138,4 @@ document.addEventListener('keydown', function(e) {
     }
 });
 
-window.openModal = openModal;
-window.showImage = showImage;
-window.nextImage = nextImage;
-window.prevImage = prevImage;
-window.closeModal = closeModal;
-window.openPhotoLightbox = openPhotoLightbox;
-window.closePhotoLightbox = closePhotoLightbox;
+

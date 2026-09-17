@@ -24,4 +24,15 @@
         </div>
     </div>
 </div>
+@push('scripts')
+<script nonce="{{ $cspNonce ?? '' }}">
+    // history.back() via bound listener: inline onclick is blocked by CSP.
+    document.querySelectorAll('[data-go-back]').forEach(function (link) {
+        link.addEventListener('click', function (e) {
+            e.preventDefault();
+            history.back();
+        });
+    });
+</script>
+@endpush
 @endsection

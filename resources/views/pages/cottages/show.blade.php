@@ -85,8 +85,8 @@
                     @php $photoLabels = ['exterior view', 'interior view', 'bedroom', 'bathroom', 'amenities', 'beach view']; @endphp
                     @foreach($cottage->photos as $photo)
                     @php $photoAlt = $cottage->name . ' — ' . $photoLabels[$loop->index % count($photoLabels)]; @endphp
-                    <button type="button" class="relative block w-full aspect-[4/3] rounded-xl overflow-hidden bg-teal-50 dark:bg-teal-900/30 cursor-pointer group"
-                         onclick="openPhotoLightbox(this, '{{ Storage::url($photo->photo_path) }}', '{{ $photoAlt }}')"
+                     <button type="button" class="relative block w-full aspect-[4/3] rounded-xl overflow-hidden bg-teal-50 dark:bg-teal-900/30 cursor-pointer group"
+                         data-photo-open data-photo-src="{{ Storage::url($photo->photo_path) }}" data-photo-alt="{{ $photoAlt }}"
                          aria-haspopup="dialog">
                         <img src="{{ Storage::url($photo->photo_path) }}" alt="{{ $photoAlt }}" width="600" height="450" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy">
                         <span class="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
@@ -195,11 +195,11 @@
                         </h3>
                         <div x-data="calendar(@js($blockedDates))">
                             <div class="flex items-center justify-between mb-3">
-                                <button @click="prevMonth" aria-label="Previous month" class="min-w-[44px] min-h-[44px] p-3 flex items-center justify-center hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg transition-colors text-gray-500 dark:text-slate-400">
+                                <button @click="prevMonth()" aria-label="Previous month" class="min-w-[44px] min-h-[44px] p-3 flex items-center justify-center hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg transition-colors text-gray-500 dark:text-slate-400">
                                     <x-icons name="chevron-left" class="w-4 h-4" />
                                 </button>
                                 <span class="text-sm font-semibold text-gray-700 dark:text-slate-200" x-text="monthLabel" aria-live="polite" role="status"></span>
-                                <button @click="nextMonth" aria-label="Next month" class="min-w-[44px] min-h-[44px] p-3 flex items-center justify-center hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg transition-colors text-gray-500 dark:text-slate-400">
+                                <button @click="nextMonth()" aria-label="Next month" class="min-w-[44px] min-h-[44px] p-3 flex items-center justify-center hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg transition-colors text-gray-500 dark:text-slate-400">
                                     <x-icons name="chevron-right" class="w-4 h-4" />
                                 </button>
                             </div>
@@ -253,8 +253,8 @@
 </section>
 
 {{-- Photo Lightbox --}}
-<div id="photo-lightbox" role="dialog" aria-modal="true" aria-label="Cottage photo viewer" tabindex="-1" class="fixed inset-0 z-50 bg-black/95 hidden items-center justify-center p-4" onclick="closePhotoLightbox(event)">
-    <button onclick="closePhotoLightbox(event)" class="absolute top-4 right-4 w-12 h-12 flex items-center justify-center text-white/60 hover:text-white rounded-full hover:bg-white/10 transition-all z-30" aria-label="Close photo viewer">
+<div id="photo-lightbox" role="dialog" aria-modal="true" aria-label="Cottage photo viewer" tabindex="-1" class="fixed inset-0 z-50 bg-black/95 hidden items-center justify-center p-4" data-photo-lightbox="close">
+    <button data-photo-lightbox="close" class="absolute top-4 right-4 w-12 h-12 flex items-center justify-center text-white/60 hover:text-white rounded-full hover:bg-white/10 transition-all z-30" aria-label="Close photo viewer">
         <x-icons name="x" class="w-6 h-6" />
     </button>
     <img id="photo-lightbox-img" src="" alt="" class="max-w-full max-h-[85vh] object-contain rounded-xl transition-all duration-300 shadow-2xl">

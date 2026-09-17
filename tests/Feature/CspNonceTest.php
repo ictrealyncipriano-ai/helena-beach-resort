@@ -7,9 +7,11 @@ use Tests\TestCase;
 
 /**
  * CSP hardening slice — the SecurityHeaders middleware must emit a strict
- * per-request nonce policy (never 'unsafe-inline'), every executable inline
- * script must carry that nonce, and the Organization JSON-LD must render
- * valid structured data.
+ * per-request nonce policy (never 'unsafe-inline' and never 'unsafe-eval':
+ * Alpine runs via the @alpinejs/csp build whose AST evaluator needs no
+ * runtime code generation), every executable inline script must carry that
+ * nonce, no inline event-handler attributes may remain (they ignore nonces),
+ * and the Organization JSON-LD must render valid structured data.
  */
 class CspNonceTest extends TestCase
 {
@@ -43,6 +45,37 @@ class CspNonceTest extends TestCase
         $this->assertStringContainsString("'nonce-", $scriptSrc);
         $this->assertStringNotContainsString('unsafe-inline', $scriptSrc);
         $this->assertStringContainsString('https://www.googletagmanager.com', $scriptSrc);
+    }
+
+    public function test_script_src_never_allows_unsafe_eval(): void
+    {
+        // Alpine's CSP build evaluates x-* expressions without new Function,
+        // so the strict policy must hold on every public entry point. If this
+        // fails, all Alpine interactivity (booking picker, navbar, drawers)
+        // is dead in the browser while tests stay green.
+        foreach (['/', '/book', '/contact'] as $uri) {
+            $csp = $this->get($uri)->headers->get('Content-Security-Policy', '');
+            $this->assertStringNotContainsString(
+                'unsafe-eval',
+                $this->scriptSrc($csp),
+                "unsafe-eval present on {$uri}"
+            );
+        }
+    }
+
+    public function test_no_inline_event_handler_attributes(): void
+    {
+        // Nonces do not whitelist on* attributes (only 'unsafe-hashes'
+        // would); any remaining handler is dead markup. Alpine's @click /
+        // x-on directives are plain attributes and must not match.
+        foreach (['/', '/book'] as $uri) {
+            $html = $this->get($uri)->getContent();
+            $this->assertDoesNotMatchRegularExpression(
+                '/\son(load|click|change|submit|error|mouseover|keydown|keyup)="[^"]*"/i',
+                $html,
+                "Inline event handler found on {$uri}"
+            );
+        }
     }
 
     public function test_consecutive_requests_receive_different_nonces(): void

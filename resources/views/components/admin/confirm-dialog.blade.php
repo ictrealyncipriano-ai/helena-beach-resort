@@ -7,11 +7,13 @@
     'cancelText' => 'Cancel',
 ])
 
-<div x-data="{ open: false, actionUrl: '', actionMethod: 'POST', _previousFocus: null }"
-     x-on:open-confirm-{{ $name }}.window="_previousFocus = document.activeElement; open = true; actionUrl = $event.detail.url; actionMethod = $event.detail.method || 'POST'"
+{{-- Open/escape handling lives in Alpine.data('resortConfirm') (admin.js) for the
+     same CSP reason as x-admin.modal (no `document` or statements in x-*). --}}
+<div x-data="resortConfirm()"
+     x-on:open-confirm-{{ $name }}.window="handleOpen($event)"
      x-show="open"
      x-trap.noscroll="open"
-     x-on:keydown.escape.window="if (open) { open = false; if (_previousFocus) { _previousFocus.focus(); _previousFocus = null; } }"
+     x-on:keydown.escape.window="handleEscape()"
      class="relative z-50"
      x-cloak>
     <div x-show="open" x-transition:enter="transition-opacity ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="transition-opacity ease-in duration-150" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="fixed inset-0 bg-gray-900/50 backdrop-blur-sm"></div>

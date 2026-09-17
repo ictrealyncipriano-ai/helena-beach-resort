@@ -17,6 +17,12 @@ use Symfony\Component\HttpFoundation\Response;
  * scripts can opt in with nonce="{{ $cspNonce ?? '' }}" without ever falling
  * back to 'unsafe-inline'. Views rendered off-request (queued mail, PDFs)
  * see an empty nonce via the null-coalescing default.
+ *
+ * script-src intentionally omits 'unsafe-eval': Alpine runs via the
+ * @alpinejs/csp build (AST expression evaluator, no new Function), so all
+ * x-* directives work under the strict policy. Consequences, enforced by
+ * CspNonceTest: no inline on* handler attributes (nonces do not cover them;
+ * bind listeners in nonce scripts instead) and no eval-dependent libraries.
  */
 class SecurityHeaders
 {
