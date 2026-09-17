@@ -9,6 +9,7 @@ use App\Models\Inquiry;
 use App\Models\User;
 use App\Services\PayMongoService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
 use Tests\TestCase;
@@ -101,6 +102,32 @@ class PaymentFlowTest extends TestCase
         $this->assertDatabaseHas('inquiries', [
             'id' => $inquiry->id,
             'paymongo_session_id' => 'cs_test_123',
+        ]);
+    }
+
+    public function test_pay_when_payment_api_unreachable_redirects_with_error(): void
+    {
+        // Transport failures (DNS/TLS/timeouts) throw ConnectionException,
+        // which is not a RuntimeException. The guest must get a redirect with
+        // a retry message — never a bare 500 — and nothing may be persisted
+        // as if a session had been created.
+        $inquiry = $this->confirmedBooking('unreachable@example.com');
+
+        Http::fake([
+            'api.paymongo.com/v2/checkout_sessions' => function () {
+                throw new ConnectionException('cURL error 6: Could not resolve host: api.paymongo.com');
+            },
+        ]);
+
+        $this->withSession($this->portalSession($inquiry))
+            ->post(route('payment.pay', $inquiry))
+            ->assertRedirect(route('booking.portal.show', $inquiry))
+            ->assertSessionHas('error', 'Unable to reach the payment service. Please try again later.');
+
+        $this->assertDatabaseHas('inquiries', [
+            'id' => $inquiry->id,
+            'paymongo_session_id' => null,
+            'payment_pending_amount' => null,
         ]);
     }
 

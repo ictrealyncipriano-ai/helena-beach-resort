@@ -11,6 +11,7 @@ use App\Support\Money;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 /**
  * Handles the guest payment flow: redirecting to PayMongo's hosted checkout
@@ -59,6 +60,19 @@ class PaymentController extends Controller
         } catch (\RuntimeException $e) {
             return redirect()->route('booking.portal.show', $inquiry)
                 ->with('error', $e->getMessage());
+        } catch (\Throwable $e) {
+            // Transport failures (DNS/TLS/timeouts) throw ConnectionException,
+            // which is not a RuntimeException — without this the guest gets a
+            // bare 500 and PayMongo never sees a session. Never expose the raw
+            // exception text; it can leak internals.
+            Log::error('PayMongo checkout session transport failure', [
+                'inquiry_id' => $inquiry->id,
+                'exception' => get_class($e),
+                'message' => $e->getMessage(),
+            ]);
+
+            return redirect()->route('booking.portal.show', $inquiry)
+                ->with('error', 'Unable to reach the payment service. Please try again later.');
         }
 
         // A malformed 200 can omit checkout_url/session_id; never redirect to
