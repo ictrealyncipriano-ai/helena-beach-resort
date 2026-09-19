@@ -38,6 +38,10 @@ class InvoiceController extends Controller
 
         $pdf = Pdf::loadView('pages.invoice', [
             'inquiry' => $inquiry,
+            // DomPDF's default media type is screen, so @media screen rules
+            // apply in the PDF while @media print is ignored. Gate all
+            // screen-only markup/CSS on this flag instead of relying on CSS.
+            'isPdf' => true,
             ...$this->buildLineItems($inquiry, $pricing),
         ]);
 

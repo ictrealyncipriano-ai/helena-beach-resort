@@ -158,6 +158,10 @@
             .action-bar { display: none !important; }
         }
 
+        {{-- DomPDF renders with screen as its default media type, so every
+             @media screen rule below would leak into the PDF while @media
+             print is ignored. Exclude the whole screen layer when $isPdf. --}}
+        @unless($isPdf ?? false)
         /* Screen foundation (all widths): page backdrop, sheet background,
            and the action bar visible on every screen but never in print/PDF
            (base stays display:none; print forces it hidden). */
@@ -354,14 +358,17 @@
             .terms { font-size: 11px; }
             .footer { font-size: 10px; }
         }
+        @endunless
     </style>
 </head>
 <body>
 
+    @unless($isPdf ?? false)
     <div class="action-bar">
         <a class="back" href="{{ route('booking.portal.show', $inquiry) }}">&larr; Back to Booking</a>
         <a class="download" href="{{ route('invoice.download', $inquiry) }}">Download PDF</a>
     </div>
+    @endunless
 
     <div class="watermark">{{ $inquiry->isPaid() ? 'PAID' : 'UNPAID' }}</div>
 
