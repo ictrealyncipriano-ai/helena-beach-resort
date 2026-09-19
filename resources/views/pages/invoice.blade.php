@@ -158,6 +158,127 @@
             .action-bar { display: none !important; }
         }
 
+        /* Screen foundation (all widths): page backdrop, sheet background,
+           and the action bar visible on every screen but never in print/PDF
+           (base stays display:none; print forces it hidden). */
+        @media screen {
+            html { background: #eef2f5; }
+            body { background: #ffffff; overflow-x: hidden; }
+            .action-bar {
+                display: flex;
+                gap: 8px;
+                align-items: stretch;
+                position: sticky;
+                top: 0;
+                z-index: 10;
+                background: #ffffff;
+                border-bottom: 1px solid #e5e7eb;
+                padding: 10px 0;
+            }
+            .action-bar a {
+                flex: 1;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                min-height: 44px;
+                padding: 10px 12px;
+                border-radius: 10px;
+                font-size: 14px;
+                font-weight: 600;
+                text-decoration: none;
+                line-height: 1.2;
+            }
+            .action-bar .back {
+                color: #0d9488;
+                border: 1px solid #99f6e4;
+                background: #ffffff;
+            }
+            .action-bar .download {
+                color: #ffffff;
+                background: #0d9488;
+                border: 1px solid #0d9488;
+            }
+        }
+
+        /* Tablet: roomier gutters, wrapping meta grid, no table scroll. */
+        @media screen and (min-width: 641px) and (max-width: 1023px) {
+            body {
+                padding: 0 24px 40px;
+                font-size: 12px;
+            }
+            .action-bar {
+                margin: 0 -24px;
+                padding-left: 24px;
+                padding-right: 24px;
+            }
+            .top-bar {
+                margin: 0 -24px;
+                padding: 24px;
+            }
+            .top-bar h1 { font-size: 20px; }
+            .top-bar p { font-size: 11px; word-break: break-word; }
+            .meta-grid {
+                flex-wrap: wrap;
+                gap: 20px;
+                margin-bottom: 24px;
+            }
+            .meta-value.mono { word-break: break-all; }
+            .booking-summary { line-height: 1.8; font-size: 11px; }
+            .table-wrap {
+                overflow: visible;
+                border: none;
+                margin-bottom: 20px;
+            }
+            .terms { font-size: 11px; }
+            .footer { font-size: 10px; }
+        }
+
+        /* Desktop: centered sheet/card on a soft backdrop. Every value here
+           overrides inside screen scope only; the PDF keeps the base rules. */
+        @media screen and (min-width: 1024px) {
+            body {
+                max-width: 880px;
+                margin: 24px auto 48px;
+                padding: 0 48px 40px;
+                background: #ffffff;
+                border: 1px solid #e5e7eb;
+                border-radius: 12px;
+                box-shadow: 0 8px 30px rgba(15, 23, 42, 0.08);
+                font-size: 13px;
+            }
+            .action-bar {
+                margin: 0 -48px;
+                padding: 12px 48px;
+                border-radius: 12px 12px 0 0;
+            }
+            .top-bar {
+                margin: 0 -48px;
+                padding: 28px 48px;
+            }
+            .top-bar h1 { font-size: 22px; }
+            .top-bar p { font-size: 11px; word-break: break-word; }
+            .invoice-title { margin: 28px 0 22px; }
+            .invoice-title h2 { font-size: 26px; }
+            .meta-grid {
+                flex-wrap: wrap;
+                gap: 24px;
+                margin-bottom: 24px;
+            }
+            .meta-value { font-size: 13px; }
+            .meta-value.mono { word-break: break-all; }
+            .booking-summary { font-size: 12px; line-height: 1.8; }
+            table.items thead th { padding: 9px 12px; font-size: 10px; }
+            table.items tbody td { padding: 10px 12px; font-size: 12px; }
+            table.items tfoot td { font-size: 12px; }
+            .table-wrap {
+                overflow: visible;
+                border: none;
+                margin-bottom: 20px;
+            }
+            .terms { font-size: 11px; }
+            .footer { font-size: 10px; }
+        }
+
         @media screen and (max-width: 640px) {
             body {
                 padding: 0 12px 32px;
