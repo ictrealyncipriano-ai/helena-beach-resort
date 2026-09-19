@@ -2,6 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="light">
     <meta name="robots" content="noindex, nofollow, noarchive">
     <title>Invoice — {{ $inquiry->reference_code }}</title>
     <style>
@@ -146,9 +148,99 @@
             font-weight: 700; letter-spacing: 10px;
             pointer-events: none; z-index: -1;
         }
+
+        /* Screen-only chrome: hidden by default so DomPDF / print output
+           is byte-identical to before. Enabled only under @media screen. */
+        .action-bar { display: none; }
+        .table-wrap { width: 100%; }
+
+        @media print {
+            .action-bar { display: none !important; }
+        }
+
+        @media screen and (max-width: 640px) {
+            body {
+                padding: 0 12px 32px;
+                font-size: 12px;
+                overflow-x: hidden;
+            }
+            .action-bar {
+                display: flex;
+                gap: 8px;
+                align-items: stretch;
+                position: sticky;
+                top: 0;
+                z-index: 10;
+                margin: 0 -12px;
+                padding: 10px 12px;
+                background: #ffffff;
+                border-bottom: 1px solid #e5e7eb;
+            }
+            .action-bar a {
+                flex: 1;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                min-height: 44px;
+                padding: 10px 12px;
+                border-radius: 10px;
+                font-size: 14px;
+                font-weight: 600;
+                text-decoration: none;
+                line-height: 1.2;
+            }
+            .action-bar .back {
+                color: #0d9488;
+                border: 1px solid #99f6e4;
+                background: #ffffff;
+            }
+            .action-bar .download {
+                color: #ffffff;
+                background: #0d9488;
+                border: 1px solid #0d9488;
+            }
+            .top-bar {
+                margin: 0 -12px;
+                padding: 14px 16px;
+            }
+            .top-bar h1 { font-size: 18px; }
+            .top-bar p { font-size: 11px; word-break: break-word; }
+            .invoice-title { margin: 22px 0 18px; }
+            .invoice-title h2 { font-size: 20px; }
+            .meta-grid {
+                flex-direction: column;
+                gap: 12px;
+                margin-bottom: 20px;
+            }
+            .meta-grid .col.right { text-align: left; }
+            .meta-value.mono { word-break: break-all; }
+            .booking-summary { line-height: 1.8; font-size: 11px; }
+            .table-wrap {
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+                margin-bottom: 20px;
+                border: 1px solid #e5e7eb;
+                border-radius: 6px;
+            }
+            .table-wrap table.items { margin-bottom: 0; min-width: 520px; }
+            .table-wrap table.items thead th,
+            .table-wrap table.items tbody td,
+            .table-wrap table.items tfoot td {
+                padding-left: 8px;
+                padding-right: 8px;
+            }
+            .watermark { font-size: 48px; letter-spacing: 6px; }
+            .terms { font-size: 11px; }
+            .footer { font-size: 10px; }
+        }
     </style>
 </head>
 <body>
+
+    <div class="action-bar">
+        <a class="back" href="{{ route('booking.portal.show', $inquiry) }}">&larr; Back to Booking</a>
+        <a class="download" href="{{ route('invoice.download', $inquiry) }}">Download PDF</a>
+    </div>
 
     <div class="watermark">{{ $inquiry->isPaid() ? 'PAID' : 'UNPAID' }}</div>
 
@@ -199,6 +291,7 @@
         @endif
     </div>
 
+    <div class="table-wrap">
     <table class="items">
         <thead>
             <tr>
@@ -258,6 +351,7 @@
             </tr>
         </tfoot>
     </table>
+    </div>
 
     <div class="terms">
         @if($inquiry->isPaid())
