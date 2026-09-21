@@ -81,7 +81,7 @@ class AdminMiddleware
         // route segment after "inquiries" is "payment-proof", so without this
         // entry staff would be able to approve payment proofs even though the
         // rest of their inquiry access is read-only.
-        $writeActions = ['create', 'store', 'edit', 'update', 'destroy', 'confirm', 'cancel', 'activate-all', 'mark-paid', 'refund', 'payment-proof'];
+        $writeActions = ['create', 'store', 'edit', 'update', 'destroy', 'confirm', 'cancel', 'activate-all', 'mark-paid', 'refund', 'resync-payment', 'payment-proof'];
         if (in_array($action, $writeActions) && isset($this->writeAccess[$resource])) {
             if (! in_array($user->role, $this->writeAccess[$resource])) {
                 abort(403, 'You do not have permission to perform this action.');

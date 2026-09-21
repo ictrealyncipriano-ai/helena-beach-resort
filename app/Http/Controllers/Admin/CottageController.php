@@ -105,7 +105,7 @@ class CottageController extends Controller
 
     public function edit(Cottage $cottage): View
     {
-        $this->authorize('view', $cottage);
+        $this->authorize('update', $cottage);
 
         $cottage->load(['amenities', 'photos', 'dateBlocks']);
 

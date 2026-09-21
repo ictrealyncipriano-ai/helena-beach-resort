@@ -200,7 +200,7 @@ class InquiryController extends Controller
 
     public function edit(Inquiry $inquiry): View
     {
-        $this->authorize('view', $inquiry);
+        $this->authorize('update', $inquiry);
 
         $inquiry->load(['cottage', 'guest']);
         $cottages = Cottage::pluck('name', 'id');

@@ -110,7 +110,7 @@ class GuestController extends Controller
 
     public function edit(Guest $guest): View
     {
-        $this->authorize('view', $guest);
+        $this->authorize('update', $guest);
 
         return view('admin.guests.form', compact('guest'));
     }
