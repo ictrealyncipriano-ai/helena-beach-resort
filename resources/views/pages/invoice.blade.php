@@ -10,7 +10,7 @@
         @page { margin: 15mm 20mm; }
         body {
             font-family: 'DejaVu Sans', sans-serif;
-            font-size: 10px;
+            font-size: 13px;
             color: #374151;
             line-height: 1.5;
             margin: 0 auto;
@@ -21,28 +21,28 @@
         .top-bar {
             background: #0d9488;
             margin: 0;
-            padding: 8mm 20mm;
+            padding: 28px 48px;
             color: white;
         }
         .top-bar h1 {
             margin: 0;
-            font-size: 20px;
+            font-size: 22px;
             font-weight: 700;
             letter-spacing: 0.5px;
         }
         .top-bar p {
             margin: 2px 0 0;
-            font-size: 9px;
+            font-size: 11px;
             opacity: 0.85;
         }
 
         .invoice-title {
             text-align: center;
-            margin: 30px 0 24px;
+            margin: 28px 0 22px;
             position: relative;
         }
         .invoice-title h2 {
-            font-size: 24px;
+            font-size: 26px;
             color: #0d9488;
             margin: 0 0 4px;
             font-weight: 700;
@@ -68,7 +68,7 @@
         .meta-grid {
             display: table;
             width: 100%;
-            margin-bottom: 28px;
+            margin-bottom: 24px;
         }
         .meta-grid .col {
             display: table-cell;
@@ -84,7 +84,7 @@
             margin-bottom: 2px;
         }
         .meta-value {
-            font-size: 11px;
+            font-size: 13px;
             font-weight: 600;
             color: #1f2937;
         }
@@ -105,28 +105,29 @@
             border-radius: 6px;
             padding: 10px 14px;
             margin-bottom: 24px;
-            font-size: 9px;
+            font-size: 12px;
+            line-height: 1.8;
         }
         .booking-summary strong { color: #1f2937; }
         .booking-summary .sep { color: #d1d5db; margin: 0 8px; }
 
         table.items { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
         table.items thead th {
-            background: #0d9488; color: white; padding: 7px 10px;
-            font-size: 9px; text-transform: uppercase; letter-spacing: 0.6px;
+            background: #0d9488; color: white; padding: 9px 12px;
+            font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px;
             text-align: left;
         }
         table.items thead th:last-child { text-align: right; }
         table.items thead th:nth-child(3) { text-align: right; }
         table.items thead th:nth-child(4) { text-align: right; }
-        table.items tbody td { padding: 8px 10px; border-bottom: 1px solid #e5e7eb; font-size: 10px; }
+        table.items tbody td { padding: 10px 12px; border-bottom: 1px solid #e5e7eb; font-size: 12px; }
         table.items tbody td:last-child { text-align: right; }
         table.items tbody td:nth-child(3) { text-align: right; }
         table.items tbody td:nth-child(4) { text-align: right; }
         table.items tbody td.num { text-align: center; width: 30px; color: #9ca3af; }
         table.items tbody tr:last-child td { border-bottom: none; }
 
-        table.items tfoot td { padding: 6px 10px; font-size: 10px; }
+        table.items tfoot td { padding: 6px 10px; font-size: 12px; }
         table.items tfoot td:last-child { text-align: right; }
         table.items tfoot tr.subtotal td { border-top: 1px solid #d1d5db; padding-top: 10px; font-weight: 600; }
         table.items tfoot tr.total td {
@@ -137,12 +138,12 @@
 
         .terms {
             border-top: 1px solid #e5e7eb; padding-top: 14px; margin-top: 10px;
-            font-size: 9px; color: #6b7280;
+            font-size: 11px; color: #6b7280;
         }
         .terms strong { color: #374151; }
 
         .footer {
-            text-align: center; color: #9ca3af; font-size: 8px;
+            text-align: center; color: #9ca3af; font-size: 10px;
             margin-top: 30px; padding-top: 12px; border-top: 1px solid #e5e7eb;
         }
         .footer strong { color: #6b7280; }
@@ -150,7 +151,7 @@
         .watermark {
             position: fixed; top: 50%; left: 50%;
             transform: translate(-50%, -50%) rotate(-30deg);
-            font-size: 80px; color: rgba(13, 148, 136, 0.04);
+            font-size: 64px; color: rgba(13, 148, 136, 0.04);
             font-weight: 700; letter-spacing: 10px;
             pointer-events: none; z-index: -1;
         }
