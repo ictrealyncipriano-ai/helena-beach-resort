@@ -62,13 +62,19 @@
             margin: 10px auto 0;
         }
 
+        /* Table layout (not flex): DomPDF's flexbox support is incomplete
+           and pushed the right column off the page, clipping "Invoice No".
+           Screen blocks below restore flex where it is fully supported. */
         .meta-grid {
-            display: flex;
-            justify-content: space-between;
-            gap: 20px;
+            display: table;
+            width: 100%;
             margin-bottom: 28px;
         }
-        .meta-grid .col { flex: 1; }
+        .meta-grid .col {
+            display: table-cell;
+            vertical-align: top;
+            width: 50%;
+        }
         .meta-grid .col.right { text-align: right; }
         .meta-label {
             font-size: 8px;
@@ -222,10 +228,13 @@
             .top-bar h1 { font-size: 20px; }
             .top-bar p { font-size: 11px; word-break: break-word; }
             .meta-grid {
+                display: flex;
+                justify-content: space-between;
                 flex-wrap: wrap;
                 gap: 20px;
                 margin-bottom: 24px;
             }
+            .meta-grid .col { display: block; width: auto; flex: 1; }
             .meta-value.mono { word-break: break-all; }
             .booking-summary { line-height: 1.8; font-size: 11px; }
             .table-wrap {
@@ -264,10 +273,13 @@
             .invoice-title { margin: 28px 0 22px; }
             .invoice-title h2 { font-size: 26px; }
             .meta-grid {
+                display: flex;
+                justify-content: space-between;
                 flex-wrap: wrap;
                 gap: 24px;
                 margin-bottom: 24px;
             }
+            .meta-grid .col { display: block; width: auto; flex: 1; }
             .meta-value { font-size: 13px; }
             .meta-value.mono { word-break: break-all; }
             .booking-summary { font-size: 12px; line-height: 1.8; }
@@ -333,10 +345,12 @@
             .invoice-title { margin: 22px 0 18px; }
             .invoice-title h2 { font-size: 20px; }
             .meta-grid {
+                display: flex;
                 flex-direction: column;
                 gap: 12px;
                 margin-bottom: 20px;
             }
+            .meta-grid .col { display: block; width: auto; }
             .meta-grid .col.right { text-align: left; }
             .meta-value.mono { word-break: break-all; }
             .booking-summary { line-height: 1.8; font-size: 11px; }
