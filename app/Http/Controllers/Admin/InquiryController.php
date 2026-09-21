@@ -21,6 +21,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Storage;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
@@ -360,6 +362,26 @@ class InquiryController extends Controller
 
         return redirect()->route('admin.inquiries.show', $inquiry)
             ->with('success', $message);
+    }
+
+    /**
+     * Stream a guest-submitted payment proof to an authorized admin.
+     * Proofs are stored privately, so the admin view links here instead of
+     * embedding a stable public object URL. Read boundary matches the
+     * inquiries show page (staff keep read access); approve/reject stay
+     * manager-only.
+     */
+    public function showPaymentProof(Inquiry $inquiry): StreamedResponse
+    {
+        $this->authorize('view', $inquiry);
+
+        $path = $inquiry->payment_proof_path;
+
+        abort_unless($path && Storage::disk('cloudflare')->exists($path), 404);
+
+        return Storage::disk('cloudflare')->response($path, basename($path), [
+            'X-Robots-Tag' => 'noindex, nofollow, noarchive',
+        ]);
     }
 
     /**

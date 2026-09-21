@@ -168,7 +168,7 @@
             />
         </div>
         <div class="p-5">
-            <img src="{{ Storage::disk('cloudflare')->url($inquiry->payment_proof_path) }}"
+            <img src="{{ route('admin.inquiries.payment-proof.show', $inquiry) }}"
                 alt="Payment proof for {{ $inquiry->reference_code }}"
                 class="max-w-md w-full rounded-xl border border-gray-200 dark:border-slate-700">
             <p class="mt-3 text-xs text-gray-500 dark:text-slate-400">

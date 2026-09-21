@@ -27,6 +27,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 
 /**
@@ -150,7 +151,11 @@ class BookingPortalController extends Controller
      * Upload a proof of a manual payment (bank transfer, GCash, etc.) from
      * the booking portal. The image is stored privately and flagged for admin
      * review; it is not shown publicly and never linked from an unauthenticated
-     * URL.
+     * URL (admins stream it through an authorized route instead).
+     *
+     * The new object is stored before the row is updated, and the previous
+     * object is deleted only after the update succeeds — so a failed store
+     * or a failed update can never destroy the existing valid proof.
      */
     public function uploadPaymentProof(PaymentProofRequest $request, Inquiry $inquiry): RedirectResponse
     {
@@ -162,13 +167,21 @@ class BookingPortalController extends Controller
 
         $data = $request->validated();
 
+        $previous = $inquiry->payment_proof_path;
+
+        $path = Storage::disk('cloudflare')->putFile('payment-proofs', $request->file('payment_proof'), 'private');
+
         $inquiry->update([
-            'payment_proof_path' => $request->file('payment_proof')->store('payment-proofs', 'cloudflare'),
+            'payment_proof_path' => $path,
             'payment_proof_status' => Inquiry::PROOF_PENDING,
             'payment_proof_submitted_at' => now(),
             'payment_proof_reviewed_at' => null,
             'payment_proof_review_note' => null,
         ]);
+
+        if ($previous && $previous !== $path) {
+            Storage::disk('cloudflare')->delete($previous);
+        }
 
         $this->logger->record('guest.payment_proof', $inquiry, "Guest uploaded a payment proof for {$inquiry->reference_code}.");
 

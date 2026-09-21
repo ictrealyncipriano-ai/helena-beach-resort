@@ -78,6 +78,9 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::post('{inquiry}/resync-payment', [InquiryController::class, 'resyncPayment'])
                 ->middleware('throttle:resync')
                 ->name('resync-payment');
+            Route::get('{inquiry}/payment-proof', [InquiryController::class, 'showPaymentProof'])
+                ->middleware('throttle:lookup')
+                ->name('payment-proof.show');
             Route::post('{inquiry}/payment-proof/approve', [InquiryController::class, 'approvePaymentProof'])->name('payment-proof.approve');
             Route::post('{inquiry}/payment-proof/reject', [InquiryController::class, 'rejectPaymentProof'])->name('payment-proof.reject');
         });
