@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Cottage;
 use App\Models\Testimonial;
 use App\Services\ActivityLogger;
+use App\Support\SqlLike;
 use App\Traits\ManagesCloudflareFiles;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -23,8 +24,8 @@ class TestimonialController extends Controller
 
         if ($search = $request->get('search')) {
             $query->where(function ($q) use ($search) {
-                $q->where('guest_name', 'like', "%{$search}%")
-                    ->orWhere('content', 'like', "%{$search}%");
+                SqlLike::whereLike($q, 'guest_name', $search);
+                SqlLike::whereLike($q, 'content', $search, 'or');
             });
         }
 

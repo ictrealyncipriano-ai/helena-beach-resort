@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Faq;
 use App\Services\ActivityLogger;
 use App\Support\PublicCache;
+use App\Support\SqlLike;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -20,8 +21,8 @@ class FaqController extends Controller
 
         if ($search = $request->get('search')) {
             $query->where(function ($q) use ($search) {
-                $q->where('question', 'like', "%{$search}%")
-                    ->orWhere('answer', 'like', "%{$search}%");
+                SqlLike::whereLike($q, 'question', $search);
+                SqlLike::whereLike($q, 'answer', $search, 'or');
             });
         }
 

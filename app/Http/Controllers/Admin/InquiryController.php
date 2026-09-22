@@ -17,6 +17,7 @@ use App\Services\PaymentReconciliationService;
 use App\Services\PayMongoService;
 use App\Services\RefundService;
 use App\Support\Money;
+use App\Support\SqlLike;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -46,9 +47,9 @@ class InquiryController extends Controller
 
         if ($search = $request->get('search')) {
             $query->where(function ($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                    ->orWhere('email', 'like', "%{$search}%")
-                    ->orWhere('reference_code', 'like', "%{$search}%");
+                SqlLike::whereLike($q, 'name', $search);
+                SqlLike::whereLike($q, 'email', $search, 'or');
+                SqlLike::whereLike($q, 'reference_code', $search, 'or');
             });
         }
 

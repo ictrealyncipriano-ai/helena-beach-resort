@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Gallery;
 use App\Services\ActivityLogger;
+use App\Support\SqlLike;
 use App\Traits\ManagesCloudflareFiles;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -21,7 +22,7 @@ class GalleryController extends Controller
         $query = Gallery::query();
 
         if ($search = $request->get('search')) {
-            $query->where('title', 'like', "%{$search}%");
+            SqlLike::whereLike($query, 'title', $search);
         }
 
         if ($request->filled('category')) {

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\ActivityLog;
+use App\Support\SqlLike;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
@@ -19,13 +20,13 @@ class ActivityLogController extends Controller
 
         if ($search = trim((string) $request->get('search'))) {
             $query->where(function ($q) use ($search) {
-                $q->where('description', 'like', "%{$search}%")
-                    ->orWhere('action', 'like', "%{$search}%");
+                SqlLike::whereLike($q, 'description', $search);
+                SqlLike::whereLike($q, 'action', $search, 'or');
             });
         }
 
         if ($user = trim((string) $request->get('user'))) {
-            $query->where('user_name', 'like', "%{$user}%");
+            SqlLike::whereLike($query, 'user_name', $user);
         }
 
         if ($action = $request->get('action')) {

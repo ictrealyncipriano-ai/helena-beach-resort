@@ -7,6 +7,7 @@ use App\Models\Cottage;
 use App\Models\CottagePhoto;
 use App\Models\Inquiry;
 use App\Services\ActivityLogger;
+use App\Support\SqlLike;
 use App\Traits\ManagesCloudflareFiles;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -25,8 +26,8 @@ class CottageController extends Controller
 
         if ($search = $request->get('search')) {
             $query->where(function ($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                    ->orWhere('slug', 'like', "%{$search}%");
+                SqlLike::whereLike($q, 'name', $search);
+                SqlLike::whereLike($q, 'slug', $search, 'or');
             });
         }
 

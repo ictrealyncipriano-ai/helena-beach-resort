@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\PromoCode;
 use App\Services\ActivityLogger;
+use App\Support\SqlLike;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -20,7 +21,7 @@ class PromoCodeController extends Controller
         $query = PromoCode::query();
 
         if ($search = $request->get('search')) {
-            $query->where('code', 'like', '%'.strtoupper($search).'%');
+            SqlLike::whereLike($query, 'code', strtoupper($search));
         }
 
         if ($request->filled('is_active')) {
