@@ -41,7 +41,7 @@ class SecurityHeaders
             'Content-Security-Policy',
             "default-src 'self'; script-src 'self' 'nonce-{$nonce}' https://www.googletagmanager.com; "
             ."style-src 'self' 'unsafe-inline' https://fonts.bunny.net; "
-            ."font-src 'self' https://fonts.bunny.net; img-src 'self' data: https:; "
+            ."font-src 'self' https://fonts.bunny.net; img-src {$this->imageSources()}; "
             ."connect-src 'self' https://www.googletagmanager.com https://www.google-analytics.com; "
             ."object-src 'none'; base-uri 'self'; frame-ancestors 'none'"
         );
@@ -52,5 +52,27 @@ class SecurityHeaders
         }
 
         return $response;
+    }
+
+    /**
+     * Explicit image allow-list replacing the old blanket `https:` source.
+     * Same-origin, data: URLs, and blob: admin-preview object URLs are
+     * always allowed, plus the configured R2 custom-domain hosts that
+     * Storage::url() points at. Unconfigured disks are skipped cleanly so
+     * local/test environments keep a tight policy too.
+     */
+    private function imageSources(): string
+    {
+        $sources = ["'self'", 'data:', 'blob:'];
+
+        foreach (['filesystems.disks.cloudflare.url', 'filesystems.disks.r2.url'] as $key) {
+            $host = parse_url((string) config($key, ''), PHP_URL_HOST);
+
+            if (is_string($host) && $host !== '' && ! in_array($host, $sources, true)) {
+                $sources[] = $host;
+            }
+        }
+
+        return implode(' ', $sources);
     }
 }
