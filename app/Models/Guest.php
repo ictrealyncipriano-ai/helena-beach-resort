@@ -42,8 +42,11 @@ class Guest extends Model
     {
         $email = self::normalizeEmail($email);
 
+        // Slice 10: the portable email_normalized unique column carries the
+        // same TRIM+lowercase rule, so this lookup is index-backed on every
+        // driver instead of a whereRaw full scan.
         $guest = static::withTrashed()
-            ->whereRaw('LOWER(TRIM(email)) = ?', [$email])
+            ->where('email_normalized', $email)
             ->first();
 
         return $guest ?? static::create([...$attributes, 'email' => $email]);
