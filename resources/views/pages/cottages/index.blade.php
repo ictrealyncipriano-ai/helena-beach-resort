@@ -87,9 +87,15 @@
                             </div>
                         </template>
                         <template x-if="error">
-                            <div class="mt-3 px-4 py-2.5 bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800 rounded-xl text-sm text-amber-800 dark:text-amber-300 flex items-center justify-between gap-3">
-                                <span x-text="error"></span>
-                                <button type="button" @click="check()" class="shrink-0 underline font-medium">Retry</button>
+                            <div class="mt-3 px-4 py-2.5 bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800 rounded-xl text-sm text-amber-800 dark:text-amber-300">
+                                <div class="flex items-center justify-between gap-3">
+                                    <span x-text="error"></span>
+                                    <button type="button" @click="check()" class="shrink-0 underline font-medium">Retry</button>
+                                </div>
+                                <a x-show="cottageId" :href="'{{ route('book') }}?cottage_id=' + cottageId" class="mt-2 inline-flex items-center gap-1 underline font-medium min-h-[44px]">
+                                    Continue to booking anyway
+                                    <x-icons name="arrow-right" class="w-3.5 h-3.5" />
+                                </a>
                             </div>
                         </template>
                     </div>

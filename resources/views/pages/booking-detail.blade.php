@@ -68,10 +68,20 @@
 
         @if($inquiry->payment_failed_at && ! $inquiry->isPaid())
         <div class="mb-6 p-4 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-xl text-sm text-red-700 dark:text-red-300 flex items-start gap-2 reveal">
-            <x-icons name="x" class="w-5 h-5 shrink-0 mt-0.5" />
+            <x-icons name="x" class="w-4 h-4 shrink-0 mt-0.5" />
             <div>
                 <p class="font-semibold">Your last payment attempt failed.</p>
                 <p class="text-xs mt-0.5 opacity-90">You can retry the payment below or contact the resort for help.</p>
+            </div>
+        </div>
+        @endif
+
+        @if($inquiry->status === 'pending' && ! $inquiry->isPaid() && $inquiry->total_amount)
+        <div class="mb-6 p-4 bg-teal-50 dark:bg-teal-900/30 border border-teal-200 dark:border-teal-800 rounded-xl text-sm text-teal-700 dark:text-teal-300 flex items-start gap-2 reveal">
+            <x-icons name="info" class="w-4 h-4 shrink-0 mt-0.5" />
+            <div>
+                <p class="font-semibold">No payment yet — your request is awaiting confirmation.</p>
+                <p class="text-xs mt-0.5 opacity-90">We confirm requests within 24 hours, then the Pay button appears here. Questions? See our <a href="{{ route('faq') }}" class="underline font-medium">FAQ</a> or <a href="{{ route('contact') }}" class="underline font-medium">contact the resort</a>.</p>
             </div>
         </div>
         @endif
@@ -456,11 +466,25 @@
                         }
                     } else if (attempts >= maxAttempts) {
                         clearInterval(timer);
+                        showConfirmTimeout();
                     }
                 })
                 .catch(function () {
-                    if (attempts >= maxAttempts) clearInterval(timer);
+                    if (attempts >= maxAttempts) {
+                        clearInterval(timer);
+                        showConfirmTimeout();
+                    }
                 });
+            function showConfirmTimeout() {
+                if (document.getElementById('pay-confirm-timeout')) return;
+                var html = '<div id="pay-confirm-timeout" role="status" class="mb-6 p-4 bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800 rounded-xl text-sm text-amber-700 dark:text-amber-300">'
+                    + 'Still confirming your payment — refresh in a moment or <a href="{{ route('contact') }}" class="underline font-medium">contact the resort</a>.'
+                    + '</div>';
+                var form = document.getElementById('pay-now-form');
+                if (form && form.parentNode && form.parentNode.insertAdjacentHTML) {
+                    form.parentNode.insertAdjacentHTML('beforebegin', html);
+                }
+            }
         }, 3000);
     })();
 </script>

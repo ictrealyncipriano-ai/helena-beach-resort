@@ -16,6 +16,13 @@
         </div>
         @endif
 
+        @if(session('error'))
+        <div role="alert" tabindex="-1" class="mb-6 p-4 bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800 rounded-xl text-sm text-amber-700 dark:text-amber-300 flex items-center gap-2">
+            <x-icons name="clock" class="w-4 h-4 shrink-0" />
+            {{ session('error') }}
+        </div>
+        @endif
+
         <div class="reveal">
             <form method="POST" action="{{ route('booking.portal.lookup') }}" class="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm p-8">
                 @csrf
