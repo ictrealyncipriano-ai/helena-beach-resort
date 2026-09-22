@@ -377,12 +377,15 @@ class Inquiry extends Model
             // balance 0). Checked inside the lock so a serialized retry sees
             // the first attempt's committed ledger row.
             if ($idempotencyKey !== null && $idempotencyKey !== '') {
+                // Indexed JSON-path lookup: finds the key no matter how deep
+                // the ledger grows (the old limit(25) PHP scan missed keys
+                // beyond the newest 25 rows). Portable on MySQL/PostgreSQL/
+                // SQLite; lock and stored-outcome behavior unchanged.
                 $duplicate = Payment::where('inquiry_id', $locked->id)
                     ->where('provider', Payment::PROVIDER_MANUAL)
-                    ->orderByDesc('id')
-                    ->limit(25)
-                    ->get()
-                    ->firstWhere(fn (Payment $row) => ($row->metadata['idempotency_key'] ?? null) === $idempotencyKey);
+                    ->where('metadata->idempotency_key', $idempotencyKey)
+                    ->latest('id')
+                    ->first();
 
                 if ($duplicate) {
                     $this->refresh();

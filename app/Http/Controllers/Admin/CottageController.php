@@ -22,7 +22,16 @@ class CottageController extends Controller
     {
         $this->authorize('viewAny', Cottage::class);
 
-        $query = Cottage::withCount('inquiries')->with(['primaryPhoto', 'amenities', 'photos', 'dateBlocks']);
+        // The index editor only needs recent blocks: bound the eager load
+        // to the last 3 months plus the future so a long-lived cottage does
+        // not hydrate its full block history per page. Full history stays
+        // loadable per record (edit) and writable (sync).
+        $query = Cottage::withCount('inquiries')->with([
+            'primaryPhoto',
+            'amenities',
+            'photos',
+            'dateBlocks' => fn ($q) => $q->where('date', '>=', now()->subMonths(3)->toDateString()),
+        ]);
 
         if ($search = $request->get('search')) {
             $query->where(function ($q) use ($search) {
@@ -313,6 +322,17 @@ class CottageController extends Controller
 
         if ($activeBlocks) {
             return back()->with('error', 'This cottage has active bookings. Cancel or complete them before deleting the cottage.');
+        }
+
+        // History is protected too: deleting would null the cottage link on
+        // past inquiries and testimonials (nullOnDelete), silently orphaning
+        // booking history. Remove or reassign those records first.
+        if ($cottage->inquiries()->exists()) {
+            return back()->with('error', 'This cottage still has booking history. Delete or reassign those inquiries before deleting the cottage.');
+        }
+
+        if ($cottage->testimonials()->exists()) {
+            return back()->with('error', 'This cottage still has guest reviews. Delete or reassign those reviews before deleting the cottage.');
         }
 
         foreach ($cottage->photos as $photo) {

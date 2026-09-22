@@ -25,8 +25,12 @@ class Cottage extends Model
     {
         return [
             'is_available' => 'boolean',
+            'capacity' => 'integer',
+            'sort_order' => 'integer',
             'peak_start' => 'date',
             'peak_end' => 'date',
+            'rate_daytour' => 'decimal:2',
+            'rate_overnight' => 'decimal:2',
             'peak_rate_daytour' => 'decimal:2',
             'peak_rate_overnight' => 'decimal:2',
         ];
@@ -101,6 +105,11 @@ class Cottage extends Model
     public function inquiries(): HasMany
     {
         return $this->hasMany(Inquiry::class);
+    }
+
+    public function testimonials(): HasMany
+    {
+        return $this->hasMany(Testimonial::class);
     }
 
     public function dateBlocks(): HasMany
