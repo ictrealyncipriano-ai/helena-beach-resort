@@ -262,10 +262,9 @@ class PaymentReconciliationService
             return 'skipped';
         }
 
-        $pending = (float) $inquiry->payment_pending_amount;
-        $total = (float) $inquiry->total_amount;
-
-        if (abs($pending - $total) < 0.005) {
+        // Both columns are decimal(10,2): distinct values differ by >= 0.01,
+        // so the legacy abs() < 0.005 tolerance fires exactly on equality.
+        if (Money::cmp((string) $inquiry->payment_pending_amount, (string) $inquiry->total_amount) === 0) {
             $inquiry->update([
                 'payment_pending_amount' => null,
                 'payment_pending_at' => null,

@@ -16,6 +16,7 @@ use App\Services\InquiryService;
 use App\Services\PaymentReconciliationService;
 use App\Services\PayMongoService;
 use App\Services\RefundService;
+use App\Support\Money;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -97,7 +98,7 @@ class InquiryController extends Controller
         // P1.2: cap deposit at the resolved total (covers auto-calculated
         // totals where the lte:total_amount rule has no input to compare).
         if (isset($data['deposit_amount']) && $data['deposit_amount'] !== null && $data['deposit_amount'] !== ''
-            && (float) $data['deposit_amount'] > (float) $totalAmount) {
+            && Money::cmp((string) $data['deposit_amount'], (string) $totalAmount) > 0) {
             return back()->withErrors(['deposit_amount' => 'Deposit cannot exceed the total amount.'])->withInput();
         }
 
@@ -220,7 +221,7 @@ class InquiryController extends Controller
         // P1.2: cap deposit at the effective total on update as well.
         $effectiveTotal = $data['total_amount'] ?? $inquiry->total_amount;
         if (isset($data['deposit_amount']) && $data['deposit_amount'] !== null && $data['deposit_amount'] !== ''
-            && (float) $data['deposit_amount'] > (float) $effectiveTotal) {
+            && Money::cmp((string) $data['deposit_amount'], (string) $effectiveTotal) > 0) {
             return back()->withErrors(['deposit_amount' => 'Deposit cannot exceed the total amount.'])->withInput();
         }
 
@@ -228,7 +229,7 @@ class InquiryController extends Controller
         // the stale paid stamp so the booking no longer reads deposit-paid.
         if (array_key_exists('deposit_amount', $data) && $data['deposit_amount'] !== null && $data['deposit_amount'] !== ''
             && $inquiry->deposit_paid_at !== null
-            && (float) ($inquiry->amount_paid ?? 0) < (float) $data['deposit_amount']) {
+            && Money::cmp((string) ($inquiry->amount_paid ?? '0.00'), (string) $data['deposit_amount']) < 0) {
             $data['deposit_paid_at'] = null;
         }
 
@@ -245,9 +246,9 @@ class InquiryController extends Controller
         // moving into confirmed requires a covered deposit.
         if (! $wasConfirmed && ($data['status'] ?? null) === Inquiry::STATUS_CONFIRMED) {
             $newDeposit = array_key_exists('deposit_amount', $data) ? $data['deposit_amount'] : $inquiry->deposit_amount;
-            $paid = (float) ($inquiry->amount_paid ?? 0);
+            $paid = (string) ($inquiry->amount_paid ?? '0.00');
 
-            if ($newDeposit !== null && $newDeposit !== '' && (float) $newDeposit > 0 && $paid < (float) $newDeposit) {
+            if ($newDeposit !== null && $newDeposit !== '' && Money::cmp((string) $newDeposit, '0.00') > 0 && Money::cmp($paid, (string) $newDeposit) < 0) {
                 return back()->with('error', 'Deposit of ₱'.$newDeposit.' must be collected before confirming this booking.')->withInput();
             }
         }
@@ -329,9 +330,11 @@ class InquiryController extends Controller
             return back()->with('error', 'This booking has already been paid.');
         }
 
-        $balance = formatPrice(max((float) $inquiry->total_amount - $inquiry->collectedAmount(), 0), 2, false);
+        // balanceDue() is already exact string math clamped at zero with an
+        // '0.00'-form contract, so the float round-trip is unnecessary.
+        $balance = $inquiry->balanceDue();
 
-        if ((float) $balance <= 0) {
+        if (Money::cmp($balance, '0.00') <= 0) {
             return back()->with('error', 'This booking has no outstanding balance.');
         }
 
@@ -398,7 +401,7 @@ class InquiryController extends Controller
             return back()->with('error', 'This booking has no payment proof awaiting review.');
         }
 
-        $balance = formatPrice(max((float) $inquiry->total_amount - $inquiry->collectedAmount(), 0), 2, false);
+        $balance = $inquiry->balanceDue();
 
         $validated = $request->validate([
             'note' => 'nullable|string|max:500',
@@ -440,7 +443,7 @@ class InquiryController extends Controller
                     ? formatPrice($validated['amount'], 2, false)
                     : $locked->amountDueNow();
 
-                $fullyPaid = (float) $amount > 0
+                $fullyPaid = Money::cmp($amount, '0.00') > 0
                     && $locked->recordManualPayment($amount, Inquiry::METHOD_MANUAL, $validated['idempotency_key'] ?? null);
             } else {
                 $fullyPaid = true;
@@ -506,7 +509,7 @@ class InquiryController extends Controller
         }
 
         $quote = \App\Services\CancellationPolicy::quote($inquiry);
-        $collected = (float) ($inquiry->amount_paid ?? 0);
+        $collected = Money::from($inquiry->amount_paid ?? '0.00');
 
         $validated = $request->validate([
             'amount' => ['nullable', 'numeric', 'min:0.01', 'max:'.$collected],
@@ -523,7 +526,7 @@ class InquiryController extends Controller
                 ->with('error', 'An override reason is required when the refund differs from the policy quote.');
         }
 
-        if ((float) $refundAmount <= 0) {
+        if (Money::cmp($refundAmount, '0.00') <= 0) {
             return redirect()->route('admin.inquiries.show', $inquiry)
                 ->with('error', 'The policy quote refunds ₱0 for this booking — no online refund to process.');
         }

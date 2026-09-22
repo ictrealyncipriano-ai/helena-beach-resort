@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\Money;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -103,7 +104,7 @@ class Payment extends Model
     public static function classifyType(Inquiry $locked, bool $fullyPaid, bool $depositCovered): string
     {
         if ($fullyPaid) {
-            return (float) ($locked->amount_paid ?? 0) > 0
+            return Money::cmp((string) ($locked->amount_paid ?? '0.00'), '0.00') > 0
                 ? self::TYPE_BALANCE
                 : self::TYPE_FULL;
         }

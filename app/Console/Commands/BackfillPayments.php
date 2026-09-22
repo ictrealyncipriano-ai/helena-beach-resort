@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Models\Inquiry;
 use App\Models\Payment;
+use App\Support\Money;
 use Illuminate\Console\Command;
 
 /**
@@ -26,9 +27,9 @@ class BackfillPayments extends Command
 
         Inquiry::withTrashed()->chunkById(100, function ($inquiries) use ($dryRun, &$created, &$skipped) {
             foreach ($inquiries as $inquiry) {
-                $collected = (float) ($inquiry->amount_paid ?? 0);
+                $collected = (string) ($inquiry->amount_paid ?? '0.00');
                 $hasOnline = $inquiry->paymongo_payment_id !== null;
-                $hasMoney = $collected > 0 || $hasOnline;
+                $hasMoney = Money::cmp($collected, '0.00') > 0 || $hasOnline;
 
                 if (! $hasMoney && $inquiry->refunded_at === null) {
                     continue;
@@ -40,7 +41,7 @@ class BackfillPayments extends Command
                     continue;
                 }
 
-                $type = $inquiry->hasDeposit() && $collected < (float) $inquiry->total_amount
+                $type = $inquiry->hasDeposit() && Money::cmp($collected, (string) $inquiry->total_amount) < 0
                     ? Payment::TYPE_DEPOSIT
                     : Payment::TYPE_FULL;
 
@@ -68,7 +69,7 @@ class BackfillPayments extends Command
                             'metadata' => ['backfilled' => true],
                         ]
                     );
-                } elseif ($collected > 0) {
+                } elseif (Money::cmp($collected, '0.00') > 0) {
                     Payment::create([
                         'inquiry_id' => $inquiry->id,
                         'provider' => Payment::PROVIDER_MANUAL,
