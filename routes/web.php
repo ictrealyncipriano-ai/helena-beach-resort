@@ -167,7 +167,8 @@ Route::post('/paymongo/webhook', [PaymentController::class, 'webhook'])
 // with a worker; this endpoint is the serverless trigger.
 Route::match(['GET', 'POST'], '/cron/reservations', [CronController::class, 'releaseExpiredReservations'])
     ->withoutMiddleware(VerifyCsrfToken::class)
-    ->middleware('throttle:cron');
+    ->middleware('throttle:cron')
+    ->name('cron.reservations');
 
 /*
 |--------------------------------------------------------------------------
