@@ -266,7 +266,7 @@ class DepositPolicyCharacterizationTest extends TestCase
         // The admin approve form defaults to amountDueNow(): with an unpaid
         // deposit that means the deposit, not the balance.
         $inquiry = $this->makeBooking(['deposit_amount' => '1500.00']);
-        $this->withSession(['booking_access_tokens' => [$inquiry->id => $inquiry->token]]);
+        $this->withSession(['booking_access_tokens' => [$inquiry->id => ['token' => $inquiry->token, 'granted_at' => now()->toDateTimeString()]]]);
 
         $this->post(route('booking.portal.proof', $inquiry), [
             'payment_proof' => UploadedFile::fake()->image('gcash.png', 800, 600),

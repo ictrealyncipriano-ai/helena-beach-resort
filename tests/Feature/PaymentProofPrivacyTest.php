@@ -45,7 +45,7 @@ class PaymentProofPrivacyTest extends TestCase
             'source' => 'booking',
         ]);
 
-        $this->withSession(['booking_access_tokens' => [$inquiry->id => $inquiry->token]]);
+        $this->withSession(['booking_access_tokens' => [$inquiry->id => ['token' => $inquiry->token, 'granted_at' => now()->toDateTimeString()]]]);
 
         return $inquiry;
     }

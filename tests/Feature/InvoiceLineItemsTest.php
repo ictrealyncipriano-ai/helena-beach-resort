@@ -57,7 +57,7 @@ class InvoiceLineItemsTest extends TestCase
 
     private function portalSession(Inquiry $inquiry): array
     {
-        return ['booking_access_tokens' => [$inquiry->id => $inquiry->token]];
+        return ['booking_access_tokens' => [$inquiry->id => ['token' => $inquiry->token, 'granted_at' => now()->toDateTimeString()]]];
     }
 
     public function test_invoice_line_items_reflect_peak_night_rates(): void

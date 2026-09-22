@@ -34,7 +34,7 @@ class GuestReviewsTest extends TestCase
             'source' => 'booking',
         ]);
 
-        $this->withSession(['booking_access_tokens' => [$inquiry->id => $inquiry->token]]);
+        $this->withSession(['booking_access_tokens' => [$inquiry->id => ['token' => $inquiry->token, 'granted_at' => now()->toDateTimeString()]]]);
 
         return $inquiry;
     }
@@ -75,7 +75,7 @@ class GuestReviewsTest extends TestCase
             'source' => 'booking',
         ]);
 
-        $this->withSession(['booking_access_tokens' => [$inquiry->id => $inquiry->token]])
+        $this->withSession(['booking_access_tokens' => [$inquiry->id => ['token' => $inquiry->token, 'granted_at' => now()->toDateTimeString()]]])
             ->post(route('booking.portal.review', $inquiry), [
                 'rating' => 5,
                 'content' => 'Not eligible yet.',
@@ -100,7 +100,7 @@ class GuestReviewsTest extends TestCase
             'source' => 'booking',
         ]);
 
-        $this->withSession(['booking_access_tokens' => [$inquiry->id => $inquiry->token]])
+        $this->withSession(['booking_access_tokens' => [$inquiry->id => ['token' => $inquiry->token, 'granted_at' => now()->toDateTimeString()]]])
             ->post(route('booking.portal.review', $inquiry), [
                 'rating' => 5,
                 'content' => 'Not confirmed yet.',

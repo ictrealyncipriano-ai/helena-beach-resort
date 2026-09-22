@@ -88,7 +88,7 @@ class BookingPortalAccessTest extends TestCase
     {
         $inquiry = $this->createBooking();
 
-        $this->withSession(['booking_access_tokens' => [$inquiry->id => $inquiry->token]])
+        $this->withSession(['booking_access_tokens' => [$inquiry->id => ['token' => $inquiry->token, 'granted_at' => now()->toDateTimeString()]]])
             ->get(route('booking.portal.show', $inquiry))
             ->assertOk()
             ->assertSee($inquiry->reference_code);
@@ -124,7 +124,7 @@ class BookingPortalAccessTest extends TestCase
     {
         $inquiry = $this->createBooking();
 
-        $this->withSession(['booking_access_tokens' => [$inquiry->id => $inquiry->token]])
+        $this->withSession(['booking_access_tokens' => [$inquiry->id => ['token' => $inquiry->token, 'granted_at' => now()->toDateTimeString()]]])
             ->get(route('booking.portal.cancel', $inquiry))
             ->assertStatus(405);
     }
@@ -133,7 +133,7 @@ class BookingPortalAccessTest extends TestCase
     {
         $inquiry = $this->createBooking();
 
-        $this->withSession(['booking_access_tokens' => [$inquiry->id => $inquiry->token]])
+        $this->withSession(['booking_access_tokens' => [$inquiry->id => ['token' => $inquiry->token, 'granted_at' => now()->toDateTimeString()]]])
             ->post(route('booking.portal.cancel', $inquiry))
             ->assertRedirect(route('booking.portal.show', $inquiry));
 

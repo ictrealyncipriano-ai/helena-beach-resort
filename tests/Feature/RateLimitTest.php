@@ -93,7 +93,7 @@ class RateLimitTest extends TestCase
     public function test_cancel_rate_limited_after_3_requests(): void
     {
         $inquiry = $this->createConfirmedInquiry();
-        $session = ['booking_access_tokens' => [$inquiry->id => $inquiry->token]];
+        $session = ['booking_access_tokens' => [$inquiry->id => ['token' => $inquiry->token, 'granted_at' => now()->toDateTimeString()]]];
 
         for ($i = 0; $i < 3; $i++) {
             $this->withSession($session)
@@ -109,7 +109,7 @@ class RateLimitTest extends TestCase
     public function test_review_rate_limited_after_3_requests(): void
     {
         $inquiry = $this->createConfirmedInquiry();
-        $session = ['booking_access_tokens' => [$inquiry->id => $inquiry->token]];
+        $session = ['booking_access_tokens' => [$inquiry->id => ['token' => $inquiry->token, 'granted_at' => now()->toDateTimeString()]]];
 
         for ($i = 0; $i < 3; $i++) {
             $this->withSession($session)
@@ -129,7 +129,7 @@ class RateLimitTest extends TestCase
     public function test_modify_rate_limited_after_3_requests(): void
     {
         $inquiry = $this->createConfirmedInquiry();
-        $session = ['booking_access_tokens' => [$inquiry->id => $inquiry->token]];
+        $session = ['booking_access_tokens' => [$inquiry->id => ['token' => $inquiry->token, 'granted_at' => now()->toDateTimeString()]]];
         $cottage = Cottage::first();
 
         for ($i = 0; $i < 3; $i++) {
@@ -157,7 +157,7 @@ class RateLimitTest extends TestCase
     public function test_payment_rate_limited_after_5_requests(): void
     {
         $inquiry = $this->createConfirmedInquiry();
-        $session = ['booking_access_tokens' => [$inquiry->id => $inquiry->token]];
+        $session = ['booking_access_tokens' => [$inquiry->id => ['token' => $inquiry->token, 'granted_at' => now()->toDateTimeString()]]];
 
         for ($i = 0; $i < 5; $i++) {
             $this->withSession($session)
@@ -179,7 +179,7 @@ class RateLimitTest extends TestCase
     public function test_invoice_pdf_rate_limited_after_10_requests(): void
     {
         $inquiry = $this->createConfirmedInquiry();
-        $session = ['booking_access_tokens' => [$inquiry->id => $inquiry->token]];
+        $session = ['booking_access_tokens' => [$inquiry->id => ['token' => $inquiry->token, 'granted_at' => now()->toDateTimeString()]]];
 
         for ($i = 0; $i < 10; $i++) {
             $this->withSession($session)

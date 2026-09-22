@@ -44,7 +44,7 @@ class Phase6QuickWinsTest extends TestCase
     {
         $inquiry = Inquiry::where('status', 'confirmed')->first() ?? $this->createInquiry('confirmed');
 
-        $this->withSession(['booking_access_tokens' => [$inquiry->id => $inquiry->token]])
+        $this->withSession(['booking_access_tokens' => [$inquiry->id => ['token' => $inquiry->token, 'granted_at' => now()->toDateTimeString()]]])
             ->get("/booking/{$inquiry->id}")
             ->assertStatus(200)
             ->assertSee('noindex, nofollow', false);
@@ -54,7 +54,7 @@ class Phase6QuickWinsTest extends TestCase
     {
         $inquiry = Inquiry::first() ?? $this->createInquiry();
 
-        $this->withSession(['booking_access_tokens' => [$inquiry->id => $inquiry->token]])
+        $this->withSession(['booking_access_tokens' => [$inquiry->id => ['token' => $inquiry->token, 'granted_at' => now()->toDateTimeString()]]])
             ->get("/booking/confirmation/{$inquiry->id}")
             ->assertStatus(200)
             ->assertSee('noindex, nofollow', false);

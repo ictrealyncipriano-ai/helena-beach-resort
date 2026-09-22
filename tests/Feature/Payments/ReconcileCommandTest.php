@@ -46,7 +46,7 @@ class ReconcileCommandTest extends TestCase
 
     private function portalSession(Inquiry $inquiry): array
     {
-        return ['booking_access_tokens' => [$inquiry->id => $inquiry->token]];
+        return ['booking_access_tokens' => [$inquiry->id => ['token' => $inquiry->token, 'granted_at' => now()->toDateTimeString()]]];
     }
 
     public function test_dry_run_reports_without_api_calls_or_writes(): void

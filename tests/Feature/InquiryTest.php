@@ -105,7 +105,7 @@ class InquiryTest extends TestCase
 
         // The confirmation page is ownership-gated: only a session that holds
         // the inquiry's token (i.e. the guest who just submitted it) may view it.
-        $this->withSession(['booking_access_tokens' => [$inquiry->id => $inquiry->token]])
+        $this->withSession(['booking_access_tokens' => [$inquiry->id => ['token' => $inquiry->token, 'granted_at' => now()->toDateTimeString()]]])
             ->get(route('booking.confirmation', $inquiry))
             ->assertStatus(200)
             ->assertSee('HB-000001');

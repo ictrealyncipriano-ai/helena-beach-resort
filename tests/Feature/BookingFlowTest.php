@@ -40,7 +40,7 @@ class BookingFlowTest extends TestCase
      */
     private function portalSession(Inquiry $inquiry): array
     {
-        return ['booking_access_tokens' => [$inquiry->id => $inquiry->token]];
+        return ['booking_access_tokens' => [$inquiry->id => ['token' => $inquiry->token, 'granted_at' => now()->toDateTimeString()]]];
     }
 
     public function test_booking_creates_pending_date_blocks_for_full_range(): void

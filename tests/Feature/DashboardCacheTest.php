@@ -142,7 +142,7 @@ class DashboardCacheTest extends TestCase
         $this->primeCache();
         $this->assertTrue(Cache::has(DashboardController::cacheKey()));
 
-        $this->withSession(['booking_access_tokens' => [$inquiry->id => $inquiry->token]])
+        $this->withSession(['booking_access_tokens' => [$inquiry->id => ['token' => $inquiry->token, 'granted_at' => now()->toDateTimeString()]]])
             ->post(route('booking.portal.cancel', $inquiry))
             ->assertRedirect(route('booking.portal.show', $inquiry));
 

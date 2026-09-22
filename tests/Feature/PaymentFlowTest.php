@@ -51,7 +51,7 @@ class PaymentFlowTest extends TestCase
      */
     private function portalSession(Inquiry $inquiry): array
     {
-        return ['booking_access_tokens' => [$inquiry->id => $inquiry->token]];
+        return ['booking_access_tokens' => [$inquiry->id => ['token' => $inquiry->token, 'granted_at' => now()->toDateTimeString()]]];
     }
 
     public function test_pay_link_redirects_pending_booking_to_portal_with_error(): void
@@ -142,6 +142,11 @@ class PaymentFlowTest extends TestCase
         $inquiry = $this->confirmedBooking('drift@example.com');
 
         Schema::table('inquiries', function ($table) {
+            // Slice 6 indexes two of these columns; drop the dependent
+            // indexes first so the drift simulation (missing columns) stays
+            // faithful on every driver.
+            $table->dropIndex(['status', 'payment_pending_at']);
+            $table->dropIndex(['paymongo_session_id']);
             $table->dropColumn(['payment_pending_amount', 'payment_pending_at', 'paymongo_session_id']);
         });
 

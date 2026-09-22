@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Concerns;
 
 use App\Models\Inquiry;
+use Carbon\Carbon;
 
 /**
  * Session-based ownership guard for the guest booking portal.
@@ -25,7 +26,8 @@ use App\Models\Inquiry;
 trait GuardsBookingAccess
 {
     /**
-     * Grant the current session access to a booking.
+     * Grant the current session access to a booking, recording when the
+     * grant happened so stale grants expire (see authorizeBookingAccess).
      */
     protected function grantBookingAccess(Inquiry $inquiry): void
     {
@@ -35,23 +37,31 @@ trait GuardsBookingAccess
             $tokens = [];
         }
 
-        $tokens[$inquiry->id] = $inquiry->token;
+        $tokens[$inquiry->id] = [
+            'token' => $inquiry->token,
+            'granted_at' => now()->toDateTimeString(),
+        ];
 
         session(['booking_access_tokens' => $tokens]);
     }
 
     /**
-     * Require the session to hold the token matching the inquiry; otherwise
-     * 404 (never had access) or redirect to the lookup page (access expired).
+     * Require the session to hold a fresh token matching the inquiry.
+     * Grants older than 72 hours — and legacy grants without an age —
+     * follow the expired path (re-lookup); otherwise 404 as before.
      */
     protected function authorizeBookingAccess(Inquiry $inquiry): void
     {
         $tokens = session('booking_access_tokens', []);
         $tokens = is_array($tokens) ? $tokens : [];
 
-        $expected = $tokens[$inquiry->id] ?? null;
+        $entry = $tokens[$inquiry->id] ?? null;
 
-        if (is_string($expected) && hash_equals((string) $inquiry->token, $expected)) {
+        if (is_array($entry)
+            && isset($entry['token']) && is_string($entry['token'])
+            && hash_equals((string) $inquiry->token, $entry['token'])
+            && $this->grantIsFresh($entry['granted_at'] ?? null)
+        ) {
             return;
         }
 
@@ -66,5 +76,18 @@ trait GuardsBookingAccess
         }
 
         abort(404);
+    }
+
+    /**
+     * A grant is fresh when it carries a parseable age inside the 72-hour
+     * window. Missing or unparseable ages fail closed to the expired path.
+     */
+    private function grantIsFresh(mixed $grantedAt): bool
+    {
+        if (! is_string($grantedAt) || strtotime($grantedAt) === false) {
+            return false;
+        }
+
+        return Carbon::parse($grantedAt)->greaterThan(now()->subHours(72));
     }
 }
