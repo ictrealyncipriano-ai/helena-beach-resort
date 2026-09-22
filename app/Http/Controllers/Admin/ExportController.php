@@ -23,11 +23,15 @@ class ExportController extends Controller
     use QueriesByMonth;
     public function index(): View
     {
+        $this->authorize('viewAny', Inquiry::class);
+
         return view('admin.exports.index');
     }
 
     public function inquiries(ExportFilterRequest $request): StreamedResponse
     {
+        $this->authorize('viewAny', Inquiry::class);
+
         $query = $this->inquiriesQuery($request)->select([
             'id', 'reference_code', 'name', 'email', 'phone', 'booking_type',
             'status', 'source', 'check_in', 'check_out', 'pax', 'total_amount',
@@ -60,6 +64,8 @@ class ExportController extends Controller
 
     public function revenue(ExportFilterRequest $request): StreamedResponse
     {
+        $this->authorize('viewAny', Inquiry::class);
+
         // Aggregated by month+cottage (bounded rows); plain get() is fine.
         $rows = $this->revenueQuery($request)->get();
 
@@ -70,6 +76,8 @@ class ExportController extends Controller
 
     public function guests(ExportFilterRequest $request): StreamedResponse
     {
+        $this->authorize('viewAny', Guest::class);
+
         $headers = ['id', 'Name', 'Email', 'Phone', 'Notes', 'Stays', 'Last Stay', 'Inquiries', 'Paid', 'Refunded', 'Failed', 'Revenue (PHP)', 'Created At'];
 
         return response()->streamDownload(function () use ($request, $headers) {
@@ -93,15 +101,22 @@ class ExportController extends Controller
      */
     public function inquiriesView(ExportFilterRequest $request): View
     {
-        $rows = $this->inquiriesQuery($request)->with('cottage')->get();
+        $this->authorize('viewAny', Inquiry::class);
 
-        $statusCounts = $rows->groupBy('status')->map->count();
+        // Paginate the rows but keep whole-range totals: aggregates run as
+        // SQL over a clone of the filtered query, never by hydrating rows.
+        $rows = $this->inquiriesQuery($request)->with('cottage')->paginate(50)->withQueryString();
+
+        $statusCounts = $this->inquiriesQuery($request)
+            ->select('status', DB::raw('count(*) as aggregate'))
+            ->groupBy('status')
+            ->pluck('aggregate', 'status');
 
         $data = [
             'rows' => $rows,
-            'totalCount' => $rows->count(),
-            'totalAmount' => $rows->sum('total_amount'),
-            'totalPaid' => $rows->sum('amount_paid'),
+            'totalCount' => $this->inquiriesQuery($request)->count(),
+            'totalAmount' => $this->inquiriesQuery($request)->sum('total_amount'),
+            'totalPaid' => $this->inquiriesQuery($request)->sum('amount_paid'),
             'statusCounts' => $statusCounts,
             'from' => $request->from,
             'to' => $request->to,
@@ -117,6 +132,8 @@ class ExportController extends Controller
      */
     public function revenueView(ExportFilterRequest $request): View
     {
+        $this->authorize('viewAny', Inquiry::class);
+
         $rows = $this->revenueQuery($request)->get();
 
         $grandTotal = $rows->sum('total');
@@ -139,13 +156,21 @@ class ExportController extends Controller
      */
     public function guestsView(ExportFilterRequest $request): View
     {
-        $rows = $this->guestsData($request);
+        $this->authorize('viewAny', Guest::class);
+
+        // Paginate the rows; the footer totals stay whole-range via SQL so a
+        // large guest book never hydrates just to render sums.
+        $rows = $this->guestsQuery($request)->paginate(50)->withQueryString();
 
         $data = [
             'rows' => $rows,
-            'totalCount' => $rows->count(),
-            'totalStays' => $rows->sum('total_stays'),
-            'totalRevenue' => $rows->sum('amount_paid'),
+            'totalCount' => $this->guestWindow($request)->count(),
+            'totalStays' => $this->guestWindow($request)->sum('total_stays'),
+            'totalRevenue' => $this->guestScopedInquiries($request)->where('amount_paid', '>', 0)->sum('amount_paid'),
+            'totalInquiries' => $this->guestScopedInquiries($request)->count(),
+            'totalPaid' => $this->guestScopedInquiries($request)->where('amount_paid', '>', 0)->count(),
+            'totalRefunded' => $this->guestScopedInquiries($request)->whereNotNull('refunded_at')->count(),
+            'totalFailed' => $this->guestScopedInquiries($request)->whereNotNull('payment_failed_at')->count(),
             'title' => 'Guests Report',
             'from' => $request->from,
             'to' => $request->to,
@@ -179,10 +204,17 @@ class ExportController extends Controller
 
     /**
      * Revenue report query: paid bookings grouped by month and cottage.
+     *
+     * Revenue is attributed to the settlement month
+     * COALESCE(fully_paid_at, deposit_paid_at) — the same rule as the
+     * dashboard — so fully-paid non-deposit bookings appear, each booking
+     * lands in exactly one month, and rows with no paid date at all are
+     * preserved whenever no date filter is applied.
      */
     private function revenueQuery(Request $request): \Illuminate\Database\Eloquent\Builder
     {
-        $monthExpr = $this->monthExpression('deposit_paid_at');
+        $settled = 'COALESCE(fully_paid_at, deposit_paid_at)';
+        $monthExpr = $this->monthExpression($settled);
 
         $query = Inquiry::query()
             ->select(DB::raw("{$monthExpr} as period"), 'cottages.name as cottage_name', DB::raw('sum(amount_paid) as total'), DB::raw('count(*) as bookings'))
@@ -193,11 +225,13 @@ class ExportController extends Controller
             ->orderBy('cottages.name');
 
         if ($request->filled('from')) {
-            $query->whereDate('deposit_paid_at', '>=', $request->from);
+            $query->whereRaw("{$settled} >= ?", [$request->from]);
         }
 
         if ($request->filled('to')) {
-            $query->whereDate('deposit_paid_at', '<=', $request->to);
+            // whereDate(<= to) covers the whole day; the raw equivalent is
+            // a strict upper bound on the day after.
+            $query->whereRaw("{$settled} < ?", [date('Y-m-d', strtotime($request->to.' +1 day'))]);
         }
 
         return $query;
@@ -235,6 +269,46 @@ class ExportController extends Controller
     private function guestsData(?Request $request = null): Collection
     {
         return $this->guestsQuery($request)->get();
+    }
+
+    /**
+     * The guest date window shared by guestsQuery(), honoring from/to on
+     * guest creation. Extracted so whole-range footer aggregates reuse the
+     * exact same window without hydrating guest rows.
+     */
+    private function guestWindow(?Request $request = null): \Illuminate\Database\Eloquent\Builder
+    {
+        $query = Guest::query();
+
+        if ($request?->filled('from')) {
+            $query->whereDate('guests.created_at', '>=', $request->from);
+        }
+
+        if ($request?->filled('to')) {
+            $query->whereDate('guests.created_at', '<=', $request->to);
+        }
+
+        return $query;
+    }
+
+    /**
+     * Inquiries belonging to windowed guests (soft-deleted rows excluded by
+     * the global scope, mirroring the withCount/withSum relations). Basis
+     * for the whole-range guests-report footer aggregates.
+     */
+    private function guestScopedInquiries(?Request $request = null): \Illuminate\Database\Eloquent\Builder
+    {
+        return Inquiry::query()->whereHas('guest', function ($q) use ($request) {
+            $q->whereNull('guests.deleted_at');
+
+            if ($request?->filled('from')) {
+                $q->whereDate('guests.created_at', '>=', $request->from);
+            }
+
+            if ($request?->filled('to')) {
+                $q->whereDate('guests.created_at', '<=', $request->to);
+            }
+        });
     }
 
     /**

@@ -55,13 +55,14 @@
                     <td colspan="3">Totals ({{ $totalCount }} guests)</td>
                     <td class="r">{{ $totalStays }}</td>
                     <td></td>
-                    <td class="r">{{ $rows->sum('inquiries_count') }}</td>
-                    <td class="r">{{ $rows->sum('paid_count') }}</td>
-                    <td class="r">{{ $rows->sum('refunded_count') }}</td>
-                    <td class="r">{{ $rows->sum('failed_count') }}</td>
+                    <td class="r">{{ $totalInquiries }}</td>
+                    <td class="r">{{ $totalPaid }}</td>
+                    <td class="r">{{ $totalRefunded }}</td>
+                    <td class="r">{{ $totalFailed }}</td>
                     <td class="r">{{ formatPrice($totalRevenue) }}</td>
                 </tr>
             </tfoot>
         </table>
+        <div class="report-pagination">{{ $rows->links('pagination::simple-default') }}</div>
     @endif
 @endsection

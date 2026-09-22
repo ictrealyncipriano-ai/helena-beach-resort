@@ -80,5 +80,6 @@
                 </tr>
             </tfoot>
         </table>
+        <div class="report-pagination">{{ $rows->links('pagination::simple-default') }}</div>
     @endif
 @endsection
